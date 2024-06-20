@@ -1,0 +1,40 @@
+config:
+  (): custom_colbert.utils.train_custom_colbert_models.ColModelTrainingConfig
+  output_dir: !path ../../../models/without_tabfquad_no_pairwise/train_real_siglip_text_only
+  processor:
+    () : custom_colbert.utils.wrapper.AutoProcessorWrapper
+    pretrained_model_name_or_path: !path ../../../models/siglip-so400m-patch14-384
+    max_length: 64
+  model:
+    (): custom_colbert.utils.wrapper.AutoColModelWrapper
+    pretrained_model_name_or_path: !path ../../../models/siglip-so400m-patch14-384
+    training_objective: "biencoder_mean"
+    # attn_implementation: "eager"
+    torch_dtype:  !ext torch.bfloat16
+#    device_map: "auto"
+#    quantization_config:
+#      (): transformers.BitsAndBytesConfig
+#      load_in_4bit: true
+#      bnb_4bit_quant_type: "nf4"
+#      bnb_4bit_compute_dtype:  "bfloat16"
+#      bnb_4bit_use_double_quant: true
+
+  dataset_loading_func: !ext custom_colbert.utils.dataset_transformation.load_train_set
+  eval_dataset_loader: !import ../data/test_data.yaml
+
+  max_length: 64
+  run_train: true
+  run_eval: true
+  add_suffix: true
+  loss_func:
+    (): custom_colbert.loss.colbert_loss.BiEncoderLoss
+  tr_args: !import ../tr_args/default_tr_args.yaml
+  peft_config:
+    (): peft.LoraConfig
+    r: 32
+    lora_alpha: 32
+    lora_dropout: 0.1
+    init_lora_weights: "gaussian"
+    bias: "none"
+    task_type: "FEATURE_EXTRACTION"
+    target_modules: '(.*(text_model).*(down_proj|gate_proj|up_proj|k_proj|q_proj|v_proj|o_proj).*$)'
