@@ -1,0 +1,3 @@
+syntheticDocQA_energy:
+  (): custom_colbert.utils.dataset_transformation.TestSetFactory
+  dataset_path: coldoc/syntheticDocQA_energy_test

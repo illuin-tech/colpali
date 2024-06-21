@@ -1,0 +1,31 @@
+# eval_dataset_loader:
+syntheticDocQA_energy:
+  (): custom_colbert.utils.dataset_transformation.TestSetFactory
+  dataset_path: !path ../../../data_dir/syntheticDocQA_energy_test
+syntheticDocQA_healthcare_industry:
+  (): custom_colbert.utils.dataset_transformation.TestSetFactory
+  dataset_path: !path ../../../data_dir/syntheticDocQA_healthcare_industry_test
+syntheticDocQA_artificial_intelligence_test:
+  (): custom_colbert.utils.dataset_transformation.TestSetFactory
+  dataset_path: !path ../../../data_dir/syntheticDocQA_artificial_intelligence_test
+syntheticDocQA_government_reports:
+  (): custom_colbert.utils.dataset_transformation.TestSetFactory
+  dataset_path: !path ../../../data_dir/syntheticDocQA_government_reports_test
+infovqa_subsampled:
+  (): custom_colbert.utils.dataset_transformation.TestSetFactory
+  dataset_path: !path ../../../data_dir/infovqa_test_subsampled
+docvqa_subsampled:
+  (): custom_colbert.utils.dataset_transformation.TestSetFactory
+  dataset_path: !path ../../../data_dir/docvqa_test_subsampled
+arxivqa_subsampled:
+  (): custom_colbert.utils.dataset_transformation.TestSetFactory
+  dataset_path: !path ../../../data_dir/arxivqa_test_subsampled
+tabfquad_subsampled:
+  (): custom_colbert.utils.dataset_transformation.TestSetFactory
+  dataset_path: !path ../../../data_dir/tabfquad_test_subsampled
+tatdqa:
+  (): custom_colbert.utils.dataset_transformation.TestSetFactory
+  dataset_path: !path ../../../data_dir/tatdqa_test
+shift_project:
+  (): custom_colbert.utils.dataset_transformation.TestSetFactory
+  dataset_path: !path ../../../data_dir/shiftproject_test

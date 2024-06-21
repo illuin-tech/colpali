@@ -1,7 +1,7 @@
 import typer
 import torch
 from torch.utils.data import DataLoader
-
+from tqdm import tqdm
 from transformers import AutoProcessor
 
 from PIL import Image
@@ -84,6 +84,24 @@ def main() -> None:
     images = load_from_dataset("coldoc/docvqa_test_subsampled")
     queries = ["From which university does James V. Fiorca come ?", "Who is the japanese prime minister?"]
 
+
+    # run inference - docs
+    dataloader = DataLoader(
+        images,
+        batch_size=4,
+        shuffle=False,
+        collate_fn=lambda x: process_images(processor, x),
+    )
+    ds = []
+    for batch_doc in tqdm(dataloader):
+        with torch.no_grad():
+            batch_doc = {k: v.to(device) for k, v in batch_doc.items()}
+            embeddings_doc = model(**batch_doc)
+        ds.extend(list(torch.unbind(embeddings_doc.to("cpu"))))
+
+
+
+
     # run inference - queries
     dataloader = DataLoader(
         queries,
@@ -99,26 +117,13 @@ def main() -> None:
             embeddings_query = model(**batch_query)
         qs.extend(list(torch.unbind(embeddings_query.to("cpu"))))
 
-    # run inference - docs
-    dataloader = DataLoader(
-        images,
-        batch_size=4,
-        shuffle=False,
-        collate_fn=lambda x: process_images(processor, x),
-    )
-    ds = []
-    for batch_doc in dataloader:
-        with torch.no_grad():
-            batch_doc = {k: v.to(device) for k, v in batch_doc.items()}
-            embeddings_doc = model(**batch_doc)
-        ds.extend(list(torch.unbind(embeddings_doc.to("cpu"))))
+
 
     # run evaluation
     retriever_evaluator = CustomEvaluator(is_multi_vector=True)
     scores = retriever_evaluator.evaluate(qs, ds)
 
-    print(scores.shape)
-    print(scores)
+    print(scores.argmax(dim=1))
 
 
 if __name__ == "__main__":

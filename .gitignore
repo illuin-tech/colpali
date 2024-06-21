@@ -11,10 +11,10 @@ models/
 logs/
 data/downloaded_datasets/rimes_raw_dataset/
 
-# DVC
 models/
 !custom_colbert/models
 data/
+!*/configs/data/
 data_dir/
 
 # Byte-compiled / optimized / DLL files
