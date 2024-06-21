@@ -13,6 +13,7 @@ data/downloaded_datasets/rimes_raw_dataset/
 
 # DVC
 models/
+!custom_colbert/models
 data/
 data_dir/
 
