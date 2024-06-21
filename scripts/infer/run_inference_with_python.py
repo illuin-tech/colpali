@@ -21,7 +21,6 @@ def process_images(processor, images, max_length: int = 50):
         padding="longest",
         max_length=max_length + processor.image_seq_length,
     )
-    # batch_doc = {f"doc_{k}": v for k, v in batch_doc.items()}
     return batch_doc
 
 
@@ -43,8 +42,6 @@ def process_queries(processor, queries, mock_image, max_length: int = 50):
 
     batch_query["input_ids"] = batch_query["input_ids"][..., processor.image_seq_length :]
     batch_query["attention_mask"] = batch_query["attention_mask"][..., processor.image_seq_length :]
-
-    # batch_query = {f"query_{k}": v for k, v in batch_query.items()}
     return batch_query
 
 
@@ -116,7 +113,7 @@ def main() -> None:
     retriever_evaluator = CustomEvaluator(is_multi_vector=True)
     scores = retriever_evaluator.evaluate(qs, ds)
 
-    print(scores.argmax(dim=1))
+    print(scores.argmax(axis=1))
 
 
 if __name__ == "__main__":
