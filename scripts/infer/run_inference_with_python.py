@@ -46,31 +46,31 @@ def process_queries(processor, queries, mock_image, max_length: int = 50):
     return batch_query
 
 
+def pdf_to_images(pdf_path: str):
+    from pdf2image import convert_from_path
+    images = convert_from_path(pdf_path)
+    return images
+
+
 def main() -> None:
     """Example script to run inference with ColPali"""
 
     # Load model
     model_name = "coldoc/colpali-3b-mix-448"
-    model = ColPali.from_pretrained("google/paligemma-3b-mix-448", torch_dtype=torch.float16, device_map="cuda").eval()
+    model = ColPali.from_pretrained("google/paligemma-3b-mix-448", torch_dtype=torch.bfloat16, device_map="cuda").eval()
     model.load_adapter(model_name)
     processor = AutoProcessor.from_pretrained(model_name)
     device = model.device
 
-    images = [
-        Image.open(requests.get(
-            "https://datasets-server.huggingface.co/cached-assets/coldoc/docvqa_test_subsampled/--/fd6f97e6af163270d858f00daf9fa033f805058a/--/default/test/209/image/image.jpg?Expires=1718982078&Signature=HCNcBV3sxtzB2lPDBk4C~GQJQl2qbc6uiDmWRz1JMRoCy~H9KHAU0DriWw6yPtD8LpXqIn11OJ84pNgp4D2uPIZ-Uwg5aFfdDMjtPhEXjoAxKKB~J5DdyDRXriJdSjvcMMnFI1nQ71Bmjd93olgzpfkGn1sDsruIM-BkLv8c9u5KAEJGQd3omvl0i4tJApjkWFGEGp4TTMqAPYT2k1Iv5jJDl5NThRCKHHm0cvQ67zlmD2WSlmPksAcVTLSUf1M3TkIfH9MbnaE1K74a7zRTQ8bT78AwBTVxKznJiyWigq~UtTHLqx~MW3m6x2ZKpFYTezYOJj8wdsU32DcJuIvv~w__&Key-Pair-Id=K3EI6M078Z3AC3",
-            stream=True).raw),
-        Image.open(requests.get(
-            "https://datasets-server.huggingface.co/assets/coldoc/docvqa_test_subsampled/--/fd6f97e6af163270d858f00daf9fa033f805058a/--/default/test/1/image/image.jpg?Expires=1718981760&Signature=V5g~nfy9-ffH3ZlHBUP~-00KEi~DxFQ8fadxX1JykRmjeXbDT-ajvrVsPewwXtG0e~9eYOC0iDuv4DT3TMDv7w-VMz2lrWADAmTX46ic93fidFGOHG4zJymdIUxUCHhxG0if6SNBEDMuiDZFnolH~U8D~33-L3oln~u38YGY0aJJ8q27Tb1cV04O7piXT3JlBPx6Xpy1mMEgulvMY51FWRbwYY8tkZNiucEpqodEnahP1a7ugLM-WwcAh6rL-fjreCBiu955jLEHnnoKSYKT6BoGbZHucDvZ1xdVrZEKCHSCgXiPj5VmRzyY1t9hyORlSEAZF5EEbslpWgifPro0mg__&Key-Pair-Id=K3EI6M078Z3AC3",
-            stream=True).raw)
-    ]
-    queries = ["When is the ASMBR meeting ?", "What is the capital of Italy?"]
+    # images from pdf pages
+    images = pdf_to_images("example.pdf")
+    queries = ["What is the carbon footprint of the work ?", "What is the scoring prompt used?"]
 
     # run inference - queries
     from torch.utils.data import DataLoader
     dataloader = DataLoader(
         queries,
-        batch_size=2,
+        batch_size=4,
         shuffle=False,
         collate_fn=lambda x: process_queries(processor, x, images[0]),
     )
@@ -78,7 +78,6 @@ def main() -> None:
     qs = []
     for batch_query in dataloader:
         with torch.no_grad():
-            # put on device
             batch_query = {k: v.to(device) for k, v in batch_query.items()}
             embeddings_query = model(**batch_query)
         qs.extend(list(torch.unbind(embeddings_query.to("cpu"))))
@@ -86,22 +85,21 @@ def main() -> None:
     # run inference - docs
     dataloader = DataLoader(
         images,
-        batch_size=2,
+        batch_size=4,
         shuffle=False,
         collate_fn=lambda x: process_images(processor, x),
     )
     ds = []
     for batch_doc in dataloader:
         with torch.no_grad():
-            # put on device
             batch_doc = {k: v.to(device) for k, v in batch_doc.items()}
             embeddings_doc = model(**batch_doc)
         ds.extend(list(torch.unbind(embeddings_doc.to("cpu"))))
 
     # run evaluation
     retriever_evaluator = CustomEvaluator(is_multi_vector=True)
-
     scores = retriever_evaluator.evaluate(qs, ds)
+
     print(scores.shape)
     print(scores)
 
