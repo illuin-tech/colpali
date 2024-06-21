@@ -1,5 +1,7 @@
 import typer
 import torch
+from torch.utils.data import DataLoader
+
 from transformers import AutoProcessor
 
 from PIL import Image
@@ -46,13 +48,21 @@ def process_queries(processor, queries, mock_image, max_length: int = 50):
     return batch_query
 
 
-def pdf_to_images(pdf_path: str):
+def load_from_pdf(pdf_path: str):
     from pdf2image import convert_from_path
     images = convert_from_path(pdf_path)
     return images
 
 
-def main() -> None:
+def load_from_image_urls(urls: str):
+    images = [
+        Image.open(requests.get(url, stream=True).raw)
+        for url in urls
+    ]
+    return images
+
+
+def main(pdf_path) -> None:
     """Example script to run inference with ColPali"""
 
     # Load model
@@ -63,11 +73,11 @@ def main() -> None:
     device = model.device
 
     # images from pdf pages
-    images = pdf_to_images("example.pdf")
-    queries = ["What is the carbon footprint of the work ?", "What is the scoring prompt used?"]
+    images = load_from_pdf(pdf_path)
+    # images = load_from_image_urls(["<url_1>"])
+    queries = ["From which university does James V. Fiorca come ?", "Who is the japanese prime minister?"]
 
     # run inference - queries
-    from torch.utils.data import DataLoader
     dataloader = DataLoader(
         queries,
         batch_size=4,
