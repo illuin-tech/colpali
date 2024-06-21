@@ -1,11 +1,10 @@
-import typer
+import requests
 import torch
+import typer
+from PIL import Image
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import AutoProcessor
-
-from PIL import Image
-import requests
 
 from custom_colbert.models.paligemma_colbert_architecture import ColPali
 from custom_colbert.trainer.retrieval_evaluator import CustomEvaluator
@@ -38,11 +37,12 @@ def process_queries(processor, queries, mock_image, max_length: int = 50):
         text=texts_query,
         return_tensors="pt",
         padding="longest",
-        max_length=max_length + processor.image_seq_length)
+        max_length=max_length + processor.image_seq_length,
+    )
     del batch_query["pixel_values"]
 
-    batch_query["input_ids"] = batch_query["input_ids"][..., processor.image_seq_length:]
-    batch_query["attention_mask"] = batch_query["attention_mask"][..., processor.image_seq_length:]
+    batch_query["input_ids"] = batch_query["input_ids"][..., processor.image_seq_length :]
+    batch_query["attention_mask"] = batch_query["attention_mask"][..., processor.image_seq_length :]
 
     # batch_query = {f"query_{k}": v for k, v in batch_query.items()}
     return batch_query
@@ -50,20 +50,19 @@ def process_queries(processor, queries, mock_image, max_length: int = 50):
 
 def load_from_pdf(pdf_path: str):
     from pdf2image import convert_from_path
+
     images = convert_from_path(pdf_path)
     return images
 
 
 def load_from_image_urls(urls: str):
-    images = [
-        Image.open(requests.get(url, stream=True).raw)
-        for url in urls
-    ]
+    images = [Image.open(requests.get(url, stream=True).raw) for url in urls]
     return images
 
 
 def load_from_dataset(dataset):
     from datasets import load_dataset
+
     dataset = load_dataset(dataset, split="test")
     return dataset["image"]
 
@@ -84,7 +83,6 @@ def main() -> None:
     images = load_from_dataset("coldoc/docvqa_test_subsampled")
     queries = ["From which university does James V. Fiorca come ?", "Who is the japanese prime minister?"]
 
-
     # run inference - docs
     dataloader = DataLoader(
         images,
@@ -98,9 +96,6 @@ def main() -> None:
             batch_doc = {k: v.to(device) for k, v in batch_doc.items()}
             embeddings_doc = model(**batch_doc)
         ds.extend(list(torch.unbind(embeddings_doc.to("cpu"))))
-
-
-
 
     # run inference - queries
     dataloader = DataLoader(
@@ -116,8 +111,6 @@ def main() -> None:
             batch_query = {k: v.to(device) for k, v in batch_query.items()}
             embeddings_query = model(**batch_query)
         qs.extend(list(torch.unbind(embeddings_query.to("cpu"))))
-
-
 
     # run evaluation
     retriever_evaluator = CustomEvaluator(is_multi_vector=True)
