@@ -62,7 +62,13 @@ def load_from_image_urls(urls: str):
     return images
 
 
-def main(pdf_path) -> None:
+def load_from_dataset(dataset):
+    from datasets import load_dataset
+    dataset = load_dataset(dataset, split="test")
+    return dataset["image"]
+
+
+def main() -> None:
     """Example script to run inference with ColPali"""
 
     # Load model
@@ -73,8 +79,9 @@ def main(pdf_path) -> None:
     device = model.device
 
     # images from pdf pages
-    images = load_from_pdf(pdf_path)
+    # images = load_from_pdf(pdf_path)
     # images = load_from_image_urls(["<url_1>"])
+    images = load_from_dataset("coldoc/docvqa_test_subsampled")
     queries = ["From which university does James V. Fiorca come ?", "Who is the japanese prime minister?"]
 
     # run inference - queries
