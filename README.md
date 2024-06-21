@@ -23,6 +23,15 @@ Notably, we train colbert with LLMs (decoders) as well as Image Language models 
 pip install -r requirements.txt
 ```
 
+## Usage
+
+Example usage of the model is shown in the `scripts` directory.
+
+```bash
+# hackable example script to adapt
+python scripts/infer/run_inference_with_python.py
+```
+
 ## Training
 
 ```bash
