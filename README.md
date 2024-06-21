@@ -12,7 +12,7 @@
 ## Associated Paper
 
 **ColPali: Efficient Document Retrieval with Vision Language Models**
-Manuel Faysse, Hugues Sibille, Tony Wu, Bilel Omrani, Gautier Viaud, CELINE HUDELOT, Pierre Colombo
+Manuel Faysse, Hugues Sibille, Tony Wu, Bilel Omrani, Gautier Viaud, Céline Hudelot, Pierre Colombo
 
 This repository contains the code for training custom Colbert retriever models.
 Notably, we train colbert with LLMs (decoders) as well as Image Language models !
