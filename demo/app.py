@@ -1,7 +1,8 @@
-import gradio as gr
-from pdf2image import convert_from_path
+import os
 
+import gradio as gr
 import torch
+from pdf2image import convert_from_path
 from PIL import Image
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -46,7 +47,7 @@ def process_queries(processor, queries, mock_image, max_length: int = 50):
     return batch_query
 
 
-def search(query: str, ds, images) -> str:
+def search(query: str, ds, images):
     qs = []
     with torch.no_grad():
         batch_query = process_queries(processor, [query], mock_image)
@@ -57,12 +58,11 @@ def search(query: str, ds, images) -> str:
     # run evaluation
     retriever_evaluator = CustomEvaluator(is_multi_vector=True)
     scores = retriever_evaluator.evaluate(qs, ds)
+    best_page = int(scores.argmax(axis=1).item())
+    return f"The most relevant page is {best_page}", images[best_page]
 
-    return f"The most relevant page is {scores.argmax(axis=1)}",  images[scores.argmax(axis=1)]
-    # return f"Query: {query}, most relevant page: 1, {len(ds)}", images[1]
 
-
-def index(file):
+def index(file, ds):
     """Example script to run inference with ColPali"""
     images = []
     for f in file:
@@ -75,7 +75,6 @@ def index(file):
         shuffle=False,
         collate_fn=lambda x: process_images(processor, x),
     )
-    ds = ["test", "double test"]
     for batch_doc in tqdm(dataloader):
         with torch.no_grad():
             batch_doc = {k: v.to(device) for k, v in batch_doc.items()}
@@ -84,32 +83,31 @@ def index(file):
     return f"Uploaded and converted {len(images)} pages", ds, images
 
 
-COLORS = ['#4285f4', '#db4437', '#f4b400', '#0f9d58', '#e48ef1']
+COLORS = ["#4285f4", "#db4437", "#f4b400", "#0f9d58", "#e48ef1"]
 # Load model
 model_name = "coldoc/colpali-3b-mix-448"
-model = ColPali.from_pretrained("google/paligemma-3b-mix-448", torch_dtype=torch.bfloat16, device_map="cuda").eval()
+token = os.environ.get("HF_TOKEN")
+model = ColPali.from_pretrained(
+    "google/paligemma-3b-mix-448", torch_dtype=torch.bfloat16, device_map="cuda", token=token
+).eval()
 model.load_adapter(model_name)
-processor = AutoProcessor.from_pretrained(model_name)
+processor = AutoProcessor.from_pretrained(model_name, token=token)
 device = model.device
 mock_image = Image.new("RGB", (448, 448), (255, 255, 255))
 
 with gr.Blocks() as demo:
-    gr.Markdown("# PDF to 🤗 Dataset")
+    gr.Markdown("# ColPali: Efficient Document Retrieval with Vision Language Models 📚🔍")
     gr.Markdown("## 1️⃣ Upload PDFs")
     file = gr.File(file_types=["pdf"], file_count="multiple")
 
     gr.Markdown("## 2️⃣ Convert the PDFs and upload")
     convert_button = gr.Button("🔄 Convert and upload")
     message = gr.Textbox("Files not yet uploaded")
-    embeds = gr.State()
-    imgs = gr.State()
+    embeds = gr.State(value=[])
+    imgs = gr.State(value=[])
 
     # Define the actions
-    convert_button.click(
-        index,
-        inputs=[file],
-        outputs=[message, embeds, imgs]
-    )
+    convert_button.click(index, inputs=[file, embeds], outputs=[message, embeds, imgs])
 
     gr.Markdown("## 3️⃣ Search")
     query = gr.Textbox(placeholder="Enter your query here")
@@ -117,10 +115,7 @@ with gr.Blocks() as demo:
     message2 = gr.Textbox("Query not yet set")
     output_img = gr.Image()
 
-    search_button.click(
-        search, inputs=[query, embeds, imgs],
-        outputs=[message2, output_img]
-    )
+    search_button.click(search, inputs=[query, embeds, imgs], outputs=[message2, output_img])
 
 
 if __name__ == "__main__":
