@@ -85,7 +85,7 @@ def index(file, ds):
 
 COLORS = ["#4285f4", "#db4437", "#f4b400", "#0f9d58", "#e48ef1"]
 # Load model
-model_name = "coldoc/colpali-3b-mix-448"
+model_name = "vidore/colpali-3b-mix-448"
 token = os.environ.get("HF_TOKEN")
 model = ColPali.from_pretrained(
     "google/paligemma-3b-mix-448", torch_dtype=torch.bfloat16, device_map="cuda", token=token

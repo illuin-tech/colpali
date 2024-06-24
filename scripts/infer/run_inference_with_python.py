@@ -68,7 +68,7 @@ def main() -> None:
     """Example script to run inference with ColPali"""
 
     # Load model
-    model_name = "coldoc/colpali-3b-mix-448"
+    model_name = "vidore/colpali-3b-mix-448"
     model = ColPali.from_pretrained("google/paligemma-3b-mix-448", torch_dtype=torch.bfloat16, device_map="cuda").eval()
     model.load_adapter(model_name)
     processor = AutoProcessor.from_pretrained(model_name)
@@ -77,7 +77,7 @@ def main() -> None:
     # images from pdf pages
     # images = load_from_pdf(pdf_path)
     # images = load_from_image_urls(["<url_1>"])
-    images = load_from_dataset("coldoc/docvqa_test_subsampled")
+    images = load_from_dataset("vidore/docvqa_test_subsampled")
     queries = ["From which university does James V. Fiorca come ?", "Who is the japanese prime minister?"]
 
     # run inference - docs

@@ -25,7 +25,7 @@ def load_train_set() -> DatasetDict:
         "syntheticDocQA_artificial_intelligence_train",
         "syntheticDocQA_energy_train",
     ]
-    base_path = "./data_dir/" if USE_LOCAL_DATASET else "coldoc/"
+    base_path = "./data_dir/" if USE_LOCAL_DATASET else "vidore/"
     ds_tot = []
     for path in ds_paths:
         cpath = base_path + path
@@ -57,7 +57,7 @@ def load_train_set_with_tabfquad() -> DatasetDict:
         "syntheticDocQA_artificial_intelligence_train",
         "syntheticDocQA_energy_train",
     ]
-    base_path = "./data_dir/" if USE_LOCAL_DATASET else "coldoc/"
+    base_path = "./data_dir/" if USE_LOCAL_DATASET else "vidore/"
     ds_tot = []
     for path in ds_paths:
         cpath = base_path + path
@@ -121,5 +121,5 @@ class TestSetFactory:
 
 
 if __name__ == "__main__":
-    ds = TestSetFactory("coldoc/tabfquad_test_subsampled")()
+    ds = TestSetFactory("vidore/tabfquad_test_subsampled")()
     print(ds)

@@ -6,14 +6,14 @@ class TrainDatasets(Enum):
     Dataset names for the training datasets used in HuggingFace Datasets.
     """
 
-    government_reports = "coldoc/syntheticDocQA_government_reports_train"
-    healthcare_industry = "coldoc/syntheticDocQA_healthcare_industry_train"
-    energy = "coldoc/syntheticDocQA_energy_train"
-    artificial_intelligence = "coldoc/syntheticDocQA_artificial_intelligence_train"
-    arxivqa = "coldoc/arxivqa_train"
-    docvqa = "coldoc/docvqa_train"
-    infovqa = "coldoc/infovqa_train"
-    tatqa = "coldoc/tatqa_train"
+    government_reports = "vidore/syntheticDocQA_government_reports_train"
+    healthcare_industry = "vidore/syntheticDocQA_healthcare_industry_train"
+    energy = "vidore/syntheticDocQA_energy_train"
+    artificial_intelligence = "vidore/syntheticDocQA_artificial_intelligence_train"
+    arxivqa = "vidore/arxivqa_train"
+    docvqa = "vidore/docvqa_train"
+    infovqa = "vidore/infovqa_train"
+    tatqa = "vidore/tatqa_train"
 
     @staticmethod
     def get_synthetic_datasets():
@@ -45,8 +45,8 @@ class CaptionedSyntheticDatasets(Enum):
     Dataset names for the captioned synthetic datasets used in HuggingFace Datasets.
     """
 
-    shift = "coldoc/baseline_cap_shiftproject_test"
+    shift = "vidore/baseline_cap_shiftproject_test"
 
 
 class SyntheticDocQATest(Enum):
-    shift = "coldoc/shiftproject_test"
+    shift = "vidore/shiftproject_test"
