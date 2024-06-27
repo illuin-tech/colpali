@@ -32,6 +32,8 @@ Example usage of the model is shown in the `scripts` directory.
 python scripts/infer/run_inference_with_python.py
 ```
 
+Detais are also given in the model card for the base Colpali model on HuggingFace: [ColPali Model card](https://huggingface.co/vidore/colpali).
+
 ## Training
 
 ```bash
