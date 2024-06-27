@@ -1,12 +1,12 @@
 config:
-  (): custom_colbert.utils.train_custom_colbert_models.ColModelTrainingConfig
+  (): colpali_engine.utils.train_colpali_engine_models.ColModelTrainingConfig
   processor:
-    (): custom_colbert.utils.wrapper.AutoProcessorWrapper
+    (): colpali_engine.utils.wrapper.AutoProcessorWrapper
     pretrained_model_name_or_path: "HuggingFaceM4/idefics2-8b"
     do_image_splitting: false
   pretrained_peft_model_name_or_path: !path ../../../models/HuggingFaceM4_idefics2-8b-chatty
   model:
-    (): custom_colbert.utils.wrapper.AutoColModelWrapper
+    (): colpali_engine.utils.wrapper.AutoColModelWrapper
     pretrained_model_name_or_path: "HuggingFaceM4/idefics2-8b-chatty"
     training_objective: "colbertv1"
     # attn_implementation: "flash_attention_2"
@@ -18,12 +18,12 @@ config:
       bnb_4bit_compute_dtype:  "float16"
       bnb_4bit_use_double_quant: true
 
-  dataset_loading_func: !ext custom_colbert.utils.dataset_transformation.load_tabfquad_retrieving
+  dataset_loading_func: !ext colpali_engine.utils.dataset_transformation.load_tabfquad_retrieving
   max_length: 256
   run_eval: true
   run_train: false
   loss_func:
-    (): custom_colbert.loss.colbert_loss.ColbertLoss
+    (): colpali_engine.loss.colbert_loss.ColbertLoss
   tr_args:
     (): transformers.training_args.TrainingArguments
     output_dir: null

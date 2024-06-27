@@ -11,11 +11,11 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import AutoTokenizer, Idefics2Processor, PreTrainedModel, PreTrainedTokenizer, TrainingArguments
 
-from custom_colbert.dataset.custom_collator import CustomCollator
-from custom_colbert.loss.colbert_loss import BiEncoderLoss, BiPairwiseCELoss, ColbertLoss, ColbertPairwiseCELoss
-from custom_colbert.trainer.contrastive_trainer import ContrastiveTrainer
-from custom_colbert.trainer.retrieval_evaluator import CustomEvaluator
-from custom_colbert.utils.gpu_stats import print_gpu_utilization, print_summary
+from colpali_engine.dataset.custom_collator import CustomCollator
+from colpali_engine.loss.colbert_loss import BiEncoderLoss, BiPairwiseCELoss, ColbertLoss, ColbertPairwiseCELoss
+from colpali_engine.trainer.contrastive_trainer import ContrastiveTrainer
+from colpali_engine.trainer.retrieval_evaluator import CustomEvaluator
+from colpali_engine.utils.gpu_stats import print_gpu_utilization, print_summary
 
 
 @dataclass

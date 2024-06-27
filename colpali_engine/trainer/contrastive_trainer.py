@@ -1,7 +1,7 @@
 import torch
 from transformers import Trainer
 
-from custom_colbert.loss.colbert_loss import BiEncoderLoss, ColbertLoss
+from colpali_engine.loss.colbert_loss import BiEncoderLoss, ColbertLoss
 
 
 class ContrastiveTrainer(Trainer):

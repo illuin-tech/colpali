@@ -1,12 +1,12 @@
 config:
-  (): custom_colbert.utils.train_custom_colbert_models.ColModelTrainingConfig
+  (): colpali_engine.utils.train_colpali_engine_models.ColModelTrainingConfig
   output_dir: !path ../../../models/without_tabfquad_no_pairwise/train_real_siglip
   processor:
-    () : custom_colbert.utils.wrapper.AutoProcessorWrapper
+    () : colpali_engine.utils.wrapper.AutoProcessorWrapper
     pretrained_model_name_or_path: google/siglip-so400m-patch14-384
     max_length: 64
   model:
-    (): custom_colbert.utils.wrapper.AutoColModelWrapper
+    (): colpali_engine.utils.wrapper.AutoColModelWrapper
     pretrained_model_name_or_path: google/siglip-so400m-patch14-384
     training_objective: "biencoder_mean"
     # attn_implementation: "eager"
@@ -19,7 +19,7 @@ config:
 #      bnb_4bit_compute_dtype:  "bfloat16"
 #      bnb_4bit_use_double_quant: true
 
-  dataset_loading_func: !ext custom_colbert.utils.dataset_transformation.load_docvqa_dataset
+  dataset_loading_func: !ext colpali_engine.utils.dataset_transformation.load_docvqa_dataset
   eval_dataset_loader: !import ../data/debug_data.yaml
 
   max_length: 64
@@ -27,7 +27,7 @@ config:
   run_eval: true
   add_suffix: true
   loss_func:
-    (): custom_colbert.loss.colbert_loss.BiEncoderLoss
+    (): colpali_engine.loss.colbert_loss.BiEncoderLoss
   tr_args:
     (): transformers.training_args.TrainingArguments
     output_dir: null

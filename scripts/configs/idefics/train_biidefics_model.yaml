@@ -1,12 +1,12 @@
 config:
-  (): custom_colbert.utils.train_custom_colbert_models.ColModelTrainingConfig
+  (): colpali_engine.utils.train_colpali_engine_models.ColModelTrainingConfig
   output_dir: !path ../../../models/biidefics2-8b-chatty
   processor:
-    (): custom_colbert.utils.wrapper.AutoProcessorWrapper
+    (): colpali_engine.utils.wrapper.AutoProcessorWrapper
     pretrained_model_name_or_path: "HuggingFaceM4/idefics2-8b"
     do_image_splitting: false
   model:
-    (): custom_colbert.utils.wrapper.AutoColModelWrapper
+    (): colpali_engine.utils.wrapper.AutoColModelWrapper
     pretrained_model_name_or_path: "HuggingFaceM4/idefics2-8b-chatty"
     training_objective: "biencoder"
     # attn_implementation: "flash_attention_2"
@@ -18,11 +18,11 @@ config:
       bnb_4bit_compute_dtype:  "float16"
       bnb_4bit_use_double_quant: true
 
-  dataset_loading_func: !ext custom_colbert.utils.dataset_transformation.load_docvqa_dataset
+  dataset_loading_func: !ext colpali_engine.utils.dataset_transformation.load_docvqa_dataset
   max_length: 256
   run_eval: true
   loss_func:
-    (): custom_colbert.loss.colbert_loss.BiEncoderLoss
+    (): colpali_engine.loss.colbert_loss.BiEncoderLoss
   tr_args:
     (): transformers.training_args.TrainingArguments
     output_dir: null

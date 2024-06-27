@@ -9,11 +9,11 @@ from einops import rearrange
 from PIL import Image
 from tqdm import trange
 
-from custom_colbert.interpretability.plot_utils import plot_patches
-from custom_colbert.interpretability.processor import ColPaliProcessor
-from custom_colbert.interpretability.torch_utils import normalize_attention_map_per_query_token
-from custom_colbert.interpretability.vit_configs import VIT_CONFIG
-from custom_colbert.models.paligemma_colbert_architecture import ColPali
+from colpali_engine.interpretability.plot_utils import plot_patches
+from colpali_engine.interpretability.processor import ColPaliProcessor
+from colpali_engine.interpretability.torch_utils import normalize_attention_map_per_query_token
+from colpali_engine.interpretability.vit_configs import VIT_CONFIG
+from colpali_engine.models.paligemma_colbert_architecture import ColPali
 
 OUTDIR_INTERPRETABILITY = Path("outputs/interpretability")
 

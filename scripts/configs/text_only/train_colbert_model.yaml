@@ -1,15 +1,15 @@
 config:
-  (): custom_colbert.utils.train_custom_colbert_models.ColModelTrainingConfig
+  (): colpali_engine.utils.train_colpali_engine_models.ColModelTrainingConfig
   model:
-    (): custom_colbert.utils.wrapper.AutoColModelWrapper
+    (): colpali_engine.utils.wrapper.AutoColModelWrapper
     pretrained_model_name_or_path: "FacebookAI/xlm-roberta-base"
 
   add_suffix: true
-  dataset_loading_func: !ext custom_colbert.utils.dataset_transformation.load_manu_embeddings
+  dataset_loading_func: !ext colpali_engine.utils.dataset_transformation.load_manu_embeddings
   max_length: 256
   run_eval: true
   loss_func:
-    (): custom_colbert.loss.colbert_loss.ColbertLoss
+    (): colpali_engine.loss.colbert_loss.ColbertLoss
   tr_args:
     (): transformers.training_args.TrainingArguments
     output_dir: null

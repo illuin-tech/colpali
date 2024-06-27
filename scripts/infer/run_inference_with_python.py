@@ -5,10 +5,10 @@ from tqdm import tqdm
 from transformers import AutoProcessor
 from PIL import Image
 
-from custom_colbert.models.paligemma_colbert_architecture import ColPali
-from custom_colbert.trainer.retrieval_evaluator import CustomEvaluator
-from custom_colbert.utils.colpali_processing_utils import process_images, process_queries
-from custom_colbert.utils.image_from_page_utils import load_from_dataset
+from colpali_engine.models.paligemma_colbert_architecture import ColPali
+from colpali_engine.trainer.retrieval_evaluator import CustomEvaluator
+from colpali_engine.utils.colpali_processing_utils import process_images, process_queries
+from colpali_engine.utils.image_from_page_utils import load_from_dataset
 
 
 def main() -> None:

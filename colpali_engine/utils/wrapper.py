@@ -1,7 +1,7 @@
 import importlib
 
-from custom_colbert.models.clip_baselines import ColSigLIP, SigLIP
-from custom_colbert.models.colbert_architectures import (
+from colpali_engine.models.clip_baselines import ColSigLIP, SigLIP
+from colpali_engine.models.colbert_architectures import (
     BiBERT,
     BiXLMRoBERTa,
     ColBERT,
@@ -9,8 +9,8 @@ from custom_colbert.models.colbert_architectures import (
     ColLlama,
     ColXLMRoBERTa,
 )
-from custom_colbert.models.idefics_colbert_architecture import BiIdefics, ColIdefics
-from custom_colbert.models.paligemma_colbert_architecture import (
+from colpali_engine.models.idefics_colbert_architecture import BiIdefics, ColIdefics
+from colpali_engine.models.paligemma_colbert_architecture import (
     BiNewSiglip,
     BiPaliLast,
     BiPaliMean,

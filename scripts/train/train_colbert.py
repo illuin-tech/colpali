@@ -1,6 +1,6 @@
 from pathlib import Path
-from custom_colbert.utils.train_custom_colbert_models import ColModelTrainingConfig, ColModelTraining
-from custom_colbert.utils.gpu_stats import print_gpu_utilization
+from colpali_engine.utils.train_colpali_engine_models import ColModelTrainingConfig, ColModelTraining
+from colpali_engine.utils.gpu_stats import print_gpu_utilization
 import typer
 import configue
 

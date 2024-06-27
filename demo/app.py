@@ -8,8 +8,8 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import AutoProcessor
 
-from custom_colbert.models.paligemma_colbert_architecture import ColPali
-from custom_colbert.trainer.retrieval_evaluator import CustomEvaluator
+from colpali_engine.models.paligemma_colbert_architecture import ColPali
+from colpali_engine.trainer.retrieval_evaluator import CustomEvaluator
 
 
 def process_images(processor, images, max_length: int = 50):

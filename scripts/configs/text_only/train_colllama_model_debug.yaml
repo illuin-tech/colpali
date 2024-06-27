@@ -1,7 +1,7 @@
 config:
-  (): custom_colbert.utils.train_custom_colbert_models.ColModelTrainingConfig
+  (): colpali_engine.utils.train_colpali_engine_models.ColModelTrainingConfig
   model:
-    (): custom_colbert.utils.wrapper.AutoColModelWrapper
+    (): colpali_engine.utils.wrapper.AutoColModelWrapper
     pretrained_model_name_or_path: "HuggingFaceM4/tiny-random-LlamaForCausalLM"
     # attn_implementation: "eager"
     quantization_config:
@@ -11,9 +11,9 @@ config:
       bnb_4bit_compute_dtype:  "float16"
       bnb_4bit_use_double_quant: true
 
-  dataset_loading_func: !ext custom_colbert.utils.dataset_transformation.load_manu_embeddings
+  dataset_loading_func: !ext colpali_engine.utils.dataset_transformation.load_manu_embeddings
   loss_func:
-    (): custom_colbert.loss.colbert_loss.ColbertLoss
+    (): colpali_engine.loss.colbert_loss.ColbertLoss
   max_length: 256
   run_eval: true
   add_suffix: true

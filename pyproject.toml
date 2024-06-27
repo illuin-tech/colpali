@@ -1,5 +1,5 @@
 [project]
-name = 'custom_colbert'
+name = 'colpali_engine'
 dynamic = ["version"]
 description = 'This repository centralizes ressources for the ColPali project.'
 authors = [
@@ -24,7 +24,6 @@ dependencies = [
     "transformers>=4.41.1",
     "mteb>=1.12.22",
     "requests",
-    "PIL",
     "GPUtil"
 ]
 
@@ -62,7 +61,7 @@ zip-safe = false
 platforms = ['any']
 
 [tool.setuptools.packages.find]
-include = ['custom_colbert', 'custom_colbert.*']
+include = ['colpali_engine', 'colpali_engine.*']
 
 [tool.mypy]
 check_untyped_defs = true

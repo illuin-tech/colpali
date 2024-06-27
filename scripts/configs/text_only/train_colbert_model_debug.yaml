@@ -1,15 +1,15 @@
 config:
-  (): custom_colbert.utils.train_custom_colbert_models.ColModelTrainingConfig
+  (): colpali_engine.utils.train_colpali_engine_models.ColModelTrainingConfig
   model:
-    (): custom_colbert.utils.wrapper.AutoColModelWrapper
+    (): colpali_engine.utils.wrapper.AutoColModelWrapper
     pretrained_model_name_or_path: "bert-base-uncased"
     training_objective: "biencoder" # "biencoder"
     torch_dtype: !ext torch.float16
 
-  dataset_loading_func: !ext custom_colbert.utils.dataset_transformation.load_manu_embeddings
+  dataset_loading_func: !ext colpali_engine.utils.dataset_transformation.load_manu_embeddings
 
   loss_func:
-    (): custom_colbert.loss.colbert_loss.BiEncoderLoss # BiEncoderLoss # ColbertLoss
+    (): colpali_engine.loss.colbert_loss.BiEncoderLoss # BiEncoderLoss # ColbertLoss
   max_length: 128
   run_eval: true
   run_train: true

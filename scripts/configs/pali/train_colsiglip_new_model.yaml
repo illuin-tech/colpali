@@ -1,12 +1,12 @@
 config:
-  (): custom_colbert.utils.train_custom_colbert_models.ColModelTrainingConfig
+  (): colpali_engine.utils.train_colpali_engine_models.ColModelTrainingConfig
   output_dir: !path ../../../models/without_tabfquad_no_pairwise/train_colsiglip_new-3b-mix-448
   processor:
-    () : custom_colbert.utils.wrapper.AutoProcessorWrapper
+    () : colpali_engine.utils.wrapper.AutoProcessorWrapper
     pretrained_model_name_or_path: "./models/paligemma-3b-mix-448"
     max_length: 50
   model:
-    (): custom_colbert.utils.wrapper.AutoColModelWrapper
+    (): colpali_engine.utils.wrapper.AutoColModelWrapper
     pretrained_model_name_or_path: "./models/paligemma-3b-mix-448"
     training_objective: "colbertv1_vision"
     # attn_implementation: "eager"
@@ -19,13 +19,13 @@ config:
 #      bnb_4bit_compute_dtype:  "bfloat16"
 #      bnb_4bit_use_double_quant: true
 
-  dataset_loading_func: !ext custom_colbert.utils.dataset_transformation.load_train_set
+  dataset_loading_func: !ext colpali_engine.utils.dataset_transformation.load_train_set
   eval_dataset_loader: !import ../data/test_data.yaml
   max_length: 50
   run_eval: true
   add_suffix: true
   loss_func:
-    (): custom_colbert.loss.colbert_loss.ColbertLoss
+    (): colpali_engine.loss.colbert_loss.ColbertLoss
   tr_args: !import ../tr_args/default_tr_args.yaml
   peft_config:
     (): peft.LoraConfig

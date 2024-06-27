@@ -6,13 +6,10 @@ data/litellm_cache_captionning/
 .idea
 .venv/
 colbert/models/
-models/
-!custom_colbert/models
 logs/
 data/downloaded_datasets/rimes_raw_dataset/
-
 models/
-!custom_colbert/models
+!colpali_engine/models
 data/
 !*/configs/data/
 data_dir/
