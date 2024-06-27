@@ -1,6 +1,6 @@
 config:
   (): colpali_engine.utils.train_colpali_engine_models.ColModelTrainingConfig
-  output_dir: !path ../../../models/without_tabfquad/train_colpali-no-register-3b-mix-448
+  output_dir: !path ../../../models/without_tabfquad/train_colpali-3b-mix-448
   processor:
     () : colpali_engine.utils.wrapper.AutoProcessorWrapper
     pretrained_model_name_or_path: "./models/paligemma-3b-mix-448"
