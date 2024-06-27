@@ -25,7 +25,8 @@ dependencies = [
     "transformers>=4.41.1",
     "mteb>=1.12.22",
     "requests",
-    "GPUtil"
+    "GPUtil",
+    "peft==0.11.1",
 ]
 
 [project.optional-dependencies]
@@ -42,7 +43,6 @@ train = [
     "accelerate==0.30.1",
     "configue==5.0.0",
     "datasets==2.19.1",
-    "peft==0.11.1",
     "typer==0.12.3",
     "bitsandbytes",
 ]
