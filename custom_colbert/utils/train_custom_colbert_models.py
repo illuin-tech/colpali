@@ -9,13 +9,10 @@ from datasets import concatenate_datasets
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from transformers import (AutoTokenizer, Idefics2Processor, PreTrainedModel,
-                          PreTrainedTokenizer, TrainingArguments)
+from transformers import AutoTokenizer, Idefics2Processor, PreTrainedModel, PreTrainedTokenizer, TrainingArguments
 
 from custom_colbert.dataset.custom_collator import CustomCollator
-from custom_colbert.loss.colbert_loss import (BiEncoderLoss, BiPairwiseCELoss,
-                                              ColbertLoss,
-                                              ColbertPairwiseCELoss)
+from custom_colbert.loss.colbert_loss import BiEncoderLoss, BiPairwiseCELoss, ColbertLoss, ColbertPairwiseCELoss
 from custom_colbert.trainer.contrastive_trainer import ContrastiveTrainer
 from custom_colbert.trainer.retrieval_evaluator import CustomEvaluator
 from custom_colbert.utils.gpu_stats import print_gpu_utilization, print_summary

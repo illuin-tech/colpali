@@ -2,3 +2,4 @@
 
 black
 pytest
+pdf2image

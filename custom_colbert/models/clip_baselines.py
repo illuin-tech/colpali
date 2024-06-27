@@ -6,7 +6,6 @@ from transformers import SiglipModel
 
 
 class SigLIP(SiglipModel):
-
     def forward(self, *args, **kwargs):
         """
         Forward pass through Llama and the linear layer for dimensionality reduction

@@ -23,6 +23,9 @@ dependencies = [
     "torch>=2.2.0",
     "transformers>=4.41.1",
     "mteb>=1.12.22",
+    "requests",
+    "PIL",
+    "GPUtil"
 ]
 
 [project.optional-dependencies]
