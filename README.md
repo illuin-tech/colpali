@@ -3,10 +3,10 @@
 
 [[Blog]]()
 [[Paper]]()
-[[ColPali Model card]]()
-[[ViDoRe Dataset card]]()
-[[Colab example]]()
-[[HuggingFace Space]]()
+[[ColPali Model card]](https://huggingface.co/vidore/colpali)
+[[ViDoRe Benchmark]](https://huggingface.co/vidore)
+<!---[[Colab example]]()-->
+[[HuggingFace Demo]](https://huggingface.co/spaces/manu/ColPali-demo)
 
 
 ## Associated Paper
@@ -206,3 +206,7 @@ sbatch --nodes=1 --cpus-per-task=16 --mem-per-cpu=32GB --time=20:00:00 --gres=gp
 
 sbatch --nodes=1  --time=5:00:00 -A cad15443 --gres=gpu:8  --constraint=MI250 --job-name=colpali --wrap="python scripts/train/train_colbert.py scripts/configs/train_colpali_model.yaml"
 ```
+
+## CITE
+
+TO BE ADDED
