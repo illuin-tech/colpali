@@ -1,8 +1,6 @@
 import torch
 from transformers import Trainer
 
-from colpali_engine.loss.colbert_loss import BiEncoderLoss, ColbertLoss
-
 
 class ContrastiveTrainer(Trainer):
     def __init__(self, loss_func, is_vision_model, *args, **kwargs):
