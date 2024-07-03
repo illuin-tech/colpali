@@ -2,7 +2,7 @@
 
 
 [[Blog]]()
-[[Paper]]()
+[[Paper]](https://arxiv.org/abs/2407.01449)
 [[ColPali Model card]](https://huggingface.co/vidore/colpali)
 [[ViDoRe Benchmark]](https://huggingface.co/vidore)
 <!---[[Colab example]]()-->
