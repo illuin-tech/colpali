@@ -21,12 +21,12 @@ Notably, we train colbert with LLMs (decoders) as well as Image Language models 
 
 ### From git
 ```bash
-pip install git+https://github.com/ManuelFay/colpali
+pip install git+https://github.com/illuin-tech/colpali
 ```
 
 ### From source
 ```bash
-https://github.com/ManuelFay/colpali
+git clone https://github.com/illuin-tech/colpali
 mv colpali
 pip install -r requirements.txt
 ```
