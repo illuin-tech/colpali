@@ -207,6 +207,16 @@ sbatch --nodes=1 --cpus-per-task=16 --mem-per-cpu=32GB --time=20:00:00 --gres=gp
 sbatch --nodes=1  --time=5:00:00 -A cad15443 --gres=gpu:8  --constraint=MI250 --job-name=colpali --wrap="python scripts/train/train_colbert.py scripts/configs/train_colpali_model.yaml"
 ```
 
-## CITE
+## CITATION
 
-TO BE ADDED
+```bibtex
+@misc{faysse2024colpaliefficientdocumentretrieval,
+      title={ColPali: Efficient Document Retrieval with Vision Language Models}, 
+      author={Manuel Faysse and Hugues Sibille and Tony Wu and Bilel Omrani and Gautier Viaud and Céline Hudelot and Pierre Colombo},
+      year={2024},
+      eprint={2407.01449},
+      archivePrefix={arXiv},
+      primaryClass={cs.IR},
+      url={https://arxiv.org/abs/2407.01449}, 
+}
+```
