@@ -1,7 +1,7 @@
 # ColPali: Efficient Document Retrieval with Vision Language Models
 
 
-[[Blog]]()
+[[Blog]](https://huggingface.co/blog/manu/colpali)
 [[Paper]](https://arxiv.org/abs/2407.01449)
 [[ColPali Model card]](https://huggingface.co/vidore/colpali)
 [[ViDoRe Benchmark]](https://huggingface.co/vidore)
