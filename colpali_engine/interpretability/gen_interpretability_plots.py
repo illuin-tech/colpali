@@ -86,6 +86,7 @@ def generate_interpretability_plots(
     attention_map_normalized = normalize_attention_map_per_query_token(
         attention_map
     )  # (1, n_text_tokens, n_patch_x, n_patch_y)
+    attention_map_normalized = attention_map_normalized.float()
 
     # Get text token information
     n_tokens = input_text_processed.input_ids.size(1)
