@@ -145,6 +145,7 @@ class CustomCollator:
             if example["query"] is None:
                 texts_query.append(None)
             else:
+                query = example["query"]
                 query = f"Question: {query}<unused0><unused0><unused0><unused0><unused0>"
                 texts_query.append(query)
 
