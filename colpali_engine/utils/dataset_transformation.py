@@ -76,6 +76,39 @@ def load_train_set_with_tabfquad() -> DatasetDict:
     return ds_dict
 
 
+def load_train_set_with_docmatix() -> DatasetDict:
+
+    ds_paths = [
+        "infovqa_train",
+        "docvqa_train",
+        "arxivqa_train",
+        "tatdqa_train",
+        "tabfquad_train_subsampled",
+        "syntheticDocQA_government_reports_train",
+        "syntheticDocQA_healthcare_industry_train",
+        "syntheticDocQA_artificial_intelligence_train",
+        "syntheticDocQA_energy_train",
+        "Docmatix_filtered_train",
+    ]
+    base_path = "./data_dir/" if USE_LOCAL_DATASET else "vidore/"
+    ds_tot = []
+    for path in ds_paths:
+        cpath = base_path + path
+        ds = load_dataset(cpath, split="train")
+        if "arxivqa" in path:
+            # subsample 10k
+            ds = ds.shuffle(42).select(range(10000))
+        ds_tot.append(ds)
+
+    dataset = concatenate_datasets(ds_tot)
+    dataset = dataset.shuffle(seed=42)
+    # split into train and test
+    dataset_eval = dataset.select(range(500))
+    dataset = dataset.select(range(500, len(dataset)))
+    ds_dict = DatasetDict({"train": dataset, "test": dataset_eval})
+    return ds_dict
+
+
 def load_docvqa_dataset() -> DatasetDict:
     if USE_LOCAL_DATASET:
         dataset_doc = load_dataset("./data_dir/DocVQA", "DocVQA", split="validation")
