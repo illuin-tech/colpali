@@ -7,15 +7,13 @@ class CustomCollator:
         processor: ProcessorMixin = None,
         tokenizer: PreTrainedTokenizer = None,
         max_length: int = 2048,
-        add_suffix: bool = False,
+        add_suffix: bool = True,
     ):
         self.processor = processor
         self.tokenizer = tokenizer
         self.image_token_id = None
         self.max_length = max_length
         self.suffix = ""
-        if add_suffix:
-            self.suffix = "\n" * 10
 
         if tokenizer is None and processor is None:
             raise ValueError("Either processor or tokenizer should be provided.")
@@ -36,6 +34,12 @@ class CustomCollator:
             if self.processor.tokenizer.padding_side != "right":
                 print("Setting padding side to right")
                 self.processor.tokenizer.padding_side = "right"
+
+        if add_suffix:
+            if self.tokenizer:
+                self.suffix = self.tokenizer.pad_token * 10
+            else:
+                self.suffix = self.processor.tokenizer.pad_token * 10
 
     def __call__(self, examples):
         if self.processor is None:
@@ -81,14 +85,14 @@ class CustomCollator:
 
             text_query = None
             if example["query"] is not None:
-                query = example["query"]
+                query = example["query"] + self.suffix
                 messages_query = [
                     {
                         "role": "user",
                         "content": [
                             {
                                 "type": "text",
-                                "text": f"Question: {query}<end_of_utterance><end_of_utterance><end_of_utterance><end_of_utterance><end_of_utterance>",
+                                "text": f"Question: {query}",
                             },
                         ],
                     },
@@ -156,7 +160,9 @@ class CustomCollator:
                 texts_query.append(None)
             else:
                 query = example["query"]
-                query = f"Question: {query}<unused0><unused0><unused0><unused0><unused0>"
+                query = f"Question: {query}"
+                # add pad tokens
+                query += self.suffix
                 texts_query.append(query)
 
         batch_doc = self.processor(
