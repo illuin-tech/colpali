@@ -10,7 +10,7 @@ class HardNegCollator(CustomCollator):
         processor: ProcessorMixin = None,
         tokenizer: PreTrainedTokenizer = None,
         max_length: int = 2048,
-        add_suffix: bool = False,
+        add_suffix: bool = True,
         image_dataset: Dataset = None,
     ):
         super().__init__(processor, tokenizer, max_length, add_suffix)
