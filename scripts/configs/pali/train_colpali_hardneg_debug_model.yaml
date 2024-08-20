@@ -1,14 +1,14 @@
 config:
   (): colpali_engine.utils.train_colpali_engine_models.ColModelTrainingConfig
-  output_dir: !path ../../../models/without_tabfquad/train_colpali-3b-mix-448
+  output_dir: !path ../../../models/without_tabfquad/train_colpali-3b-mix-448-debug
   processor:
     () : colpali_engine.utils.wrapper.AutoProcessorWrapper
-    pretrained_model_name_or_path:  "./models/without_tabfquad/train_colpali-3b-mix-448" # "./models/paligemma-3b-mix-448"
+    pretrained_model_name_or_path:  "./models/colpaligemma-3b-mix-448-base" # "./models/paligemma-3b-mix-448"
     max_length: 50
   model:
     (): colpali_engine.utils.wrapper.AllPurposeWrapper
     class_to_instanciate: !ext colpali_engine.models.paligemma_colbert_architecture.ColPali
-    pretrained_model_name_or_path: "./models/without_tabfquad/train_colpali-3b-mix-448"
+    pretrained_model_name_or_path: "./models/colpaligemma-3b-mix-448-base"
     torch_dtype:  !ext torch.bfloat16
 #    device_map: "auto"
 #    quantization_config:
