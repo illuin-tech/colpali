@@ -59,9 +59,6 @@ class ColModelTrainingConfig:
             print("Using textual model tokenization")
             self.tokenizer = AutoTokenizer.from_pretrained(self.model.name_or_path)
 
-        # before adapter, export the model
-        self.model.save_pretrained(self.output_dir)
-
         if self.pretrained_peft_model_name_or_path is not None:
             self.model.load_adapter(self.pretrained_peft_model_name_or_path)
             print(f"Loaded pretrained adapter from {self.pretrained_peft_model_name_or_path}")
