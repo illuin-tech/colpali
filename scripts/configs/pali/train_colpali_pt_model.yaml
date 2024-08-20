@@ -3,7 +3,7 @@ config:
   output_dir: !path ../../../models/without_tabfquad/train_colpali-3b-pt-448
   processor:
     () : colpali_engine.utils.wrapper.AutoProcessorWrapper
-    pretrained_model_name_or_path:  "./models/colpaligemma-3b-mix-448-base" # "./models/paligemma-3b-mix-448"
+    pretrained_model_name_or_path:  "./models/colpaligemma-3b-pt-448-base" # "./models/paligemma-3b-mix-448"
     max_length: 50
   model:
     (): colpali_engine.utils.wrapper.AllPurposeWrapper
