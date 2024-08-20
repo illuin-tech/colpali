@@ -3,11 +3,11 @@ config:
   output_dir: !path ../../../models/right_pad/train_colpali_hardneg_ib_3b-mix-448
   processor:
     () : colpali_engine.utils.wrapper.AutoProcessorWrapper
-    pretrained_model_name_or_path: "./models/paligemma-3b-mix-448"
+    pretrained_model_name_or_path:  "./models/right_pad/train_colpali_hardneg_ib_3b-mix-448" # "./models/paligemma-3b-mix-448"
     max_length: 50
   model:
     (): colpali_engine.utils.wrapper.AutoColModelWrapper
-    pretrained_model_name_or_path: "./models/paligemma-3b-mix-448"
+    pretrained_model_name_or_path: "./models/right_pad/train_colpali_hardneg_ib_3b-mix-448" # paligemma-3b-mix-448"
     training_objective: "colbertv1"
     # attn_implementation: "eager"
     torch_dtype:  !ext torch.bfloat16
@@ -28,7 +28,7 @@ config:
   loss_func:
     (): colpali_engine.loss.colbert_loss.ColbertPairwiseNegativeCELoss
     in_batch_term: true
-  tr_args: !import ../tr_args/default_neg_tr_args.yaml
+  tr_args: !import ../tr_args/resume_neg_tr_args.yaml
   peft_config:
     (): peft.LoraConfig
     r: 32
