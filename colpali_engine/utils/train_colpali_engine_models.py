@@ -80,8 +80,10 @@ class ColModelTrainingConfig:
                 #     self.model.model.vision_model.encoder.layers = self.model.model.vision_model.encoder.layers[0:2]
                 # self.model.enable_input_require_grads()
                 if self.pretrained_peft_model_name_or_path is None:
-                    self.model.add_adapter(self.peft_config)
-                    self.model.enable_adapters()
+                    # self.model.add_adapter(self.peft_config)
+                    # self.model.enable_adapters()
+                    self.model = get_peft_model(self.model, self.peft_config)
+                    self.model.print_trainable_parameters()
                 else:
                     print(f"Adapter already loaded from {self.pretrained_peft_model_name_or_path}. Not overwriting.")
 
