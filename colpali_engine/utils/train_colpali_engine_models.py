@@ -140,7 +140,7 @@ class ColModelTraining:
             )
         trainer.args.remove_unused_columns = False
 
-        result = trainer.train()
+        result = trainer.train(resume_from_checkpoint=self.config.tr_args.resume_from_checkpoint)
         print_summary(result)
 
     def eval_dataset(self, test_dataset):
