@@ -78,6 +78,8 @@ class ColPali(PaliGemmaPreTrainedModel):
         Returns:
         - torch.Tensor: Embeddings of shape (batch_size, num_tokens, dim)
         """
+        # delete output_hidden_states from kwargs
+        kwargs.pop("output_hidden_states", None)
         outputs = self.model(*args, output_hidden_states=True, **kwargs)
         last_hidden_states = outputs.hidden_states[-1]  # (batch_size, sequence_length, hidden_size)
         proj = self.custom_text_proj(last_hidden_states)
