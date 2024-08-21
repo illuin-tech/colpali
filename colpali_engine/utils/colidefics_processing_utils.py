@@ -1,4 +1,5 @@
-# Utils for processing images and queries for ColPaLi
+"""Utils for processing images and queries for ColPaLi"""
+
 
 def process_images(processor, images, max_length: int = 50):
     texts_doc = []
