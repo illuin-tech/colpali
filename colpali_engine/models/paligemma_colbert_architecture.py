@@ -22,6 +22,8 @@ class BiPaliLast(PaliGemmaPreTrainedModel):
         Returns:
         - torch.Tensor: Embeddings of shape (batch_size, num_tokens, dim)
         """
+        # delete output_hidden_states from kwargs
+        kwargs.pop("output_hidden_states", None)
         outputs = self.model(*args, output_hidden_states=True, **kwargs)
         last_hidden_states = outputs.hidden_states[-1]  # (batch_size, sequence_length, hidden_size)
         # pooling - last token
@@ -49,6 +51,8 @@ class BiPaliMean(PaliGemmaPreTrainedModel):
         Returns:
         - torch.Tensor: Embeddings of shape (batch_size, num_tokens, dim)
         """
+        # delete output_hidden_states from kwargs
+        kwargs.pop("output_hidden_states", None)
         outputs = self.model(*args, output_hidden_states=True, **kwargs)
         last_hidden_states = outputs.hidden_states[-1]  # (batch_size, sequence_length, hidden_size)
         # pooling -mean on attention mask==1
@@ -117,6 +121,8 @@ class ColNewSiglip(PaliGemmaPreTrainedModel):
             # print(f"Doc proj: {proj.shape}")
             proj = proj / proj.norm(dim=-1, keepdim=True)
         else:
+            # delete output_hidden_states from kwargs
+            kwargs.pop("output_hidden_states", None)
             outputs = self.model(*args, output_hidden_states=True, **kwargs)
             last_hidden_states = outputs.hidden_states[-1]  # (batch_size, sequence_length, hidden_size)
             # print(f"Query: {last_hidden_states.shape}")
@@ -168,6 +174,8 @@ class BiNewSiglip(PaliGemmaPreTrainedModel):
             norm = proj.norm(dim=-1, keepdim=True)
             proj = proj / norm
         else:
+            # delete output_hidden_states from kwargs
+            kwargs.pop("output_hidden_states", None)
             outputs = self.model(*args, output_hidden_states=True, **kwargs)
             last_hidden_states = outputs.hidden_states[-1]  # (batch_size, sequence_length, hidden_size)
             # pooling -mean on attention mask==1
