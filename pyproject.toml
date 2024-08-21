@@ -1,7 +1,7 @@
 [project]
 name = 'colpali_engine'
 # dynamic = ["version"]
-version = '0.0.1'
+version = '0.1.0'
 description = 'This repository centralizes ressources for the ColPali project.'
 authors = [
     { name = 'Manuel Faysse', email = 'manuel.faysse@illuin.tech' },

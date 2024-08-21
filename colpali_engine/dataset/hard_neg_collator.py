@@ -1,6 +1,8 @@
+from random import randint
+
 from datasets import Dataset, DatasetDict
 from transformers import PreTrainedTokenizer, ProcessorMixin
-from random import randint
+
 from .custom_collator import CustomCollator
 
 
