@@ -1,34 +1,39 @@
-# ColPali: Efficient Document Retrieval with Vision Language Models
+# ColPali: Efficient Document Retrieval with Vision Language Models 👀
 
+[![arXiv](https://img.shields.io/badge/arXiv-2407.01449-b31b1b.svg?style=for-the-badge)](https://arxiv.org/abs/2407.01449)
+[![GitHub](https://img.shields.io/badge/ViDoRe_Benchmark-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/illuin-tech/vidore-benchmark)
+[![Hugging Face](https://img.shields.io/badge/Vidore_Hf_Space-FFD21E?style=for-the-badge&logo=huggingface&logoColor=000)](https://huggingface.co/vidore)
 
-[[Blog]](https://huggingface.co/blog/manu/colpali)
-[[Paper]](https://arxiv.org/abs/2407.01449)
-[[ColPali Model card]](https://huggingface.co/vidore/colpali)
-[[ViDoRe Benchmark]](https://huggingface.co/vidore)
-<!---[[Colab example]]()-->
-[[HuggingFace Demo]](https://huggingface.co/spaces/manu/ColPali-demo)
+[[Model card]](https://huggingface.co/vidore/colpali)
+[[ViDoRe Benchmark]](https://huggingface.co/collections/vidore/vidore-benchmark-667173f98e70a1c0fa4db00d)
+[[ViDoRe Leaderboard]](https://huggingface.co/spaces/vidore/vidore-leaderboard)
+[[Demo]](https://huggingface.co/spaces/manu/ColPali-demo)
+[[Blog Post]](https://huggingface.co/blog/manu/colpali)
 
+> [!TIP]
+> If you want to try the pre-trained ColPali on your own documents, you should use the [`vidore-benchmark`](https://github.com/illuin-tech/vidore-benchmark) repository. It comes with a Python package and a CLI tool for convenient evaluation.
 
 ## Associated Paper
 
 **ColPali: Efficient Document Retrieval with Vision Language Models**
-Manuel Faysse, Hugues Sibille, Tony Wu, Bilel Omrani, Gautier Viaud, Céline Hudelot, Pierre Colombo
+Manuel Faysse\*, Hugues Sibille\*, Tony Wu\* Bilel Omrani, Gautier Viaud, Céline Hudelot, Pierre Colombo (\*Equal Contribution)
 
-This repository contains the code for training custom Colbert retriever models.
-Notably, we train colbert with LLMs (decoders) as well as Image Language models !
+This repository contains the code used for training the vision retrievers in the paper. In particular, it contains the code for training the ColPali model, which is a vision retriever based on the ColBERT architecture.
 
-## Installation
+## Setup
 
-### From git
+We used Python 3.11.6 and PyTorch 2.2.2 to train and test our models, but the codebase is expected to be compatible with Python >=3.9 and recent PyTorch versions.
+
+The eval codebase depends on a few Python packages, which can be downloaded using the following command:
+
 ```bash
-pip install git+https://github.com/illuin-tech/colpali
+pip install colpali-engine
 ```
 
-### From source
+You can a install the package from the source code:
+
 ```bash
-git clone https://github.com/illuin-tech/colpali
-cd colpali
-pip install -r requirements.txt
+pip install git+https://github.com/illuin-tech/colpali
 ```
 
 ## Usage
@@ -36,10 +41,8 @@ pip install -r requirements.txt
 Example usage of the model is shown in the `scripts` directory.
 
 ```bash
-# hackable example script to adapt
 python scripts/infer/run_inference_with_python.py
 ```
-
 
 ```python
 import torch
@@ -106,7 +109,7 @@ if __name__ == "__main__":
     typer.run(main)
 ```
 
-Detais are also given in the model card for the base Colpali model on HuggingFace: [ColPali Model card](https://huggingface.co/vidore/colpali).
+More details are given in the [ColPali Model card](https://huggingface.co/vidore/colpali).
 
 ## Training
 
@@ -114,13 +117,14 @@ Detais are also given in the model card for the base Colpali model on HuggingFac
 USE_LOCAL_DATASET=0 python scripts/train/train_colbert.py scripts/configs/siglip/train_siglip_model_debug.yaml
 ```
 
-or 
+or
 
 ```bash
 accelerate launch scripts/train/train_colbert.py scripts/configs/train_colidefics_model.yaml
 ```
 
 ### Configurations
+
 All training arguments can be set through a configuration file.
 The configuration file is a yaml file that contains all the arguments for training.
 
@@ -144,9 +148,10 @@ class ColModelTrainingConfig:
     eval_dataset_loader: Optional[Dict[str, Callable]] = None
     pretrained_peft_model_name_or_path: Optional[str] = None
 ```
+
 ### Example
 
-An example configuration file is:
+Example of a YAML configuration file:
 
 ```yaml
 config:
@@ -191,13 +196,11 @@ config:
     # target_modules: '(.*(language_model).*(down_proj|gate_proj|up_proj|k_proj|q_proj|v_proj|o_proj).*$|.*(custom_text_proj).*$)'
 ```
 
-
 #### Local training
 
 ```bash
 USE_LOCAL_DATASET=0 python scripts/train/train_colbert.py scripts/configs/siglip/train_siglip_model_debug.yaml
 ```
-
 
 #### SLURM
 
@@ -207,9 +210,14 @@ sbatch --nodes=1 --cpus-per-task=16 --mem-per-cpu=32GB --time=20:00:00 --gres=gp
 sbatch --nodes=1  --time=5:00:00 -A cad15443 --gres=gpu:8  --constraint=MI250 --job-name=colpali --wrap="python scripts/train/train_colbert.py scripts/configs/train_colpali_model.yaml"
 ```
 
-## CITATION
+## Citation
 
-```bibtex
+**ColPali: Efficient Document Retrieval with Vision Language Models**  
+
+- First authors: Manuel Faysse\*, Hugues Sibille\*, Tony Wu\* (\*Equal Contribution)
+- Contributors: Bilel Omrani, Gautier Viaud, Céline Hudelot, Pierre Colombo
+
+```latex
 @misc{faysse2024colpaliefficientdocumentretrieval,
       title={ColPali: Efficient Document Retrieval with Vision Language Models}, 
       author={Manuel Faysse and Hugues Sibille and Tony Wu and Bilel Omrani and Gautier Viaud and Céline Hudelot and Pierre Colombo},
