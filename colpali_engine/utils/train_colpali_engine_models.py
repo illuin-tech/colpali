@@ -8,17 +8,18 @@ from datasets import concatenate_datasets
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from transformers import (AutoTokenizer, Idefics2Processor, PreTrainedModel,
-                          PreTrainedTokenizer, TrainingArguments)
+from transformers import AutoTokenizer, Idefics2Processor, PreTrainedModel, PreTrainedTokenizer, TrainingArguments
 
 from colpali_engine.dataset.custom_collator import CustomCollator
 from colpali_engine.dataset.hard_neg_collator import HardNegCollator
-from colpali_engine.loss.colbert_loss import (BiEncoderLoss, BiPairwiseCELoss,
-                                              ColbertLoss,
-                                              ColbertPairwiseCELoss,
-                                              ColbertPairwiseNegativeCELoss)
-from colpali_engine.trainer.contrastive_trainer import (
-    ContrastiveNegativeTrainer, ContrastiveTrainer)
+from colpali_engine.loss.colbert_loss import (
+    BiEncoderLoss,
+    BiPairwiseCELoss,
+    ColbertLoss,
+    ColbertPairwiseCELoss,
+    ColbertPairwiseNegativeCELoss,
+)
+from colpali_engine.trainer.contrastive_trainer import ContrastiveNegativeTrainer, ContrastiveTrainer
 from colpali_engine.trainer.retrieval_evaluator import CustomEvaluator
 from colpali_engine.utils.gpu_stats import print_gpu_utilization, print_summary
 
