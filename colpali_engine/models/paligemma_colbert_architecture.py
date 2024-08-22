@@ -6,9 +6,16 @@ from transformers.models.paligemma.modeling_paligemma import PaliGemmaForConditi
 class BiPaliLast(PaliGemmaPreTrainedModel):
     def __init__(self, config):
         super(BiPaliLast, self).__init__(config=config)
-        self.model: PaliGemmaForConditionalGeneration = PaliGemmaForConditionalGeneration(config)
-        self.pooling_strategy = "last"
+        model: PaliGemmaForConditionalGeneration = PaliGemmaForConditionalGeneration(config)
+        if model.language_model._tied_weights_keys is not None:
+            self._tied_weights_keys = [f"model.language_model.{k}" for k in model.language_model._tied_weights_keys]
+        self.model: PaliGemmaForConditionalGeneration = model
         self.main_input_name = "doc_input_ids"
+        self.post_init()
+
+    def tie_weights(self):
+        return self.model.tie_weights()
+
 
     def forward(self, *args, **kwargs):
         """
@@ -35,9 +42,17 @@ class BiPaliLast(PaliGemmaPreTrainedModel):
 class BiPaliMean(PaliGemmaPreTrainedModel):
     def __init__(self, config):
         super(BiPaliMean, self).__init__(config=config)
-        self.model: PaliGemmaForConditionalGeneration = PaliGemmaForConditionalGeneration(config)
-        self.pooling_strategy = "mean"
+        model: PaliGemmaForConditionalGeneration = PaliGemmaForConditionalGeneration(config)
+        if model.language_model._tied_weights_keys is not None:
+            self._tied_weights_keys = [f"model.language_model.{k}" for k in model.language_model._tied_weights_keys]
+        self.model: PaliGemmaForConditionalGeneration = model
         self.main_input_name = "doc_input_ids"
+        self.post_init()
+
+
+    def tie_weights(self):
+        return self.model.tie_weights()
+
 
     def forward(self, *args, **kwargs):
         """
@@ -65,10 +80,17 @@ class BiPaliMean(PaliGemmaPreTrainedModel):
 class ColPali(PaliGemmaPreTrainedModel):
     def __init__(self, config):
         super(ColPali, self).__init__(config=config)
-        self.model: PaliGemmaForConditionalGeneration = PaliGemmaForConditionalGeneration(config)
+        model: PaliGemmaForConditionalGeneration = PaliGemmaForConditionalGeneration(config)
+        if model.language_model._tied_weights_keys is not None:
+            self._tied_weights_keys = [f"model.language_model.{k}" for k in model.language_model._tied_weights_keys]
+        self.model = model
         self.dim = 128
         self.custom_text_proj = nn.Linear(self.model.config.text_config.hidden_size, self.dim)
         self.main_input_name = "doc_input_ids"
+        self.post_init()
+
+    def tie_weights(self):
+        return self.model.tie_weights()
 
     def forward(self, *args, **kwargs):
         """
