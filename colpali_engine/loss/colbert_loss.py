@@ -170,13 +170,14 @@ class BiPairwiseNegativeCELoss(torch.nn.Module):
         """
 
         # Compute the ColBERT scores
-        pos_scores = torch.einsum("bd,cd->bc", query_embeddings, doc_embeddings)
-        neg_scores = torch.einsum("bd,cd->bc", query_embeddings, neg_doc_embeddings)
+        pos_scores = torch.einsum("bd,cd->bc", query_embeddings, doc_embeddings).diagonal()
+        neg_scores = torch.einsum("bd,cd->bc", query_embeddings, neg_doc_embeddings).diagonal()
+
         loss = F.softplus(neg_scores - pos_scores).mean()
 
         if self.in_batch_term:
             scores = (
-                torch.einsum("bnd,csd->bcns", query_embeddings, doc_embeddings).max(dim=3)[0].sum(dim=2)
+                torch.einsum("bd,cd->bc", query_embeddings, doc_embeddings).max(dim=3)[0].sum(dim=2)
             )  # (batch_size, batch_size)
 
             # Positive scores are the diagonal of the scores matrix.
