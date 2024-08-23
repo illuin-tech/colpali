@@ -8,7 +8,7 @@ config:
   model:
     (): colpali_engine.utils.wrapper.AllPurposeWrapper
     class_to_instanciate: !ext colpali_engine.models.paligemma_colbert_architecture.BiPali
-    pretrained_model_name_or_path: "./models/paligemma-3b-mix-448-base"
+    pretrained_model_name_or_path: "./models/paligemma-3b-mix-448"
     torch_dtype:  !ext torch.bfloat16
 #    device_map: "auto"
 #    quantization_config:
