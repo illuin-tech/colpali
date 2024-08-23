@@ -176,10 +176,7 @@ class BiPairwiseNegativeCELoss(torch.nn.Module):
         loss = F.softplus(neg_scores - pos_scores).mean()
 
         if self.in_batch_term:
-            scores = (
-                torch.einsum("bd,cd->bc", query_embeddings, doc_embeddings).max(dim=3)[0].sum(dim=2)
-            )  # (batch_size, batch_size)
-
+            scores = torch.einsum("bd,cd->bc", query_embeddings, doc_embeddings)
             # Positive scores are the diagonal of the scores matrix.
             pos_scores = scores.diagonal()  # (batch_size,)
             neg_scores = scores - torch.eye(scores.shape[0], device=scores.device) * 1e6  # (batch_size, batch_size)
