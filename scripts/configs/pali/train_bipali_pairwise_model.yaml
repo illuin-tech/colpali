@@ -6,10 +6,9 @@ config:
     pretrained_model_name_or_path: "./models/paligemma-3b-mix-448"
     max_length: 50
   model:
-    (): colpali_engine.utils.wrapper.AutoColModelWrapper
-    pretrained_model_name_or_path: "./models/paligemma-3b-mix-448"
-    training_objective: "biencoder_mean"
-    # attn_implementation: "eager"
+    (): colpali_engine.utils.wrapper.AllPurposeWrapper
+    class_to_instanciate: !ext colpali_engine.models.paligemma_colbert_architecture.BiPali
+    pretrained_model_name_or_path: "./models/paligemma-3b-mix-448-base"
     torch_dtype:  !ext torch.bfloat16
 #    device_map: "auto"
 #    quantization_config:

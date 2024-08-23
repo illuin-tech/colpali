@@ -12,8 +12,7 @@ from colpali_engine.models.colbert_architectures import (
 from colpali_engine.models.idefics_colbert_architecture import BiIdefics, ColIdefics
 from colpali_engine.models.paligemma_colbert_architecture import (
     BiNewSiglip,
-    BiPaliLast,
-    BiPaliMean,
+    BiPali,
     ColNewSiglip,
     ColPali,
 )
