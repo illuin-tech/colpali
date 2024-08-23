@@ -1,14 +1,54 @@
 import torch
 from torch import nn
 from transformers.models.paligemma.modeling_paligemma import PaliGemmaForConditionalGeneration, PaliGemmaPreTrainedModel
+from typing import Optional
 
 
 class BiPaliLast(PaliGemmaPreTrainedModel):
     def __init__(self, config):
         super(BiPaliLast, self).__init__(config=config)
-        self.model: PaliGemmaForConditionalGeneration = PaliGemmaForConditionalGeneration(config)
-        self.pooling_strategy = "last"
+        model: PaliGemmaForConditionalGeneration = PaliGemmaForConditionalGeneration(config)
+        if model.language_model._tied_weights_keys is not None:
+            self._tied_weights_keys = [f"model.language_model.{k}" for k in model.language_model._tied_weights_keys]
+        self.model: PaliGemmaForConditionalGeneration = model
         self.main_input_name = "doc_input_ids"
+        self.post_init()
+
+    # Copied from transformers.models.llava.modeling_llava.LlavaForConditionalGeneration.get_input_embeddings with Llava->PaliGemma
+    def get_input_embeddings(self):
+        return self.model.language_model.get_input_embeddings()
+
+    # Copied from transformers.models.llava.modeling_llava.LlavaForConditionalGeneration.set_input_embeddings with Llava->PaliGemma
+    def set_input_embeddings(self, value):
+        self.model.language_model.set_input_embeddings(value)
+
+    # Copied from transformers.models.llava.modeling_llava.LlavaForConditionalGeneration.get_output_embeddings with Llava->PaliGemma
+    def get_output_embeddings(self):
+        return self.model.language_model.get_output_embeddings()
+
+    # Copied from transformers.models.llava.modeling_llava.LlavaForConditionalGeneration.set_output_embeddings with Llava->PaliGemma
+    def set_output_embeddings(self, new_embeddings):
+        self.model.language_model.set_output_embeddings(new_embeddings)
+
+    # Copied from transformers.models.llava.modeling_llava.LlavaForConditionalGeneration.set_decoder with Llava->PaliGemma
+    def set_decoder(self, decoder):
+        self.model.language_model.set_decoder(decoder)
+
+    # Copied from transformers.models.llava.modeling_llava.LlavaForConditionalGeneration.get_decoder with Llava->PaliGemma
+    def get_decoder(self):
+        return self.model.language_model.get_decoder()
+
+    # Copied from transformers.models.llava.modeling_llava.LlavaForConditionalGeneration.tie_weights with Llava->PaliGemma
+    def tie_weights(self):
+        return self.model.language_model.tie_weights()
+
+    def resize_token_embeddings(self, new_num_tokens: Optional[int] = None, pad_to_multiple_of=None) -> nn.Embedding:
+        model_embeds = self.model.language_model.resize_token_embeddings(new_num_tokens, pad_to_multiple_of)
+        # update vocab size
+        self.config.text_config.vocab_size = model_embeds.num_embeddings
+        self.config.vocab_size = model_embeds.num_embeddings
+        self.model.vocab_size = model_embeds.num_embeddings
+        return model_embeds
 
     def forward(self, *args, **kwargs):
         """
@@ -35,9 +75,48 @@ class BiPaliLast(PaliGemmaPreTrainedModel):
 class BiPaliMean(PaliGemmaPreTrainedModel):
     def __init__(self, config):
         super(BiPaliMean, self).__init__(config=config)
-        self.model: PaliGemmaForConditionalGeneration = PaliGemmaForConditionalGeneration(config)
-        self.pooling_strategy = "mean"
+        model: PaliGemmaForConditionalGeneration = PaliGemmaForConditionalGeneration(config)
+        if model.language_model._tied_weights_keys is not None:
+            self._tied_weights_keys = [f"model.language_model.{k}" for k in model.language_model._tied_weights_keys]
+        self.model: PaliGemmaForConditionalGeneration = model
         self.main_input_name = "doc_input_ids"
+        self.post_init()
+
+    # Copied from transformers.models.llava.modeling_llava.LlavaForConditionalGeneration.get_input_embeddings with Llava->PaliGemma
+    def get_input_embeddings(self):
+        return self.model.language_model.get_input_embeddings()
+
+    # Copied from transformers.models.llava.modeling_llava.LlavaForConditionalGeneration.set_input_embeddings with Llava->PaliGemma
+    def set_input_embeddings(self, value):
+        self.model.language_model.set_input_embeddings(value)
+
+    # Copied from transformers.models.llava.modeling_llava.LlavaForConditionalGeneration.get_output_embeddings with Llava->PaliGemma
+    def get_output_embeddings(self):
+        return self.model.language_model.get_output_embeddings()
+
+    # Copied from transformers.models.llava.modeling_llava.LlavaForConditionalGeneration.set_output_embeddings with Llava->PaliGemma
+    def set_output_embeddings(self, new_embeddings):
+        self.model.language_model.set_output_embeddings(new_embeddings)
+
+    # Copied from transformers.models.llava.modeling_llava.LlavaForConditionalGeneration.set_decoder with Llava->PaliGemma
+    def set_decoder(self, decoder):
+        self.model.language_model.set_decoder(decoder)
+
+    # Copied from transformers.models.llava.modeling_llava.LlavaForConditionalGeneration.get_decoder with Llava->PaliGemma
+    def get_decoder(self):
+        return self.model.language_model.get_decoder()
+
+    # Copied from transformers.models.llava.modeling_llava.LlavaForConditionalGeneration.tie_weights with Llava->PaliGemma
+    def tie_weights(self):
+        return self.model.language_model.tie_weights()
+
+    def resize_token_embeddings(self, new_num_tokens: Optional[int] = None, pad_to_multiple_of=None) -> nn.Embedding:
+        model_embeds = self.model.language_model.resize_token_embeddings(new_num_tokens, pad_to_multiple_of)
+        # update vocab size
+        self.config.text_config.vocab_size = model_embeds.num_embeddings
+        self.config.vocab_size = model_embeds.num_embeddings
+        self.model.vocab_size = model_embeds.num_embeddings
+        return model_embeds
 
     def forward(self, *args, **kwargs):
         """
@@ -65,10 +144,50 @@ class BiPaliMean(PaliGemmaPreTrainedModel):
 class ColPali(PaliGemmaPreTrainedModel):
     def __init__(self, config):
         super(ColPali, self).__init__(config=config)
-        self.model: PaliGemmaForConditionalGeneration = PaliGemmaForConditionalGeneration(config)
+        model: PaliGemmaForConditionalGeneration = PaliGemmaForConditionalGeneration(config)
+        if model.language_model._tied_weights_keys is not None:
+            self._tied_weights_keys = [f"model.language_model.{k}" for k in model.language_model._tied_weights_keys]
+        self.model = model
         self.dim = 128
         self.custom_text_proj = nn.Linear(self.model.config.text_config.hidden_size, self.dim)
         self.main_input_name = "doc_input_ids"
+        self.post_init()
+
+    # Copied from transformers.models.llava.modeling_llava.LlavaForConditionalGeneration.get_input_embeddings with Llava->PaliGemma
+    def get_input_embeddings(self):
+        return self.model.language_model.get_input_embeddings()
+
+    # Copied from transformers.models.llava.modeling_llava.LlavaForConditionalGeneration.set_input_embeddings with Llava->PaliGemma
+    def set_input_embeddings(self, value):
+        self.model.language_model.set_input_embeddings(value)
+
+    # Copied from transformers.models.llava.modeling_llava.LlavaForConditionalGeneration.get_output_embeddings with Llava->PaliGemma
+    def get_output_embeddings(self):
+        return self.model.language_model.get_output_embeddings()
+
+    # Copied from transformers.models.llava.modeling_llava.LlavaForConditionalGeneration.set_output_embeddings with Llava->PaliGemma
+    def set_output_embeddings(self, new_embeddings):
+        self.model.language_model.set_output_embeddings(new_embeddings)
+
+    # Copied from transformers.models.llava.modeling_llava.LlavaForConditionalGeneration.set_decoder with Llava->PaliGemma
+    def set_decoder(self, decoder):
+        self.model.language_model.set_decoder(decoder)
+
+    # Copied from transformers.models.llava.modeling_llava.LlavaForConditionalGeneration.get_decoder with Llava->PaliGemma
+    def get_decoder(self):
+        return self.model.language_model.get_decoder()
+
+    # Copied from transformers.models.llava.modeling_llava.LlavaForConditionalGeneration.tie_weights with Llava->PaliGemma
+    def tie_weights(self):
+        return self.model.language_model.tie_weights()
+
+    def resize_token_embeddings(self, new_num_tokens: Optional[int] = None, pad_to_multiple_of=None) -> nn.Embedding:
+        model_embeds = self.model.language_model.resize_token_embeddings(new_num_tokens, pad_to_multiple_of)
+        # update vocab size
+        self.config.text_config.vocab_size = model_embeds.num_embeddings
+        self.config.vocab_size = model_embeds.num_embeddings
+        self.model.vocab_size = model_embeds.num_embeddings
+        return model_embeds
 
     def forward(self, *args, **kwargs):
         """
