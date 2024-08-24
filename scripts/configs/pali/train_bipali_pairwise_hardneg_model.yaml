@@ -1,13 +1,13 @@
 config:
   (): colpali_engine.utils.train_colpali_engine_models.ColModelTrainingConfig
-  output_dir: !path ../../../models/right_pad/train_bipali_pairwise_hardneg
+  output_dir: !path ../../../models/right_pad/train_bipali_pairwise_hardneg_proj
   processor:
     () : colpali_engine.utils.wrapper.AutoProcessorWrapper
     pretrained_model_name_or_path: "./models/paligemma-3b-mix-448"
     max_length: 50
   model:
     (): colpali_engine.utils.wrapper.AllPurposeWrapper
-    class_to_instanciate: !ext colpali_engine.models.paligemma_colbert_architecture.BiPali
+    class_to_instanciate: !ext colpali_engine.models.paligemma_colbert_architecture.BiPaliProj
     pretrained_model_name_or_path: "./models/paligemma-3b-mix-448"
     torch_dtype:  !ext torch.bfloat16
 #    device_map: "auto"
