@@ -23,8 +23,6 @@ class HardNegCollator(CustomCollator):
         return target_image
 
     def __call__(self, examples):
-        # assert len(examples) == 1, "HardNegCollator only supports a single example at at time"
-
         tmp_examples = examples
         examples = []
         for example in tmp_examples:
@@ -35,7 +33,7 @@ class HardNegCollator(CustomCollator):
 
             examples += [{"image": pos_image, "query": pos_query, "neg_image": neg_images[0]}]
 
-        # reorder examples
+
         if self.processor is None:
             return self.forward_text(examples)
         if self.processor.__class__.__name__ == "Idefics2Processor":
