@@ -42,6 +42,9 @@ class ColModelTrainingConfig:
     pretrained_peft_model_name_or_path: Optional[str] = None
 
     def __post_init__(self):
+        """
+        Initialize the model and tokenizer if not provided
+        """
         if self.output_dir is None:
             sanitized_name = str(self.model.name_or_path).replace("/", "_")
             self.output_dir = f"./models/{sanitized_name}"
