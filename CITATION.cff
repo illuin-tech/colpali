@@ -1,0 +1,37 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Faysse"
+  given-names: "Manuel"
+  email: "manuel.faysse@illuin.tech"
+- family-names: "Sibille"
+  given-names: "Hugues"
+  email: "hugues.sibille@illuin.tech"
+- family-names: "Wu"
+  given-names: "Tony"
+  email: "tony.wu@illuin.tech"
+title: "Vision Document Retrieval (ViDoRe): Benchmark"
+date-released: 2024-06-26
+url: "https://github.com/illuin-tech/vidore-benchmark"
+preferred-citation:
+  type: article
+  authors:
+  - family-names: "Faysse"
+    given-names: "Manuel"
+  - family-names: "Sibille"
+    given-names: "Hugues"
+  - family-names: "Wu"
+    given-names: "Tony"
+  - family-names: "Omrani"
+    given-names: "Bilel"
+  - family-names: "Viaud"
+    given-names: "Gautier"
+  - family-names: "Hudelot"
+    given-names: "Céline"
+  - family-names: "Colombo"
+    given-names: "Pierre"
+  doi: "arXiv.2407.01449"
+  month: 6
+  title: "ColPali: Efficient Document Retrieval with Vision Language Models"
+  year: 2024
+  url: "https://arxiv.org/abs/2407.01449"

@@ -1,18 +1,13 @@
 # Custom
-.DS_Store
-.env
-.litellm_cache/
-data/litellm_cache_captionning/
-.idea
-.venv/
-colbert/models/
-logs/
-data/downloaded_datasets/rimes_raw_dataset/
-models/
-!colpali_engine/models
-data/
 !*/configs/data/
+!colpali_engine/models
+.DS_Store
+.litellm_cache/
+colbert/models/
 data_dir/
+data/
+logs/
+models/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
