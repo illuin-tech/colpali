@@ -46,6 +46,9 @@ train = [
     "mteb>=1.12.22",
     "typer>=0.12.3",
 ]
+
+demo = ["gradio>=4.0.0,<5.0.0", "pdf2image>1.17.0,<2.0.0"]
+
 dev = [
     "black>=24.4.2",
     "coverage>=7.5.2",
@@ -54,7 +57,8 @@ dev = [
     "pytest>=8.2.1",
     "ruff>=0.4.5",
 ]
-all = ["colpali-engine[dev]", "colpali-engine[train]"]
+
+all = ["colpali-engine[dev]", "colpali-engine[demo]", "colpali-engine[train]"]
 
 [project.urls]
 homepage = "https://github.com/illuin-tech/colpali"
