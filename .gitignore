@@ -1,13 +1,9 @@
 # Custom
 !*/configs/data/
-!colpali_engine/models
 .DS_Store
-.litellm_cache/
-colbert/models/
-data_dir/
-data/
-logs/
-models/
+/data/
+/logs/
+/models/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
