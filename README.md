@@ -11,7 +11,7 @@
 [[Blog Post]](https://huggingface.co/blog/manu/colpali)
 
 > [!TIP]
-> If you want to try the pre-trained ColPali on your own documents, you should use the [`vidore-benchmark`](https://github.com/illuin-tech/vidore-benchmark) repository. It comes with a Python package and a CLI tool for convenient evaluation.
+> If you want to try the pre-trained ColPali on your own documents, you can use the [`vidore-benchmark`](https://github.com/illuin-tech/vidore-benchmark) repository. It comes with a Python package and a CLI tool for convenient evaluation. You can also use code provided in the model cards on the hub.
 
 ## Associated Paper
 
@@ -35,6 +35,11 @@ To keep a lightweight repository, only the essential packages were installed. In
 ```bash
 pip install "colpali-engine[train]"
 ```
+
+
+> [!TIP]
+> For ColPali versions above v1.0, make sure to install the `colpali-engine` package from source or with a version above v0.2.0.
+
 
 ## Usage
 

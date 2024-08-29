@@ -1,4 +1,5 @@
 import os
+from typing import Tuple
 
 from datasets import Dataset, DatasetDict, concatenate_datasets, load_dataset
 
@@ -74,6 +75,33 @@ def load_train_set_with_tabfquad() -> DatasetDict:
     dataset = dataset.select(range(500, len(dataset)))
     ds_dict = DatasetDict({"train": dataset, "test": dataset_eval})
     return ds_dict
+
+
+def load_docmatix_ir_negs() -> Tuple[DatasetDict, Dataset]:
+    base_path = "./data_dir/" if USE_LOCAL_DATASET else "Tevatron/"
+    dataset = load_dataset(base_path + "docmatix-ir", split="train")
+    dataset = dataset.select(range(100500))
+
+    dataset_eval = dataset.select(range(500))
+    dataset = dataset.select(range(500, len(dataset)))
+    ds_dict = DatasetDict({"train": dataset, "test": dataset_eval})
+
+    base_path = "./data_dir/" if USE_LOCAL_DATASET else "HuggingFaceM4/"
+    anchor_ds = load_dataset(base_path + "Docmatix", split="train")
+
+    return ds_dict, anchor_ds
+
+
+def load_train_set_ir_negs() -> Tuple[DatasetDict, Dataset]:
+    base_path = "./data_dir/" if USE_LOCAL_DATASET else "manu/"
+    dataset = load_dataset(base_path + "colpali-data-ir", split="train")
+
+    dataset_eval = dataset.select(range(500))
+    dataset = dataset.select(range(500, len(dataset)))
+    ds_dict = DatasetDict({"train": dataset, "test": dataset_eval})
+
+    anchor_ds = load_dataset(base_path + "colpali-data", split="train")
+    return ds_dict, anchor_ds
 
 
 def load_train_set_with_docmatix() -> DatasetDict:

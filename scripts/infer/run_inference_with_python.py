@@ -15,8 +15,8 @@ def main() -> None:
     """Example script to run inference with ColPali"""
 
     # Load model
-    model_name = "vidore/colpali"
-    model = ColPali.from_pretrained("google/paligemma-3b-mix-448", torch_dtype=torch.bfloat16, device_map="cuda").eval()
+    model_name = "vidore/colpali-v1.2"
+    model = ColPali.from_pretrained("vidore/colpaligemma-3b-pt-448-base", torch_dtype=torch.bfloat16, device_map="cuda").eval()
     model.load_adapter(model_name)
     processor = AutoProcessor.from_pretrained(model_name)
 

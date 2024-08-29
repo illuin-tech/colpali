@@ -3,13 +3,12 @@ config:
   output_dir: !path ../../../models/without_tabfquad_no_pairwise/train_colpali_all-3b-mix-448
   processor:
     () : colpali_engine.utils.wrapper.AutoProcessorWrapper
-    pretrained_model_name_or_path: "./models/paligemma-3b-mix-448"
+    pretrained_model_name_or_path:  "./models/colpaligemma-3b-mix-448-base" # "./models/paligemma-3b-mix-448"
     max_length: 50
   model:
-    (): colpali_engine.utils.wrapper.AutoColModelWrapper
-    pretrained_model_name_or_path: "./models/paligemma-3b-mix-448"
-    training_objective: "colbertv1"
-    # attn_implementation: "eager"
+    (): colpali_engine.utils.wrapper.AllPurposeWrapper
+    class_to_instanciate: !ext colpali_engine.models.paligemma_colbert_architecture.ColPali
+    pretrained_model_name_or_path: "./models/colpaligemma-3b-mix-448-base"
     torch_dtype:  !ext torch.bfloat16
 #    device_map: "auto"
 #    quantization_config:

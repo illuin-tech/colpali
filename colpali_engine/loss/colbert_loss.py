@@ -95,6 +95,40 @@ class ColbertPairwiseCELoss(torch.nn.Module):
         return loss
 
 
+class ColbertPairwiseNegativeCELoss(torch.nn.Module):
+    def __init__(self, in_batch_term=False):
+        super().__init__()
+        self.ce_loss = CrossEntropyLoss()
+        self.in_batch_term = in_batch_term
+
+    def forward(self, query_embeddings, doc_embeddings, neg_doc_embeddings):
+        """
+        query_embeddings: (batch_size, num_query_tokens, dim)
+        doc_embeddings: (batch_size, num_doc_tokens, dim)
+        neg_doc_embeddings: (batch_size, num_neg_doc_tokens, dim)
+        """
+
+        # Compute the ColBERT scores
+        pos_scores = torch.einsum("bnd,bsd->bns", query_embeddings, doc_embeddings).max(dim=2)[0].sum(dim=1)
+        neg_scores = torch.einsum("bnd,bsd->bns", query_embeddings, neg_doc_embeddings).max(dim=2)[0].sum(dim=1)
+
+        loss = F.softplus(neg_scores - pos_scores).mean()
+
+        if self.in_batch_term:
+            scores = (
+                torch.einsum("bnd,csd->bcns", query_embeddings, doc_embeddings).max(dim=3)[0].sum(dim=2)
+            )  # (batch_size, batch_size)
+
+            # Positive scores are the diagonal of the scores matrix.
+            pos_scores = scores.diagonal()  # (batch_size,)
+            neg_scores = scores - torch.eye(scores.shape[0], device=scores.device) * 1e6  # (batch_size, batch_size)
+            neg_scores = neg_scores.max(dim=1)[0]  # (batch_size,)
+
+            loss += F.softplus(neg_scores - pos_scores).mean()
+
+        return loss / 2
+
+
 class BiPairwiseCELoss(torch.nn.Module):
     def __init__(self):
         super().__init__()
@@ -120,3 +154,34 @@ class BiPairwiseCELoss(torch.nn.Module):
         loss = F.softplus(neg_scores - pos_scores).mean()
 
         return loss
+
+
+class BiPairwiseNegativeCELoss(torch.nn.Module):
+    def __init__(self, in_batch_term=False):
+        super().__init__()
+        self.ce_loss = CrossEntropyLoss()
+        self.in_batch_term = in_batch_term
+
+    def forward(self, query_embeddings, doc_embeddings, neg_doc_embeddings):
+        """
+        query_embeddings: (batch_size, dim)
+        doc_embeddings: (batch_size, dim)
+        neg_doc_embeddings: (batch_size, dim)
+        """
+
+        # Compute the ColBERT scores
+        pos_scores = torch.einsum("bd,cd->bc", query_embeddings, doc_embeddings).diagonal()
+        neg_scores = torch.einsum("bd,cd->bc", query_embeddings, neg_doc_embeddings).diagonal()
+
+        loss = F.softplus(neg_scores - pos_scores).mean()
+
+        if self.in_batch_term:
+            scores = torch.einsum("bd,cd->bc", query_embeddings, doc_embeddings)
+            # Positive scores are the diagonal of the scores matrix.
+            pos_scores = scores.diagonal()  # (batch_size,)
+            neg_scores = scores - torch.eye(scores.shape[0], device=scores.device) * 1e6  # (batch_size, batch_size)
+            neg_scores = neg_scores.max(dim=1)[0]  # (batch_size,)
+
+            loss += F.softplus(neg_scores - pos_scores).mean()
+
+        return loss / 2

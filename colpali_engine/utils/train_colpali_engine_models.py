@@ -1,7 +1,7 @@
 import json
 import os
 from dataclasses import dataclass
-from typing import Callable, Dict, Optional
+from typing import Callable, Dict, Optional, Tuple
 
 import torch
 from datasets import concatenate_datasets
@@ -11,8 +11,15 @@ from tqdm import tqdm
 from transformers import AutoTokenizer, Idefics2Processor, PreTrainedModel, PreTrainedTokenizer, TrainingArguments
 
 from colpali_engine.dataset.custom_collator import CustomCollator
-from colpali_engine.loss.colbert_loss import ColbertLoss, ColbertPairwiseCELoss
-from colpali_engine.trainer.contrastive_trainer import ContrastiveTrainer
+from colpali_engine.dataset.hard_neg_collator import HardNegCollator
+from colpali_engine.loss.colbert_loss import (
+    BiEncoderLoss,
+    BiPairwiseCELoss,
+    ColbertLoss,
+    ColbertPairwiseCELoss,
+    ColbertPairwiseNegativeCELoss,
+)
+from colpali_engine.trainer.contrastive_trainer import ContrastiveNegativeTrainer, ContrastiveTrainer
 from colpali_engine.trainer.retrieval_evaluator import CustomEvaluator
 from colpali_engine.utils.gpu_stats import print_gpu_utilization, print_summary
 
@@ -35,6 +42,9 @@ class ColModelTrainingConfig:
     pretrained_peft_model_name_or_path: Optional[str] = None
 
     def __post_init__(self):
+        """
+        Initialize the model and tokenizer if not provided
+        """
         if self.output_dir is None:
             sanitized_name = str(self.model.name_or_path).replace("/", "_")
             self.output_dir = f"./models/{sanitized_name}"
@@ -73,8 +83,10 @@ class ColModelTrainingConfig:
                 #     self.model.model.vision_model.encoder.layers = self.model.model.vision_model.encoder.layers[0:2]
                 # self.model.enable_input_require_grads()
                 if self.pretrained_peft_model_name_or_path is None:
-                    self.model.add_adapter(self.peft_config)
-                    self.model.enable_adapters()
+                    # self.model.add_adapter(self.peft_config)
+                    # self.model.enable_adapters()
+                    self.model = get_peft_model(self.model, self.peft_config)
+                    self.model.print_trainable_parameters()
                 else:
                     print(f"Adapter already loaded from {self.pretrained_peft_model_name_or_path}. Not overwriting.")
 
@@ -86,31 +98,55 @@ class ColModelTraining:
         self.config = config
         self.model = self.config.model
         self.dataset = self.config.dataset_loading_func()
-        self.collator = CustomCollator(
-            processor=self.config.processor, tokenizer=self.config.tokenizer, max_length=self.config.max_length
-        )
+        if isinstance(self.dataset, Tuple):
+            neg_dataset = self.dataset[1]
+            self.dataset = self.dataset[0]
+            self.collator = HardNegCollator(
+                processor=self.config.processor,
+                tokenizer=self.config.tokenizer,
+                max_length=self.config.max_length,
+                image_dataset=neg_dataset,
+            )
+        else:
+            self.collator = CustomCollator(
+                processor=self.config.processor, tokenizer=self.config.tokenizer, max_length=self.config.max_length
+            )
         self.current_git_hash = os.popen("git rev-parse HEAD").read().strip()
         self.retriever_evaluator = CustomEvaluator(
             is_multi_vector=(
                 isinstance(self.config.loss_func, ColbertLoss)
                 or isinstance(self.config.loss_func, ColbertPairwiseCELoss)
+                or isinstance(self.config.loss_func, ColbertPairwiseNegativeCELoss)
             )
         )
 
     def train(self) -> None:
 
-        trainer = ContrastiveTrainer(
-            model=self.model,
-            train_dataset=self.dataset["train"],
-            eval_dataset=self.dataset["test"],
-            args=self.config.tr_args,
-            data_collator=self.collator,
-            loss_func=self.config.loss_func,
-            is_vision_model=self.config.processor is not None,
-        )
+        if isinstance(self.collator, HardNegCollator):
+            print("Training with hard negatives")
+            trainer = ContrastiveNegativeTrainer(
+                model=self.model,
+                train_dataset=self.dataset["train"],
+                eval_dataset=self.dataset["test"],
+                args=self.config.tr_args,
+                data_collator=self.collator,
+                loss_func=self.config.loss_func,
+                is_vision_model=self.config.processor is not None,
+            )
+        else:
+            print("Training with in-batch negatives")
+            trainer = ContrastiveTrainer(
+                model=self.model,
+                train_dataset=self.dataset["train"],
+                eval_dataset=self.dataset["test"],
+                args=self.config.tr_args,
+                data_collator=self.collator,
+                loss_func=self.config.loss_func,
+                is_vision_model=self.config.processor is not None,
+            )
         trainer.args.remove_unused_columns = False
 
-        result = trainer.train()
+        result = trainer.train(resume_from_checkpoint=self.config.tr_args.resume_from_checkpoint)
         print_summary(result)
 
     def eval_dataset(self, test_dataset):
@@ -209,11 +245,19 @@ class ColModelTraining:
 
     def eval(self) -> None:
 
-        print("Evaluating on validation set")
-        metrics = self.eval_dataset(self.dataset["test"])
-        print(f"Metrics for validation set: {metrics}")
-        all_metrics = {"validation_set": metrics}
+        all_metrics = {}
+        try:
+            print("Evaluating on validation set")
+            metrics = self.eval_dataset(self.dataset["test"])
+            print(f"Metrics for validation set: {metrics}")
+            all_metrics["validation_set"] = metrics
+        except Exception as e:
+            print(f"Error evaluating validation set: {e}")
 
+        # switching to normal collator
+        self.collator = CustomCollator(
+            processor=self.config.processor, tokenizer=self.config.tokenizer, max_length=self.config.max_length
+        )
         if self.config.eval_dataset_loader is not None:
             for test_name, test_dataset_loading_func in self.config.eval_dataset_loader.items():
                 print(f"Evaluating {test_name}")

@@ -1,6 +1,6 @@
 config:
   (): colpali_engine.utils.train_colpali_engine_models.ColModelTrainingConfig
-  output_dir: !path ../../../models/train_colpali-docmatix-3b-mix-448
+  output_dir: !path ../../../models/without_tabfquad/train_colpali-3b-mix-448-debug
   processor:
     () : colpali_engine.utils.wrapper.AutoProcessorWrapper
     pretrained_model_name_or_path:  "./models/colpaligemma-3b-mix-448-base" # "./models/paligemma-3b-mix-448"
@@ -10,6 +10,7 @@ config:
     class_to_instanciate: !ext colpali_engine.models.paligemma_colbert_architecture.ColPali
     pretrained_model_name_or_path: "./models/colpaligemma-3b-mix-448-base"
     torch_dtype:  !ext torch.bfloat16
+#    device_map: "auto"
 #    quantization_config:
 #      (): transformers.BitsAndBytesConfig
 #      load_in_4bit: true
@@ -17,15 +18,16 @@ config:
 #      bnb_4bit_compute_dtype:  "bfloat16"
 #      bnb_4bit_use_double_quant: true
 
-  dataset_loading_func: !ext colpali_engine.utils.dataset_transformation.load_train_set_with_docmatix
+  dataset_loading_func: !ext colpali_engine.utils.dataset_transformation.load_train_set_ir_negs
   eval_dataset_loader: !import ../data/test_data.yaml
 
   max_length: 50
   run_eval: true
   add_suffix: true
   loss_func:
-    (): colpali_engine.loss.colbert_loss.ColbertPairwiseCELoss
-  tr_args: !import ../tr_args/default_tr_args.yaml
+    (): colpali_engine.loss.colbert_loss.ColbertPairwiseNegativeCELoss
+    in_batch_term: true
+  tr_args: !import ../tr_args/resume_neg_tr_args.yaml
   peft_config:
     (): peft.LoraConfig
     r: 32
