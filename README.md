@@ -68,6 +68,14 @@ sbatch --nodes=1 --cpus-per-task=16 --mem-per-cpu=32GB --time=20:00:00 --gres=gp
 sbatch --nodes=1  --time=5:00:00 -A cad15443 --gres=gpu:8  --constraint=MI250 --job-name=colpali --wrap="python scripts/train/train_colbert.py scripts/configs/train_colpali_model.yaml"
 ```
 
+## Paper result reproduction
+
+To reproduce the results from the paper, you should checkout to the `v0.1.1` tag or install the corresponding `colpali-engine` package release using:
+
+```bash
+pip install colpali-engine==0.1.1
+```
+
 ## Citation
 
 **ColPali: Efficient Document Retrieval with Vision Language Models**  
