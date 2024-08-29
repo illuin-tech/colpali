@@ -3,7 +3,7 @@ from typing import Optional
 from datasets import Dataset
 from transformers import PreTrainedTokenizer, ProcessorMixin
 
-from .custom_collator import CustomCollator
+from colpali_engine.collators.custom_collator import CustomCollator
 
 
 class HardNegCollator(CustomCollator):
