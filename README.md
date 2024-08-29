@@ -36,10 +36,8 @@ To keep a lightweight repository, only the essential packages were installed. In
 pip install "colpali-engine[train]"
 ```
 
-
-> [!TIP]
+> [!WARNING]
 > For ColPali versions above v1.0, make sure to install the `colpali-engine` package from source or with a version above v0.2.0.
-
 
 ## Usage
 
