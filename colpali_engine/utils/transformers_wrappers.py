@@ -1,6 +1,6 @@
 import importlib
 
-from colpali_engine.models.bi_encoders import BiIdefics, BiNewSiglip, BiPaliLast, BiPaliMean, BiSigLIP
+from colpali_engine.models.bi_encoders import BiIdefics, BiNewSiglip, BiPaliMean, BiSigLIP
 from colpali_engine.models.late_interaction import ColIdefics, ColNewSiglip, ColPali, ColSigLIP
 
 if importlib.util.find_spec("transformers") is not None:

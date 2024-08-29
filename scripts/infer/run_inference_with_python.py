@@ -1,5 +1,8 @@
+from typing import cast
+
 import torch
 import typer
+from datasets import Dataset, load_dataset
 from PIL import Image
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -7,8 +10,7 @@ from transformers import AutoProcessor
 
 from colpali_engine.models.late_interaction.colpali_architecture import ColPali
 from colpali_engine.trainer.retrieval_evaluator import CustomEvaluator
-from colpali_engine.utils.colpali_processing_utils import process_images, process_queries
-from colpali_engine.utils.image_from_page_utils import load_from_dataset
+from colpali_engine.utils.processing_utils.colpali_processing_utils import process_images, process_queries
 
 
 def main() -> None:
@@ -22,8 +24,7 @@ def main() -> None:
     model.load_adapter(model_name)
     processor = AutoProcessor.from_pretrained(model_name)
 
-    # select images -> load_from_pdf(<pdf_path>),  load_from_image_urls(["<url_1>"]), load_from_dataset(<path>)
-    images = load_from_dataset("vidore/docvqa_test_subsampled")
+    images = cast(Dataset, load_dataset("vidore/docvqa_test_subsampled", split="test"))["image"]
     queries = ["From which university does James V. Fiorca come ?", "Who is the japanese prime minister?"]
 
     # run inference - docs

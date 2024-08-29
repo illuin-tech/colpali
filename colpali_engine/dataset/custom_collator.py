@@ -1,11 +1,13 @@
+from typing import Optional
+
 from transformers import PreTrainedTokenizer, ProcessorMixin
 
 
 class CustomCollator:
     def __init__(
         self,
-        processor: ProcessorMixin = None,
-        tokenizer: PreTrainedTokenizer = None,
+        processor: Optional[ProcessorMixin] = None,
+        tokenizer: Optional[PreTrainedTokenizer] = None,
         max_length: int = 2048,
         add_suffix: bool = True,
     ):

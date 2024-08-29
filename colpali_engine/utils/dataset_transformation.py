@@ -1,7 +1,7 @@
 import os
 from typing import Tuple
 
-from datasets import DatasetDict, concatenate_datasets, load_dataset
+from datasets import Dataset, DatasetDict, concatenate_datasets, load_dataset
 
 USE_LOCAL_DATASET = os.environ.get("USE_LOCAL_DATASET", "1") == "1"
 
@@ -15,7 +15,6 @@ def add_metadata_column(dataset, column_name, value):
 
 
 def load_train_set() -> DatasetDict:
-
     ds_paths = [
         "infovqa_train",
         "docvqa_train",
@@ -46,7 +45,6 @@ def load_train_set() -> DatasetDict:
 
 
 def load_train_set_with_tabfquad() -> DatasetDict:
-
     ds_paths = [
         "infovqa_train",
         "docvqa_train",

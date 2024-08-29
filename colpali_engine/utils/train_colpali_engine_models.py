@@ -115,7 +115,6 @@ class ColModelTraining:
         )
 
     def train(self) -> None:
-
         if isinstance(self.collator, HardNegCollator):
             print("Training with hard negatives")
             trainer = ContrastiveNegativeTrainer(
@@ -144,7 +143,6 @@ class ColModelTraining:
         print_summary(result)
 
     def eval_dataset(self, test_dataset):
-
         self.model.eval()
 
         # # debug
@@ -238,7 +236,6 @@ class ColModelTraining:
         return metrics
 
     def eval(self) -> None:
-
         all_metrics = {}
         try:
             print("Evaluating on validation set")

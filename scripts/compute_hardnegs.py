@@ -6,8 +6,8 @@ from tqdm import tqdm
 from transformers import AutoProcessor
 
 from colpali_engine.models.bi_encoders.bipali_architecture import BiPaliMean
-from colpali_engine.utils.colpali_processing_utils import process_images
 from colpali_engine.utils.dataset_transformation import load_train_set
+from colpali_engine.utils.processing_utils.colpali_processing_utils import process_images
 
 train_set = load_train_set()
 
@@ -29,8 +29,6 @@ if COMPUTE_HARDNEGS or COMPUTE_EMBEDDINGS:
     processor = AutoProcessor.from_pretrained(model_name)
 
 if COMPUTE_EMBEDDINGS:
-    # select images -> load_from_pdf(<pdf_path>),  load_from_image_urls(["<url_1>"]), load_from_dataset(<path>)
-
     print("Loading images")
     print("Images loaded")
 
@@ -81,7 +79,7 @@ if COMPUTE_HARDNEGS:
     # compute hard negatives
     ds = ds.to("cuda")
 
-    from colpali_engine.utils.colpali_processing_utils import process_queries
+    from colpali_engine.utils.processing_utils.colpali_processing_utils import process_queries
 
     # iterate on the train set
 

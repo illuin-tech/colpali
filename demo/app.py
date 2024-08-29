@@ -10,7 +10,7 @@ from transformers import AutoProcessor
 
 from colpali_engine.models.late_interaction.colpali_architecture import ColPali
 from colpali_engine.trainer.retrieval_evaluator import CustomEvaluator
-from colpali_engine.utils.colpali_processing_utils import process_images, process_queries
+from colpali_engine.utils.processing_utils.colpali_processing_utils import process_images, process_queries
 
 
 def search(query: str, ds, images):
