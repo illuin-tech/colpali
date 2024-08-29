@@ -12,7 +12,11 @@ from transformers import AutoTokenizer, Idefics2Processor, PreTrainedModel, PreT
 
 from colpali_engine.dataset.custom_collator import CustomCollator
 from colpali_engine.dataset.hard_neg_collator import HardNegCollator
-from colpali_engine.loss.late_interaction_losses import ColbertLoss, ColbertPairwiseCELoss
+from colpali_engine.loss.late_interaction_losses import (
+    ColbertLoss,
+    ColbertPairwiseCELoss,
+    ColbertPairwiseNegativeCELoss,
+)
 from colpali_engine.trainer.contrastive_trainer import ContrastiveNegativeTrainer, ContrastiveTrainer
 from colpali_engine.trainer.retrieval_evaluator import CustomEvaluator
 from colpali_engine.utils.gpu_stats import print_gpu_utilization, print_summary

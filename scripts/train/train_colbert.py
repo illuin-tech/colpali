@@ -3,8 +3,8 @@ from pathlib import Path
 import configue
 import typer
 
+from colpali_engine.trainer.colmodel_training import ColModelTraining, ColModelTrainingConfig
 from colpali_engine.utils.gpu_stats import print_gpu_utilization
-from colpali_engine.utils.train_colpali_engine_models import ColModelTraining, ColModelTrainingConfig
 
 
 def main(config_file: Path) -> None:

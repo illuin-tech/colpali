@@ -37,7 +37,7 @@ def process_queries(processor, queries, mock_image, max_length: int = 50):
                 "content": [
                     {
                         "type": "text",
-                        "text": f"Question: {query}<end_of_utterance><end_of_utterance><end_of_utterance><end_of_utterance><end_of_utterance>",
+                        "text": f"Question: {query}" + "<end_of_utterance>" * 5,
                     },
                 ],
             },

@@ -43,8 +43,6 @@ if importlib.util.find_spec("transformers") is not None:
             elif "paligemma" in pretrained_model_name_or_path:
                 if training_objective == "biencoder_mean":
                     return BiPaliMean.from_pretrained(*args, **kwargs)
-                elif training_objective == "biencoder_last":
-                    return BiPaliLast.from_pretrained(*args, **kwargs)
                 elif training_objective == "biencoder_mean_vision":
                     return BiNewSiglip.from_pretrained(*args, **kwargs)
                 elif training_objective == "colbertv1_vision":

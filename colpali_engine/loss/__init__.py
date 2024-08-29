@@ -1,2 +1,2 @@
-from bi_encoder_losses import *
-from late_interaction_losses import *
+from .bi_encoder_losses import *  # noqa: F403
+from .late_interaction_losses import *  # noqa: F403

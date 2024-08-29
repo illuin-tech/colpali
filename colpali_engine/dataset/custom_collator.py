@@ -193,8 +193,9 @@ class CustomCollator:
             # if it's the first query that is not None but the rest are None, then it's hard negatives
             raise ValueError("Some queries are None. This collator does not support None queries yet.")
         else:
+            # NOTE: the image is not used in batch_query but it is required for calling the processor
             batch_query = self.processor(
-                images=images,  # NOTE: the image is not used in batch_query but it is required for calling the processor
+                images=images,
                 text=texts_query,
                 return_tensors="pt",
                 padding="longest",
