@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import AutoProcessor
 
-from colpali_engine.models.paligemma_colbert_architecture import ColPali
+from colpali_engine.models.late_interaction.colpali_architecture import ColPali
 from colpali_engine.trainer.retrieval_evaluator import CustomEvaluator
 from colpali_engine.utils.colpali_processing_utils import process_images, process_queries
 

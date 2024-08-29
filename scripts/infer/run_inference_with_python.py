@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import AutoProcessor
 
-from colpali_engine.models.paligemma_colbert_architecture import ColPali
+from colpali_engine.models.late_interaction.colpali_architecture import ColPali
 from colpali_engine.trainer.retrieval_evaluator import CustomEvaluator
 from colpali_engine.utils.colpali_processing_utils import process_images, process_queries
 from colpali_engine.utils.image_from_page_utils import load_from_dataset
@@ -16,7 +16,9 @@ def main() -> None:
 
     # Load model
     model_name = "vidore/colpali-v1.2"
-    model = ColPali.from_pretrained("vidore/colpaligemma-3b-pt-448-base", torch_dtype=torch.bfloat16, device_map="cuda").eval()
+    model = ColPali.from_pretrained(
+        "vidore/colpaligemma-3b-pt-448-base", torch_dtype=torch.bfloat16, device_map="cuda"
+    ).eval()
     model.load_adapter(model_name)
     processor = AutoProcessor.from_pretrained(model_name)
 

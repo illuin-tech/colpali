@@ -1,6 +1,7 @@
 from random import randint
+from typing import Optional
 
-from datasets import Dataset, DatasetDict
+from datasets import Dataset
 from transformers import PreTrainedTokenizer, ProcessorMixin
 
 from .custom_collator import CustomCollator
@@ -9,11 +10,11 @@ from .custom_collator import CustomCollator
 class HardNegCollator(CustomCollator):
     def __init__(
         self,
-        processor: ProcessorMixin = None,
-        tokenizer: PreTrainedTokenizer = None,
+        processor: Optional[ProcessorMixin] = None,
+        tokenizer: Optional[PreTrainedTokenizer] = None,
         max_length: int = 2048,
         add_suffix: bool = True,
-        image_dataset: Dataset = None,
+        image_dataset: Optional[Dataset] = None,
     ):
         super().__init__(processor, tokenizer, max_length, add_suffix)
         self.image_dataset = image_dataset

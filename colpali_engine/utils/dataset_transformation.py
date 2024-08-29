@@ -1,7 +1,7 @@
 import os
 from typing import Tuple
 
-from datasets import Dataset, DatasetDict, concatenate_datasets, load_dataset
+from datasets import DatasetDict, concatenate_datasets, load_dataset
 
 USE_LOCAL_DATASET = os.environ.get("USE_LOCAL_DATASET", "1") == "1"
 

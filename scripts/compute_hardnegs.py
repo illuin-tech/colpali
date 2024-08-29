@@ -1,12 +1,11 @@
 import datasets
 import numpy as np
-
-from colpali_engine.models.paligemma_colbert_architecture import BiPaliMean
-from transformers import AutoProcessor
 import torch
-
-from tqdm import tqdm
 from torch.utils.data import DataLoader
+from tqdm import tqdm
+from transformers import AutoProcessor
+
+from colpali_engine.models.bi_encoders.bipali_architecture import BiPaliMean
 from colpali_engine.utils.colpali_processing_utils import process_images
 from colpali_engine.utils.dataset_transformation import load_train_set
 
@@ -19,9 +18,9 @@ COMPUTE_HARDNEGS = False
 if COMPUTE_HARDNEGS or COMPUTE_EMBEDDINGS:
     model_name = "./models/bipali"
 
-    model = BiPaliMean.from_pretrained("./models/paligemma-3b-mix-448",
-                                       torch_dtype=torch.bfloat16,
-                                       device_map="cuda").eval()
+    model = BiPaliMean.from_pretrained(
+        "./models/paligemma-3b-mix-448", torch_dtype=torch.bfloat16, device_map="cuda"
+    ).eval()
     print("Add adapter")
     model.load_adapter(model_name)
     print("Model loaded")
@@ -38,10 +37,12 @@ if COMPUTE_EMBEDDINGS:
     document_set = train_set["train"]
     print("Filtering dataset")
     print(document_set)
-    initial_list = document_set['image_filename']
+    initial_list = document_set["image_filename"]
     _, unique_indices = np.unique(initial_list, return_index=True, axis=0)
     filtered_dataset = document_set.select(unique_indices.tolist())
-    filtered_dataset = filtered_dataset.map(lambda example: {'image': example['image'], 'image_filename': example['image_filename']}, num_proc=16)
+    filtered_dataset = filtered_dataset.map(
+        lambda example: {"image": example["image"], "image_filename": example["image_filename"]}, num_proc=16
+    )
     # keep only column image and image_filename and source if it exists
     cols_to_remove = [col for col in filtered_dataset.column_names if col not in ["image", "image_filename"]]
     filtered_dataset = filtered_dataset.remove_columns(cols_to_remove)
@@ -113,13 +114,15 @@ with open("data_dir/mined_hardnegs_filtered.txt") as f:
 
 
 filtered_dataset = datasets.load_from_disk("data_dir/filtered_dataset")
-filenames = list(filtered_dataset['image_filename'])
+filenames = list(filtered_dataset["image_filename"])
 
 
 def mapper_fn(example, idx):
-    tmp = {"negs": [int(x) for x in mined_hardnegs[idx][1:-2].strip().split(",")],
-           "query": example["query"],
-           "gold_index": filenames.index(example["image_filename"])}
+    tmp = {
+        "negs": [int(x) for x in mined_hardnegs[idx][1:-2].strip().split(",")],
+        "query": example["query"],
+        "gold_index": filenames.index(example["image_filename"]),
+    }
 
     tmp["gold_in_top_100"] = tmp["gold_index"] in tmp["negs"]
     # remove gold index from negs if it is there
