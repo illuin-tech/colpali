@@ -33,7 +33,6 @@ class HardNegCollator(CustomCollator):
 
             examples += [{"image": pos_image, "query": pos_query, "neg_image": neg_images[0]}]
 
-
         if self.processor is None:
             return self.forward_text(examples)
         if self.processor.__class__.__name__ == "Idefics2Processor":

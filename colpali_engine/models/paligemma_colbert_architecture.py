@@ -1,7 +1,8 @@
+from typing import Optional
+
 import torch
 from torch import nn
 from transformers.models.paligemma.modeling_paligemma import PaliGemmaForConditionalGeneration, PaliGemmaPreTrainedModel
-from typing import Optional
 
 
 class BiPaliProj(PaliGemmaPreTrainedModel):
@@ -68,7 +69,6 @@ class BiPaliProj(PaliGemmaPreTrainedModel):
         outputs = self.model(*args, output_hidden_states=True, **kwargs)
         last_hidden_states = outputs.hidden_states[-1]  # (batch_size, sequence_length, hidden_size)
 
-
         # pooling -mean on attention mask==1
         proj = torch.sum(last_hidden_states * kwargs["attention_mask"].unsqueeze(-1), dim=1) / torch.sum(
             kwargs["attention_mask"], dim=1, keepdim=True
@@ -76,7 +76,6 @@ class BiPaliProj(PaliGemmaPreTrainedModel):
         proj = self.custom_text_proj(proj)
         proj = proj / proj.norm(dim=-1, keepdim=True)
         return proj
-
 
 
 class BiPali(PaliGemmaPreTrainedModel):
