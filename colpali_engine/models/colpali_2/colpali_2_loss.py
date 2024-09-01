@@ -76,7 +76,7 @@ class ColPali2Loss(torch.nn.Module):
         return loss
 
     def forward(self, query_embeddings: ColPali2ModelOutput, doc_embeddings: ColPali2ModelOutput) -> torch.Tensor:
-        single_vector_loss = self.single_vector_loss(query_embeddings.single_vector, doc_embeddings.single_vector)
-        multi_vector_loss = self.multi_vector_loss(query_embeddings.multi_vector, doc_embeddings.multi_vector)
+        single_vector_loss = self.single_vector_loss(query_embeddings.single_vec_emb, doc_embeddings.single_vec_emb)
+        multi_vector_loss = self.multi_vector_loss(query_embeddings.multi_vec_emb, doc_embeddings.multi_vec_emb)
         total_loss = self.alpha * single_vector_loss + (1 - self.alpha) * multi_vector_loss
         return total_loss
