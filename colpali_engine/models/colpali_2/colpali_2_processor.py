@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import List, cast
 
-import torch
 from PIL import Image
 from transformers import BatchFeature, LlamaTokenizerFast, PaliGemmaProcessor
 
@@ -11,17 +10,11 @@ class ColPali2Processor(PaliGemmaProcessor):
     def __init__(
         self,
         *args,
-        cls_token: str = "<unused1>",
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.tokenizer = cast(LlamaTokenizerFast, self.tokenizer)  # type: ignore
+        self.tokenizer = cast(LlamaTokenizerFast, self.tokenizer)
         self.special_tokens_map = self.tokenizer.special_tokens_map
-        self.cls_token = cls_token
-        if self.cls_token not in self.tokenizer.added_tokens_decoder:
-            raise ValueError(f"The tokenizer should have an `{cls_token}` token to be used as the <cls> token.")
-        self.special_tokens_map["cls_token"] = self.cls_token
-        self.cls_token_id = cast(int, self.tokenizer.convert_tokens_to_ids(self.cls_token))
 
     def process_text(
         self,
@@ -32,7 +25,8 @@ class ColPali2Processor(PaliGemmaProcessor):
     ) -> BatchFeature:
         """
         Process text inputs for the model.
-        If `add_special_tokens` is True (default), the text will be prepended with the <bos> token and appended with " \n".
+        If `add_special_tokens` is True (default), the text will be prepended with the <bos> token and
+        postpended with " \n".
         """
         if add_special_tokens:
             if isinstance(text, str):
@@ -90,14 +84,3 @@ class ColPali2Processor(PaliGemmaProcessor):
 
     def batch_decode(self, *args, **kwargs):
         return self.tokenizer.batch_decode(*args, **kwargs)
-
-    def is_cls_token_first(self, input_ids: torch.Tensor) -> bool:
-        """
-        Check if the first token in each sequence of the batch is the CLS token.
-
-        Inputs:
-        - input_ids (torch.Tensor): The input_ids tensor (batch_size, sequence_length).
-        """
-        if input_ids.dim() != 2:
-            raise ValueError("`input_ids` must be a 2D tensor.")
-        return cast(bool, torch.all(input_ids[:, 0] == self.cls_token_id).item())
