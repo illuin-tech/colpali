@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import List, Optional
 
 import torch
@@ -17,7 +18,7 @@ class MatryoshkaCELoss(torch.nn.Module):
         self.criterion = torch.nn.CrossEntropyLoss(**kwargs)
         self.relative_importance = relative_importance
 
-    def forward(self, output, target):
+    def forward(self, output, target) -> torch.Tensor:
         # Calculate losses for each output and stack them. This is still O(N)
         losses = torch.stack([self.criterion(output_i, target) for output_i in output])
 
@@ -31,23 +32,52 @@ class MatryoshkaCELoss(torch.nn.Module):
         return weighted_losses.sum()
 
 
+@dataclass
+class ColPali2LossOutputs:
+    single_vector_loss: torch.Tensor
+    multi_vector_loss: torch.Tensor
+    total_loss: torch.Tensor
+
+
 class ColPali2Loss(torch.nn.Module):
-    def __init__(self):
+    """
+    Loss function for ColPali2.
+    The loss function is a combination of two losses:
+    1. Single-vector loss: Cross-entropy (with optional Matryoshka) loss between the query and document
+        single-vector embeddings.
+    2. Multi-vector loss: Margin loss between the query and document multi-vector embeddings.
+    """
+
+    def __init__(
+        self,
+        use_matryoshka_loss: bool = True,
+    ):
         super().__init__()
-        self.matryoshka_loss = MatryoshkaCELoss()
+        self.use_matryoshka_loss = use_matryoshka_loss
         self.alpha: float = 0.5
 
-    def single_vector_loss(self, query_embeddings, doc_embeddings) -> torch.Tensor:
+    def single_vector_loss(
+        self,
+        query_embeddings: torch.Tensor,
+        doc_embeddings: torch.Tensor,
+    ) -> torch.Tensor:
         """
         query_embeddings: (batch_size, dim)
         doc_embeddings: (batch_size, dim)
         """
         scores = torch.einsum("bd,cd->bc", query_embeddings, doc_embeddings)
 
-        loss_rowwise = self.matryoshka_loss(scores, torch.arange(scores.shape[0], device=scores.device))
-        return loss_rowwise
+        if self.use_matryoshka_loss:
+            loss = self.single_vector_loss(scores, torch.arange(scores.shape[0], device=scores.device))
+        else:
+            loss = F.cross_entropy(scores, torch.arange(scores.shape[0], device=scores.device))
+        return loss
 
-    def multi_vector_loss(self, query_embeddings, doc_embeddings) -> torch.Tensor:
+    def multi_vector_loss(
+        self,
+        query_embeddings: torch.Tensor,
+        doc_embeddings: torch.Tensor,
+    ) -> torch.Tensor:
         """
         query_embeddings: (batch_size, num_query_tokens, dim)
         doc_embeddings: (batch_size, num_doc_tokens, dim)
@@ -66,17 +96,19 @@ class ColPali2Loss(torch.nn.Module):
         neg_scores = scores - torch.eye(scores.shape[0], device=scores.device) * 1e6  # (batch_size, batch_size)
         neg_scores = neg_scores.max(dim=1)[0]  # (batch_size,)
 
-        # Compute the loss
-        # The loss is computed as the negative log of the softmax of the positive scores
-        # relative to the negative scores.
-        # This can be simplified to log-sum-exp of negative scores minus the positive score
-        # for numerical stability.
+        # Compute the margin loss
         loss = F.softplus(neg_scores - pos_scores).mean()
 
         return loss
 
-    def forward(self, query_embeddings: ColPali2ModelOutput, doc_embeddings: ColPali2ModelOutput) -> torch.Tensor:
+    def forward(
+        self,
+        query_embeddings: ColPali2ModelOutput,
+        doc_embeddings: ColPali2ModelOutput,
+    ) -> ColPali2LossOutputs:
         single_vector_loss = self.single_vector_loss(query_embeddings.single_vec_emb, doc_embeddings.single_vec_emb)
         multi_vector_loss = self.multi_vector_loss(query_embeddings.multi_vec_emb, doc_embeddings.multi_vec_emb)
+
         total_loss = self.alpha * single_vector_loss + (1 - self.alpha) * multi_vector_loss
-        return total_loss
+
+        return ColPali2LossOutputs(single_vector_loss, multi_vector_loss, total_loss)
