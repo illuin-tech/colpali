@@ -5,5 +5,5 @@ import torch
 
 @dataclass
 class ColPali2ModelOutput:
-    single_vector: torch.Tensor
-    multi_vector: torch.Tensor
+    single_vec_emb: torch.Tensor
+    multi_vec_emb: torch.Tensor
