@@ -1,18 +1,29 @@
+from typing import cast
+
 import torch
 from torch import nn
 from transformers.models.paligemma.modeling_paligemma import PaliGemmaForConditionalGeneration, PaliGemmaPreTrainedModel
 
+from colpali_engine.models.colpali_2.colpali_2_config import ColPali2Config
 from colpali_engine.models.colpali_2.colpali_2_modeling_outputs import ColPali2ModelOutput
 
 
 class ColPali2(PaliGemmaPreTrainedModel):
-    def __init__(self, config):
+    def __init__(self, config: ColPali2Config):
         super(ColPali2, self).__init__(config=config)
-        self.model: PaliGemmaForConditionalGeneration = PaliGemmaForConditionalGeneration(config)
-        self.dim = 128
+        self.config = cast(ColPali2Config, self.config)
+        self.model = PaliGemmaForConditionalGeneration(self.config.vlm_config)
         self.single_vector_projector = nn.Linear(self.model.config.text_config.hidden_size, self.dim)
         self.multi_vector_projector = nn.Linear(self.model.config.text_config.hidden_size, self.dim)
         self.main_input_name = "doc_input_ids"
+
+    @property
+    def single_vector_projector_dim(self) -> int:
+        return self.config.single_vector_projector_dim
+
+    @property
+    def multi_vector_projector_dim(self) -> int:
+        return self.config.multi_vector_projector_dim
 
     def forward(self, *args, **kwargs) -> ColPali2ModelOutput:
         """
@@ -49,7 +60,7 @@ class ColPali2(PaliGemmaPreTrainedModel):
 
         return ColPali2ModelOutput(single_vector=single_vec_emb, multi_vector=multi_vec_emb)
 
-    def forward_single_vector(self, *args, **kwargs):
+    def forward_single_vector(self, *args, **kwargs) -> torch.Tensor:
         """
         Forward pass through ColPali. Returns only the single-vector embeddings.
         """
@@ -60,7 +71,7 @@ class ColPali2(PaliGemmaPreTrainedModel):
 
         return single_vec_emb
 
-    def forward_multi_vector(self, *args, **kwargs):
+    def forward_multi_vector(self, *args, **kwargs) -> torch.Tensor:
         """
         Forward pass through ColPali. Returns only the multi-vector embeddings.
         """
