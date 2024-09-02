@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 
+## [0.2.1] - 2024-09-02
+ 
+Patch query preprocessing helper function disalignement with training scheme.
+
+### Fixed
+- Add 10 extra pad token by default to the query to act as reasoning buffers. This was added in the collator but not the external helper function for inference purposes.
+
+
 ## [0.2.0] - 2024-08-29
  
 Large refactoring to adress several issues and add features. This release is not backward compatible with previous versions.
