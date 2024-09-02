@@ -15,10 +15,14 @@ def process_images(processor, images, max_length: int = 50):
     return batch_doc
 
 
-def process_queries(processor, queries, mock_image, max_length: int = 50):
+def process_queries(processor, queries, mock_image, max_length: int = 50, suffix: str="default_suffix"):
+    if suffix == "default_suffix":
+        suffix = "<pad>" * 10
     texts_query = []
     for query in queries:
-        query = f"Question: {query}<unused0><unused0><unused0><unused0><unused0>"
+        query = f"Question: {query}"
+        # add pad tokens
+        query += suffix
         texts_query.append(query)
 
     batch_query = processor(
