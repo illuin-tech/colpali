@@ -8,9 +8,10 @@ from transformers.models.paligemma.modeling_paligemma import PaliGemmaForConditi
 
 class BiPali(PaliGemmaPreTrainedModel):
     """
-    BiPali is a BiPali model implementation from the "ColPali: Efficient Document Retrieval with Vision Language Models" paper.
+    BiPali is an implementation from the "ColPali: Efficient Document Retrieval with Vision Language Models" paper.
     Representations are average pooled to obtain a single vector representation.
     """
+
     def __init__(self, config: PaliGemmaConfig):
         super(BiPali, self).__init__(config=config)
         model: PaliGemmaForConditionalGeneration = PaliGemmaForConditionalGeneration(config)
@@ -66,6 +67,7 @@ class BiPaliProj(PaliGemmaPreTrainedModel):
     """
     BiPaliProj is a BiPali model with a projection layer for dimensionality reduction.
     """
+
     def __init__(self, config: PaliGemmaConfig):
         super(BiPaliProj, self).__init__(config=config)
         model: PaliGemmaForConditionalGeneration = PaliGemmaForConditionalGeneration(config)
