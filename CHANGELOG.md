@@ -16,11 +16,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - feat: Restructure the `utils` module
 - feat: Move `ColModelTraining` module
 - feat: Lint code + tweaks
+- feat: deprecated a lot of unused modules and legacy code
 
 ### Changed
 
 - doc: Lint Changelog
 - doc: Tweak README
+- feat: The processing function in `colpali_engine.utils.processing_utils.colpali_processing_utils` `process_queries` has a changed API and does not require a Mock Image anymore.
 
 ## [0.2.1] - 2024-09-02
  

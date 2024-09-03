@@ -3,7 +3,6 @@ from typing import cast
 import torch
 import typer
 from datasets import Dataset, load_dataset
-from PIL import Image
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import AutoProcessor
