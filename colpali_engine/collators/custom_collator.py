@@ -21,10 +21,9 @@ class CustomCollator:
             raise ValueError("Either processor or tokenizer should be provided.")
 
         if self.processor is not None:
-            if self.processor.__class__.__name__ != "SiglipProcessor":
-                self.image_token_id = self.processor.tokenizer.additional_special_tokens_ids[
-                    self.processor.tokenizer.additional_special_tokens.index("<image>")
-                ]
+            self.image_token_id = self.processor.tokenizer.additional_special_tokens_ids[
+                self.processor.tokenizer.additional_special_tokens.index("<image>")
+            ]
 
             if self.tokenizer is not None:
                 raise ValueError("Only one of processor or tokenizer should be provided.")
@@ -50,8 +49,6 @@ class CustomCollator:
             return self.forward_vision_idefics(examples)
         if self.processor.__class__.__name__ == "PaliGemmaProcessor":
             return self.forward_vision_pali(examples)
-        if self.processor.__class__.__name__ == "SiglipProcessor":
-            return self.forward_vision_siglip(examples)
         raise ValueError("Processor not supported")
 
     def forward_text(self, examples):
@@ -214,64 +211,5 @@ class CustomCollator:
         if batch_neg_doc is not None:
             batch_neg_doc = {f"neg_doc_{k}": v for k, v in batch_neg_doc.items()}
             batch_doc.update(batch_neg_doc)
-
-        return batch_doc
-
-    def forward_vision_siglip(self, examples):
-        texts_doc = []
-        texts_query = []
-        images = []
-        for example in examples:
-
-            if example["image"] is None:
-                raise ValueError("Image is None - This collator does not support None images yet.")
-
-            image = example["image"].convert("RGB")
-            images.append(image)
-            texts_doc.append("Describe the image.")
-
-            if example["query"] is None:
-                texts_query.append(None)
-            else:
-                query = f"Question: {example['query']}"
-                texts_query.append(query)
-
-        batch_doc = self.processor(
-            text=texts_doc,
-            images=images,
-            return_tensors="pt",
-            padding="max_length",
-            truncation=True,
-        )
-
-        batch_query = None
-        # check if some but not all queries are None
-        if all([t is None for t in texts_query]):
-            # print("All queries are None.")
-            pass
-        elif any([t is None for t in texts_query]):
-            raise ValueError("Some queries are None. This collator does not support None queries yet.")
-        else:
-            batch_query = self.processor(
-                images=images,
-                text=texts_query,
-                return_tensors="pt",
-                padding="max_length",
-                max_length=self.max_length,
-                truncation=True,
-            )
-            del batch_query["pixel_values"]
-
-        # prefix each key with "doc_" or "query_" to avoid key conflicts
-        batch_doc = {f"doc_{k}": v for k, v in batch_doc.items()}
-
-        if batch_query is not None:
-            batch_query = {f"query_{k}": v for k, v in batch_query.items()}
-            batch_doc.update(batch_query)
-            # add attention mask for queries
-            batch_doc["query_attention_mask"] = batch_doc["query_input_ids"].ne(0).long()
-
-        # add attention mask for docs
-        batch_doc["doc_attention_mask"] = batch_doc["doc_input_ids"].ne(0).long()
 
         return batch_doc

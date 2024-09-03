@@ -42,6 +42,4 @@ class HardNegCollator(CustomCollator):
             return self.forward_vision_idefics(examples)
         if self.processor.__class__.__name__ == "PaliGemmaProcessor":
             return self.forward_vision_pali(examples)
-        if self.processor.__class__.__name__ == "SiglipProcessor":
-            return self.forward_vision_siglip(examples)
         raise ValueError("Processor not supported")
