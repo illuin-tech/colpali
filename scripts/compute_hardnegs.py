@@ -87,7 +87,7 @@ if COMPUTE_HARDNEGS:
 
     for i in tqdm(range(0, len(train_set["train"]), 8)):
         samples = train_set["train"][i : i + 8]
-        batch_query = process_queries(processor, samples["query"], train_set["train"][i]["image"])
+        batch_query = process_queries(processor, samples["query"])
         with torch.no_grad():
             batch_query = {k: v.to(model.device) for k, v in batch_query.items()}
             embeddings_query = model(**batch_query)

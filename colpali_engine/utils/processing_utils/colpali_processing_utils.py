@@ -1,7 +1,10 @@
 """Utils for processing images and queries for ColPaLi"""
+from typing import List
+from transformers import BatchFeature
+from PIL import Image
 
 
-def process_images(processor, images, max_length: int = 50):
+def process_images(processor, images: List["PIL.Image"]) -> BatchFeature:
     texts_doc = ["Describe the image."] * len(images)
     images = [image.convert("RGB") for image in images]
 
@@ -10,12 +13,14 @@ def process_images(processor, images, max_length: int = 50):
         images=images,
         return_tensors="pt",
         padding="longest",
-        max_length=max_length + processor.image_seq_length,
     )
     return batch_doc
 
 
-def process_queries(processor, queries, mock_image, max_length: int = 50, suffix: str="default_suffix"):
+def process_queries(processor, queries: List[str], max_length: int = 50, suffix: str="default_suffix") -> BatchFeature:
+
+    mock_image = Image.new("RGB", (448, 448), (255, 255, 255)).convert("RGB")
+
     if suffix == "default_suffix":
         suffix = "<pad>" * 10
     texts_query = []
@@ -26,7 +31,7 @@ def process_queries(processor, queries, mock_image, max_length: int = 50, suffix
         texts_query.append(query)
 
     batch_query = processor(
-        images=[mock_image.convert("RGB")] * len(texts_query),
+        images=[mock_image] * len(texts_query),
         # NOTE: the image is not used in batch_query but it is required for calling the processor
         text=texts_query,
         return_tensors="pt",

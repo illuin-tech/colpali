@@ -46,7 +46,7 @@ def main() -> None:
         queries,
         batch_size=4,
         shuffle=False,
-        collate_fn=lambda x: process_queries(processor, x, Image.new("RGB", (448, 448), (255, 255, 255))),
+        collate_fn=lambda x: process_queries(processor, x),
     )
 
     qs = []
