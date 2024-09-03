@@ -6,9 +6,9 @@ config:
     pretrained_model_name_or_path: "./models/idefics2-8b"
     do_image_splitting: false
   model:
-    (): colpali_engine.utils.wrapper.AutoColModelWrapper
+    (): colpali_engine.utils.wrapper.AllPurposeWrapper
+    class_to_instanciate: !ext colpali_engine.models.late_interaction.colidefics_architecture.ColIdefics2
     pretrained_model_name_or_path: "./models/idefics2-8b"
-    training_objective: "colbertv1"
     # attn_implementation: "eager"
     torch_dtype:  !ext torch.bfloat16
 #    device_map: "auto"

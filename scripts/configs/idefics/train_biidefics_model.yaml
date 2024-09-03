@@ -6,9 +6,9 @@ config:
     pretrained_model_name_or_path: "HuggingFaceM4/idefics2-8b"
     do_image_splitting: false
   model:
-    (): colpali_engine.utils.wrapper.AutoColModelWrapper
+    (): colpali_engine.utils.wrapper.AllPurposeWrapper
+    class_to_instanciate: !ext colpali_engine.models.late_interaction.colidefics_architecture.BiIdefics2
     pretrained_model_name_or_path: "HuggingFaceM4/idefics2-8b-chatty"
-    training_objective: "biencoder"
     # attn_implementation: "flash_attention_2"
     torch_dtype:  !ext torch.bfloat16
     quantization_config:

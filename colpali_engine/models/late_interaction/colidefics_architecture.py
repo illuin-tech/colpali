@@ -2,9 +2,9 @@ from torch import nn
 from transformers import Idefics2Model, Idefics2PreTrainedModel
 
 
-class ColIdefics(Idefics2PreTrainedModel):
+class ColIdefics2(Idefics2PreTrainedModel):
     def __init__(self, config):
-        super(ColIdefics, self).__init__(config=config)
+        super(ColIdefics2, self).__init__(config=config)
         self.model: Idefics2Model = Idefics2Model(config)
         self.dim = 128
         self.linear = nn.Linear(self.model.config.text_config.hidden_size, self.dim)

@@ -58,34 +58,6 @@ class BiPali(PaliGemmaPreTrainedModel):
         return proj
 
 
-class BiPaliMean(PaliGemmaPreTrainedModel):
-    def __init__(self, config):
-        super(BiPaliMean, self).__init__(config=config)
-        self.model: PaliGemmaForConditionalGeneration = PaliGemmaForConditionalGeneration(config)
-        self.pooling_strategy = "mean"
-        self.main_input_name = "doc_input_ids"
-
-    def forward(self, *args, **kwargs):
-        """
-        Forward pass through Llama and the linear layer for dimensionality reduction
-
-        Args:
-        - input_ids (torch.LongTensor): The input tokens tensor.
-        - attention_mask (torch.LongTensor): The attention mask tensor.
-
-        Returns:
-        - torch.Tensor: Embeddings of shape (batch_size, num_tokens, dim)
-        """
-        outputs = self.model(*args, output_hidden_states=True, **kwargs)
-        last_hidden_states = outputs.hidden_states[-1]  # (batch_size, sequence_length, hidden_size)
-        # pooling -mean on attention mask==1
-        proj = torch.sum(last_hidden_states * kwargs["attention_mask"].unsqueeze(-1), dim=1) / torch.sum(
-            kwargs["attention_mask"], dim=1, keepdim=True
-        )
-        proj = proj / proj.norm(dim=-1, keepdim=True)
-        return proj
-
-
 class BiPaliProj(PaliGemmaPreTrainedModel):
     def __init__(self, config: PaliGemmaConfig):
         super(BiPaliProj, self).__init__(config=config)

@@ -1,9 +1,9 @@
 from transformers import Idefics2Model, Idefics2PreTrainedModel
 
 
-class BiIdefics(Idefics2PreTrainedModel):
+class BiIdefics2(Idefics2PreTrainedModel):
     def __init__(self, config):
-        super(BiIdefics, self).__init__(config=config)
+        super(BiIdefics2, self).__init__(config=config)
         self.model: Idefics2Model = Idefics2Model(config)
         self.pooling_strategy = "last"
         self.main_input_name = "doc_input_ids"

@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import AutoProcessor
 
-from colpali_engine.models.bi_encoders.bipali_architecture import BiPaliMean
+from colpali_engine.models.bi_encoders.bipali_architecture import BiPali
 from colpali_engine.utils.dataset_transformation import load_train_set
 from colpali_engine.utils.processing_utils.colpali_processing_utils import process_images
 
@@ -18,7 +18,7 @@ COMPUTE_HARDNEGS = False
 if COMPUTE_HARDNEGS or COMPUTE_EMBEDDINGS:
     model_name = "./models/bipali"
 
-    model = BiPaliMean.from_pretrained(
+    model = BiPali.from_pretrained(
         "./models/paligemma-3b-mix-448", torch_dtype=torch.bfloat16, device_map="cuda"
     ).eval()
     print("Add adapter")
