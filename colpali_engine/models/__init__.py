@@ -1,2 +1,2 @@
-from .bi_encoders import BiPali, BiPaliProj, BiIdefics2
-from .late_interaction import ColPali, ColIdefics2
+from .bi_encoders import BiIdefics2, BiPali, BiPaliProj
+from .late_interaction import ColIdefics2, ColPali
