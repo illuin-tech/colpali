@@ -1,6 +1,5 @@
 import importlib
 
-
 if importlib.util.find_spec("transformers") is not None:
     from transformers import AutoProcessor, AutoTokenizer
     from transformers.tokenization_utils import PreTrainedTokenizer

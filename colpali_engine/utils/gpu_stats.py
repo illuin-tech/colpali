@@ -1,6 +1,6 @@
 # cond import
 try:
-    from pynvml import *
+    from pynvml import nvmlDeviceGetHandleByIndex, nvmlDeviceGetMemoryInfo, nvmlInit
 
     def print_gpu_utilization():
         nvmlInit()
