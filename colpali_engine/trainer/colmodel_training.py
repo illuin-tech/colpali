@@ -10,8 +10,8 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import AutoTokenizer, Idefics2Processor, PreTrainedModel, PreTrainedTokenizer, TrainingArguments
 
-from colpali_engine.dataset.custom_collator import CustomCollator
-from colpali_engine.dataset.hard_neg_collator import HardNegCollator
+from colpali_engine.collators.custom_collator import CustomCollator
+from colpali_engine.collators.hard_neg_collator import HardNegCollator
 from colpali_engine.loss.late_interaction_losses import (
     ColbertLoss,
     ColbertPairwiseCELoss,

@@ -1,5 +1,5 @@
 config:
-  (): colpali_engine.utils.train_colpali_engine_models.ColModelTrainingConfig
+  (): colpali_engine.trainer.colmodel_training.ColModelTrainingConfig
   output_dir: !path ../../../models/biidefics2-8b-chatty
   processor:
     (): colpali_engine.utils.wrapper.AutoProcessorWrapper
@@ -22,7 +22,7 @@ config:
   max_length: 256
   run_eval: true
   loss_func:
-    (): colpali_engine.loss.colbert_loss.BiEncoderLoss
+    (): colpali_engine.loss.bi_encoder_losses.BiEncoderLoss
   tr_args:
     (): transformers.training_args.TrainingArguments
     output_dir: null

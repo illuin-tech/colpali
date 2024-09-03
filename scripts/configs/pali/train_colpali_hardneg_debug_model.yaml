@@ -1,5 +1,5 @@
 config:
-  (): colpali_engine.utils.train_colpali_engine_models.ColModelTrainingConfig
+  (): colpali_engine.trainer.colmodel_training.ColModelTrainingConfig
   output_dir: !path ../../../models/without_tabfquad/train_colpali-3b-mix-448-debug
   processor:
     () : colpali_engine.utils.wrapper.AutoProcessorWrapper
@@ -25,7 +25,7 @@ config:
   run_eval: true
   add_suffix: true
   loss_func:
-    (): colpali_engine.loss.colbert_loss.ColbertPairwiseNegativeCELoss
+    (): colpali_engine.loss.late_interaction_losses.ColbertPairwiseNegativeCELoss
     in_batch_term: true
   tr_args: !import ../tr_args/resume_neg_tr_args.yaml
   peft_config:
