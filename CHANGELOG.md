@@ -11,7 +11,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - feat: Deprecate `interpretability` and `eval_manager` modules
 - feat: Deprecate unused util modules
-- build: Add demo-related deps in `colpali-engine[demo]`
 - feat: Revamp module organization
 - feat: Restructure the `utils` module
 - feat: Move `ColModelTraining` module
