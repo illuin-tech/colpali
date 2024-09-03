@@ -7,7 +7,7 @@ config:
     max_length: 50
   model:
     (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
-    class_to_instanciate: !ext colpali_engine.models.paligemma_colbert_architecture.ColPali
+    class_to_instanciate: !ext colpali_engine.models.late_interaction.colpali_architecture.ColPali
     pretrained_model_name_or_path: "./models/colpaligemma-3b-mix-448-base"
     torch_dtype:  !ext torch.bfloat16
 #    device_map: "auto"
