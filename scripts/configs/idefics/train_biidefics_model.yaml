@@ -2,11 +2,11 @@ config:
   (): colpali_engine.trainer.colmodel_training.ColModelTrainingConfig
   output_dir: !path ../../../models/biidefics2-8b-chatty
   processor:
-    (): colpali_engine.utils.wrapper.AutoProcessorWrapper
+    (): colpali_engine.utils.transformers_wrappers.AutoProcessorWrapper
     pretrained_model_name_or_path: "HuggingFaceM4/idefics2-8b"
     do_image_splitting: false
   model:
-    (): colpali_engine.utils.wrapper.AllPurposeWrapper
+    (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
     class_to_instanciate: !ext colpali_engine.models.late_interaction.colidefics_architecture.BiIdefics2
     pretrained_model_name_or_path: "HuggingFaceM4/idefics2-8b-chatty"
     # attn_implementation: "flash_attention_2"
