@@ -15,10 +15,8 @@
 
 ## Associated Paper
 
-**ColPali: Efficient Document Retrieval with Vision Language Models**
-Manuel Faysse\*, Hugues Sibille\*, Tony Wu\* Bilel Omrani, Gautier Viaud, Céline Hudelot, Pierre Colombo (\*Equal Contribution)
-
-This repository contains the code used for training the vision retrievers in the paper. In particular, it contains the code for training the ColPali model, which is a vision retriever based on the ColBERT architecture.
+This repository contains the code used for training the vision retrievers in the [**ColPali: Efficient Document Retrieval with Vision Language Models**](https://arxiv.org/abs/2407.01449) paper. 
+In particular, it contains the code for training the ColPali model, which is a vision retriever based on the ColBERT architecture.
 
 ## Setup
 
@@ -83,8 +81,9 @@ pip install colpali-engine==0.1.1
 
 **ColPali: Efficient Document Retrieval with Vision Language Models**  
 
-- First authors: Manuel Faysse\*, Hugues Sibille\*, Tony Wu\* (\*Equal Contribution)
-- Contributors: Bilel Omrani, Gautier Viaud, Céline Hudelot, Pierre Colombo
+Authors: Manuel Faysse\*, Hugues Sibille\*, Tony Wu\*, Bilel Omrani, Gautier Viaud, Céline Hudelot, Pierre Colombo
+
+(\* Denotes Equal Contribution)
 
 ```latex
 @misc{faysse2024colpaliefficientdocumentretrieval,
