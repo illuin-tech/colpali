@@ -51,7 +51,6 @@ def load_train_set_detailed() -> DatasetDict:
     return ds_dict
 
 
-
 def load_train_set_with_tabfquad() -> DatasetDict:
     ds_paths = [
         "infovqa_train",
