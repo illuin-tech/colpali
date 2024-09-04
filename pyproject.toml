@@ -46,6 +46,7 @@ train = [
     "mteb>=1.12.22",
     "typer>=0.12.3",
 ]
+
 dev = [
     "black>=24.4.2",
     "coverage>=7.5.2",
@@ -54,6 +55,7 @@ dev = [
     "pytest>=8.2.1",
     "ruff>=0.4.5",
 ]
+
 all = ["colpali-engine[dev]", "colpali-engine[train]"]
 
 [project.urls]

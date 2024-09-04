@@ -1,14 +1,15 @@
+from typing import cast
+
 import torch
 import typer
-from PIL import Image
+from datasets import Dataset, load_dataset
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import AutoProcessor
 
-from colpali_engine.models.paligemma_colbert_architecture import ColPali
+from colpali_engine.models.late_interaction.colpali_architecture import ColPali
 from colpali_engine.trainer.retrieval_evaluator import CustomEvaluator
-from colpali_engine.utils.colpali_processing_utils import process_images, process_queries
-from colpali_engine.utils.image_from_page_utils import load_from_dataset
+from colpali_engine.utils.processing_utils.colpali_processing_utils import process_images, process_queries
 
 
 def main() -> None:
@@ -16,12 +17,13 @@ def main() -> None:
 
     # Load model
     model_name = "vidore/colpali-v1.2"
-    model = ColPali.from_pretrained("vidore/colpaligemma-3b-pt-448-base", torch_dtype=torch.bfloat16, device_map="cuda").eval()
+    model = ColPali.from_pretrained(
+        "vidore/colpaligemma-3b-pt-448-base", torch_dtype=torch.bfloat16, device_map="cuda"
+    ).eval()
     model.load_adapter(model_name)
     processor = AutoProcessor.from_pretrained(model_name)
 
-    # select images -> load_from_pdf(<pdf_path>),  load_from_image_urls(["<url_1>"]), load_from_dataset(<path>)
-    images = load_from_dataset("vidore/docvqa_test_subsampled")
+    images = cast(Dataset, load_dataset("vidore/docvqa_test_subsampled", split="test"))["image"]
     queries = ["From which university does James V. Fiorca come ?", "Who is the japanese prime minister?"]
 
     # run inference - docs
@@ -43,7 +45,7 @@ def main() -> None:
         queries,
         batch_size=4,
         shuffle=False,
-        collate_fn=lambda x: process_queries(processor, x, Image.new("RGB", (448, 448), (255, 255, 255))),
+        collate_fn=lambda x: process_queries(processor, x),
     )
 
     qs = []

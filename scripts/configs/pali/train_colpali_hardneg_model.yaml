@@ -1,13 +1,13 @@
 config:
-  (): colpali_engine.utils.train_colpali_engine_models.ColModelTrainingConfig
+  (): colpali_engine.trainer.colmodel_training.ColModelTrainingConfig
   output_dir: !path ../../../models/right_pad/train_colpali_hardneg_long
   processor:
-    () : colpali_engine.utils.wrapper.AutoProcessorWrapper
+    () : colpali_engine.utils.transformers_wrappers.AutoProcessorWrapper
     pretrained_model_name_or_path:  "./models/colpaligemma-3b-pt-448-base" # "./models/paligemma-3b-mix-448"
     max_length: 50
   model:
-    (): colpali_engine.utils.wrapper.AllPurposeWrapper
-    class_to_instanciate: !ext colpali_engine.models.paligemma_colbert_architecture.ColPali
+    (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
+    class_to_instanciate: !ext colpali_engine.models.late_interaction.colpali_architecture.ColPali
     pretrained_model_name_or_path: "./models/colpaligemma-3b-pt-448-base"
     torch_dtype:  !ext torch.bfloat16
 #    device_map: "auto"
@@ -25,7 +25,7 @@ config:
   run_eval: true
   add_suffix: true
   loss_func:
-    (): colpali_engine.loss.colbert_loss.ColbertPairwiseNegativeCELoss
+    (): colpali_engine.loss.late_interaction_losses.ColbertPairwiseNegativeCELoss
     in_batch_term: true
   tr_args:
     (): transformers.training_args.TrainingArguments
