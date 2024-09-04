@@ -15,6 +15,13 @@ def add_metadata_column(dataset, column_name, value):
 
 
 def load_train_set() -> DatasetDict:
+    ds_path = "colpali_train_set"
+    base_path = "./data_dir/" if USE_LOCAL_DATASET else "vidore/"
+    ds_dict = load_dataset(base_path + ds_path)
+    return ds_dict
+
+
+def load_train_set_detailed() -> DatasetDict:
     ds_paths = [
         "infovqa_train",
         "docvqa_train",
@@ -42,6 +49,7 @@ def load_train_set() -> DatasetDict:
     dataset = dataset.select(range(500, len(dataset)))
     ds_dict = DatasetDict({"train": dataset, "test": dataset_eval})
     return ds_dict
+
 
 
 def load_train_set_with_tabfquad() -> DatasetDict:
