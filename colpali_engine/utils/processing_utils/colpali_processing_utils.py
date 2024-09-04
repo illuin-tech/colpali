@@ -1,5 +1,5 @@
 """Utils for processing images and queries for ColPaLi"""
-from typing import List
+from typing import List, Optional
 
 from PIL import Image
 from transformers import BatchFeature
@@ -18,14 +18,11 @@ def process_images(processor, images: List[Image]) -> BatchFeature:
     return batch_doc
 
 
-def process_queries(
-    processor, queries: List[str], max_length: int = 50, suffix: str = "default_suffix"
-) -> BatchFeature:
+def process_queries(processor, queries: List[str], max_length: int = 50, suffix: Optional[str] = None) -> BatchFeature:
 
     mock_image = Image.new("RGB", (448, 448), (255, 255, 255)).convert("RGB")
 
-    if suffix == "default_suffix":
-        suffix = "<pad>" * 10
+    suffix = suffix or "<pad>" * 10
     texts_query = []
     for query in queries:
         query = f"Question: {query}"
