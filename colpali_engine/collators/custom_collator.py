@@ -21,9 +21,12 @@ class CustomCollator:
             raise ValueError("Either processor or tokenizer should be provided.")
 
         if self.processor is not None:
-            self.image_token_id = self.processor.tokenizer.additional_special_tokens_ids[
-                self.processor.tokenizer.additional_special_tokens.index("<image>")
-            ]
+            try:
+                self.image_token_id = self.processor.tokenizer.additional_special_tokens_ids[
+                    self.processor.tokenizer.additional_special_tokens.index("<image>")
+                ]
+            except:
+                pass
 
             if self.tokenizer is not None:
                 raise ValueError("Only one of processor or tokenizer should be provided.")
@@ -49,6 +52,8 @@ class CustomCollator:
             return self.forward_vision_idefics(examples)
         if self.processor.__class__.__name__ == "PaliGemmaProcessor":
             return self.forward_vision_pali(examples)
+        if self.processor.__class__.__name__ == "Phi3VProcessor": 
+            return self.forward_vision_phi(examples)
         raise ValueError("Processor not supported")
 
     def forward_text(self, examples):
@@ -213,3 +218,66 @@ class CustomCollator:
             batch_doc.update(batch_neg_doc)
 
         return batch_doc
+
+    def forward_vision_phi(self, examples):
+        texts_doc = []
+        texts_query = []
+        images = []
+
+        for example in examples:
+            image = example['image']
+            text_query = None
+            if example['query'] is not None:
+                query = example['query'] + self.suffix
+                messages_query = [
+                    {
+                        "role": "user",
+                        "content": [
+                              {"role": "user", "content": f"{query}" },
+                        ],
+                    },
+                ]
+                text_query = self.processor.tokenizer.apply_chat_template(messages_query,tokenize = False, add_generation_prompt=False, ).strip()
+
+            messages_doc = [
+                        {"role": "user", "content": "<|image_1|>\nDescribe the image."},
+
+            ]
+
+            text_doc = self.processor.tokenizer.apply_chat_template(messages_doc, add_generation_prompt=False).strip()
+
+            texts_doc.append(text_doc.strip())
+            texts_query.append(text_query)
+            images.append(image)
+
+        batch_doc = self.processor(
+            text=texts_doc,
+            images=images,
+            return_tensors="pt",
+            padding="longest",
+            max_length=self.max_length
+        )
+
+        batch_query = None
+        if all([t is None for t in texts_query]):
+            print("All queries are None. Returning None for all queries.")
+        elif any([t is None for t in texts_query]):
+            raise ValueError("Some queries are None. This collator does not support None queries yet.")
+        else:
+            batch_query = self.processor(
+                text=texts_query,
+                images=None,
+                return_tensors="pt",
+                padding="longest",
+                max_length=self.max_length
+            )
+
+        batch_doc = {f"doc_{k}": v for k, v in batch_doc.items()}
+
+
+        if batch_query is not None:
+            batch_query = {f"query_{k}": v for k, v in batch_query.items()}
+            batch_doc.update(batch_query)
+        
+        return batch_doc
+
