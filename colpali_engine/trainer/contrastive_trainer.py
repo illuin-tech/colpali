@@ -56,9 +56,9 @@ class ContrastiveTrainer(Trainer):
                 #         pixel_values=inputs["doc_pixel_values"],
                 #         pixel_attention_mask=inputs["doc_pixel_attention_mask"],
                 #     )
-                # query_outputs = model(
-                #     input_ids=inputs["query_input_ids"], attention_mask=inputs["query_attention_mask"]
-                # )
+                query_outputs = model(
+                    input_ids=inputs["query_input_ids"], attention_mask=inputs["query_attention_mask"]
+                )
                 doc_outputs = model(input_ids = inputs['doc_input_ids'], 
                                     attention_mask = inputs['doc_attention_mask'], 
                                     pixel_values = inputs['doc_pixel_values'], 
@@ -115,6 +115,7 @@ class ContrastiveNegativeTrainer(Trainer):
             doc_outputs = model(input_ids = inputs['doc_input_ids'], 
             attention_mask = inputs['doc_attention_mask'], 
             pixel_values = inputs['doc_pixel_values'], image_sizes = inputs['doc_image_sizes'])
+        
         else:
             raise NotImplementedError("Only vision models are supported for now")
 
@@ -173,7 +174,11 @@ class ContrastiveNegativeTrainer(Trainer):
                 attention_mask = input['doc_attention_mask'],
                  pixel_values = input['doc_pixel_values'],
                  image_sizes = input['doc_image_sizes'])
-                neg_doc_outputs = 
+
+                neg_doc_outputs = model(input_ids = input['neg_doc_input_ids'], 
+                attention_mask = input['neg_doc_attention_mask'],
+                 pixel_values = input['neg_doc_pixel_values'],
+                 image_sizes = input['neg_doc_image_sizes'])
                 query_outputs = model(
                     input_ids=inputs["query_input_ids"], attention_mask=inputs["query_attention_mask"]
                 )

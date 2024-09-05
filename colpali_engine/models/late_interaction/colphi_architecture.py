@@ -13,6 +13,7 @@ class ColPhi3(Phi3VPreTrainedModel):
         self.dim = 128
         self.custom_text_proj = nn.Linear(self.model.config.hidden_size, self.dim)
         self.main_input_name = "doc_input_ids"
+        self.post_init()
 
         # Copied from transformers.models.llama.modeling_llama.LlamaForCausalLM.get_input_embeddings
     def get_input_embeddings(self):

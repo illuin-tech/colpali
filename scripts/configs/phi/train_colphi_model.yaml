@@ -10,14 +10,14 @@ config:
     class_to_instanciate: !ext colpali_engine.models.late_interaction.colphi_architecture.ColPhi3
     pretrained_model_name_or_path: "microsoft/Phi-3-vision-128k-instruct"
     torch_dtype:  !ext torch.bfloat16
-    _attn_implementation: "eager"
+    # _attn_implementation: "eager"
     device_map: "auto"
-    # quantization_config:
-    #   (): transformers.BitsAndBytesConfig
-    #   load_in_4bit: true
-    #   bnb_4bit_quant_type: "nf4"
-    #   bnb_4bit_compute_dtype:  "bfloat16"
-    #   bnb_4bit_use_double_quant: true
+    quantization_config:
+      (): transformers.BitsAndBytesConfig
+      load_in_4bit: true
+      bnb_4bit_quant_type: "nf4"
+      bnb_4bit_compute_dtype:  "bfloat16"
+      bnb_4bit_use_double_quant: true
 
   dataset_loading_func: !ext colpali_engine.utils.dataset_transformation.load_train_set
   eval_dataset_loader: !import ../data/test_data.yaml
@@ -36,6 +36,6 @@ config:
     init_lora_weights: "gaussian"
     bias: "none"
     task_type: "FEATURE_EXTRACTION"
-    target_modules: '(.*(q_proj|k_proj|v_proj|out_proj|fc1|fc2|img_projection.0|img_projection.2).*$|.*(custom_text_proj).*$)'
+    target_modules: '(.*(qkv_proj|o_proj|down_proj|gate_up_proj|q_proj|k_proj|v_proj|out_proj|fc1|fc2|img_projection.0|img_projection.2).*$|.*(custom_text_proj).*$)'
     # target_modules: '(.*(language_model).*(down_proj|gate_proj|up_proj|k_proj|q_proj|v_proj|o_proj).*$|.*(custom_text_proj).*$)'
 
