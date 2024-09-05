@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F  # noqa: N812
 
-from colpali_engine.models.colpali_2.colpali_2_modeling_outputs import ColPali2ModelOutput
+from colpali_engine.models.late_interaction.colpali_2.colpali_2_modeling_outputs import ColPali2ModelOutput
 
 
 class MatryoshkaCELoss(torch.nn.Module):

@@ -4,9 +4,9 @@ import torch
 from torch import nn
 from transformers.models.paligemma.modeling_paligemma import PaliGemmaForConditionalGeneration, PaliGemmaPreTrainedModel
 
-from colpali_engine.models.colpali_2.colpali_2_config import ColPali2Config
-from colpali_engine.models.colpali_2.colpali_2_modeling_outputs import ColPali2ModelOutput
-from colpali_engine.models.colpali_2.colpali_2_utils import MultiVectorPooler
+from colpali_engine.models.late_interaction.colpali_2.colpali_2_config import ColPali2Config
+from colpali_engine.models.late_interaction.colpali_2.colpali_2_modeling_outputs import ColPali2ModelOutput
+from colpali_engine.models.late_interaction.colpali_2.colpali_2_utils import MultiVectorPooler
 
 
 class ColPali2(PaliGemmaPreTrainedModel):
