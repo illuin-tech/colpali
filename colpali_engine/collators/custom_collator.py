@@ -101,7 +101,7 @@ class CustomCollator:
                         ],
                     },
                 ]
-                text_query = self.processor.apply_chat_template(messages_query, add_generation_prompt=False).strip()
+                text_query = self.processor.apply_chat_template(messages_query, add_generation_prompt=False, tokenize = False).strip()
 
             messages_doc = [
                 {
@@ -225,17 +225,15 @@ class CustomCollator:
         images = []
 
         for example in examples:
-            image = example['image']
+            image = example["image"]
             text_query = None
             if example['query'] is not None:
                 query = example['query'] + self.suffix
                 messages_query = [
-                    {
-                        "role": "user",
-                        "content": [
-                              {"role": "user", "content": f"{query}" },
-                        ],
-                    },
+                    
+                        {"role": "user", "content": f"{query}" },
+                        
+                    
                 ]
                 text_query = self.processor.tokenizer.apply_chat_template(messages_query,tokenize = False, add_generation_prompt=False, ).strip()
 
@@ -244,15 +242,15 @@ class CustomCollator:
 
             ]
 
-            text_doc = self.processor.tokenizer.apply_chat_template(messages_doc, add_generation_prompt=False).strip()
+            text_doc = self.processor.tokenizer.apply_chat_template(messages_doc,tokenize = False,  add_generation_prompt=False).strip()
 
             texts_doc.append(text_doc.strip())
             texts_query.append(text_query)
             images.append(image)
 
         batch_doc = self.processor(
-            text=texts_doc,
-            images=images,
+            text=texts_doc[0],
+            images=images[0],
             return_tensors="pt",
             padding="longest",
             max_length=self.max_length
