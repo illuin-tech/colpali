@@ -1,14 +1,14 @@
 config:
   (): colpali_engine.trainer.colmodel_training.ColModelTrainingConfig
-  output_dir: !path ../../../models/right_pad/train_colpali-3b-mix-448
+  output_dir: !path ../../../models/right_pad/train_colphi-3b-mix-448
   processor:
     () : colpali_engine.utils.transformers_wrappers.AutoProcessorWrapper
-    pretrained_model_name_or_path:  "google/paligemma-3b-mix-448" # "./models/paligemma-3b-mix-448"
+    pretrained_model_name_or_path:  "microsoft/Phi-3-vision-128k-instruct" # "./models/paligemma-3b-mix-448"
     max_length: 50
   model:
     (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
-    class_to_instanciate: !ext colpali_engine.models.late_interaction.colpali_architecture.ColPali
-    pretrained_model_name_or_path: "google/paligemma-3b-mix-448"
+    class_to_instanciate: !ext colpali_engine.models.late_interaction.colphi_architecture.ColPhi3
+    pretrained_model_name_or_path: "microsoft/Phi-3-vision-128k-instruct"
     torch_dtype:  !ext torch.bfloat16
 #    device_map: "auto"
 #    quantization_config:
@@ -35,6 +35,6 @@ config:
     init_lora_weights: "gaussian"
     bias: "none"
     task_type: "FEATURE_EXTRACTION"
-    target_modules: '(.*(language_model).*(down_proj|gate_proj|up_proj|k_proj|q_proj|v_proj|o_proj).*$|.*(custom_text_proj).*$)'
+    target_modules: '(.*(encoder).*(down_proj|gate_proj|up_proj|k_proj|q_proj|v_proj|o_proj|qkv_proj).*$|.*(custom_text_proj).*$)'
     # target_modules: '(.*(language_model).*(down_proj|gate_proj|up_proj|k_proj|q_proj|v_proj|o_proj).*$|.*(custom_text_proj).*$)'
 
