@@ -1,11 +1,12 @@
 """Utils for processing images and queries for ColPaLi"""
+
 from typing import List, Optional
 
 from PIL import Image
 from transformers import BatchFeature
 
 
-def process_images(processor, images: List[Image]) -> BatchFeature:
+def process_images(processor, images: List[Image.Image]) -> BatchFeature:
     texts_doc = []
     images = [image.convert("RGB") for image in images]
 

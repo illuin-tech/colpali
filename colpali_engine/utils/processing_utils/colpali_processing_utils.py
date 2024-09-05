@@ -1,4 +1,5 @@
 """Utils for processing images and queries for ColPaLi"""
+
 from typing import List, Optional
 
 from PIL import Image
@@ -19,7 +20,6 @@ def process_images(processor, images: List[Image.Image]) -> BatchFeature:
 
 
 def process_queries(processor, queries: List[str], max_length: int = 50, suffix: Optional[str] = None) -> BatchFeature:
-
     mock_image = Image.new("RGB", (448, 448), (255, 255, 255)).convert("RGB")
 
     suffix = suffix or "<pad>" * 10
