@@ -26,7 +26,7 @@ class CustomCollator:
                     self.processor.tokenizer.additional_special_tokens.index("<image>")
                 ]
             except:
-                pass
+                self.image_token_id = self.processor.get_special_image_token_id()
 
             if self.tokenizer is not None:
                 raise ValueError("Only one of processor or tokenizer should be provided.")
@@ -72,6 +72,7 @@ class CustomCollator:
         batch_query = self.tokenizer(
             texts_query, max_length=self.max_length, padding="longest", truncation=True, return_tensors="pt"
         )
+
 
         # prefix each key with "doc_" or "query_" to avoid key conflicts
         batch_doc = {f"doc_{k}": v for k, v in batch_doc.items()}
@@ -224,6 +225,7 @@ class CustomCollator:
         texts_query = []
         images = []
 
+
         for example in examples:
             image = example["image"]
             text_query = None
@@ -235,8 +237,9 @@ class CustomCollator:
                         
                     
                 ]
-                text_query = self.processor.tokenizer.apply_chat_template(messages_query,tokenize = False, add_generation_prompt=False, ).strip()
 
+                text_query = self.processor.tokenizer.apply_chat_template(messages_query,tokenize = False, add_generation_prompt=False, ).strip()
+            
             messages_doc = [
                         {"role": "user", "content": "<|image_1|>\nDescribe the image."},
 
@@ -269,6 +272,7 @@ class CustomCollator:
                 padding="longest",
                 max_length=self.max_length
             )
+
 
         batch_doc = {f"doc_{k}": v for k, v in batch_doc.items()}
 

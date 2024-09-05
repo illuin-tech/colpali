@@ -11,7 +11,7 @@ config:
     pretrained_model_name_or_path: "microsoft/Phi-3-vision-128k-instruct"
     torch_dtype:  !ext torch.bfloat16
     _attn_implementation: "eager"
-    # device_map: "auto"
+    device_map: "auto"
     # quantization_config:
     #   (): transformers.BitsAndBytesConfig
     #   load_in_4bit: true

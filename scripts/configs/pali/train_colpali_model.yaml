@@ -10,13 +10,13 @@ config:
     class_to_instanciate: !ext colpali_engine.models.late_interaction.colpali_architecture.ColPali
     pretrained_model_name_or_path: "google/paligemma-3b-mix-448"
     torch_dtype:  !ext torch.bfloat16
-    # device_map: "auto"
-    # quantization_config:
-    #   (): transformers.BitsAndBytesConfig
-    #   load_in_4bit: true
-    #   bnb_4bit_quant_type: "nf4"
-    #   bnb_4bit_compute_dtype:  "bfloat16"
-    #   bnb_4bit_use_double_quant: true
+    device_map: "auto"
+    quantization_config:
+      (): transformers.BitsAndBytesConfig
+      load_in_4bit: true
+      bnb_4bit_quant_type: "nf4"
+      bnb_4bit_compute_dtype:  "bfloat16"
+      bnb_4bit_use_double_quant: true
 
   dataset_loading_func: !ext colpali_engine.utils.dataset_transformation.load_train_set
   eval_dataset_loader: !import ../data/test_data.yaml

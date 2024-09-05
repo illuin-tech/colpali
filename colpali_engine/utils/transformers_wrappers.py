@@ -9,7 +9,7 @@ if util.find_spec("transformers") is not None:
     class AllPurposeWrapper:
         def __new__(cls, class_to_instanciate, trust_remote_code=True, *args, **kwargs):
             return class_to_instanciate.from_pretrained(
-                trust_remote_code=trust_remote_code, *args, **kwargs
+                trust_remote_code=trust_remote_code,*args, **kwargs
             )
 
     class AutoProcessorWrapper:
