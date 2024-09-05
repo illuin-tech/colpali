@@ -9,7 +9,7 @@ from transformers import AutoProcessor
 
 from colpali_engine.models import ColPali
 from colpali_engine.trainer.retrieval_evaluator import CustomEvaluator
-from colpali_engine.utils.processing_utils.colpali_processing_utils import (
+from colpali_engine.utils.processing_utils_old.colpali_processing_utils import (
     process_images_colpali,
     process_queries_colpali,
 )

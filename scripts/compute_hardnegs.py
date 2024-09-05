@@ -7,7 +7,7 @@ from transformers import AutoProcessor
 
 from colpali_engine.models import BiPali
 from colpali_engine.utils.dataset_transformation import load_train_set
-from colpali_engine.utils.processing_utils.colpali_processing_utils import process_images_colpali
+from colpali_engine.utils.processing_utils_old.colpali_processing_utils import process_images_colpali
 
 train_set = load_train_set()
 
@@ -79,7 +79,7 @@ if COMPUTE_HARDNEGS:
     # compute hard negatives
     ds = ds.to("cuda")
 
-    from colpali_engine.utils.processing_utils.colpali_processing_utils import process_queries_colpali
+    from colpali_engine.utils.processing_utils_old.colpali_processing_utils import process_queries_colpali
 
     # iterate on the train set
 
