@@ -1,6 +1,6 @@
 config:
   (): colpali_engine.trainer.colmodel_training.ColModelTrainingConfig
-  output_dir: !path ../../../models/right_pad/train_colphi-3b-mix-448
+  output_dir: !path ../../../models/right_pad/train_colphi-3-vision-128k-instruct
   processor:
     () : colpali_engine.utils.transformers_wrappers.AutoProcessorWrapper
     pretrained_model_name_or_path:  "microsoft/Phi-3-vision-128k-instruct" # "./models/paligemma-3b-mix-448"

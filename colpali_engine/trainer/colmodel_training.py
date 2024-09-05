@@ -81,15 +81,36 @@ class ColModelTrainingConfig:
                 #     self.model.model.vision_model.encoder.layers = self.model.model.vision_model.encoder.layers[0:2]
                 # self.model.enable_input_require_grads()
                 if self.pretrained_peft_model_name_or_path is None:
-                    self.model.add_adapter(self.peft_config)
-                    self.model.enable_adapters()
-                    # self.model = get_peft_model(self.model, self.peft_config)
-                    # self.model.print_trainable_parameters()
+                    # self.model.add_adapter(self.peft_config)
+                    # self.model.enable_adapters()
+                    # patch_clip_for_lora(self.model)
+                    self.model = get_peft_model(self.model, self.peft_config)
+                    self.model.gradient_checkpointing_enable()
+                    self.model.print_trainable_parameters()
                 else:
                     print(f"Adapter already loaded from {self.pretrained_peft_model_name_or_path}. Not overwriting.")
 
     print_gpu_utilization()
 
+def patch_clip_for_lora(model):
+    # remove unused parameters and then monkey patch
+    def get_img_features(self, img_embeds):
+        clip_vision_model = self.img_processor.vision_model
+        hidden_states = clip_vision_model.embeddings(img_embeds)
+        hidden_states = clip_vision_model.pre_layrnorm(hidden_states)
+        patch_feature = clip_vision_model.encoder(
+            inputs_embeds=hidden_states, output_hidden_states=True
+        ).hidden_states[-1][:, 1:]
+        return patch_feature
+
+    image_embedder = model.model.vision_embed_tokens
+    layer_index = image_embedder.layer_idx
+    clip_layers = image_embedder.img_processor.vision_model.encoder.layers
+    if layer_index < 0:
+        layer_index = len(clip_layers) + layer_index
+    del clip_layers[layer_index + 1 :]
+    del image_embedder.img_processor.vision_model.post_layernorm
+    image_embedder.get_img_features = get_img_features.__get__(image_embedder)
 
 class ColModelTraining:
     def __init__(self, config: ColModelTrainingConfig) -> None:
