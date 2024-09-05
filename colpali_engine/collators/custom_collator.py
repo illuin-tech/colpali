@@ -6,6 +6,8 @@ from transformers.image_utils import ImageInput
 from transformers.models.idefics2 import Idefics2Processor
 from transformers.models.paligemma import PaliGemmaProcessor
 
+from colpali_engine.utils.processing_utils.colpali_processing_utils import process_images, process_queries
+
 
 class CustomCollator:
     """
@@ -190,7 +192,6 @@ class CustomCollator:
         Collate function for ColPaLi.
         """
         # Placeholders
-        texts_doc: List[str] = []
         texts_query: List[str] | List[None] | List[str | None] = []  # some documents don't have a query
         images: List[Image] = []
         neg_images: List[Image] = []
@@ -203,64 +204,46 @@ class CustomCollator:
             if example["image"] is None:
                 raise ValueError("Image is None - This collator does not support None images yet.")
 
-            image = cast(Image, example["image"]).convert("RGB")
-            images.append(image)
-            texts_doc.append("Describe the image.")
+            images.append(cast(Image, example["image"]))
 
             if "neg_image" in example and example["neg_image"] is not None:
-                neg_image = cast(Image, example["neg_image"]).convert("RGB")
-                neg_images.append(neg_image)
+                neg_images.append(cast(Image, example["neg_image"]))
 
             if example["query"] is None:
                 texts_query.append(None)
-            else:
-                query = example["query"]
-                query = f"Question: {query}"
-                query += self.suffix  # add suffix (pad tokens)
-                texts_query.append(query)
 
         # Process the documents
-        batch_doc = self.processor(
-            text=texts_doc,
+        batch_doc = process_images(
+            processor=self.processor,
             images=images,
-            return_tensors="pt",
-            padding="longest",
-            max_length=self.max_length + self.processor.image_seq_length,
+            max_length=self.max_length,
         )
 
-        # Process the negative documents
+        # Process the negative documents (if available)
         batch_neg_doc = None
         if len(neg_images) > 0:
-            batch_neg_doc = self.processor(
-                text=texts_doc,
+            batch_neg_doc = process_images(
+                processor=self.processor,
                 images=neg_images,
-                return_tensors="pt",
-                padding="longest",
-                max_length=self.max_length + self.processor.image_seq_length,
+                max_length=self.max_length,
             )
 
         # Process the queries
         batch_query = None
 
-        # Check if some but not all queries are `None`
         if all([t is None for t in texts_query]):
-            print("All queries are None. Returning None for all queries.")
+            print("All queries are `None`. Returning `None` for all queries.")
         elif any([t is None for t in texts_query]):
             # If it's the first query that is not None but the rest are None, then it's hard negatives.
             raise ValueError("Some queries are None. This collator does not support None queries yet.")
         else:
             texts_query = cast(List[str], texts_query)
-            # NOTE: The image is not used in batch_query but it is required for calling the processor.
-            batch_query = self.processor(
-                images=images,
-                text=texts_query,
-                return_tensors="pt",
-                padding="longest",
-                max_length=self.max_length + self.processor.image_seq_length,
+            batch_query = process_queries(
+                processor=self.processor,
+                queries=texts_query,
+                max_length=self.max_length,
+                suffix=self.suffix,
             )
-            del batch_query["pixel_values"]
-            batch_query["input_ids"] = batch_query["input_ids"][..., self.processor.image_seq_length :]
-            batch_query["attention_mask"] = batch_query["attention_mask"][..., self.processor.image_seq_length :]
 
         # Prefix each key with "doc_" or "query_" to avoid key conflicts
         batch_all = {f"doc_{k}": v for k, v in batch_doc.items()}
