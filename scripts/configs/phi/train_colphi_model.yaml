@@ -35,6 +35,6 @@ config:
     init_lora_weights: "gaussian"
     bias: "none"
     task_type: "FEATURE_EXTRACTION"
-    target_modules: '(.*(encoder).*(down_proj|gate_proj|up_proj|k_proj|q_proj|v_proj|o_proj|qkv_proj).*$|.*(custom_text_proj).*$)'
+    target_modules: '(.*(q_proj|k_proj|v_proj|out_proj|fc1|fc2|img_projection.0|img_projection.2).*$|.*(custom_text_proj).*$)'
     # target_modules: '(.*(language_model).*(down_proj|gate_proj|up_proj|k_proj|q_proj|v_proj|o_proj).*$|.*(custom_text_proj).*$)'
 
