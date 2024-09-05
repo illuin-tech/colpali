@@ -1,2 +1,2 @@
-from .colidefics_architecture import *  # noqa: F403
-from .colpali_architecture import *  # noqa: F403
+from .colidefics import *  # noqa: F403
+from .colpali import *  # noqa: F403

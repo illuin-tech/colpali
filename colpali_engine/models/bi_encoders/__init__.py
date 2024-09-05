@@ -1,2 +1,2 @@
-from .biidefics_architecture import *  # noqa: F403
-from .bipali_architecture import *  # noqa: F403
+from .biidefics import *  # noqa: F403
+from .bipali import *  # noqa: F403

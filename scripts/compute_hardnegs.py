@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import AutoProcessor
 
-from colpali_engine.models.bi_encoders.bipali_architecture import BiPali
+from colpali_engine.models import BiPali
 from colpali_engine.utils.dataset_transformation import load_train_set
 from colpali_engine.utils.processing_utils.colpali_processing_utils import process_images_colpali
 
