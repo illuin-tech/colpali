@@ -7,10 +7,9 @@ from transformers import BatchFeature
 from transformers.models.paligemma import PaliGemmaProcessor
 
 
-def process_images(
+def process_images_colpali(
     processor: PaliGemmaProcessor,
     images: List[Image.Image],
-    max_length: int = 50,
 ) -> BatchFeature:
     """
     Process images for ColPaLi, with an efficient tweak around the PaliGemmma processor.
@@ -23,13 +22,12 @@ def process_images(
         images=images,
         return_tensors="pt",
         padding="longest",
-        max_length=max_length + processor.image_seq_length,
     )
 
     return batch_doc
 
 
-def process_queries(
+def process_queries_colpali(
     processor: PaliGemmaProcessor,
     queries: List[str],
     max_length: int = 50,

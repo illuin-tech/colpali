@@ -7,7 +7,7 @@ from transformers import AutoProcessor
 
 from colpali_engine.models.bi_encoders.bipali_architecture import BiPali
 from colpali_engine.utils.dataset_transformation import load_train_set
-from colpali_engine.utils.processing_utils.colpali_processing_utils import process_images
+from colpali_engine.utils.processing_utils.colpali_processing_utils import process_images_colpali
 
 train_set = load_train_set()
 
@@ -55,7 +55,7 @@ if COMPUTE_EMBEDDINGS:
         filtered_dataset,
         batch_size=8,
         shuffle=False,
-        collate_fn=lambda x: process_images(processor, [a["image"] for a in x]),
+        collate_fn=lambda x: process_images_colpali(processor, [a["image"] for a in x]),
     )
     print("Computing embeddings")
 
@@ -79,7 +79,7 @@ if COMPUTE_HARDNEGS:
     # compute hard negatives
     ds = ds.to("cuda")
 
-    from colpali_engine.utils.processing_utils.colpali_processing_utils import process_queries
+    from colpali_engine.utils.processing_utils.colpali_processing_utils import process_queries_colpali
 
     # iterate on the train set
 
@@ -87,7 +87,7 @@ if COMPUTE_HARDNEGS:
 
     for i in tqdm(range(0, len(train_set["train"]), 8)):
         samples = train_set["train"][i : i + 8]
-        batch_query = process_queries(processor, samples["query"])
+        batch_query = process_queries_colpali(processor, samples["query"])
         with torch.no_grad():
             batch_query = {k: v.to(model.device) for k, v in batch_query.items()}
             embeddings_query = model(**batch_query)

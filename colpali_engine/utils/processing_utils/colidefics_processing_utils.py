@@ -3,10 +3,17 @@
 from typing import List, Optional
 
 from PIL import Image
-from transformers import BatchFeature
+from transformers import BatchEncoding
+from transformers.models.idefics2 import Idefics2Processor
 
 
-def process_images(processor, images: List[Image.Image]) -> BatchFeature:
+def process_images_idefics(
+    processor: Idefics2Processor,
+    images: List[Image.Image],
+) -> BatchEncoding:
+    """
+    Process images for ColIdefics2, with an efficient tweak around the Idefics2 processor.
+    """
     texts_doc = []
     images = [image.convert("RGB") for image in images]
 
@@ -33,7 +40,15 @@ def process_images(processor, images: List[Image.Image]) -> BatchFeature:
     return batch_doc
 
 
-def process_queries(processor, queries: List[str], max_length: int = 50, suffix: Optional[str] = None) -> BatchFeature:
+def process_queries_idefics(
+    processor: Idefics2Processor,
+    queries: List[str],
+    max_length: int = 50,
+    suffix: Optional[str] = None,
+) -> BatchEncoding:
+    """
+    Process queries for ColIdefics2, with an efficient tweak around the Idefics2 processor.
+    """
     suffix = suffix or "<end_of_utterance>" * 5
     texts_query = []
     for query in queries:

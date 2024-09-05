@@ -9,7 +9,10 @@ from transformers import AutoProcessor
 
 from colpali_engine.models.late_interaction.colpali_architecture import ColPali
 from colpali_engine.trainer.retrieval_evaluator import CustomEvaluator
-from colpali_engine.utils.processing_utils.colpali_processing_utils import process_images, process_queries
+from colpali_engine.utils.processing_utils.colpali_processing_utils import (
+    process_images_colpali,
+    process_queries_colpali,
+)
 
 
 def main() -> None:
@@ -31,7 +34,7 @@ def main() -> None:
         images,
         batch_size=4,
         shuffle=False,
-        collate_fn=lambda x: process_images(processor, x),
+        collate_fn=lambda x: process_images_colpali(processor, x),
     )
     ds = []
     for batch_doc in tqdm(dataloader):
@@ -45,7 +48,7 @@ def main() -> None:
         queries,
         batch_size=4,
         shuffle=False,
-        collate_fn=lambda x: process_queries(processor, x),
+        collate_fn=lambda x: process_queries_colpali(processor, x),
     )
 
     qs = []
