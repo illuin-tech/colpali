@@ -14,7 +14,7 @@ if util.find_spec("transformers") is not None:
 
     class AutoProcessorWrapper:
         def __new__(cls, *args, **kwargs):
-            return AutoProcessor.from_pretrained(trust_remote_code=True, *args, **kwargs)
+            return AutoProcessor.from_pretrained(trust_remote_code=True, min_pixels=256*28*28, max_pixels = 1280*28*28, *args, **kwargs)
 
     class AutoTokenizerWrapper(PreTrainedTokenizer):
         def __new__(cls, *args, **kwargs):

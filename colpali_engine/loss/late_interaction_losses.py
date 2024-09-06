@@ -49,7 +49,6 @@ class ColbertPairwiseCELoss(torch.nn.Module):
 
         Positive scores are the diagonal of the scores matrix.
         """
-        print(query_embeddings.shape, doc_embeddings.shape)
         # Compute the ColBERT scores
         scores = (
             torch.einsum("bnd,csd->bcns", query_embeddings, doc_embeddings).max(dim=3)[0].sum(dim=2)
