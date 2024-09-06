@@ -20,6 +20,32 @@ def load_train_set() -> DatasetDict:
     ds_dict = load_dataset(base_path + ds_path)
     return ds_dict
 
+def load_train_set2() -> DatasetDict:
+
+    ds_paths = [
+        "colpali_training_machine_learning"
+    ]
+    base_path = "./data_dir/" if USE_LOCAL_DATASET else "efeno/"
+    ds_tot = []
+    for path in ds_paths:
+        cpath = base_path + path
+        ds = load_dataset(cpath, split="train")
+        ds = ds.rename_column("question","query")
+        # subsample 10k
+        ds_tot.append(ds)
+
+    
+    dataset = concatenate_datasets(ds_tot)
+    dataset = dataset.shuffle(seed=42)
+    # split into train and test
+    # dataset_eval = dataset.select(range(500))
+    # dataset = dataset.select(range(500, len(dataset)))
+    dataset_eval = dataset.select(range(100))
+    dataset = dataset.select(range(100, len(dataset)))
+    ds_dict = DatasetDict({"train": dataset, "test": dataset_eval})
+    return ds_dict
+
+
 
 def load_train_set_detailed() -> DatasetDict:
     ds_paths = [
