@@ -45,7 +45,7 @@ class CustomCollator:
     def __call__(self, examples):
         if self.processor is None:
             return self.forward_text(examples)
-        if self.processor.__class__.__name__ == "Idefics2Processor":
+        if self.processor.__class__.__name__ == "Idefics2Processor" or self.processor.__class__.__name__ == "Idefics3Processor":
             return self.forward_vision_idefics(examples)
         if self.processor.__class__.__name__ == "PaliGemmaProcessor":
             return self.forward_vision_pali(examples)
@@ -85,18 +85,34 @@ class CustomCollator:
             text_query = None
             if example["query"] is not None:
                 query = example["query"] + self.suffix
-                messages_query = [
-                    {
-                        "role": "user",
-                        "content": [
-                            {
-                                "type": "text",
-                                "text": f"Question: {query}",
-                            },
-                        ],
-                    },
-                ]
-                text_query = self.processor.apply_chat_template(messages_query, add_generation_prompt=False).strip()
+                if self.processor.__class__.__name__ == "Idefics3Processor":
+                    
+                    messages_query = [
+                        {
+                            "role": "user",
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": f"Question: {query}",
+                                },
+                                {"type": "image"},
+                            ],
+                        },
+                    ]
+                    text_query = self.processor.apply_chat_template(messages_query, add_generation_prompt=False).strip()
+                else: # Idefics2
+                    messages_query = [
+                        {
+                            "role": "user",
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": f"Question: {query}",
+                                },
+                            ],
+                        },
+                    ]
+                    text_query = self.processor.apply_chat_template(messages_query, add_generation_prompt=False).strip()
 
             messages_doc = [
                 {
@@ -124,9 +140,22 @@ class CustomCollator:
         elif any([t is None for t in texts_query]):
             raise ValueError("Some queries are None. This collator does not support None queries yet.")
         else:
-            batch_query = self.processor(
-                text=texts_query, return_tensors="pt", padding="longest", max_length=self.max_length
+            if self.processor.__class__.__name__ == "Idefics3Processor":
+                batch_query = self.processor(
+                images=images,  # NOTE: the image is not used in batch_query but it is required for calling the processor
+                text=texts_query,
+                return_tensors="pt",
+                padding="longest",
+                max_length=self.max_length + self.processor.image_seq_len,
             )
+                del batch_query["pixel_values"]
+                batch_query["input_ids"] = torch.cat((batch_query["input_ids"][..., :batch_query["input_ids"].shape[1] - self.processor.image_seq_len -7], batch_query["input_ids"][..., -1:]), dim=1)
+                batch_query["attention_mask"] = torch.cat((batch_query["input_ids"][..., :batch_query["input_ids"].shape[1] - self.processor.image_seq_len -7], batch_query["input_ids"][..., -1:]), dim=1)
+
+            else: #Idefics2
+                batch_query = self.processor(
+                    text=texts_query, return_tensors="pt", padding="longest", max_length=self.max_length
+                )
 
         # prefix each key with "doc_" or "query_" to avoid key conflicts
         batch_doc = {f"doc_{k}": v for k, v in batch_doc.items()}
