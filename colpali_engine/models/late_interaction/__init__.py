@@ -1,2 +1,2 @@
-from .colidefics import *  # noqa: F403
-from .colpali import *  # noqa: F403
+from .colidefics import ColIdefics2, ColIdefics2Processor
+from .colpali import ColPali, ColPaliConfig, ColPaliProcessor

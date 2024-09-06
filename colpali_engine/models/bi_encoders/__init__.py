@@ -1,2 +1,2 @@
-from .biidefics import *  # noqa: F403
-from .bipali import *  # noqa: F403
+from .biidefics import BiIdefics2
+from .bipali import BiPali, BiPaliProj
