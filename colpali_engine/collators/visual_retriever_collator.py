@@ -8,7 +8,7 @@ from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 
 class VisualRetrieverCollator:
     """
-    Collator for training ColBERT-based vision retrieval models.
+    Collator for training vision retrieval models.
     """
 
     def __init__(
