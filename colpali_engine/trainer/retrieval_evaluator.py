@@ -2,6 +2,14 @@ import torch
 from mteb.evaluation.evaluators import RetrievalEvaluator
 
 
+if torch.cuda.is_available():
+    device = torch.device('cuda')
+elif torch.backends.mps.is_available():
+    device = torch.device('mps')
+else:
+    device = torch.device('cpu')
+
+
 class CustomEvaluator:
     def __init__(self, is_multi_vector=False):
         self.is_multi_vector = is_multi_vector
@@ -51,12 +59,12 @@ class CustomEvaluator:
         for i in range(0, len(qs), batch_size):
             scores_batch = []
             qs_batch = torch.nn.utils.rnn.pad_sequence(qs[i : i + batch_size], batch_first=True, padding_value=0).to(
-                "cuda"
+                device
             )
             for j in range(0, len(ps), batch_size):
                 ps_batch = torch.nn.utils.rnn.pad_sequence(
                     ps[j : j + batch_size], batch_first=True, padding_value=0
-                ).to("cuda")
+                ).to(device)
                 scores_batch.append(torch.einsum("bnd,csd->bcns", qs_batch, ps_batch).max(dim=3)[0].sum(dim=2))
             scores_batch = torch.cat(scores_batch, dim=1).cpu()
             scores.append(scores_batch)
