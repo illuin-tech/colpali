@@ -220,6 +220,85 @@ class CustomCollator:
 
         return batch_doc
 
+    def forward_vision_qwen(self, examples):
+    
+        texts_doc = []
+        texts_query = []
+        images = []
+        neg_images = []
+        for example in examples:
+
+            if example["image"] is None:
+                raise ValueError("Image is None - This collator does not support None images yet.")
+
+            image = example["image"].convert("RGB")
+            images.append(image)
+            texts_doc.append("Describe the image.")
+
+            if "neg_image" in example and example["neg_image"] is not None:
+                neg_image = example["neg_image"].convert("RGB")
+                neg_images.append(neg_image)
+
+            if example["query"] is None:
+                texts_query.append(None)
+            else:
+                query = example["query"]
+                query = f"Question: {query}"
+                # add pad tokens
+                query += self.suffix
+                texts_query.append(query)
+
+        batch_doc = self.processor(
+            text=texts_doc,
+            images=images,
+            return_tensors="pt",
+            padding="longest",
+            max_length=self.max_length + self.processor.image_seq_length,
+        )
+
+        batch_neg_doc = None
+        if len(neg_images) > 0:
+            batch_neg_doc = self.processor(
+                text=texts_doc,
+                images=neg_images,
+                return_tensors="pt",
+                padding="longest",
+                max_length=self.max_length + self.processor.image_seq_length,
+            )
+
+        batch_query = None
+        # check if some but not all queries are None
+        if all([t is None for t in texts_query]):
+            print("All queries are None. Returning None for all queries.")
+        elif any([t is None for t in texts_query]):
+            # if it's the first query that is not None but the rest are None, then it's hard negatives
+            raise ValueError("Some queries are None. This collator does not support None queries yet.")
+        else:
+            # NOTE: the image is not used in batch_query but it is required for calling the processor
+            batch_query = self.processor(
+                images=images,
+                text=texts_query,
+                return_tensors="pt",
+                padding="longest",
+                max_length=self.max_length + self.processor.image_seq_length,
+            )
+            del batch_query["pixel_values"]
+            batch_query["input_ids"] = batch_query["input_ids"][..., self.processor.image_seq_length :]
+            batch_query["attention_mask"] = batch_query["attention_mask"][..., self.processor.image_seq_length :]
+
+        # prefix each key with "doc_" or "query_" to avoid key conflicts
+        batch_doc = {f"doc_{k}": v for k, v in batch_doc.items()}
+
+        if batch_query is not None:
+            batch_query = {f"query_{k}": v for k, v in batch_query.items()}
+            batch_doc.update(batch_query)
+        if batch_neg_doc is not None:
+            batch_neg_doc = {f"neg_doc_{k}": v for k, v in batch_neg_doc.items()}
+            batch_doc.update(batch_neg_doc)
+
+        return batch_doc
+
+
     def forward_vision_phi(self, examples):
         texts_doc = []
         texts_query = []
