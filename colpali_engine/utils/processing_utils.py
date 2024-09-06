@@ -2,22 +2,13 @@ from abc import ABC, abstractmethod
 from typing import List, Optional
 
 from PIL import Image
-from transformers import BatchEncoding, BatchFeature, PreTrainedTokenizer, ProcessorMixin
+from transformers import BatchEncoding, BatchFeature, ProcessorMixin
 
 
 class BaseVisualRetrieverProcessor(ABC, ProcessorMixin):
     """
     Base class for visual retriever processors.
     """
-
-    def __init__(self):
-        if not hasattr(self, "tokenizer"):
-            raise ValueError("Processor must have a tokenizer attribute.")
-
-    @property
-    @abstractmethod
-    def tokenizer(self) -> PreTrainedTokenizer:
-        pass
 
     @abstractmethod
     def process_images(

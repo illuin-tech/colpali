@@ -10,8 +10,7 @@ from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 
 class ColPaliProcessor(BaseVisualRetrieverProcessor, PaliGemmaProcessor):
     def __init__(self):
-        BaseVisualRetrieverProcessor.__init__(self)
-        PaliGemmaProcessor.__init__(self)
+        super().__init__()
 
     def process_images(
         self,
