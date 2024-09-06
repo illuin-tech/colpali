@@ -38,7 +38,7 @@ class HardNegCollator(CustomCollator):
         # reorder examples
         if self.processor is None:
             return self.forward_text(examples)
-        if self.processor.__class__.__name__ == "Idefics2Processor":
+        if self.processor.__class__.__name__ == "Idefics2Processor" or self.processor.__class__.__name__ == "Idefics3Processor":
             return self.forward_vision_idefics(examples)
         if self.processor.__class__.__name__ == "PaliGemmaProcessor":
             return self.forward_vision_pali(examples)
