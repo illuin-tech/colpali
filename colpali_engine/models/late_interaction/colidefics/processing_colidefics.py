@@ -10,10 +10,9 @@ from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 
 class ColIdefics2Processor(BaseVisualRetrieverProcessor, Idefics2Processor):
     def __init__(self, image_processor):
-        BaseVisualRetrieverProcessor.__init__(self)
-        Idefics2Processor.__init__(self, image_processor)
+        super().__init__(image_processor)
 
-    def process_images_idefics(
+    def process_images(
         self,
         images: List[Image.Image],
     ) -> BatchEncoding:
@@ -45,7 +44,7 @@ class ColIdefics2Processor(BaseVisualRetrieverProcessor, Idefics2Processor):
         )
         return batch_doc
 
-    def process_queries_idefics(
+    def process_queries(
         self,
         queries: List[str],
         max_length: int = 50,
