@@ -10,7 +10,8 @@ from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 
 class ColIdefics2Processor(BaseVisualRetrieverProcessor, Idefics2Processor):
     def __init__(self, image_processor):
-        super().__init__(image_processor)
+        BaseVisualRetrieverProcessor.__init__(self)
+        Idefics2Processor.__init__(self, image_processor)
 
     def process_images(
         self,
