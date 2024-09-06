@@ -24,7 +24,7 @@ from colpali_engine.loss.late_interaction_losses import (
     ColbertPairwiseNegativeCELoss,
 )
 from colpali_engine.trainer.contrastive_trainer import ContrastiveNegativeTrainer, ContrastiveTrainer
-from colpali_engine.trainer.retrieval_evaluator import CustomEvaluator
+from colpali_engine.trainer.retrieval_evaluator import CustomRetrievalEvaluator
 from colpali_engine.utils.gpu_stats import print_gpu_utilization, print_summary
 
 
@@ -117,7 +117,7 @@ class ColModelTraining:
                 max_length=self.config.max_length,
             )
         self.current_git_hash = os.popen("git rev-parse HEAD").read().strip()
-        self.retriever_evaluator = CustomEvaluator(
+        self.retriever_evaluator = CustomRetrievalEvaluator(
             is_multi_vector=(
                 isinstance(self.config.loss_func, ColbertLoss)
                 or isinstance(self.config.loss_func, ColbertPairwiseCELoss)

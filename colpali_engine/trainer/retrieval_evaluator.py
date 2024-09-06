@@ -17,8 +17,8 @@ def get_torch_device() -> str:
     return device
 
 
-class CustomEvaluator:
-    def __init__(self, is_multi_vector=False):
+class CustomRetrievalEvaluator:
+    def __init__(self, is_multi_vector: bool = False):
         self.is_multi_vector = is_multi_vector
         self.mteb_evaluator = RetrievalEvaluator()
         self.device = get_torch_device()

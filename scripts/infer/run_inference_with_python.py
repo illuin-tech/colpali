@@ -8,7 +8,7 @@ from tqdm import tqdm
 from transformers import AutoProcessor
 
 from colpali_engine.models import ColPali
-from colpali_engine.trainer.retrieval_evaluator import CustomEvaluator
+from colpali_engine.trainer.retrieval_evaluator import CustomRetrievalEvaluator
 from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 
 
@@ -59,7 +59,7 @@ def main() -> None:
         qs.extend(list(torch.unbind(embeddings_query.to("cpu"))))
 
     # run evaluation
-    retriever_evaluator = CustomEvaluator(is_multi_vector=True)
+    retriever_evaluator = CustomRetrievalEvaluator(is_multi_vector=True)
     scores = retriever_evaluator.evaluate(qs, ds)
     print(scores.argmax(axis=1))
 
