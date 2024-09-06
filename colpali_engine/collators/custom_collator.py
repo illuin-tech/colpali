@@ -21,12 +21,11 @@ class CustomCollator:
             raise ValueError("Either processor or tokenizer should be provided.")
 
         if self.processor is not None:
-            try:
-                self.image_token_id = self.processor.tokenizer.additional_special_tokens_ids[
-                    self.processor.tokenizer.additional_special_tokens.index("<image>")
-                ]
-            except:
-                self.image_token_id = self.processor.get_special_image_token_id()
+            # try:
+            #     self.image_token_id = self.processor.tokenizer.additional_special_tokens_ids[
+            #         self.processor.tokenizer.additional_special_tokens.index("<image>")
+            #     ]
+
 
             if self.tokenizer is not None:
                 raise ValueError("Only one of processor or tokenizer should be provided.")
@@ -52,8 +51,10 @@ class CustomCollator:
             return self.forward_vision_idefics(examples)
         if self.processor.__class__.__name__ == "PaliGemmaProcessor":
             return self.forward_vision_pali(examples)
-        if self.processor.__class__.__name__ == "Phi3VProcessor": 
+        if self.processor.__class__.__name__ == "Phi3VProcessor":
             return self.forward_vision_phi(examples)
+        if self.processor.__class__.__name__ == "Qwen2VLProcessor":
+            return self.forward_vision_qwen(examples)
         raise ValueError("Processor not supported")
 
     def forward_text(self, examples):
@@ -72,7 +73,6 @@ class CustomCollator:
         batch_query = self.tokenizer(
             texts_query, max_length=self.max_length, padding="longest", truncation=True, return_tensors="pt"
         )
-
 
         # prefix each key with "doc_" or "query_" to avoid key conflicts
         batch_doc = {f"doc_{k}": v for k, v in batch_doc.items()}
@@ -102,7 +102,9 @@ class CustomCollator:
                         ],
                     },
                 ]
-                text_query = self.processor.apply_chat_template(messages_query, add_generation_prompt=False, tokenize = False).strip()
+                text_query = self.processor.apply_chat_template(
+                    messages_query, add_generation_prompt=False, tokenize=False
+                ).strip()
 
             messages_doc = [
                 {
@@ -221,7 +223,7 @@ class CustomCollator:
         return batch_doc
 
     def forward_vision_qwen(self, examples):
-    
+
         texts_doc = []
         texts_query = []
         images = []
@@ -231,29 +233,38 @@ class CustomCollator:
             if example["image"] is None:
                 raise ValueError("Image is None - This collator does not support None images yet.")
 
+            messages_docs = [
+                {"role": "user", "content": [{"type": "text", "text": "Describe the image"}, {"type": "image"}]},
+            ]
+            text_docs = self.processor.apply_chat_template(messages_docs, add_generation_prompt=False).strip()
+
             image = example["image"].convert("RGB")
             images.append(image)
-            texts_doc.append("Describe the image.")
+            texts_doc.append(text_docs)
 
             if "neg_image" in example and example["neg_image"] is not None:
                 neg_image = example["neg_image"].convert("RGB")
                 neg_images.append(neg_image)
 
             if example["query"] is None:
+
                 texts_query.append(None)
             else:
                 query = example["query"]
                 query = f"Question: {query}"
                 # add pad tokens
                 query += self.suffix
-                texts_query.append(query)
+
+                messages_query = {"role": "user", "content": [{"type": "text", "text": query}]}
+                text_query = self.processor.apply_chat_template(messages_query, add_generation_prompt=False).strip() 
+                texts_query.append(text_query)
 
         batch_doc = self.processor(
             text=texts_doc,
             images=images,
             return_tensors="pt",
             padding="longest",
-            max_length=self.max_length + self.processor.image_seq_length,
+            max_length=self.max_length + 1280,
         )
 
         batch_neg_doc = None
@@ -263,7 +274,7 @@ class CustomCollator:
                 images=neg_images,
                 return_tensors="pt",
                 padding="longest",
-                max_length=self.max_length + self.processor.image_seq_length,
+                max_length=self.max_length + 1280,
             )
 
         batch_query = None
@@ -276,15 +287,13 @@ class CustomCollator:
         else:
             # NOTE: the image is not used in batch_query but it is required for calling the processor
             batch_query = self.processor(
-                images=images,
+                images=None,
                 text=texts_query,
                 return_tensors="pt",
                 padding="longest",
-                max_length=self.max_length + self.processor.image_seq_length,
+                max_length=self.max_length +1280,
             )
-            del batch_query["pixel_values"]
-            batch_query["input_ids"] = batch_query["input_ids"][..., self.processor.image_seq_length :]
-            batch_query["attention_mask"] = batch_query["attention_mask"][..., self.processor.image_seq_length :]
+         
 
         # prefix each key with "doc_" or "query_" to avoid key conflicts
         batch_doc = {f"doc_{k}": v for k, v in batch_doc.items()}
@@ -298,44 +307,40 @@ class CustomCollator:
 
         return batch_doc
 
-
     def forward_vision_phi(self, examples):
         texts_doc = []
         texts_query = []
         images = []
 
-
         for example in examples:
             image = example["image"]
             text_query = None
-            if example['query'] is not None:
-                query = example['query'] + self.suffix
+            if example["query"] is not None:
+                query = example["query"] + self.suffix
                 messages_query = [
-                    
-                        {"role": "user", "content": f"{query}" },
-                        
-                    
+                    {"role": "user", "content": f"{query}"},
                 ]
 
-                text_query = self.processor.tokenizer.apply_chat_template(messages_query,tokenize = False, add_generation_prompt=False, ).strip()
-            
-            messages_doc = [
-                        {"role": "user", "content": "<|image_1|>\nDescribe the image."},
+                text_query = self.processor.tokenizer.apply_chat_template(
+                    messages_query,
+                    tokenize=False,
+                    add_generation_prompt=False,
+                ).strip()
 
+            messages_doc = [
+                {"role": "user", "content": "<|image_1|>\nDescribe the image."},
             ]
 
-            text_doc = self.processor.tokenizer.apply_chat_template(messages_doc,tokenize = False,  add_generation_prompt=False).strip()
+            text_doc = self.processor.tokenizer.apply_chat_template(
+                messages_doc, tokenize=False, add_generation_prompt=False
+            ).strip()
 
             texts_doc.append(text_doc.strip())
             texts_query.append(text_query)
             images.append(image)
 
         batch_doc = self.processor(
-            text=texts_doc[0],
-            images=images[0],
-            return_tensors="pt",
-            padding="longest",
-            max_length=self.max_length
+            text=texts_doc[0], images=images[0], return_tensors="pt", padding="longest", max_length=self.max_length
         )
 
         batch_query = None
@@ -345,20 +350,13 @@ class CustomCollator:
             raise ValueError("Some queries are None. This collator does not support None queries yet.")
         else:
             batch_query = self.processor(
-                text=texts_query,
-                images=None,
-                return_tensors="pt",
-                padding="longest",
-                max_length=self.max_length
+                text=texts_query, images=None, return_tensors="pt", padding="longest", max_length=self.max_length
             )
 
-
         batch_doc = {f"doc_{k}": v for k, v in batch_doc.items()}
-
 
         if batch_query is not None:
             batch_query = {f"query_{k}": v for k, v in batch_query.items()}
             batch_doc.update(batch_query)
-        
-        return batch_doc
 
+        return batch_doc

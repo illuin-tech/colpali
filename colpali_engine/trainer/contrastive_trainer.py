@@ -30,6 +30,7 @@ class ContrastiveTrainer(Trainer):
                 input_ids=inputs["doc_input_ids"],
                 attention_mask=inputs["doc_attention_mask"],
                 pixel_values=inputs["doc_pixel_values"],
+                image_grid_thw = inputs['doc_image_grid_thw']
                 # image_sizes = inputs['doc_image_sizes']
             )
 
@@ -66,9 +67,9 @@ class ContrastiveTrainer(Trainer):
                     input_ids=inputs["doc_input_ids"],
                     attention_mask=inputs["doc_attention_mask"],
                     pixel_values=inputs["doc_pixel_values"],
-                    # image_sizes = inputs['doc_image_sizes']
-                )
-
+                    image_grid_thw = inputs['doc_image_grid_thw']
+                # image_sizes = inputs['doc_image_sizes']
+                 )
             else:
 
                 query_outputs = model(
