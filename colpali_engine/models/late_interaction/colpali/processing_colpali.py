@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import List, Optional, cast
 
 from PIL import Image
 from transformers import BatchFeature, PaliGemmaProcessor
@@ -12,6 +12,10 @@ class ColPaliProcessor(BaseVisualRetrieverProcessor, PaliGemmaProcessor):
     def __init__(self):
         BaseVisualRetrieverProcessor.__init__(self)
         PaliGemmaProcessor.__init__(self)
+
+    @staticmethod
+    def from_pretrained(*args, **kwargs) -> ColPaliProcessor:
+        return cast(ColPaliProcessor, PaliGemmaProcessor.from_pretrained(*args, **kwargs))
 
     def process_images(
         self,
