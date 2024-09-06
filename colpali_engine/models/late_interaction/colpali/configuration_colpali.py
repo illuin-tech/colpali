@@ -7,5 +7,8 @@ class ColPaliConfig(PaliGemmaConfig):
         embedding_dim: int = 128,
         **kwargs,
     ):
+        """
+        Config for ColPali model.
+        """
         super().__init__(**kwargs)
         self.embedding_dim = embedding_dim
