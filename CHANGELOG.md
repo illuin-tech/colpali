@@ -23,6 +23,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - doc: Tweak README
 - feat: The processing function in `colpali_engine.utils.processing_utils.colpali_processing_utils` `process_queries` has a changed API and does not require a Mock Image anymore.
 
+## [0.2.2] - 2024-09-06
+
+### Fixed
+- Remove forced "cuda" usage in Retrieval Evaluator
+
 ## [0.2.1] - 2024-09-02
  
 Patch query preprocessing helper function disalignement with training scheme.
