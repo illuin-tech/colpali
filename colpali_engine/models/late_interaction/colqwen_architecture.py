@@ -18,7 +18,7 @@ class ColQwen(Qwen2VLForConditionalGeneration):
     def __init__(self, config: Qwen2VLConfig):
         super(ColQwen, self).__init__(config=config)
         self.dim = 128
-        self.lm_head = nn.Linear(self.config.hidden_size, self.dim)
+        self.custom_text_proj = nn.Linear(self.config.hidden_size, self.dim)
         self.main_input_name = "doc_input_ids"
         self.post_init()
 
@@ -78,8 +78,8 @@ class ColQwen(Qwen2VLForConditionalGeneration):
         )
 
         hidden_states = outputs[0]
-        logits = self.lm_head(hidden_states)
-        logits = logits.float()
+        logits = self.custom_text_proj(hidden_states)
+        proj = logits.float()
 
         # L2 normalization
         proj = proj / proj.norm(dim=-1, keepdim=True)  # (batch_size, sequence_length, dim)
