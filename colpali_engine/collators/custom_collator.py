@@ -147,7 +147,7 @@ class CustomCollator:
                 return_tensors="pt",
                 padding="longest",
                 max_length=self.max_length + self.processor.image_seq_len,
-            )
+                )
                 del batch_query["pixel_values"]
                 batch_query["input_ids"] = torch.cat((batch_query["input_ids"][..., :batch_query["input_ids"].shape[1] - self.processor.image_seq_len -7], batch_query["input_ids"][..., -1:]), dim=1)
                 batch_query["attention_mask"] = torch.cat((batch_query["input_ids"][..., :batch_query["input_ids"].shape[1] - self.processor.image_seq_len -7], batch_query["input_ids"][..., -1:]), dim=1)
