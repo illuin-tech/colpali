@@ -18,7 +18,7 @@ class ColPaliProcessor(BaseVisualRetrieverProcessor, PaliGemmaProcessor):
         images: List[Image.Image],
     ) -> BatchFeature:
         """
-        Process images for ColPaLi, with an efficient tweak around the PaliGemmma processor.
+        Process images for ColPali, with an efficient tweak around the PaliGemmma processor.
         """
         texts_doc = ["Describe the image."] * len(images)
         images = [image.convert("RGB") for image in images]
@@ -39,7 +39,7 @@ class ColPaliProcessor(BaseVisualRetrieverProcessor, PaliGemmaProcessor):
         suffix: Optional[str] = None,
     ) -> BatchFeature:
         """
-        Process queries for ColPaLi, with an efficient tweak around the PaliGemmma processor.
+        Process queries for ColPali, with an efficient tweak around the PaliGemmma processor.
         """
         # NOTE: The image is required for calling PaligemmaProcessor, so we create a mock image here.
         mock_image = Image.new("RGB", (448, 448), (255, 255, 255)).convert("RGB")
@@ -60,6 +60,8 @@ class ColPaliProcessor(BaseVisualRetrieverProcessor, PaliGemmaProcessor):
             max_length=max_length + self.image_seq_length,
         )
         del batch_query["pixel_values"]
+
+        # TODO: call the tokenizer instead?
 
         batch_query["input_ids"] = batch_query["input_ids"][..., self.image_seq_length :]
         batch_query["attention_mask"] = batch_query["attention_mask"][..., self.image_seq_length :]
