@@ -81,6 +81,10 @@ class CustomRetrievalEvaluator:
         """
         Compute the dot product score for the given single-vector query and passage embeddings.
         """
+        if len(qs) == 0:
+            raise ValueError("No querie(s) provided")
+        if len(ps) == 0:
+            raise ValueError("No passage(s) provided")
 
         qs_stacked = torch.stack(qs).to(self.device)
         ps_stacked = torch.stack(ps).to(self.device)
@@ -97,8 +101,12 @@ class CustomRetrievalEvaluator:
         """
         Compute the MaxSim score (ColBERT-like) for the given multi-vector query and passage embeddings.
         """
+        if len(qs) == 0:
+            raise ValueError("No querie(s) provided")
+        if len(ps) == 0:
+            raise ValueError("No passage(s) provided")
 
-        scores = []
+        scores_list: List[torch.Tensor] = []
 
         for i in range(0, len(qs), batch_size):
             scores_batch = []
@@ -111,7 +119,7 @@ class CustomRetrievalEvaluator:
                 ).to(self.device)
                 scores_batch.append(torch.einsum("bnd,csd->bcns", qs_batch, ps_batch).max(dim=3)[0].sum(dim=2))
             scores_batch = torch.cat(scores_batch, dim=1).cpu()
-            scores.append(scores_batch)
+            scores_list.append(scores_batch)
 
-        scores = torch.cat(scores, dim=0)
+        scores = torch.cat(scores_list, dim=0)
         return scores
