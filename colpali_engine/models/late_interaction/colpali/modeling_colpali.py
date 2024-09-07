@@ -1,4 +1,4 @@
-from typing import ClassVar, Optional
+from typing import ClassVar, Optional, cast
 
 import torch
 from torch import nn
@@ -23,6 +23,10 @@ class ColPali(PaliGemmaPreTrainedModel):
         self.embedding_dim = config.embedding_dim
         self.custom_text_proj = nn.Linear(self.model.config.text_config.hidden_size, self.embedding_dim)
         self.post_init()
+
+    @classmethod
+    def from_pretrained(cls, *args, **kwargs):
+        return cast(cls, ColPali.from_pretrained(*args, **kwargs))
 
     def forward(self, *args, **kwargs) -> torch.Tensor:
         # Delete output_hidden_states from kwargs

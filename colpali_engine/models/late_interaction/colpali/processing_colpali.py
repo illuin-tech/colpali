@@ -13,9 +13,9 @@ class ColPaliProcessor(BaseVisualRetrieverProcessor, PaliGemmaProcessor):
         BaseVisualRetrieverProcessor.__init__(self)
         PaliGemmaProcessor.__init__(self)
 
-    @staticmethod
-    def from_pretrained(*args, **kwargs) -> ColPaliProcessor:
-        return cast(ColPaliProcessor, PaliGemmaProcessor.from_pretrained(*args, **kwargs))
+    @classmethod
+    def from_pretrained(cls, *args, **kwargs):
+        return cast(cls, PaliGemmaProcessor.from_pretrained(*args, **kwargs))
 
     def process_images(
         self,
