@@ -16,12 +16,19 @@ class ColPaliProcessor(BaseVisualRetrieverProcessor):
     def __init__(
         self,
         vlm_backbone_model_name_or_path: str = "google/paligemma-3b-mix-448",
+        hf_token: Optional[str] = None,
     ):
         super().__init__()
 
         # TODO: After ColPali integration in transformers where ColPaliProcessor will copy
         # PaligemmaProcessor, remove `self.processor` and use `self` directly.
-        self.processor = cast(PaliGemmaProcessor, PaliGemmaProcessor.from_pretrained(vlm_backbone_model_name_or_path))
+        self.processor = cast(
+            PaliGemmaProcessor,
+            PaliGemmaProcessor.from_pretrained(
+                vlm_backbone_model_name_or_path,
+                token=hf_token,
+            ),
+        )
         self.tokenizer = cast(LlamaTokenizerFast, self.processor.tokenizer)  # type: ignore
 
     def process_images(
