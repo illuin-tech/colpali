@@ -1,3 +1,4 @@
+from .evaluation import CustomRetrievalEvaluator
 from .models import (
     BiIdefics2,
     BiPali,

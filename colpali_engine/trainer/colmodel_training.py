@@ -18,13 +18,13 @@ from transformers import (
 
 from colpali_engine.collators.hard_neg_collator import HardNegCollator
 from colpali_engine.collators.visual_retriever_collator import VisualRetrieverCollator
+from colpali_engine.evaluation.retrieval_evaluator import CustomRetrievalEvaluator
 from colpali_engine.loss.late_interaction_losses import (
     ColbertLoss,
     ColbertPairwiseCELoss,
     ColbertPairwiseNegativeCELoss,
 )
 from colpali_engine.trainer.contrastive_trainer import ContrastiveNegativeTrainer, ContrastiveTrainer
-from colpali_engine.trainer.retrieval_evaluator import CustomRetrievalEvaluator
 from colpali_engine.utils.gpu_stats import print_gpu_utilization, print_summary
 
 
