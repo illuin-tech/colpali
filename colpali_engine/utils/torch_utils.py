@@ -1,3 +1,5 @@
+import gc
+
 import torch
 
 
@@ -20,3 +22,12 @@ def get_torch_device(device: str = "auto") -> str:
             return "cpu"
     else:
         return device
+
+
+def tear_down_torch():
+    """
+    Teardown for PyTorch.
+    Should be used after each torch-based vision retriever.
+    """
+    gc.collect()
+    torch.cuda.empty_cache()
