@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import ClassVar, Optional
 
 import torch
 from torch import nn
@@ -12,6 +12,8 @@ class ColPali(PaliGemmaPreTrainedModel):
     ColPali model implementation from the "ColPali: Efficient Document Retrieval with Vision Language Models" paper.
     """
 
+    main_input_name: ClassVar[str] = "doc_input_ids"  # transformers-related
+
     def __init__(self, config: ColPaliConfig):
         super(ColPali, self).__init__(config=config)
         model = PaliGemmaForConditionalGeneration(config)
@@ -20,7 +22,6 @@ class ColPali(PaliGemmaPreTrainedModel):
         self.model = model
         self.embedding_dim = config.embedding_dim
         self.custom_text_proj = nn.Linear(self.model.config.text_config.hidden_size, self.embedding_dim)
-        self.main_input_name = "doc_input_ids"  # transformers-related
         self.post_init()
 
     def forward(self, *args, **kwargs) -> torch.Tensor:
