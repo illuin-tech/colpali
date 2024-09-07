@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import List, Optional, cast
 
 from PIL import Image
 from transformers import BatchEncoding, Idefics2Processor
@@ -8,10 +8,13 @@ from transformers import BatchEncoding, Idefics2Processor
 from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 
 
-class ColIdefics2Processor(BaseVisualRetrieverProcessor, Idefics2Processor):
-    def __init__(self, image_processor):
-        BaseVisualRetrieverProcessor.__init__(self)
-        Idefics2Processor.__init__(self, image_processor)
+class ColIdefics2Processor(BaseVisualRetrieverProcessor):
+    def __init__(
+        self,
+        pretrained_model_name_or_path: str = "HuggingFaceM4/idefics2-8b",
+    ):
+        super().__init__()
+        self.processor = cast(Idefics2Processor, Idefics2Processor.from_pretrained(pretrained_model_name_or_path))
 
     def process_images(
         self,
@@ -34,10 +37,10 @@ class ColIdefics2Processor(BaseVisualRetrieverProcessor, Idefics2Processor):
                 },
             ]
 
-            text_doc = self.apply_chat_template(messages_doc, add_generation_prompt=False)
+            text_doc = self.processor.apply_chat_template(messages_doc, add_generation_prompt=False)
             texts_doc.append(text_doc.strip())
 
-        batch_doc = self(
+        batch_doc = self.processor(
             text=texts_doc,
             images=images,
             return_tensors="pt",
@@ -68,10 +71,10 @@ class ColIdefics2Processor(BaseVisualRetrieverProcessor, Idefics2Processor):
                     ],
                 },
             ]
-            text_query = self.apply_chat_template(messages_query, add_generation_prompt=False).strip()
+            text_query = self.processor.apply_chat_template(messages_query, add_generation_prompt=False).strip()
             texts_query.append(text_query)
 
-        batch_query = self(
+        batch_query = self.processor(
             text=texts_query,
             return_tensors="pt",
             padding="longest",

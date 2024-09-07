@@ -3,19 +3,26 @@ from __future__ import annotations
 from typing import List, Optional, cast
 
 from PIL import Image
-from transformers import BatchEncoding, BatchFeature, PaliGemmaProcessor
+from transformers import BatchEncoding, BatchFeature, LlamaTokenizerFast, PaliGemmaProcessor
 
 from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 
 
-class ColPaliProcessor(BaseVisualRetrieverProcessor, PaliGemmaProcessor):
-    def __init__(self):
-        BaseVisualRetrieverProcessor.__init__(self)
-        PaliGemmaProcessor.__init__(self)
+class ColPaliProcessor(BaseVisualRetrieverProcessor):
+    """
+    Processor for ColPali.
+    """
 
-    @classmethod
-    def from_pretrained(cls, *args, **kwargs):
-        return cast(cls, PaliGemmaProcessor.from_pretrained(*args, **kwargs))
+    def __init__(
+        self,
+        pretrained_model_name_or_path: str = "google/paligemma-3b-mix-448",
+    ):
+        super().__init__()
+
+        # TODO: After ColPali integration in transformers where ColPaliProcessor will copy
+        # PaligemmaProcessor, remove `self.processor` and use `self` directly.
+        self.processor = cast(PaliGemmaProcessor, PaliGemmaProcessor.from_pretrained(pretrained_model_name_or_path))
+        self.tokenizer = cast(LlamaTokenizerFast, self.processor.tokenizer)  # type: ignore
 
     def process_images(
         self,
@@ -27,13 +34,12 @@ class ColPaliProcessor(BaseVisualRetrieverProcessor, PaliGemmaProcessor):
         texts_doc = ["Describe the image."] * len(images)
         images = [image.convert("RGB") for image in images]
 
-        batch_doc = self(
+        batch_doc = self.processor(
             text=texts_doc,
             images=images,
             return_tensors="pt",
             padding="longest",
         )
-
         return batch_doc
 
     def process_queries(
@@ -62,5 +68,4 @@ class ColPaliProcessor(BaseVisualRetrieverProcessor, PaliGemmaProcessor):
             padding="longest",
             max_length=max_length,
         )
-
         return batch_query
