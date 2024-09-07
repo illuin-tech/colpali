@@ -1,16 +1,29 @@
-from typing import Dict, List
+import logging
+from typing import Any, Dict, List, Optional
 
 import torch
 from mteb.evaluation.evaluators import RetrievalEvaluator
 
 from colpali_engine.utils.torch_utils import get_torch_device
 
+logger = logging.getLogger(__name__)
+
 
 class CustomRetrievalEvaluator:
-    def __init__(self, is_multi_vector: bool = False):
+    """
+    Evaluator for retrieval tasks. Supports both single-vector and multi-vector embeddings.
+    """
+
+    def __init__(
+        self,
+        is_multi_vector: bool = False,
+        mteb_evaluator_args: Optional[Dict[str, Any]] = None,
+        device: str = "auto",
+    ):
+        self.mteb_evaluator_args = mteb_evaluator_args or {}
         self.is_multi_vector = is_multi_vector
-        self.mteb_evaluator = RetrievalEvaluator()
-        self.device = get_torch_device()
+        self.mteb_evaluator = RetrievalEvaluator(**self.mteb_evaluator_args)
+        self.device = get_torch_device(device)
 
     def evaluate(
         self,
@@ -18,22 +31,18 @@ class CustomRetrievalEvaluator:
         ps: List[torch.Tensor],
     ):
         if self.is_multi_vector:
-            scores = self.evaluate_colbert(qs, ps)
+            scores = self.get_multi_vector_scores(qs, ps)
         else:
-            scores = self.evaluate_biencoder(qs, ps)
+            scores = self.get_single_vector_scores(qs, ps)
 
-        assert scores.shape[0] == len(qs)
+        assert scores.shape[0] == len(qs), f"Expected {len(qs)} scores, got {scores.shape[0]}"
 
         arg_score = scores.argmax(dim=1)
-        # compare to arange
         accuracy = (arg_score == torch.arange(scores.shape[0], device=scores.device)).sum().item() / scores.shape[0]
-        print(arg_score)
-        print(f"Top 1 Accuracy (verif): {accuracy}")
 
-        # cast to numpy
-        # scores = scores.cpu().numpy()
+        logger.info(f"Top 1 Accuracy (verif): {accuracy}")
+
         scores = scores.to(torch.float32).cpu().numpy()
-
         return scores
 
     def compute_metrics(
@@ -62,10 +71,24 @@ class CustomRetrievalEvaluator:
             **{f"mrr_at_{k.split('@')[1]}": v for (k, v) in mrr[0].items()},
             **{f"naucs_at_{k.split('@')[1]}": v for (k, v) in naucs.items()},
         }
-
         return scores
 
-    def evaluate_colbert(
+    def get_single_vector_scores(
+        self,
+        qs: List[torch.Tensor],
+        ps: List[torch.Tensor],
+    ) -> torch.Tensor:
+        """
+        Compute the dot product score for the given single-vector query and passage embeddings.
+        """
+
+        qs_stacked = torch.stack(qs).to(self.device)
+        ps_stacked = torch.stack(ps).to(self.device)
+
+        scores = torch.einsum("bd,cd->bc", qs_stacked, ps_stacked)
+        return scores
+
+    def get_multi_vector_scores(
         self,
         qs: List[torch.Tensor],
         ps: List[torch.Tensor],
@@ -91,21 +114,4 @@ class CustomRetrievalEvaluator:
             scores.append(scores_batch)
 
         scores = torch.cat(scores, dim=0)
-
-        return scores
-
-    def evaluate_biencoder(
-        self,
-        qs: List[torch.Tensor],
-        ps: List[torch.Tensor],
-    ) -> torch.Tensor:
-        """
-        Compute the dot product score for the given single-vector query and passage embeddings.
-        """
-
-        qs_stacked = torch.stack(qs)
-        ps_stacked = torch.stack(ps)
-
-        scores = torch.einsum("bd,cd->bc", qs_stacked, ps_stacked)
-
         return scores
