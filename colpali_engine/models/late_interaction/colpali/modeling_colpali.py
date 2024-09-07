@@ -1,10 +1,12 @@
-from typing import ClassVar, Optional, cast
+from typing import ClassVar, Optional
 
 import torch
 from torch import nn
-from transformers.models.paligemma.modeling_paligemma import PaliGemmaForConditionalGeneration, PaliGemmaPreTrainedModel
-
-from colpali_engine.models.late_interaction.colpali.configuration_colpali import ColPaliConfig
+from transformers.models.paligemma.modeling_paligemma import (
+    PaliGemmaConfig,
+    PaliGemmaForConditionalGeneration,
+    PaliGemmaPreTrainedModel,
+)
 
 
 class ColPali(PaliGemmaPreTrainedModel):
@@ -14,19 +16,20 @@ class ColPali(PaliGemmaPreTrainedModel):
 
     main_input_name: ClassVar[str] = "doc_input_ids"  # transformers-related
 
-    def __init__(self, config: ColPaliConfig):
-        super(ColPali, self).__init__(config=config)
-        model = PaliGemmaForConditionalGeneration(config)
+    def __init__(self, config: PaliGemmaConfig):
+        super().__init__(config=config)
+
+        model = PaliGemmaForConditionalGeneration(config=config)
         if model.language_model._tied_weights_keys is not None:
             self._tied_weights_keys = [f"model.language_model.{k}" for k in model.language_model._tied_weights_keys]
         self.model = model
-        self.embedding_dim = config.embedding_dim
-        self.custom_text_proj = nn.Linear(self.model.config.text_config.hidden_size, self.embedding_dim)
-        self.post_init()
 
-    @classmethod
-    def from_pretrained(cls, *args, **kwargs):
-        return cast(cls, ColPali.from_pretrained(*args, **kwargs))
+        # TODO: Wait for ColPali2 to create a ColPaliConfig to allow specifying the embedding dimension.
+        # We could do it now but it would break all the models trying to load the model from the checkpoint.
+        self.embedding_dim = 128
+        self.custom_text_proj = nn.Linear(self.model.config.text_config.hidden_size, self.embedding_dim)
+
+        self.post_init()
 
     def forward(self, *args, **kwargs) -> torch.Tensor:
         # Delete output_hidden_states from kwargs

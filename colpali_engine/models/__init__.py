@@ -7,6 +7,5 @@ from .late_interaction import (
     ColIdefics2,
     ColIdefics2Processor,
     ColPali,
-    ColPaliConfig,
     ColPaliProcessor,
 )
