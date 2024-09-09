@@ -7,7 +7,7 @@ config:
     do_image_splitting: false
   model:
     (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
-    class_to_instanciate: !ext colpali_engine.models.late_interaction.colidefics_architecture.ColIdefics2
+    class_to_instanciate: !ext colpali_engine.models.ColIdefics2
     pretrained_model_name_or_path: "./models/idefics2-8b"
     # attn_implementation: "eager"
     torch_dtype:  !ext torch.bfloat16
