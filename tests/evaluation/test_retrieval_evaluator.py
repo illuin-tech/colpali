@@ -6,12 +6,12 @@ from colpali_engine.evaluation.retrieval_evaluator import CustomRetrievalEvaluat
 
 @pytest.fixture
 def evaluator() -> CustomRetrievalEvaluator:
-    return CustomRetrievalEvaluator(is_multi_vector=False)
+    return CustomRetrievalEvaluator(is_multi_vector=False, device="cpu")
 
 
 @pytest.fixture
 def multi_vector_evaluator() -> CustomRetrievalEvaluator:
-    return CustomRetrievalEvaluator(is_multi_vector=True)
+    return CustomRetrievalEvaluator(is_multi_vector=True, device="cpu")
 
 
 def test_evaluate_biencoder(evaluator: CustomRetrievalEvaluator):
