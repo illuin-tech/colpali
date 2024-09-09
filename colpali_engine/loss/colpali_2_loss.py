@@ -10,7 +10,8 @@ from colpali_engine.models.late_interaction.colpali_2.colpali_2_modeling_outputs
 
 class MatryoshkaCELoss(torch.nn.Module):
     """
-    Loss function for Matryoshka Representation Learning
+    Loss function for Matryoshka Representation Learning.
+
     Adapted from https://github.com/RAIVNLab/MRL/blob/7ccb42df6be05f3d21d0648aa03099bba46386bf/MRL.py#L11
     """
 
@@ -44,6 +45,7 @@ class ColPali2LossOutputs:
 class ColPali2Loss(torch.nn.Module):
     """
     Loss function for ColPali2.
+
     The loss function is a combination of two losses:
     1. Single-vector loss: Cross-entropy (with optional Matryoshka) loss between the query and document
         single-vector embeddings.
@@ -64,6 +66,7 @@ class ColPali2Loss(torch.nn.Module):
         self.use_distillation_loss = use_distillation_loss
         self.beta = beta
         self.temperature = temperature
+        self.single_vector_loss_fn = MatryoshkaCELoss() if self.use_matryoshka_loss else F.cross_entropy
 
     def single_vector_loss(
         self,
@@ -72,13 +75,14 @@ class ColPali2Loss(torch.nn.Module):
         return_scores: bool = False,
     ) -> torch.Tensor | Tuple[torch.Tensor, torch.Tensor]:
         """
+        Loss function for the single-vector head.
+
         query_embeddings: (batch_size, dim)
         doc_embeddings: (batch_size, dim)
         """
         scores = torch.einsum("bd,cd->bc", query_embeddings, doc_embeddings)
-        loss_fn = MatryoshkaCELoss() if self.use_matryoshka_loss else F.cross_entropy
 
-        loss = loss_fn(scores, torch.arange(scores.shape[0], device=scores.device))  # (1,)
+        loss = self.single_vector_loss_fn(scores, torch.arange(scores.shape[0], device=scores.device))  # (1,)
 
         if return_scores:
             return loss, scores
@@ -92,6 +96,8 @@ class ColPali2Loss(torch.nn.Module):
         return_scores: bool = False,
     ) -> torch.Tensor | Tuple[torch.Tensor, torch.Tensor]:
         """
+        Loss function for the multi-vector head.
+
         query_embeddings: (batch_size, num_query_tokens, dim)
         doc_embeddings: (batch_size, num_doc_tokens, dim)
 
@@ -141,7 +147,7 @@ class ColPali2Loss(torch.nn.Module):
         # computing the KL-divergence.
         # The embeddings are normalized, thus we know the lower and upper bounds of the scores:
         # - Teacher: the multi-vector scores (MaxSim) are between 0 and N_q, N_q being the number of query tokens
-        # - Student: the single-vector scores are between 0 and 1.
+        # - Student: the single-vector scores are between -1 and 1.
 
         # Convert the scores to log-probabilities
         teacher_logits = torch.logit(teacher_scores / teacher_score_upper_bound, eps=1e-6)
@@ -162,6 +168,10 @@ class ColPali2Loss(torch.nn.Module):
         query_embeddings: ColPali2ModelOutput,
         doc_embeddings: ColPali2ModelOutput,
     ) -> ColPali2LossOutputs:
+        """
+        Compute the total loss for the ColPali2 model.
+        """
+
         single_vector_loss, single_vector_scores = self.single_vector_loss(
             query_embeddings.single_vec_emb, doc_embeddings.single_vec_emb, return_scores=True
         )
