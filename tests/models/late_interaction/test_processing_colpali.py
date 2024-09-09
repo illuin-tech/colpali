@@ -14,7 +14,7 @@ def colpali_model_path() -> str:
 
 @pytest.fixture(scope="module")
 def processor_from_pretrained(colpali_model_path: str) -> Generator[ColPaliProcessor, None, None]:
-    yield ColPaliProcessor(colpali_model_path)
+    yield ColPaliProcessor.from_pretrained(colpali_model_path)
 
 
 def test_load_processor_from_pretrained(processor_from_pretrained: ColPaliProcessor):

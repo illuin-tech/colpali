@@ -34,7 +34,7 @@ def colpali_from_pretrained(colpali_model_path: str) -> Generator[ColPali, None,
 
 @pytest.fixture(scope="module")
 def processor() -> Generator[ColPaliProcessor, None, None]:
-    yield ColPaliProcessor("google/paligemma-3b-mix-448")
+    yield ColPaliProcessor.from_pretrained("google/paligemma-3b-mix-448")
 
 
 @pytest.mark.slow
