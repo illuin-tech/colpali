@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Optional, cast
+from typing import List, Optional
 
 from PIL import Image
 from transformers import BatchFeature, PaliGemmaProcessor
@@ -22,7 +22,7 @@ class ColPaliProcessor(BaseVisualRetrieverProcessor, PaliGemmaProcessor):
         images: List[Image.Image],
     ) -> BatchFeature:
         """
-        Process images for ColPali, with an efficient tweak around the PaliGemmma processor.
+        Process images for ColPali.
         """
         texts_doc = ["Describe the image."] * len(images)
         images = [image.convert("RGB") for image in images]
@@ -42,10 +42,9 @@ class ColPaliProcessor(BaseVisualRetrieverProcessor, PaliGemmaProcessor):
         suffix: Optional[str] = None,
     ) -> BatchFeature:
         """
-        Process queries for ColPali, with an efficient tweak around the PaliGemmma processor.
+        Process queries for ColPali.
         """
         # NOTE: The image is required for calling PaligemmaProcessor, so we create a mock image here.
-
 
         suffix = suffix or "<pad>" * 10
         texts_query: List[str] = []
@@ -60,7 +59,8 @@ class ColPaliProcessor(BaseVisualRetrieverProcessor, PaliGemmaProcessor):
             text=texts_query,
             return_tensors="pt",
             padding="longest",
-            max_length=max_length + self.image_seq_length)
+            max_length=max_length + self.image_seq_length,
+        )
 
         del batch_query["pixel_values"]
 

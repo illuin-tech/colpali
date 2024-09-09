@@ -7,7 +7,7 @@ from colpali_engine.models.paligemma.colpali.processing_colpali import ColPaliPr
 
 class BiPaliProcessor(ColPaliProcessor):
     """
-    Processor for BiPali.
+    Processor for BiPali. Mirrors the `ColPaliProcessor` class.
     """
 
     def __init__(
