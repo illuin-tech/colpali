@@ -3,6 +3,10 @@ from transformers.models.paligemma.modeling_paligemma import PaliGemmaConfig
 
 
 class ColPali2Config(PretrainedConfig):
+    """
+    Configuration for the ColPali2 model.
+    """
+
     def __init__(
         self,
         vlm_config: PaliGemmaConfig,

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import cast
+from typing import ClassVar, cast
 
 import torch
 from torch import nn
@@ -16,17 +16,24 @@ class ColPali2ModelOutput:
 
 
 class ColPali2(PaliGemmaPreTrainedModel):
+    main_input_name: ClassVar[str] = "doc_input_ids"  # transformers-related
+
     def __init__(self, config: ColPali2Config):
-        super(ColPali2, self).__init__(config=config)
+        super().__init__(config=config)
 
         self.config = cast(ColPali2Config, self.config)
         self.model = PaliGemmaForConditionalGeneration(self.config.vlm_config)
 
-        self.single_vector_projector = nn.Linear(self.model.config.text_config.hidden_size, self.dim)
-        self.multi_vector_pooler = MultiVectorPooler(pooling_strategy=self.config.single_vector_pool_strategy)
-        self.multi_vector_projector = nn.Linear(self.model.config.text_config.hidden_size, self.dim)
+        self.single_vector_projector = nn.Linear(
+            in_features=self.model.config.text_config.hidden_size,
+            out_features=self.config.single_vector_projector_dim,
+        )
 
-        self.main_input_name = "doc_input_ids"
+        self.multi_vector_pooler = MultiVectorPooler(pooling_strategy=self.config.single_vector_pool_strategy)
+        self.multi_vector_projector = nn.Linear(
+            in_features=self.model.config.text_config.hidden_size,
+            out_features=self.config.multi_vector_projector_dim,
+        )
 
     @property
     def single_vector_projector_dim(self) -> int:
