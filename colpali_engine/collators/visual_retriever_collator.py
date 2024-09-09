@@ -50,6 +50,7 @@ class VisualRetrieverCollator:
 
         # Process each example
         for example in examples:
+            texts_query.append(example["query"])
             if example["image"] is None:
                 raise ValueError("Image is None - This collator does not support None images yet.")
 
@@ -57,9 +58,6 @@ class VisualRetrieverCollator:
 
             if "neg_image" in example and example["neg_image"] is not None:
                 neg_images.append(cast(Image, example["neg_image"]))
-
-            if example["query"] is None:
-                texts_query.append(None)
 
         # Process the documents
         batch_doc = self.processor.process_images(
