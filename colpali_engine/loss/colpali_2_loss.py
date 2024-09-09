@@ -5,7 +5,15 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F  # noqa: N812
 
-from colpali_engine.models.late_interaction.colpali_2.colpali_2_modeling_outputs import ColPali2ModelOutput
+from colpali_engine.models.paligemma.colpali_2.modeling_colpali_2 import ColPali2ModelOutput
+
+
+@dataclass(kw_only=True)
+class ColPali2LossOutputs:
+    single_vector_loss: torch.Tensor
+    multi_vector_loss: torch.Tensor
+    distillation_loss: Optional[torch.Tensor] = None
+    total_loss: torch.Tensor
 
 
 class MatryoshkaCELoss(torch.nn.Module):
@@ -32,14 +40,6 @@ class MatryoshkaCELoss(torch.nn.Module):
         # Apply relative importance weights
         weighted_losses = rel_importance * losses
         return weighted_losses.sum()
-
-
-@dataclass(kw_only=True)
-class ColPali2LossOutputs:
-    single_vector_loss: torch.Tensor
-    multi_vector_loss: torch.Tensor
-    distillation_loss: Optional[torch.Tensor] = None
-    total_loss: torch.Tensor
 
 
 class ColPali2Loss(torch.nn.Module):

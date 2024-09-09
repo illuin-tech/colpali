@@ -1,17 +1,24 @@
+from dataclasses import dataclass
 from typing import cast
 
 import torch
 from torch import nn
 from transformers.models.paligemma.modeling_paligemma import PaliGemmaForConditionalGeneration, PaliGemmaPreTrainedModel
 
-from colpali_engine.models.late_interaction.colpali_2.colpali_2_config import ColPali2Config
-from colpali_engine.models.late_interaction.colpali_2.colpali_2_modeling_outputs import ColPali2ModelOutput
-from colpali_engine.models.late_interaction.colpali_2.colpali_2_utils import MultiVectorPooler
+from colpali_engine.compression.pooling.multi_vector_pooler import MultiVectorPooler
+from colpali_engine.models.paligemma.colpali_2.configuration_colpali_2 import ColPali2Config
+
+
+@dataclass
+class ColPali2ModelOutput:
+    single_vec_emb: torch.Tensor
+    multi_vec_emb: torch.Tensor
 
 
 class ColPali2(PaliGemmaPreTrainedModel):
     def __init__(self, config: ColPali2Config):
         super(ColPali2, self).__init__(config=config)
+
         self.config = cast(ColPali2Config, self.config)
         self.model = PaliGemmaForConditionalGeneration(self.config.vlm_config)
 
