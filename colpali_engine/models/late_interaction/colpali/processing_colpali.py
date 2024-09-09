@@ -58,7 +58,7 @@ class ColPaliProcessor(BaseVisualRetrieverProcessor):
         Process queries for ColPali, with an efficient tweak around the PaliGemmma processor.
         """
         # NOTE: The image is required for calling PaligemmaProcessor, so we create a mock image here.
-        mock_image = Image.new("RGB", (448, 448), (255, 255, 255)).convert("RGB")
+        mock_image = Image.new("RGB", (16, 16), color="black")
 
         suffix = suffix or "<pad>" * 10
         texts_query: List[str] = []

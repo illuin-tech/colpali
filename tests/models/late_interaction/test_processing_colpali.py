@@ -23,7 +23,7 @@ def test_load_processor_from_pretrained(processor_from_pretrained: ColPaliProces
 
 def test_process_images(processor_from_pretrained: ColPaliProcessor):
     # Create a dummy image
-    image = Image.new("RGB", (100, 100), color="red")
+    image = Image.new("RGB", (16, 16), color="black")
     images = [image]
 
     # Process the image

@@ -50,8 +50,8 @@ def test_colpali_forward_images(
 ):
     # Create a batch of dummy images
     images = [
-        Image.new("RGB", (100, 100)),
-        Image.new("RGB", (200, 50), color="red"),
+        Image.new("RGB", (32, 32), color="white"),
+        Image.new("RGB", (16, 16), color="black"),
     ]
 
     # Process the image
