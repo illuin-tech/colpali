@@ -64,8 +64,10 @@ testpaths = ["tests"]
 line-length = 120
 
 [tool.ruff]
-select = ["E", "F", "W", "I", "N"]
 line-length = 120
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N"]
+
+[tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
