@@ -1,6 +1,9 @@
 import gc
+import logging
 
 import torch
+
+logger = logging.getLogger(__name__)
 
 
 def get_torch_device(device: str = "auto") -> str:
@@ -15,13 +18,14 @@ def get_torch_device(device: str = "auto") -> str:
 
     if device == "auto":
         if torch.cuda.is_available():
-            return "cuda:0"
+            device = "cuda:0"
         elif torch.backends.mps.is_available():  # for Apple Silicon
-            return "mps"
+            device = "mps"
         else:
-            return "cpu"
-    else:
-        return device
+            device = "cpu"
+        logger.info(f"Using device: {device}")
+
+    return device
 
 
 def tear_down_torch():
