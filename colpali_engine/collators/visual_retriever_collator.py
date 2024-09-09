@@ -1,10 +1,9 @@
 from typing import Any, Dict, List, cast
 
 from PIL.Image import Image
-from transformers.models.paligemma import PaliGemmaProcessor
 
 from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
-
+from colpali_engine.models.paligemma import ColPaliProcessor
 
 class VisualRetrieverCollator:
     """
@@ -26,7 +25,7 @@ class VisualRetrieverCollator:
             self.processor.tokenizer.additional_special_tokens.index("<image>")
         ]
 
-        if isinstance(self.processor, PaliGemmaProcessor):
+        if isinstance(self.processor, ColPaliProcessor):
             if self.processor.tokenizer.padding_side != "right":
                 print("Setting padding side to right")
                 self.processor.tokenizer.padding_side = "right"
@@ -46,7 +45,7 @@ class VisualRetrieverCollator:
         images: List[Image] = []
         neg_images: List[Image] = []
 
-        if self.processor is None or not isinstance(self.processor, PaliGemmaProcessor):
+        if self.processor is None or not isinstance(self.processor, BaseVisualRetrieverProcessor):
             raise ValueError("Processor should be provided for vision collator.")
 
         # Process each example
