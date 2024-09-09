@@ -11,10 +11,14 @@ include = ["colpali_engine"]
 [project]
 name = "colpali_engine"
 dynamic = ["version"]
-description = "Code used to train ColPali"
+description = "The code used to train and run inference with the ColPali architecture."
 authors = [
     { name = "Manuel Faysse", email = "manuel.faysse@illuin.tech" },
     { name = "Hugues Sibille", email = "hugues.sibille@illuin.tech" },
+    { name = "Tony Wu", email = "tony.wu@illuin.tech" },
+]
+maintainers = [
+    { name = "Manuel Faysse", email = "manuel.faysse@illuin.tech" },
     { name = "Tony Wu", email = "tony.wu@illuin.tech" },
 ]
 readme = "README.md"
