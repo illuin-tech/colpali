@@ -54,6 +54,11 @@ all = ["colpali-engine[dev]", "colpali-engine[train]"]
 [project.urls]
 homepage = "https://github.com/illuin-tech/colpali"
 
+[tool.pytest.ini_options]
+filterwarnings = ["ignore::Warning"]
+markers = ["slow: marks test as slow"]
+testpaths = ["tests"]
+
 [tool.black]
 line-length = 120
 
