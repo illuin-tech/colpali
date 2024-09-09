@@ -2,8 +2,9 @@ from typing import Any, Dict, List, cast
 
 from PIL.Image import Image
 
-from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 from colpali_engine.models.paligemma import ColPaliProcessor
+from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
+
 
 class VisualRetrieverCollator:
     """
