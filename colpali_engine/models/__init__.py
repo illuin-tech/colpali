@@ -1,11 +1,4 @@
-from .bi_encoders import (
-    BiIdefics2,
-    BiPali,
-    BiPaliProj,
-)
-from .late_interaction import (
-    ColIdefics2,
-    ColIdefics2Processor,
-    ColPali,
-    ColPaliProcessor,
-)
+from .biidefics import BiIdefics2
+from .bipali import BiPali, BiPaliProj
+from .colidefics import ColIdefics2, ColIdefics2Processor
+from .colpali import ColPali, ColPaliProcessor
