@@ -26,8 +26,8 @@ class ColPali(PaliGemmaPreTrainedModel):
 
         # TODO: Wait for ColPali2 to create a ColPaliConfig to allow specifying the embedding dimension.
         # We could do it now but it would break all the models trying to load the model from the checkpoint.
-        self.embedding_dim = 128
-        self.custom_text_proj = nn.Linear(self.model.config.text_config.hidden_size, self.embedding_dim)
+        self.dim = 128
+        self.custom_text_proj = nn.Linear(self.model.config.text_config.hidden_size, self.dim)
 
         self.post_init()
 

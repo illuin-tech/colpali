@@ -66,7 +66,7 @@ def test_colpali_forward_images(
     assert outputs.dim() == 3
     batch_size, n_visual_tokens, emb_dim = outputs.shape
     assert batch_size == len(images)
-    assert emb_dim == colpali_from_pretrained.embedding_dim
+    assert emb_dim == colpali_from_pretrained.dim
 
 
 @pytest.mark.slow
@@ -92,4 +92,4 @@ def test_colpali_forward_queries(
     assert outputs.dim() == 3
     batch_size, n_query_tokens, emb_dim = outputs.shape
     assert batch_size == len(queries)
-    assert emb_dim == colpali_from_pretrained.embedding_dim
+    assert emb_dim == colpali_from_pretrained.dim
