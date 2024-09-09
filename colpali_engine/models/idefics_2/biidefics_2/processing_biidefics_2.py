@@ -8,8 +8,5 @@ class BiIdefics2Processor(ColIdefics2Processor):
     Processor for BiIdefics2. Mirrors the `ColIdefics2Processor` class.
     """
 
-    def __init__(
-        self,
-        pretrained_model_name_or_path: str = "HuggingFaceM4/idefics2-8b",
-    ):
-        super().__init__(pretrained_model_name_or_path)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
