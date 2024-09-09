@@ -9,6 +9,10 @@ from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 
 
 class ColIdefics2Processor(BaseVisualRetrieverProcessor):
+    """
+    Processor for ColIdefics2.
+    """
+
     def __init__(
         self,
         pretrained_model_name_or_path: str = "HuggingFaceM4/idefics2-8b",
