@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from colpali_engine.models.paligemma.colpali.processing_colpali import ColPaliProcessor
 
 
