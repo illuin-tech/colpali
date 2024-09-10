@@ -1,10 +1,12 @@
 from typing import List, Optional
+
 import torch
 from PIL import Image
 from transformers import BatchEncoding, Idefics2Processor
 
 from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 from colpali_engine.utils.torch_utils import get_torch_device
+
 
 class ColIdefics2Processor(BaseVisualRetrieverProcessor, Idefics2Processor):
     """

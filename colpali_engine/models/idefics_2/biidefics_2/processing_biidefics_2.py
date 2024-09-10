@@ -1,4 +1,5 @@
 from typing import List, Optional
+
 import torch
 
 from colpali_engine.models.idefics_2.colidefics_2.processing_colidefics_2 import ColIdefics2Processor
