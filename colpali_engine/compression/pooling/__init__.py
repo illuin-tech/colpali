@@ -1,1 +1,1 @@
-from .multi_vector_pooler import MultiVectorPooler, MultiVectorPoolingStrategy
+from .multi_vector_pooler import MultiVectorPooler
