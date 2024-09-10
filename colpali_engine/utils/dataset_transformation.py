@@ -110,7 +110,6 @@ def load_train_set_ir_negs() -> Tuple[DatasetDict, Dataset]:
 
 
 def load_train_set_with_docmatix() -> DatasetDict:
-
     ds_paths = [
         "infovqa_train",
         "docvqa_train",

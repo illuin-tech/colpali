@@ -63,21 +63,17 @@ class ColPaliProcessor(BaseVisualRetrieverProcessor, PaliGemmaProcessor):
 
         del batch_query["pixel_values"]
 
-        batch_query["input_ids"] = batch_query["input_ids"][
-            ..., self.image_seq_length :
-        ]
-        batch_query["attention_mask"] = batch_query["attention_mask"][
-            ..., self.image_seq_length :
-        ]
+        batch_query["input_ids"] = batch_query["input_ids"][..., self.image_seq_length :]
+        batch_query["attention_mask"] = batch_query["attention_mask"][..., self.image_seq_length :]
 
         return batch_query
 
     def score(
-            self,
-            qs: List[torch.Tensor],
-            ps: List[torch.Tensor],
-            batch_size: int = 128,
-            device: Union[Optional[str], torch.device] = None,
+        self,
+        qs: List[torch.Tensor],
+        ps: List[torch.Tensor],
+        batch_size: int = 128,
+        device: Union[Optional[str], torch.device] = None,
     ) -> torch.Tensor:
         """
         Compute the MaxSim score (ColBERT-like) for the given multi-vector query and passage embeddings.

@@ -82,7 +82,6 @@ class ColIdefics2Processor(BaseVisualRetrieverProcessor, Idefics2Processor):
         )
         return batch_query
 
-
     def score(
         self,
         qs: List[torch.Tensor],

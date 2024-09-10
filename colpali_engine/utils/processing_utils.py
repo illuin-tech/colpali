@@ -30,11 +30,13 @@ class BaseVisualRetrieverProcessor(ABC):
         pass
 
     @abstractmethod
-    def score(self,
-              qs: List[torch.Tensor],
-              ps: List[torch.Tensor],
-              device: Union[Optional[str], torch.device] = None,
-              **kwargs) -> torch.Tensor:
+    def score(
+        self,
+        qs: List[torch.Tensor],
+        ps: List[torch.Tensor],
+        device: Union[Optional[str], torch.device] = None,
+        **kwargs,
+    ) -> torch.Tensor:
         pass
 
     @staticmethod
@@ -81,18 +83,14 @@ class BaseVisualRetrieverProcessor(ABC):
 
         for i in range(0, len(qs), batch_size):
             scores_batch = []
-            qs_batch = torch.nn.utils.rnn.pad_sequence(
-                qs[i : i + batch_size], batch_first=True, padding_value=0
-            ).to(device)
+            qs_batch = torch.nn.utils.rnn.pad_sequence(qs[i : i + batch_size], batch_first=True, padding_value=0).to(
+                device
+            )
             for j in range(0, len(ps), batch_size):
                 ps_batch = torch.nn.utils.rnn.pad_sequence(
                     ps[j : j + batch_size], batch_first=True, padding_value=0
                 ).to(device)
-                scores_batch.append(
-                    torch.einsum("bnd,csd->bcns", qs_batch, ps_batch)
-                    .max(dim=3)[0]
-                    .sum(dim=2)
-                )
+                scores_batch.append(torch.einsum("bnd,csd->bcns", qs_batch, ps_batch).max(dim=3)[0].sum(dim=2))
             scores_batch = torch.cat(scores_batch, dim=1).cpu()
             scores_list.append(scores_batch)
 
@@ -101,5 +99,3 @@ class BaseVisualRetrieverProcessor(ABC):
 
         scores = scores.to(torch.float32)
         return scores
-
-
