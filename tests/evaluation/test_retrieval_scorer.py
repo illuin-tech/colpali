@@ -1,6 +1,8 @@
+from unittest.mock import patch
+
 import pytest
 import torch
-from unittest.mock import patch
+
 from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 
 
