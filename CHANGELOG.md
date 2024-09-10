@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Restructure the model training code
 - Add custom `Processor` classes to easily process images and/or queries
 - Enable module-level imports
-- Add `RetrievalScorer`
+- Add scoring to processor
 - Add `CustomRetrievalEvaluator`
 - Add missing typing
 - Add tests for model, processor, scorer, and collator

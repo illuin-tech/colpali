@@ -1,5 +1,6 @@
-from typing import List, Optional
+from typing import List, Optional, Union
 
+import torch
 from PIL import Image
 from transformers import BatchEncoding, Idefics2Processor
 
@@ -80,3 +81,17 @@ class ColIdefics2Processor(BaseVisualRetrieverProcessor, Idefics2Processor):
             max_length=max_length,
         )
         return batch_query
+
+
+    def score(
+        self,
+        qs: List[torch.Tensor],
+        ps: List[torch.Tensor],
+        batch_size: int = 128,
+        device: Union[Optional[str], torch.device] = None,
+    ) -> torch.Tensor:
+        """
+        Compute the MaxSim score (ColBERT-like) for the given multi-vector query and passage embeddings.
+        """
+
+        return self.score_multi_vector(qs, ps, batch_size=batch_size, device=device)

@@ -12,21 +12,18 @@ from transformers import (
     AutoTokenizer,
     PreTrainedModel,
     PreTrainedTokenizer,
-    ProcessorMixin,
     TrainingArguments,
 )
 
 from colpali_engine.collators.hard_neg_collator import HardNegCollator
 from colpali_engine.collators.visual_retriever_collator import VisualRetrieverCollator
-from colpali_engine.evaluation.retrieval_scorer import RetrievalScorer
 from colpali_engine.loss.late_interaction_losses import (
     ColbertLoss,
-    ColbertPairwiseCELoss,
-    ColbertPairwiseNegativeCELoss,
 )
 from colpali_engine.trainer.contrastive_trainer import ContrastiveNegativeTrainer, ContrastiveTrainer
 from colpali_engine.trainer.eval_utils import CustomRetrievalEvaluator
 from colpali_engine.utils.gpu_stats import print_gpu_utilization, print_summary
+from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 
 
 @dataclass
@@ -39,7 +36,7 @@ class ColModelTrainingConfig:
     run_train: bool = True
     peft_config: Optional[LoraConfig] = None
     add_suffix: bool = False
-    processor: ProcessorMixin = None
+    processor: BaseVisualRetrieverProcessor = None
     tokenizer: PreTrainedTokenizer = None
     loss_func: Optional[Callable] = ColbertLoss()
     dataset_loading_func: Optional[Callable] = None
@@ -118,13 +115,6 @@ class ColModelTraining:
                 max_length=self.config.max_length,
             )
         self.current_git_hash = os.popen("git rev-parse HEAD").read().strip()
-        self.retriever_scorer = RetrievalScorer(
-            is_multi_vector=(
-                isinstance(self.config.loss_func, ColbertLoss)
-                or isinstance(self.config.loss_func, ColbertPairwiseCELoss)
-                or isinstance(self.config.loss_func, ColbertPairwiseNegativeCELoss)
-            )
-        )
         self.retrieval_evaluator = CustomRetrievalEvaluator()
 
     def train(self) -> None:
@@ -233,7 +223,7 @@ class ColModelTraining:
                         qs.extend(list(torch.unbind(query.to("cpu"))))
 
         print("Embeddings computed, evaluating")
-        scores = self.retriever_scorer.evaluate(qs, ps)
+        scores = self.config.processor.score(qs, ps, device=self.model.device)
         # scores is 2d array of shape (n_queries, n_docs)
         # turn it into a dict
         results = {}
