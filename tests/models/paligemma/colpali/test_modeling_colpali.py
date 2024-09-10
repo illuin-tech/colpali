@@ -83,7 +83,7 @@ def test_forward_queries(
 
     # Forward pass
     with torch.no_grad():
-        outputs = model_from_pretrained(**batch_queries).to(model_from_pretrained.device)
+        outputs = model_from_pretrained(**batch_queries)
 
     # Assertions
     assert isinstance(outputs, torch.Tensor)
