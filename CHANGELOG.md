@@ -36,10 +36,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Removed
 
-- Deprecate `interpretability` and `eval_manager` modules
-- Deprecate unused utils
-- Deprecate `TextRetrieverCollator`
-- Deprecate `HardNegDocmatixCollator`
+- Remove `interpretability` and `eval_manager` modules
+- Remove unused utils
+- Remove `TextRetrieverCollator`
+- Remove `HardNegDocmatixCollator`
 
 ### Fixed
 
