@@ -26,9 +26,3 @@ def test_evaluate_colbert(multi_vector_evaluator: CustomRetrievalEvaluator):
     ps = [torch.randn(42, 128) for _ in range(10)]
     scores = multi_vector_evaluator.evaluate(qs, ps)
     assert scores.shape == (len(qs), len(ps))
-
-
-@pytest.mark.skip("Not implemented")
-def test_compute_metrics(evaluator: CustomRetrievalEvaluator):
-    # TODO: Implement this test
-    pass

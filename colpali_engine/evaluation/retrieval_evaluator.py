@@ -1,8 +1,7 @@
 import logging
-from typing import Any, Dict, List, Optional
+from typing import List
 
 import torch
-from mteb.evaluation.evaluators import RetrievalEvaluator
 
 from colpali_engine.utils.torch_utils import get_torch_device
 
@@ -17,12 +16,9 @@ class CustomRetrievalEvaluator:
     def __init__(
         self,
         is_multi_vector: bool = False,
-        mteb_evaluator_args: Optional[Dict[str, Any]] = None,
         device: str = "auto",
     ):
-        self.mteb_evaluator_args = mteb_evaluator_args or {}
         self.is_multi_vector = is_multi_vector
-        self.mteb_evaluator = RetrievalEvaluator(**self.mteb_evaluator_args)
         self.device = get_torch_device(device)
 
     def evaluate(
@@ -43,34 +39,6 @@ class CustomRetrievalEvaluator:
         logger.info(f"Top 1 Accuracy (verif): {accuracy}")
 
         scores = scores.to(torch.float32).cpu().numpy()
-        return scores
-
-    def compute_metrics(
-        self,
-        relevant_docs: Dict[str, dict[str, int]],
-        results: Dict[str, dict[str, float]],
-        **kwargs,
-    ) -> Dict[str, float]:
-        """
-        Compute the MTEB retrieval metrics.
-        """
-        ndcg, _map, recall, precision, naucs = self.mteb_evaluator.evaluate(
-            relevant_docs,
-            results,
-            self.mteb_evaluator.k_values,
-            ignore_identical_ids=kwargs.get("ignore_identical_ids", True),
-        )
-
-        mrr = self.mteb_evaluator.evaluate_custom(relevant_docs, results, self.mteb_evaluator.k_values, "mrr")
-
-        scores = {
-            **{f"ndcg_at_{k.split('@')[1]}": v for (k, v) in ndcg.items()},
-            **{f"map_at_{k.split('@')[1]}": v for (k, v) in _map.items()},
-            **{f"recall_at_{k.split('@')[1]}": v for (k, v) in recall.items()},
-            **{f"precision_at_{k.split('@')[1]}": v for (k, v) in precision.items()},
-            **{f"mrr_at_{k.split('@')[1]}": v for (k, v) in mrr[0].items()},
-            **{f"naucs_at_{k.split('@')[1]}": v for (k, v) in naucs.items()},
-        }
         return scores
 
     def get_single_vector_scores(
