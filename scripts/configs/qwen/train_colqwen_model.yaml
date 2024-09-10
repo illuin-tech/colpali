@@ -4,7 +4,8 @@ config:
   processor:
     () : colpali_engine.utils.transformers_wrappers.AutoProcessorWrapper
     pretrained_model_name_or_path:  "Qwen/Qwen2-VL-2B-Instruct" # "./models/paligemma-3b-mix-448"
-    max_length: 50
+    min_pixels: 200704 # 256 x 28 x 28
+    max_pixels: 1003520 # 1280 x 28 x 28
   model:
     (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
     class_to_instanciate: !ext colpali_engine.models.late_interaction.colqwen_architecture.ColQwen
