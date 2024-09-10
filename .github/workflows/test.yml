@@ -29,3 +29,5 @@ jobs:
       - name: Run tests with pytest (except "slow" tests)
         run: |
           pytest -m "not slow"
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
