@@ -87,7 +87,7 @@ class ColIdefics2Processor(BaseVisualRetrieverProcessor, Idefics2Processor):
         qs: List[torch.Tensor],
         ps: List[torch.Tensor],
         batch_size: int = 128,
-        device: Union[Optional[str], torch.device] = None,
+        device: Optional[Union[str, torch.device]] = None,
     ) -> torch.Tensor:
         """
         Compute the MaxSim score (ColBERT-like) for the given multi-vector query and passage embeddings.

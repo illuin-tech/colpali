@@ -17,7 +17,7 @@ class BiPaliProcessor(ColPaliProcessor):
         self,
         qs: List[torch.Tensor],
         ps: List[torch.Tensor],
-        device: Union[Optional[str], torch.device] = None,
+        device: Optional[Union[str, torch.device]] = None,
         **kwargs,
     ) -> torch.Tensor:
         """
