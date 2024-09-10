@@ -84,7 +84,7 @@ def test_colpali_forward_queries(
 
     # Forward pass
     with torch.no_grad():
-        outputs = colpali_from_pretrained(**batch_queries).to(colpali_from_pretrained.device)
+        outputs = colpali_from_pretrained(**batch_queries)
 
     # Assertions
     assert isinstance(outputs, torch.Tensor)
