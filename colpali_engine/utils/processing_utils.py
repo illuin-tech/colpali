@@ -33,7 +33,7 @@ class BaseVisualRetrieverProcessor(ABC):
     def score(self,
               qs: List[torch.Tensor],
               ps: List[torch.Tensor],
-              device: Optional[str] = None,
+              device: Union[Optional[str], torch.device] = None,
               **kwargs) -> torch.Tensor:
         pass
 
@@ -41,8 +41,7 @@ class BaseVisualRetrieverProcessor(ABC):
     def score_single_vector(
         qs: List[torch.Tensor],
         ps: List[torch.Tensor],
-        device: Optional[str] = None,
-        **kwargs,
+        device: Union[Optional[str], torch.device] = None,
     ) -> torch.Tensor:
         """
         Compute the dot product score for the given single-vector query and passage embeddings.
@@ -67,7 +66,7 @@ class BaseVisualRetrieverProcessor(ABC):
         qs: List[torch.Tensor],
         ps: List[torch.Tensor],
         batch_size: int = 128,
-        device: Optional[str] = None,
+        device: Union[Optional[str], torch.device] = None,
     ) -> torch.Tensor:
         """
         Compute the MaxSim score (ColBERT-like) for the given multi-vector query and passage embeddings.

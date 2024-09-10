@@ -223,7 +223,7 @@ class ColModelTraining:
                         qs.extend(list(torch.unbind(query.to("cpu"))))
 
         print("Embeddings computed, evaluating")
-        scores = self.config.processor.score(qs, ps)
+        scores = self.config.processor.score(qs, ps, device=self.model.device)
         # scores is 2d array of shape (n_queries, n_docs)
         # turn it into a dict
         results = {}

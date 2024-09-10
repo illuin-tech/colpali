@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import torch
 
@@ -17,7 +17,7 @@ class BiPaliProcessor(ColPaliProcessor):
         self,
         qs: List[torch.Tensor],
         ps: List[torch.Tensor],
-        device: Optional[str] = None,
+        device: Union[Optional[str], torch.device] = None,
         **kwargs,
     ) -> torch.Tensor:
         """
