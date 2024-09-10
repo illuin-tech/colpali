@@ -23,4 +23,4 @@ class BiIdefics2Processor(ColIdefics2Processor):
         """
         Compute the dot product score for the given single-vector query and passage embeddings.
         """
-        return self.score_single_vector(qs, ps, device=device, **kwargs)
+        return self.score_single_vector(qs, ps, device=device)
