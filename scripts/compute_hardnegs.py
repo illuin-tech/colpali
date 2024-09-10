@@ -62,7 +62,7 @@ if COMPUTE_EMBEDDINGS:
         filtered_dataset,
         batch_size=8,
         shuffle=False,
-        collate_fn=lambda x: processor.process_images(processor, [a["image"] for a in x]),
+        collate_fn=lambda x: processor.process_images([a["image"] for a in x]),
     )
     print("Computing embeddings")
 
