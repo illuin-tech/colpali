@@ -12,7 +12,6 @@ from transformers import (
     AutoTokenizer,
     PreTrainedModel,
     PreTrainedTokenizer,
-    ProcessorMixin,
     TrainingArguments,
 )
 
@@ -27,6 +26,7 @@ from colpali_engine.loss.late_interaction_losses import (
 from colpali_engine.trainer.contrastive_trainer import ContrastiveNegativeTrainer, ContrastiveTrainer
 from colpali_engine.trainer.eval_utils import CustomRetrievalEvaluator
 from colpali_engine.utils.gpu_stats import print_gpu_utilization, print_summary
+from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 
 
 @dataclass
@@ -39,7 +39,7 @@ class ColModelTrainingConfig:
     run_train: bool = True
     peft_config: Optional[LoraConfig] = None
     add_suffix: bool = False
-    processor: ProcessorMixin = None
+    processor: BaseVisualRetrieverProcessor = None
     tokenizer: PreTrainedTokenizer = None
     loss_func: Optional[Callable] = ColbertLoss()
     dataset_loading_func: Optional[Callable] = None
@@ -233,7 +233,7 @@ class ColModelTraining:
                         qs.extend(list(torch.unbind(query.to("cpu"))))
 
         print("Embeddings computed, evaluating")
-        scores = self.retriever_scorer.evaluate(qs, ps)
+        scores = self.config.processor.score(qs, ps)
         # scores is 2d array of shape (n_queries, n_docs)
         # turn it into a dict
         results = {}

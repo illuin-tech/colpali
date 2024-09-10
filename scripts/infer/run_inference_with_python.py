@@ -60,7 +60,7 @@ def main() -> None:
 
     # run evaluation
     retriever_evaluator = RetrievalScorer(is_multi_vector=True)
-    scores = retriever_evaluator.evaluate(qs, ds)
+    scores = processor.score(qs, ds)
     print(scores.argmax(axis=1))
 
 
