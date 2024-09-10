@@ -11,16 +11,15 @@
 [[Blog Post]](https://huggingface.co/blog/manu/colpali)
 
 > [!TIP]
-> If you want to try the pre-trained ColPali on your own documents, you can use the [`vidore-benchmark`](https://github.com/illuin-tech/vidore-benchmark) repository. It comes with a Python package and a CLI tool for convenient evaluation. You can also use code provided in the model cards on the hub.
+> For production usage in your RAG pipelines, we recommend using the [`byaldi`](https://github.com/AnswerDotAI/byaldi) package, which is a lightweight wrapper around the `colpali-engine` package developed by the author of the popular [RAGatouille](https://github.com/AnswerDotAI/RAGatouille) repostiory. 🐭
 
 ## Associated Paper
 
-This repository contains the code used for training the vision retrievers in the [**ColPali: Efficient Document Retrieval with Vision Language Models**](https://arxiv.org/abs/2407.01449) paper. 
-In particular, it contains the code for training the ColPali model, which is a vision retriever based on the ColBERT architecture.
+This repository contains the code used for training the vision retrievers in the [**ColPali: Efficient Document Retrieval with Vision Language Models**](https://arxiv.org/abs/2407.01449) paper. In particular, it contains the code for training the ColPali model, which is a vision retriever based on the ColBERT architecture.
 
 ## Setup
 
-We used Python 3.11.6 and PyTorch 2.2.2 to train and test our models, but the codebase is expected to be compatible with Python >=3.9 and recent PyTorch versions.
+We used Python 3.11.6 and PyTorch 2.2.2 to train and test our models, but the codebase is compatible with Python >=3.9 and recent PyTorch versions.
 
 The eval codebase depends on a few Python packages, which can be downloaded using the following command:
 
@@ -28,28 +27,30 @@ The eval codebase depends on a few Python packages, which can be downloaded usin
 pip install colpali-engine
 ```
 
+> [!WARNING]
+> For ColPali versions above v1.0, make sure to install the `colpali-engine` package from source or with a version above v0.2.0.
+
+## Usage
+
+### Inference
+
+This repository doesn't contain the code to run optimized retrieval for RAG pipelines. For this, we recommend using [`byaldi`](https://github.com/AnswerDotAI/byaldi) - [RAGatouille](https://github.com/AnswerDotAI/RAGatouille)'s little sister 🐭 - which share a similar API and leverages our `colpali-engine` package.
+
+### Benchmarking
+
+To benchmark ColPali to reproduce the results on the [ViDoRe leaderboard](https://huggingface.co/spaces/vidore/vidore-leaderboard), it is recommended to use the [`vidore-benchmark`](https://github.com/illuin-tech/vidore-benchmark) package.
+
+### Training
+
 To keep a lightweight repository, only the essential packages were installed. In particular, you must specify the dependencies to use the training script for ColPali. You can do this using the following command:
 
 ```bash
 pip install "colpali-engine[train]"
 ```
 
-> [!WARNING]
-> For ColPali versions above v1.0, make sure to install the `colpali-engine` package from source or with a version above v0.2.0.
-
-## Usage
-
-The `scripts/` directory contains scripts to run training and inference.
-
-### Inference
-
-While there is an inference script in this repository, it's recommended to run inference using the  [`vidore-benchmark`](https://github.com/illuin-tech/vidore-benchmark) package.
-
-### Training
-
 All the model configs used can be found in `scripts/configs/` and rely on the [configue](https://github.com/illuin-tech/configue) package for straightforward configuration. They should be used with the `train_colbert.py` script.
 
-**Example 1: Local training**
+#### Example 1: Local training
 
 ```bash
 USE_LOCAL_DATASET=0 python scripts/train/train_colbert.py scripts/configs/pali/train_colpali_docmatix_hardneg_model.yaml
@@ -61,7 +62,7 @@ or using `accelerate`:
 accelerate launch scripts/train/train_colbert.py scripts/configs/pali/train_colpali_docmatix_hardneg_model.yaml
 ```
 
-**Example 2: Training on a SLURM cluster**
+#### Example 2: Training on a SLURM cluster
 
 ```bash
 sbatch --nodes=1 --cpus-per-task=16 --mem-per-cpu=32GB --time=20:00:00 --gres=gpu:1  -p gpua100 --job-name=colidefics --output=colidefics.out --error=colidefics.err --wrap="accelerate launch scripts/train/train_colbert.py scripts/configs/pali/train_colpali_docmatix_hardneg_model.yaml"
