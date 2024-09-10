@@ -1,6 +1,7 @@
 # Custom
 !*/configs/data/
 .DS_Store
+/.vscode/
 /data/
 /logs/
 /models/

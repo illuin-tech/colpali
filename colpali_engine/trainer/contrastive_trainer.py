@@ -55,7 +55,6 @@ class ContrastiveTrainer(Trainer):
                     input_ids=inputs["query_input_ids"], attention_mask=inputs["query_attention_mask"]
                 )
             else:
-
                 query_outputs = model(
                     input_ids=inputs["query_input_ids"], attention_mask=inputs["query_attention_mask"]
                 )
@@ -145,7 +144,6 @@ class ContrastiveNegativeTrainer(Trainer):
                     input_ids=inputs["query_input_ids"], attention_mask=inputs["query_attention_mask"]
                 )
             else:
-
                 query_outputs = model(
                     input_ids=inputs["query_input_ids"], attention_mask=inputs["query_attention_mask"]
                 )

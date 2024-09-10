@@ -11,10 +11,14 @@ include = ["colpali_engine"]
 [project]
 name = "colpali_engine"
 dynamic = ["version"]
-description = "Code used to train ColPali"
+description = "The code used to train and run inference with the ColPali architecture."
 authors = [
     { name = "Manuel Faysse", email = "manuel.faysse@illuin.tech" },
     { name = "Hugues Sibille", email = "hugues.sibille@illuin.tech" },
+    { name = "Tony Wu", email = "tony.wu@illuin.tech" },
+]
+maintainers = [
+    { name = "Manuel Faysse", email = "manuel.faysse@illuin.tech" },
     { name = "Tony Wu", email = "tony.wu@illuin.tech" },
 ]
 readme = "README.md"
@@ -30,7 +34,9 @@ classifiers = [
 
 dependencies = [
     "GPUtil",
+    "numpy<2.0.0",
     "peft>=0.11.0,<0.12.0",
+    "pillow>=9.2.0,<11.0.0",
     "requests",
     "torch>=2.2.0",
     "transformers>=4.41.1",
@@ -39,34 +45,30 @@ dependencies = [
 [project.optional-dependencies]
 train = [
     "accelerate>=0.30.1",
-    "numpy==1.26.4",
     "bitsandbytes",
     "configue>=5.0.0",
     "datasets>=2.19.1",
-    "mteb>=1.12.22",
+    "mteb>=1.12.22,<2.0.0",
     "typer>=0.12.3",
 ]
 
-dev = [
-    "black>=24.4.2",
-    "coverage>=7.5.2",
-    "ipykernel>=6.29.4",
-    "mypy>=1.10.0",
-    "pytest>=8.2.1",
-    "ruff>=0.4.5",
-]
+dev = ["pytest>=8.0.0", "ruff>=0.4.0"]
 
 all = ["colpali-engine[dev]", "colpali-engine[train]"]
 
 [project.urls]
 homepage = "https://github.com/illuin-tech/colpali"
 
-[tool.black]
-line-length = 120
+[tool.pytest.ini_options]
+filterwarnings = ["ignore::Warning"]
+markers = ["slow: marks test as slow"]
+testpaths = ["tests"]
 
 [tool.ruff]
-select = ["E", "F", "W", "I", "N"]
 line-length = 120
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N"]
+
+[tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]

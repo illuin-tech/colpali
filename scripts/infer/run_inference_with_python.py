@@ -7,9 +7,8 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import AutoProcessor
 
-from colpali_engine.models.late_interaction.colpali_architecture import ColPali
-from colpali_engine.trainer.retrieval_evaluator import CustomEvaluator
-from colpali_engine.utils.processing_utils.colpali_processing_utils import process_images, process_queries
+from colpali_engine.models import ColPali
+from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 
 
 def main() -> None:
@@ -23,6 +22,9 @@ def main() -> None:
     model.load_adapter(model_name)
     processor = AutoProcessor.from_pretrained(model_name)
 
+    if not isinstance(processor, BaseVisualRetrieverProcessor):
+        raise ValueError("Processor should be a BaseVisualRetrieverProcessor")
+
     images = cast(Dataset, load_dataset("vidore/docvqa_test_subsampled", split="test"))["image"]
     queries = ["From which university does James V. Fiorca come ?", "Who is the japanese prime minister?"]
 
@@ -31,7 +33,7 @@ def main() -> None:
         images,
         batch_size=4,
         shuffle=False,
-        collate_fn=lambda x: process_images(processor, x),
+        collate_fn=lambda x: processor.process_images(x),
     )
     ds = []
     for batch_doc in tqdm(dataloader):
@@ -45,7 +47,7 @@ def main() -> None:
         queries,
         batch_size=4,
         shuffle=False,
-        collate_fn=lambda x: process_queries(processor, x),
+        collate_fn=lambda x: processor.process_queries(x),
     )
 
     qs = []
@@ -56,8 +58,7 @@ def main() -> None:
         qs.extend(list(torch.unbind(embeddings_query.to("cpu"))))
 
     # run evaluation
-    retriever_evaluator = CustomEvaluator(is_multi_vector=True)
-    scores = retriever_evaluator.evaluate(qs, ds)
+    scores = processor.score(qs, ds)
     print(scores.argmax(axis=1))
 
 

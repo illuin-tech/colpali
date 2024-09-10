@@ -5,36 +5,60 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## Unreleased
+## [0.3.0] - 2024-09-10
+
+✨ This release is an exhaustive package refacto, making ColPali more modular and easier to use.
+
+🚨 It is **NOT** backward-compatible with previous versions.
 
 ### Added
 
-- feat: Deprecate `interpretability` and `eval_manager` modules
-- feat: Deprecate unused util modules
-- feat: Revamp module organization
-- feat: Restructure the `utils` module
-- feat: Move `ColModelTraining` module
-- feat: Lint code + tweaks
-- feat: deprecated a lot of unused modules and legacy code
+- Restructure the `utils` module
+- Restructure the model training code
+- Add custom `Processor` classes to easily process images and/or queries
+- Enable module-level imports
+- Add scoring to processor
+- Add `CustomRetrievalEvaluator`
+- Add missing typing
+- Add tests for model, processor, scorer, and collator
+- Lint `Changelog`
+- Add missing docstrings
+- Add "Ruff" and "Test" CI pipelines
 
 ### Changed
 
-- doc: Lint Changelog
-- doc: Tweak README
-- feat: The processing function in `colpali_engine.utils.processing_utils.colpali_processing_utils` `process_queries` has a changed API and does not require a Mock Image anymore.
+- Restructure all modules to closely follow the [`transformers`](https://github.com/huggingface/transformers) architecture
+- Hugely simplify the collator implementation to make it model-agnostic
+- `ColPaliProcessor`'s `process_queries` doesn't need a mock image input anymore
+- Clean `pyproject.toml`
+- Loosen the required dependencies
+- Replace `black` with the `ruff` linter
+
+### Removed
+
+- Deprecate `interpretability` and `eval_manager` modules
+- Deprecate unused utils
+- Deprecate `TextRetrieverCollator`
+- Deprecate `HardNegDocmatixCollator`
+
+### Fixed
+
+- Fix wrong PIL import
+- Fix dependency issues
 
 ## [0.2.2] - 2024-09-06
 
 ### Fixed
+
 - Remove forced "cuda" usage in Retrieval Evaluator
 
 ## [0.2.1] - 2024-09-02
- 
+
 Patch query preprocessing helper function disalignement with training scheme.
 
 ### Fixed
-- Add 10 extra pad token by default to the query to act as reasoning buffers. This was added in the collator but not the external helper function for inference purposes.
 
+- Add 10 extra pad token by default to the query to act as reasoning buffers. This was added in the collator but not the external helper function for inference purposes.
 
 ## [0.2.0] - 2024-08-29
 

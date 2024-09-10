@@ -1,3 +1,5 @@
+from typing import cast
+
 import datasets
 import numpy as np
 import torch
@@ -5,9 +7,9 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import AutoProcessor
 
-from colpali_engine.models.bi_encoders.bipali_architecture import BiPali
+from colpali_engine.models import BiPali
 from colpali_engine.utils.dataset_transformation import load_train_set
-from colpali_engine.utils.processing_utils.colpali_processing_utils import process_images
+from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 
 train_set = load_train_set()
 
@@ -18,15 +20,20 @@ COMPUTE_HARDNEGS = False
 if COMPUTE_HARDNEGS or COMPUTE_EMBEDDINGS:
     model_name = "./models/bipali"
 
+    print("Loading base model")
     model = BiPali.from_pretrained(
         "./models/paligemma-3b-mix-448", torch_dtype=torch.bfloat16, device_map="cuda"
     ).eval()
-    print("Add adapter")
+
+    print("Adding adapter")
     model.load_adapter(model_name)
-    print("Model loaded")
     model = model.to("cuda")
-    print("Processor")
+
+    print("Loading processor")
     processor = AutoProcessor.from_pretrained(model_name)
+    if not isinstance(processor, BaseVisualRetrieverProcessor):
+        raise ValueError("Processor should be a BaseVisualRetrieverProcessor")
+    processor = cast(BaseVisualRetrieverProcessor, processor)
 
 if COMPUTE_EMBEDDINGS:
     print("Loading images")
@@ -55,7 +62,7 @@ if COMPUTE_EMBEDDINGS:
         filtered_dataset,
         batch_size=8,
         shuffle=False,
-        collate_fn=lambda x: process_images(processor, [a["image"] for a in x]),
+        collate_fn=lambda x: processor.process_images([a["image"] for a in x]),
     )
     print("Computing embeddings")
 
@@ -77,17 +84,14 @@ if not COMPUTE_EMBEDDINGS:
 
 if COMPUTE_HARDNEGS:
     # compute hard negatives
-    ds = ds.to("cuda")
-
-    from colpali_engine.utils.processing_utils.colpali_processing_utils import process_queries
+    ds = cast(torch.Tensor, ds).to("cuda")
 
     # iterate on the train set
-
     mined_hardnegs = []
 
     for i in tqdm(range(0, len(train_set["train"]), 8)):
         samples = train_set["train"][i : i + 8]
-        batch_query = process_queries(processor, samples["query"])
+        batch_query = processor.process_queries(samples["query"])
         with torch.no_grad():
             batch_query = {k: v.to(model.device) for k, v in batch_query.items()}
             embeddings_query = model(**batch_query)

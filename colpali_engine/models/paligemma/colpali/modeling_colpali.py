@@ -1,9 +1,12 @@
-from typing import Optional
+from typing import ClassVar, Optional
 
 import torch
 from torch import nn
-from transformers.models.paligemma.configuration_paligemma import PaliGemmaConfig
-from transformers.models.paligemma.modeling_paligemma import PaliGemmaForConditionalGeneration, PaliGemmaPreTrainedModel
+from transformers.models.paligemma.modeling_paligemma import (
+    PaliGemmaConfig,
+    PaliGemmaForConditionalGeneration,
+    PaliGemmaPreTrainedModel,
+)
 
 
 class ColPali(PaliGemmaPreTrainedModel):
@@ -11,15 +14,21 @@ class ColPali(PaliGemmaPreTrainedModel):
     ColPali model implementation from the "ColPali: Efficient Document Retrieval with Vision Language Models" paper.
     """
 
+    main_input_name: ClassVar[str] = "doc_input_ids"  # transformers-related
+
     def __init__(self, config: PaliGemmaConfig):
-        super(ColPali, self).__init__(config=config)
-        model: PaliGemmaForConditionalGeneration = PaliGemmaForConditionalGeneration(config)
+        super().__init__(config=config)
+
+        model = PaliGemmaForConditionalGeneration(config=config)
         if model.language_model._tied_weights_keys is not None:
             self._tied_weights_keys = [f"model.language_model.{k}" for k in model.language_model._tied_weights_keys]
         self.model = model
+
+        # TODO: Wait for ColPali2 to create a ColPaliConfig to allow specifying the embedding dimension.
+        # We could do it now but it would break all the models trying to load the model from the checkpoint.
         self.dim = 128
         self.custom_text_proj = nn.Linear(self.model.config.text_config.hidden_size, self.dim)
-        self.main_input_name = "doc_input_ids"
+
         self.post_init()
 
     def forward(self, *args, **kwargs) -> torch.Tensor:

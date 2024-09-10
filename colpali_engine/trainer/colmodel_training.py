@@ -8,18 +8,22 @@ from datasets import concatenate_datasets
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from transformers import AutoTokenizer, Idefics2Processor, PreTrainedModel, PreTrainedTokenizer, TrainingArguments
+from transformers import (
+    AutoTokenizer,
+    PreTrainedModel,
+    PreTrainedTokenizer,
+    TrainingArguments,
+)
 
-from colpali_engine.collators.custom_collator import CustomCollator
 from colpali_engine.collators.hard_neg_collator import HardNegCollator
+from colpali_engine.collators.visual_retriever_collator import VisualRetrieverCollator
 from colpali_engine.loss.late_interaction_losses import (
     ColbertLoss,
-    ColbertPairwiseCELoss,
-    ColbertPairwiseNegativeCELoss,
 )
 from colpali_engine.trainer.contrastive_trainer import ContrastiveNegativeTrainer, ContrastiveTrainer
-from colpali_engine.trainer.retrieval_evaluator import CustomEvaluator
+from colpali_engine.trainer.eval_utils import CustomRetrievalEvaluator
 from colpali_engine.utils.gpu_stats import print_gpu_utilization, print_summary
+from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 
 
 @dataclass
@@ -32,7 +36,7 @@ class ColModelTrainingConfig:
     run_train: bool = True
     peft_config: Optional[LoraConfig] = None
     add_suffix: bool = False
-    processor: Idefics2Processor = None
+    processor: BaseVisualRetrieverProcessor = None
     tokenizer: PreTrainedTokenizer = None
     loss_func: Optional[Callable] = ColbertLoss()
     dataset_loading_func: Optional[Callable] = None
@@ -106,17 +110,12 @@ class ColModelTraining:
                 image_dataset=neg_dataset,
             )
         else:
-            self.collator = CustomCollator(
-                processor=self.config.processor, tokenizer=self.config.tokenizer, max_length=self.config.max_length
+            self.collator = VisualRetrieverCollator(
+                processor=self.config.processor,
+                max_length=self.config.max_length,
             )
         self.current_git_hash = os.popen("git rev-parse HEAD").read().strip()
-        self.retriever_evaluator = CustomEvaluator(
-            is_multi_vector=(
-                isinstance(self.config.loss_func, ColbertLoss)
-                or isinstance(self.config.loss_func, ColbertPairwiseCELoss)
-                or isinstance(self.config.loss_func, ColbertPairwiseNegativeCELoss)
-            )
-        )
+        self.retrieval_evaluator = CustomRetrievalEvaluator()
 
     def train(self) -> None:
         if isinstance(self.collator, HardNegCollator):
@@ -224,7 +223,7 @@ class ColModelTraining:
                         qs.extend(list(torch.unbind(query.to("cpu"))))
 
         print("Embeddings computed, evaluating")
-        scores = self.retriever_evaluator.evaluate(qs, ps)
+        scores = self.config.processor.score(qs, ps, device=self.model.device)
         # scores is 2d array of shape (n_queries, n_docs)
         # turn it into a dict
         results = {}
@@ -235,8 +234,9 @@ class ColModelTraining:
             }
 
         # evaluate
-        metrics = self.retriever_evaluator.compute_metrics(relevant_docs, results)
-        print(metrics)
+        metrics = self.retrieval_evaluator.compute_mteb_metrics(relevant_docs, results)
+        print("MTEB metrics:", metrics)
+
         return metrics
 
     def eval(self) -> None:
@@ -250,8 +250,9 @@ class ColModelTraining:
             print(f"Error evaluating validation set: {e}")
 
         # switching to normal collator
-        self.collator = CustomCollator(
-            processor=self.config.processor, tokenizer=self.config.tokenizer, max_length=self.config.max_length
+        self.collator = VisualRetrieverCollator(
+            processor=self.config.processor,
+            max_length=self.config.max_length,
         )
         if self.config.eval_dataset_loader is not None:
             for test_name, test_dataset_loading_func in self.config.eval_dataset_loader.items():
