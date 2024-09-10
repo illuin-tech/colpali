@@ -8,13 +8,13 @@ from colpali_engine.models import ColPaliProcessor
 
 
 @pytest.fixture(scope="module")
-def colpali_model_path() -> str:
+def colpali_processor_path() -> str:
     return "google/paligemma-3b-mix-448"
 
 
 @pytest.fixture(scope="module")
-def processor_from_pretrained(colpali_model_path: str) -> Generator[ColPaliProcessor, None, None]:
-    yield cast(ColPaliProcessor, ColPaliProcessor.from_pretrained(colpali_model_path))
+def processor_from_pretrained(colpali_processor_path: str) -> Generator[ColPaliProcessor, None, None]:
+    yield cast(ColPaliProcessor, ColPaliProcessor.from_pretrained(colpali_processor_path))
 
 
 def test_load_processor_from_pretrained(processor_from_pretrained: ColPaliProcessor):
