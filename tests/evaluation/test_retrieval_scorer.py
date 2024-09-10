@@ -1,10 +1,11 @@
 import pytest
 import torch
-
+from unittest.mock import patch
 from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 
 
 @pytest.fixture
+@patch.multiple(BaseVisualRetrieverProcessor, __abstractmethods__=set())
 def vector_scorer() -> BaseVisualRetrieverProcessor:
     return BaseVisualRetrieverProcessor()
 
