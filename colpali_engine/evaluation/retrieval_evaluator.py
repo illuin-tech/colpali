@@ -25,23 +25,31 @@ class CustomRetrievalEvaluator:
         self,
         qs: List[torch.Tensor],
         ps: List[torch.Tensor],
-    ):
+    ) -> torch.Tensor:
+        """
+        Compute the retrieval scores for the given query and passage embeddings. Uses the scoring method
+        based on the `is_multi_vector` attribute.
+        """
         if self.is_multi_vector:
-            scores = self.get_multi_vector_scores(qs, ps)
+            scores = self._get_multi_vector_scores(qs, ps)
         else:
-            scores = self.get_single_vector_scores(qs, ps)
+            scores = self._get_single_vector_scores(qs, ps)
 
         assert scores.shape[0] == len(qs), f"Expected {len(qs)} scores, got {scores.shape[0]}"
 
-        arg_score = scores.argmax(dim=1)
-        accuracy = (arg_score == torch.arange(scores.shape[0], device=scores.device)).sum().item() / scores.shape[0]
-
-        logger.info(f"Top 1 Accuracy (verif): {accuracy}")
-
-        scores = scores.to(torch.float32).cpu().numpy()
+        scores = scores.to(torch.float32)
         return scores
 
-    def get_single_vector_scores(
+    @staticmethod
+    def compute_top_1_accuracy(scores: torch.Tensor) -> float:
+        """
+        Compute the top-1 accuracy from the given scores.
+        """
+        arg_score = scores.argmax(dim=1)
+        accuracy = (arg_score == torch.arange(scores.shape[0], device=scores.device)).sum().item() / scores.shape[0]
+        return accuracy
+
+    def _get_single_vector_scores(
         self,
         qs: List[torch.Tensor],
         ps: List[torch.Tensor],
@@ -60,11 +68,11 @@ class CustomRetrievalEvaluator:
         scores = torch.einsum("bd,cd->bc", qs_stacked, ps_stacked)
         return scores
 
-    def get_multi_vector_scores(
+    def _get_multi_vector_scores(
         self,
         qs: List[torch.Tensor],
         ps: List[torch.Tensor],
-        batch_size=128,
+        batch_size: int = 128,
     ) -> torch.Tensor:
         """
         Compute the MaxSim score (ColBERT-like) for the given multi-vector query and passage embeddings.
