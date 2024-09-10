@@ -8,9 +8,9 @@ from colpali_engine.utils.torch_utils import get_torch_device
 logger = logging.getLogger(__name__)
 
 
-class CustomRetrievalEvaluator:
+class RetrievalScorer:
     """
-    Evaluator for retrieval tasks. Supports both single-vector and multi-vector embeddings.
+    Scorer for retrieval tasks. Supports both single-vector and multi-vector embeddings.
     """
 
     def __init__(

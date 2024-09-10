@@ -1,1 +1,1 @@
-from .retrieval_evaluator import CustomRetrievalEvaluator
+from .retrieval_scorer import RetrievalScorer
