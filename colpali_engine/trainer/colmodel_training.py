@@ -17,11 +17,8 @@ from transformers import (
 
 from colpali_engine.collators.hard_neg_collator import HardNegCollator
 from colpali_engine.collators.visual_retriever_collator import VisualRetrieverCollator
-from colpali_engine.evaluation.retrieval_scorer import RetrievalScorer
 from colpali_engine.loss.late_interaction_losses import (
     ColbertLoss,
-    ColbertPairwiseCELoss,
-    ColbertPairwiseNegativeCELoss,
 )
 from colpali_engine.trainer.contrastive_trainer import ContrastiveNegativeTrainer, ContrastiveTrainer
 from colpali_engine.trainer.eval_utils import CustomRetrievalEvaluator
@@ -118,13 +115,6 @@ class ColModelTraining:
                 max_length=self.config.max_length,
             )
         self.current_git_hash = os.popen("git rev-parse HEAD").read().strip()
-        self.retriever_scorer = RetrievalScorer(
-            is_multi_vector=(
-                isinstance(self.config.loss_func, ColbertLoss)
-                or isinstance(self.config.loss_func, ColbertPairwiseCELoss)
-                or isinstance(self.config.loss_func, ColbertPairwiseNegativeCELoss)
-            )
-        )
         self.retrieval_evaluator = CustomRetrievalEvaluator()
 
     def train(self) -> None:

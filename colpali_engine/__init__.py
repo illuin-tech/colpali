@@ -1,4 +1,3 @@
-from .evaluation import RetrievalScorer
 from .models import (
     BiIdefics2,
     BiPali,
