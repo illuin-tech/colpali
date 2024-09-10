@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from PIL import Image
 from transformers import BatchEncoding, BatchFeature
@@ -14,7 +14,7 @@ class BaseVisualRetrieverProcessor(ABC):
     def process_images(
         self,
         images: List[Image.Image],
-    ) -> BatchFeature | BatchEncoding:
+    ) -> Union[BatchFeature, BatchEncoding]:
         pass
 
     @abstractmethod
@@ -23,5 +23,5 @@ class BaseVisualRetrieverProcessor(ABC):
         queries: List[str],
         max_length: int = 50,
         suffix: Optional[str] = None,
-    ) -> BatchFeature | BatchEncoding:
+    ) -> Union[BatchFeature, BatchEncoding]:
         pass

@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, cast
+from typing import Any, Dict, List, Union, cast
 
 from PIL.Image import Image
 
@@ -42,7 +42,7 @@ class VisualRetrieverCollator:
         Collate function for the vision retriever associated to the collator's processor.
         """
         # Placeholders
-        texts_query: List[str] | List[None] | List[str | None] = []  # some documents don't have a query
+        texts_query: Union[List[str], List[None], List[Union[str, None]]] = []  # some documents don't have a query
         images: List[Image] = []
         neg_images: List[Image] = []
 
