@@ -17,6 +17,14 @@ class ContrastiveTrainer(Trainer):
                     attention_mask=inputs["doc_attention_mask"],
                     pixel_values=inputs["doc_pixel_values"],
                 )
+            # TODO: clean this up by just passing all args with doc suffix that are received
+            elif "image_grid_thw" in inputs:
+                doc_outputs = model(
+                    input_ids=inputs["doc_input_ids"],
+                    attention_mask=inputs["doc_attention_mask"],
+                    pixel_values=inputs["doc_pixel_values"],
+                    image_grid_thw=inputs["doc_image_grid_thw"],
+                )
             else:
                 doc_outputs = model(
                     input_ids=inputs["doc_input_ids"],
