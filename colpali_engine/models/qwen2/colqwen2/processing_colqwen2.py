@@ -27,7 +27,8 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
                      * len(images))
 
         # TODO: figure out best option for resizing images
-        images = [image.convert("RGB").resize((448, 448)) for image in images]
+        images = [image.convert("RGB") for image in images]
+        # images = [image.convert("RGB").resize((448, 448)) for image in images]
 
         batch_doc = self(
             text=texts_doc,
