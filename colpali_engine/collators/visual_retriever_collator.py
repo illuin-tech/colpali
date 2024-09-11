@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Union, cast
 from PIL.Image import Image
 
 from colpali_engine.models.paligemma import ColPaliProcessor
+from colpali_engine.models.idefics_2 import ColIdefics2Processor
 from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 
 
@@ -22,9 +23,10 @@ class VisualRetrieverCollator:
         self.max_length = max_length
         self.suffix = ""
 
-        self.image_token_id = self.processor.tokenizer.additional_special_tokens_ids[
-            self.processor.tokenizer.additional_special_tokens.index("<image>")
-        ]
+        if isinstance(self.processor, ColPaliProcessor) or isinstance(self.processor, ColIdefics2Processor):
+            self.image_token_id = self.processor.tokenizer.additional_special_tokens_ids[
+                self.processor.tokenizer.additional_special_tokens.index("<image>")
+            ]
 
         if isinstance(self.processor, ColPaliProcessor):
             if self.processor.tokenizer.padding_side != "right":
