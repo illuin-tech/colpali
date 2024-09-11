@@ -18,7 +18,7 @@ class ColQwen2(Qwen2VLPreTrainedModel):
         self.model = Qwen2VLModel(config=config)
         # TODO:  verify weight tying
         self.dim = 128
-        self.custom_text_proj = nn.Linear(self.model.config.text_config.hidden_size, self.dim)
+        self.custom_text_proj = nn.Linear(self.model.config.hidden_size, self.dim)
 
         self.post_init()
 
