@@ -3,59 +3,93 @@ import torch.nn.functional as F  # noqa: N812
 from torch.nn import CrossEntropyLoss
 
 
-class ColbertLoss(torch.nn.Module):
+class BaseColbertLoss(torch.nn.Module):
+    """
+    Base class for ColBERT loss functions (late-interaction).
+    """
+
+    @staticmethod
+    def compute_colbert_scores(qs: torch.Tensor, ps: torch.Tensor) -> torch.Tensor:
+        """
+        Compute the ColBERT scores between the query (`qs`) and document (`ps`, p for passage) embeddings.
+        Both the query and document embeddings should have the same batch size.
+
+        Args:
+        - qs [queries] (n_queries, num_query_tokens, dim)
+        - ps [documents] (n_documents, num_doc_tokens, dim)
+
+        Returns:
+        - torch.Tensor: The ColBERT scores with shape (n_queries, n_documents).
+        """
+
+        scores = torch.einsum("bnd,csd->bcns", qs, ps).max(dim=3)[0].sum(dim=2)  # (n_queries, n_documents)
+
+        return scores
+
+
+class ColbertLoss(BaseColbertLoss):
+    """
+    Cross-entropy loss using the ColBERT scores between the query and document embeddings.
+    """
+
     def __init__(self):
         super().__init__()
         self.ce_loss = CrossEntropyLoss()
 
-    def forward(self, query_embeddings, doc_embeddings):
+    def forward(
+        self,
+        query_embeddings: torch.Tensor,
+        doc_embeddings: torch.Tensor,
+    ) -> torch.Tensor:
         """
-        query_embeddings: (batch_size, num_query_tokens, dim)
-        doc_embeddings: (batch_size, num_doc_tokens, dim)
+        Args:
+        - query_embeddings: (batch_size, num_query_tokens, dim)
+        - doc_embeddings: (batch_size, num_doc_tokens, dim)
+
+        Returns:
+        - torch.Tensor (1,)
         """
 
-        scores = torch.einsum("bnd,csd->bcns", query_embeddings, doc_embeddings).max(dim=3)[0].sum(dim=2)
+        if query_embeddings.shape[0] != doc_embeddings.shape[0]:
+            raise ValueError("Batch size mismatch between query and document embeddings.")
 
-        # scores = torch.zeros((query_embeddings.shape[0], doc_embeddings.shape[0]), device=query_embeddings.device)
-        # for i in range(query_embeddings.shape[0]):
-        #     for j in range(doc_embeddings.shape[0]):
-        #         # step 1 - dot product --> (s1,s2)
-        #         q2d_scores = torch.matmul(query_embeddings[i], doc_embeddings[j].T)
-        #         # step 2 -> max on doc  --> (s1)
-        #         q_scores = torch.max(q2d_scores, dim=1)[0]
-        #         # step 3 --> sum the max score --> (1)
-        #         sum_q_score = torch.sum(q_scores)
-        #         # step 4 --> assert is scalar
-        #         scores[i, j] = sum_q_score
+        scores = self.compute_colbert_scores(qs=query_embeddings, ps=doc_embeddings)  # (batch_size, batch_size)
 
-        # assert (scores_einsum - scores < 0.0001).all().item()
+        loss_rowwise = self.ce_loss(scores, torch.arange(scores.shape[0], device=scores.device))  # (1,)
 
-        loss_rowwise = self.ce_loss(scores, torch.arange(scores.shape[0], device=scores.device))
-        # TODO: comparing between queries might not make sense since it's a sum over the length of the query
-        # loss_columnwise = self.ce_loss(scores.T, torch.arange(scores.shape[1], device=scores.device))
-        # loss = (loss_rowwise + loss_columnwise) / 2
         return loss_rowwise
 
 
-class ColbertPairwiseCELoss(torch.nn.Module):
+class ColbertPairwiseCELoss(BaseColbertLoss):
+    """
+    Hard-margin loss using the ColBERT scores between the query and document embeddings.
+    """
+
     def __init__(self):
         super().__init__()
         self.ce_loss = CrossEntropyLoss()
 
-    def forward(self, query_embeddings, doc_embeddings):
+    def forward(
+        self,
+        query_embeddings: torch.Tensor,
+        doc_embeddings: torch.Tensor,
+    ) -> torch.Tensor:
         """
-        query_embeddings: (batch_size, num_query_tokens, dim)
-        doc_embeddings: (batch_size, num_doc_tokens, dim)
+        Args:
+        - query_embeddings: (batch_size, num_query_tokens, dim)
+        - doc_embeddings: (batch_size, num_doc_tokens, dim)
 
-        Positive scores are the diagonal of the scores matrix.
+        Returns:
+        - torch.Tensor (1,)
         """
+
+        if query_embeddings.shape[0] != doc_embeddings.shape[0]:
+            raise ValueError("Batch size mismatch between query and document embeddings.")
 
         # Compute the ColBERT scores
-        scores = (
-            torch.einsum("bnd,csd->bcns", query_embeddings, doc_embeddings).max(dim=3)[0].sum(dim=2)
-        )  # (batch_size, batch_size)
+        scores = self.compute_colbert_scores(qs=query_embeddings, ps=doc_embeddings)  # (batch_size, batch_size)
 
-        # Positive scores are the diagonal of the scores matrix.
+        # Positive scores are the diagonal of the scores matrix
         pos_scores = scores.diagonal()  # (batch_size,)
 
         # Negative score for a given query is the maximum of the scores against all all other pages.
@@ -65,45 +99,59 @@ class ColbertPairwiseCELoss(torch.nn.Module):
         neg_scores = neg_scores.max(dim=1)[0]  # (batch_size,)
 
         # Compute the loss
-        # The loss is computed as the negative log of the softmax of the positive scores
-        # relative to the negative scores.
-        # This can be simplified to log-sum-exp of negative scores minus the positive score
-        # for numerical stability.
-        # torch.vstack((pos_scores, neg_scores)).T.softmax(1)[:, 0].log()*(-1)
+        # The loss is computed as the negative log of the softmax of the positive scores relative to the negative
+        # scores. This can be simplified to log-sum-exp of negative scores minus the positive score for numerical
+        # stability.
         loss = F.softplus(neg_scores - pos_scores).mean()
 
         return loss
 
 
-class ColbertPairwiseNegativeCELoss(torch.nn.Module):
-    def __init__(self, in_batch_term=False):
+class ColbertPairwiseNegativeCELoss(BaseColbertLoss):
+    """
+    Hard-margin loss using the ColBERT scores between:
+        - the query and the document embeddings
+        - the query and the negative document embeddings.
+    """
+
+    def __init__(self, in_batch_term: bool = False):
         super().__init__()
         self.ce_loss = CrossEntropyLoss()
         self.in_batch_term = in_batch_term
 
-    def forward(self, query_embeddings, doc_embeddings, neg_doc_embeddings):
+    def forward(
+        self,
+        query_embeddings: torch.Tensor,
+        doc_embeddings: torch.Tensor,
+        neg_doc_embeddings: torch.Tensor,
+    ) -> torch.Tensor:
         """
-        query_embeddings: (batch_size, num_query_tokens, dim)
-        doc_embeddings: (batch_size, num_doc_tokens, dim)
-        neg_doc_embeddings: (batch_size, num_neg_doc_tokens, dim)
+        Args:
+        - query_embeddings: (batch_size, num_query_tokens, dim)
+        - doc_embeddings: (batch_size, num_doc_tokens, dim)
+        - neg_doc_embeddings: (batch_size, num_doc_tokens, dim)
+
+        Returns:
+        - torch.Tensor (1,)
         """
+
+        if query_embeddings.shape[0] != doc_embeddings.shape[0]:
+            raise ValueError("Batch size mismatch between query and document embeddings.")
 
         # Compute the ColBERT scores
-        pos_scores = torch.einsum("bnd,bsd->bns", query_embeddings, doc_embeddings).max(dim=2)[0].sum(dim=1)
-        neg_scores = torch.einsum("bnd,bsd->bns", query_embeddings, neg_doc_embeddings).max(dim=2)[0].sum(dim=1)
+        pos_scores = self.compute_colbert_scores(qs=query_embeddings, ps=doc_embeddings)  # (batch_size, batch_size)
+        neg_scores = self.compute_colbert_scores(qs=query_embeddings, ps=neg_doc_embeddings)  # (batch_size, batch_size)
 
-        loss = F.softplus(neg_scores - pos_scores).mean()
+        loss = F.softplus(neg_scores - pos_scores).mean()  # (1,)
 
         if self.in_batch_term:
-            scores = (
-                torch.einsum("bnd,csd->bcns", query_embeddings, doc_embeddings).max(dim=3)[0].sum(dim=2)
-            )  # (batch_size, batch_size)
+            scores = self.compute_colbert_scores(qs=query_embeddings, ps=doc_embeddings)  # (batch_size, batch_size)
 
             # Positive scores are the diagonal of the scores matrix.
             pos_scores = scores.diagonal()  # (batch_size,)
             neg_scores = scores - torch.eye(scores.shape[0], device=scores.device) * 1e6  # (batch_size, batch_size)
             neg_scores = neg_scores.max(dim=1)[0]  # (batch_size,)
 
-            loss += F.softplus(neg_scores - pos_scores).mean()
+            loss += F.softplus(neg_scores - pos_scores).mean()  # (1,)
 
         return loss / 2
