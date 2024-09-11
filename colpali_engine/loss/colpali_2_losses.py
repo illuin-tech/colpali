@@ -81,6 +81,10 @@ class ColPali2Loss(BaseColbertLoss):
         query_embeddings: (batch_size, dim)
         doc_embeddings: (batch_size, dim)
         """
+
+        if query_embeddings.shape[0] != doc_embeddings.shape[0]:
+            raise ValueError("Batch size mismatch between query and document embeddings.")
+
         scores = torch.einsum("bd,cd->bc", query_embeddings, doc_embeddings)
 
         loss = self.single_vector_loss_fn(scores, torch.arange(scores.shape[0], device=scores.device))  # (1,)
@@ -105,6 +109,10 @@ class ColPali2Loss(BaseColbertLoss):
         NOTE: If `return_scores` is True, the function will return only the positive scores, i.e.
         the diagonal of the scores matrix.
         """
+
+        if query_embeddings.shape[0] != doc_embeddings.shape[0]:
+            raise ValueError("Batch size mismatch between query and document embeddings.")
+
         # Compute the ColBERT scores
         scores = self.compute_colbert_scores(query_embeddings, doc_embeddings)  # (batch_size, batch_size)
 
@@ -140,6 +148,7 @@ class ColPali2Loss(BaseColbertLoss):
         - student_scores: (batch_size)
         - teacher_score_upper_bound: The upper bound of the teacher scores.
         """
+
         kl_div_loss = nn.KLDivLoss(reduction="batchmean")
 
         # NOTE: Both the teacher and student scores should be turned into log-probabilities before
