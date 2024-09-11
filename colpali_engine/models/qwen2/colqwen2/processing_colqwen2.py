@@ -16,9 +16,6 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.min_pixels = 256 * 28 * 28
-        self.max_pixels = 256 * 28 * 28     # 1280
-
     def process_images(
         self,
         images: List[Image.Image],
@@ -28,6 +25,8 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
         """
         texts_doc = (["<|im_start|>user\n<|vision_start|><|image_pad|><|vision_end|>Describe the image.<|im_end|>\n"]
                      * len(images))
+
+        # TODO: figure out best option for resizing images
         images = [image.convert("RGB").resize((448, 448)) for image in images]
 
         batch_doc = self(
