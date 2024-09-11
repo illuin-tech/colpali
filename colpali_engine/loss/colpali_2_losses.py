@@ -5,6 +5,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F  # noqa: N812
 
+from colpali_engine.loss.base_late_interaction_loss import BaseColbertLoss
 from colpali_engine.models.paligemma.colpali_2.modeling_colpali_2 import ColPali2ModelOutput
 
 
@@ -42,7 +43,7 @@ class MatryoshkaCELoss(torch.nn.Module):
         return weighted_losses.sum()
 
 
-class ColPali2Loss(torch.nn.Module):
+class ColPali2Loss(BaseColbertLoss):
     """
     Loss function for ColPali2.
 
@@ -75,7 +76,7 @@ class ColPali2Loss(torch.nn.Module):
         return_scores: bool = False,
     ) -> torch.Tensor | Tuple[torch.Tensor, torch.Tensor]:
         """
-        Loss function for the single-vector head.
+        Compute the loss function for the single-vector head.
 
         query_embeddings: (batch_size, dim)
         doc_embeddings: (batch_size, dim)
@@ -96,7 +97,7 @@ class ColPali2Loss(torch.nn.Module):
         return_scores: bool = False,
     ) -> torch.Tensor | Tuple[torch.Tensor, torch.Tensor]:
         """
-        Loss function for the multi-vector head.
+        Compute the loss function for the multi-vector head.
 
         query_embeddings: (batch_size, num_query_tokens, dim)
         doc_embeddings: (batch_size, num_doc_tokens, dim)
@@ -105,9 +106,7 @@ class ColPali2Loss(torch.nn.Module):
         the diagonal of the scores matrix.
         """
         # Compute the ColBERT scores
-        scores = (
-            torch.einsum("bnd,csd->bcns", query_embeddings, doc_embeddings).max(dim=3)[0].sum(dim=2)
-        )  # (batch_size, batch_size)
+        scores = self.compute_colbert_scores(query_embeddings, doc_embeddings)  # (batch_size, batch_size)
 
         # Positive scores are the diagonal of the scores matrix.
         pos_scores = scores.diagonal()  # (batch_size,)
