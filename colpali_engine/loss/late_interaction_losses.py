@@ -71,8 +71,7 @@ class ColbertPairwiseCELoss(BaseColbertLoss):
         pos_scores = scores.diagonal()  # (batch_size,)
 
         # Negative score for a given query is the maximum of the scores against all all other pages.
-        # NOTE: We exclude the diagonal by setting it to a very low value: since we know the maximum score is 1,
-        # we can subtract 1 from the diagonal to exclude it from the maximum operation.
+        # NOTE: We subtract a large value from the diagonal to exclude it from the maximum operation.
         neg_scores = scores - torch.eye(scores.shape[0], device=scores.device) * 1e6  # (batch_size, batch_size)
         neg_scores = neg_scores.max(dim=1)[0]  # (batch_size,)
 

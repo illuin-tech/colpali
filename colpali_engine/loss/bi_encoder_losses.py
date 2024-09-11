@@ -60,7 +60,12 @@ class BiPairwiseCELoss(torch.nn.Module):
 
         scores = torch.einsum("bd,cd->bc", query_embeddings, doc_embeddings)  # (batch_size, batch_size)
 
+        # Positive scores are the diagonal of the scores matrix.
         pos_scores = scores.diagonal()  # (batch_size,)
+
+        # Negative score for a given query is the maximum of the scores against all all other pages.
+        # NOTE: We exclude the diagonal by setting it to a very low value. But since the embeddings are L2-normalized,
+        # their maximum score is 1. Thus, we can subtract 1 from the diagonal to exclude it from the maximum operation.
         neg_scores = scores - torch.eye(scores.shape[0], device=scores.device) * 1e6  # (batch_size, batch_size)
         neg_scores = neg_scores.max(dim=1)[0]  # (batch_size,)
 
