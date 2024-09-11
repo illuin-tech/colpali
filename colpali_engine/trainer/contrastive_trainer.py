@@ -20,29 +20,8 @@ class ContrastiveTrainer(Trainer):
             raise ValueError("prediction_step is only called with prediction_loss_only=True")
 
         with torch.no_grad():
-            if self.is_vision_model:
-                if "doc_pixel_attention_mask" not in inputs:
-                    doc_outputs = model(
-                        input_ids=inputs["doc_input_ids"],
-                        attention_mask=inputs["doc_attention_mask"],
-                        pixel_values=inputs["doc_pixel_values"],
-                    )
-                else:
-                    doc_outputs = model(
-                        input_ids=inputs["doc_input_ids"],
-                        attention_mask=inputs["doc_attention_mask"],
-                        pixel_values=inputs["doc_pixel_values"],
-                        pixel_attention_mask=inputs["doc_pixel_attention_mask"],
-                    )
-                query_outputs = model(
-                    input_ids=inputs["query_input_ids"], attention_mask=inputs["query_attention_mask"]
-                )
-            else:
-                query_outputs = model(
-                    input_ids=inputs["query_input_ids"], attention_mask=inputs["query_attention_mask"]
-                )
-                doc_outputs = model(input_ids=inputs["doc_input_ids"], attention_mask=inputs["doc_attention_mask"])
-
+            doc_outputs = model(**{k[4:]: v for k, v in inputs.items() if k.startswith("doc")})
+            query_outputs = model(input_ids=inputs["query_input_ids"], attention_mask=inputs["query_attention_mask"])
             loss = self.loss_func(query_outputs, doc_outputs)
             return loss, None, None
 

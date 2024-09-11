@@ -14,11 +14,8 @@ class ColQwen2(Qwen2VLForConditionalGeneration):
 
     def __init__(self, config: Qwen2VLConfig):
         super().__init__(config=config)
-
-        # TODO: verify weight tying and that type of things
         self.dim = 128
         self.custom_text_proj = nn.Linear(self.model.config.hidden_size, self.dim)
-
         self.post_init()
 
     def forward(self, *args, **kwargs) -> torch.Tensor:
@@ -30,7 +27,5 @@ class ColQwen2(Qwen2VLForConditionalGeneration):
 
         # L2 normalization
         proj = proj / proj.norm(dim=-1, keepdim=True)  # (batch_size, sequence_length, dim)
-
         proj = proj * kwargs["attention_mask"].unsqueeze(-1)  # (batch_size, sequence_length, dim)
-
         return proj
