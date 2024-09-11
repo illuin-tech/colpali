@@ -4,7 +4,7 @@ from .bi_encoder_losses import (
     BiPairwiseNegativeCELoss,
 )
 from .late_interaction_losses import (
-    ColbertLoss,
+    ColbertCELoss,
     ColbertPairwiseCELoss,
     ColbertPairwiseNegativeCELoss,
 )

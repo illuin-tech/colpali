@@ -27,7 +27,7 @@ class BaseColbertLoss(torch.nn.Module):
         return scores
 
 
-class ColbertLoss(BaseColbertLoss):
+class ColbertCELoss(BaseColbertLoss):
     """
     Cross-entropy loss using the ColBERT scores between the query and document embeddings.
     """
