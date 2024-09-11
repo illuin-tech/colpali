@@ -56,12 +56,16 @@ class ColPali2Loss(BaseColbertLoss):
         Args:
         - query_embeddings: (batch_size, dim)
         - doc_embeddings: (batch_size, dim)
+
+        Returns:
+        - torch.Tensor: The loss value (1,)
+        - Optional[torch.Tensor]: The scores matrix (batch_size, batch_size) if `return_scores` is True
         """
 
         if query_embeddings.shape[0] != doc_embeddings.shape[0]:
             raise ValueError("Batch size mismatch between query and document embeddings.")
 
-        scores = torch.einsum("bd,cd->bc", query_embeddings, doc_embeddings)
+        scores = torch.einsum("bd,cd->bc", query_embeddings, doc_embeddings)  # (batch_size, batch_size)
 
         loss = self.single_vector_loss_fn(scores, torch.arange(scores.shape[0], device=scores.device))  # (1,)
 
@@ -83,8 +87,9 @@ class ColPali2Loss(BaseColbertLoss):
         - query_embeddings: (batch_size, num_query_tokens, dim)
         - doc_embeddings: (batch_size, num_doc_tokens, dim)
 
-        NOTE: If `return_scores` is True, the function will return only the positive scores, i.e.
-        the diagonal of the scores matrix.
+        Returns:
+        - torch.Tensor: The loss value (1,)
+        - Optional[torch.Tensor]: The scores matrix (batch_size, batch_size) if `return_scores` is True
         """
 
         if query_embeddings.shape[0] != doc_embeddings.shape[0]:
@@ -97,8 +102,7 @@ class ColPali2Loss(BaseColbertLoss):
         pos_scores = scores.diagonal()  # (batch_size,)
 
         # Negative score for a given query is the maximum of the scores against all all other pages.
-        # NOTE: We exclude the diagonal by setting it to a very low value: since we know the maximum score is 1,
-        # we can subtract 1 from the diagonal to exclude it from the maximum operation.
+        # NOTE: We subtract a large value from the diagonal to exclude it from the maximum operation.
         neg_scores = scores - torch.eye(scores.shape[0], device=scores.device) * 1e6  # (batch_size, batch_size)
         neg_scores = neg_scores.max(dim=1)[0]  # (batch_size,)
 
@@ -120,10 +124,14 @@ class ColPali2Loss(BaseColbertLoss):
         Compute the distillation loss between the multi-vector head (teacher) and
         the single-vector head (student).
 
-        Inputs:
+        Args:
         - teacher_scores: (batch_size)
         - student_scores: (batch_size)
         - teacher_score_upper_bound: The upper bound of the teacher scores.
+
+        Returns:
+        - torch.Tensor: The loss value (1,)
+        - Optional[torch.Tensor]: The scores matrix (batch_size, batch_size) if `return_scores` is True
         """
 
         kl_div_loss = nn.KLDivLoss(reduction="batchmean")
@@ -159,6 +167,9 @@ class ColPali2Loss(BaseColbertLoss):
         Args:
         - query_embeddings (ColPali2ModelOutput), all tensors with shape (batch_size, num_tokens, dim)
         - doc_embeddings (ColPali2ModelOutput), all tensors with shape (batch_size, num_tokens, dim)
+
+        Returns:
+        - ColPali2LossOutputs
         """
 
         single_vector_loss, single_vector_scores = self.single_vector_loss(
