@@ -43,9 +43,8 @@ class ColPaliProcessor(BaseVisualRetrieverProcessor, PaliGemmaProcessor):
         """
         Process queries for ColPali.
         """
-        # NOTE: The image is required for calling PaligemmaProcessor, so we create a mock image here.
-
-        suffix = suffix or "<pad>" * 10
+        if suffix is None:
+            suffix = "<pad>" * 10
         texts_query: List[str] = []
 
         for query in queries:
