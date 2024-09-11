@@ -2,7 +2,7 @@ from typing import ClassVar
 
 import torch
 from torch import nn
-from transformers.models.qwen2_vl import Qwen2VLConfig, Qwen2VLModel, Qwen2VLPreTrainedModel
+from transformers.models.qwen2_vl import Qwen2VLConfig, Qwen2VLForConditionalGeneration, Qwen2VLPreTrainedModel
 
 
 class ColQwen2(Qwen2VLPreTrainedModel):
@@ -15,7 +15,7 @@ class ColQwen2(Qwen2VLPreTrainedModel):
     def __init__(self, config: Qwen2VLConfig):
         super().__init__(config=config)
 
-        self.model = Qwen2VLModel(config=config)
+        self.model = Qwen2VLForConditionalGeneration(config=config)
         # TODO:  verify weight tying
         self.dim = 128
         self.custom_text_proj = nn.Linear(self.model.config.hidden_size, self.dim)
