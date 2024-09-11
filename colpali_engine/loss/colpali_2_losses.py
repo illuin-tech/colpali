@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 
 import torch
 import torch.nn as nn
@@ -49,7 +49,7 @@ class ColPali2Loss(BaseColbertLoss):
         query_embeddings: torch.Tensor,
         doc_embeddings: torch.Tensor,
         return_scores: bool = False,
-    ) -> torch.Tensor | Tuple[torch.Tensor, torch.Tensor]:
+    ) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
         """
         Compute the loss function for the single-vector head.
 
@@ -75,7 +75,7 @@ class ColPali2Loss(BaseColbertLoss):
         query_embeddings: torch.Tensor,
         doc_embeddings: torch.Tensor,
         return_scores: bool = False,
-    ) -> torch.Tensor | Tuple[torch.Tensor, torch.Tensor]:
+    ) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
         """
         Compute the loss function for the multi-vector head.
 
@@ -115,7 +115,7 @@ class ColPali2Loss(BaseColbertLoss):
         teacher_scores: torch.Tensor,
         student_scores: torch.Tensor,
         teacher_score_upper_bound: int,
-    ):
+    ) -> torch.Tensor:
         """
         Compute the distillation loss between the multi-vector head (teacher) and
         the single-vector head (student).
