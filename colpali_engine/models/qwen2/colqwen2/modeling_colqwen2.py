@@ -26,6 +26,7 @@ class ColQwen2(Qwen2VLPreTrainedModel):
         # Delete output_hidden_states from kwargs
         kwargs.pop("output_hidden_states", None)
 
+        breakpoint()
         outputs = self.model(*args, output_hidden_states=True, **kwargs)  # (batch_size, sequence_length, hidden_size)
         last_hidden_states = outputs.hidden_states[-1]  # (batch_size, sequence_length, hidden_size)
         proj = self.custom_text_proj(last_hidden_states)  # (batch_size, sequence_length, dim)
