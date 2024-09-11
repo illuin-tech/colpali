@@ -5,7 +5,7 @@ from torch import nn
 from transformers.models.qwen2_vl import Qwen2VLConfig, Qwen2VLForConditionalGeneration, Qwen2VLPreTrainedModel
 
 
-class ColQwen2(Qwen2VLPreTrainedModel):
+class ColQwen2(Qwen2VLForConditionalGeneration):
     """
     ColQwen2 model implementation from the "ColPali: Efficient Document Retrieval with Vision Language Models" paper.
     """
@@ -15,8 +15,7 @@ class ColQwen2(Qwen2VLPreTrainedModel):
     def __init__(self, config: Qwen2VLConfig):
         super().__init__(config=config)
 
-        self.model = Qwen2VLForConditionalGeneration(config=config)
-        # TODO:  verify weight tying
+        # TODO: verify weight tying and that type of things
         self.dim = 128
         self.custom_text_proj = nn.Linear(self.model.config.hidden_size, self.dim)
 
@@ -25,7 +24,7 @@ class ColQwen2(Qwen2VLPreTrainedModel):
     def forward(self, *args, **kwargs) -> torch.Tensor:
         # Delete output_hidden_states from kwargs
         kwargs.pop("output_hidden_states", None)
-        outputs = self.model(*args, output_hidden_states=True, **kwargs)  # (batch_size, sequence_length, hidden_size)
+        outputs = super().forward(*args, output_hidden_states=True, **kwargs)  # (batch_size, sequence_length, hidden_size)
         last_hidden_states = outputs.hidden_states[-1]  # (batch_size, sequence_length, hidden_size)
         proj = self.custom_text_proj(last_hidden_states)  # (batch_size, sequence_length, dim)
 

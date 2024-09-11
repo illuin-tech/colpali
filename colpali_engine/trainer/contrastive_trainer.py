@@ -11,31 +11,6 @@ class ContrastiveTrainer(Trainer):
     def compute_loss(self, model, inputs, return_outputs=False):
         query_outputs = model(input_ids=inputs["query_input_ids"], attention_mask=inputs["query_attention_mask"])
         doc_outputs = model(**{k[4:]: v for k, v in inputs.items() if k.startswith("doc")})
-        # if self.is_vision_model:
-        #     if "doc_pixel_attention_mask" in inputs:
-        #         doc_outputs = model(
-        #             input_ids=inputs["doc_input_ids"],
-        #             attention_mask=inputs["doc_attention_mask"],
-        #             pixel_values=inputs["doc_pixel_values"],
-        #             pixel_attention_mask=inputs["doc_pixel_attention_mask"],
-        #         )
-        #     # TODO: clean this up by just passing all args with doc suffix that are received
-        #     elif "doc_image_grid_thw" in inputs:
-        #         doc_outputs = model(
-        #             input_ids=inputs["doc_input_ids"],
-        #             attention_mask=inputs["doc_attention_mask"],
-        #             pixel_values=inputs["doc_pixel_values"],
-        #             image_grid_thw=inputs["doc_image_grid_thw"],
-        #         )
-        #     else:
-        #         doc_outputs = model(
-        #             input_ids=inputs["doc_input_ids"],
-        #             attention_mask=inputs["doc_attention_mask"],
-        #             pixel_values=inputs["doc_pixel_values"],
-        #         )
-        # else:
-        #     doc_outputs = model(input_ids=inputs["doc_input_ids"], attention_mask=inputs["doc_attention_mask"])
-
         loss = self.loss_func(query_outputs, doc_outputs)
         return (loss, (query_outputs, doc_outputs)) if return_outputs else loss
 
