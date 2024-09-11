@@ -32,9 +32,53 @@ pip install colpali-engine
 
 ## Usage
 
+### Quick start
+
+```python
+from typing import cast
+
+import torch
+from PIL import Image
+
+from colpali_engine.models import ColPali, ColPaliProcessor
+
+model = cast(
+    ColPali,
+    ColPali.from_pretrained(
+        "vidore/colpali-v1.2",
+        torch_dtype=torch.bfloat16,
+        device_map="cuda:0",  # or "mps" if on Apple Silicon
+    ),
+)
+
+processor = cast(ColPaliProcessor, ColPaliProcessor.from_pretrained("google/paligemma-3b-mix-448"))
+
+# Your inputs
+images = [
+    Image.new("RGB", (32, 32), color="white"),
+    Image.new("RGB", (16, 16), color="black"),
+]
+queries = [
+    "Is attention really all you need?",
+    "Are Benjamin, Antoine, Merve, and Jo best friends?",
+]
+
+# Process the inputs
+batch_images = processor.process_images(images).to(model.device)
+batch_queries = processor.process_queries(queries).to(model.device)
+
+# Forward pass
+with torch.no_grad():
+    image_embeddings = model(**batch_images)
+    querry_embeddings = model(**batch_queries)
+
+scores = processor.score_multi_vector(querry_embeddings, image_embeddings)
+
+```
+
 ### Inference
 
-This repository doesn't contain the code to run optimized retrieval for RAG pipelines. For this, we recommend using [`byaldi`](https://github.com/AnswerDotAI/byaldi) - [RAGatouille](https://github.com/AnswerDotAI/RAGatouille)'s little sister 🐭 - which share a similar API and leverages our `colpali-engine` package.
+You can find an example [here](https://github.com/illuin-tech/colpali/blob/2c75550b1fe15ee4ec56521dc155116631ae083f/scripts/infer/run_inference_with_python.py#L33). If you need an indexing system, we recommend using [`byaldi`](https://github.com/AnswerDotAI/byaldi) - [RAGatouille](https://github.com/AnswerDotAI/RAGatouille)'s little sister 🐭 - which share a similar API and leverages our `colpali-engine` package.
 
 ### Benchmarking
 

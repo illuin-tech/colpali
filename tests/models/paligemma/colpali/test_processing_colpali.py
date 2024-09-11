@@ -36,9 +36,8 @@ def test_process_images(processor_from_pretrained: ColPaliProcessor):
 
 def test_process_queries(processor_from_pretrained: ColPaliProcessor):
     queries = [
-        "Does Manu like to play football?",
-        "Are Benjamin, Antoine, Merve, and Jo friends?",
-        "Is byaldi a dish or a nice repository for RAG?",
+        "Is attention really all you need?",
+        "Are Benjamin, Antoine, Merve, and Jo best friends?",
     ]
 
     # Process the queries

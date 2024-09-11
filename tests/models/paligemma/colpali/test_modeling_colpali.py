@@ -74,9 +74,8 @@ def test_colpali_forward_queries(
     processor: ColPaliProcessor,
 ):
     queries = [
-        "Does Manu like to play football?",
-        "Are Benjamin, Antoine, Merve, and Jo friends?",
-        "Is byaldi a dish or an awesome repository for RAG?",
+        "Is attention really all you need?",
+        "Are Benjamin, Antoine, Merve, and Jo best friends?",
     ]
 
     # Process the queries

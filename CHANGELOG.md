@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+### Added
+
+- Add E2E test for ColPali
+
+### Changed
+
+- Rename scorer test to `test_processing_utils`
+
 ### Fixed
 
 - Fix edge case when empty suffix `""` given to processor
