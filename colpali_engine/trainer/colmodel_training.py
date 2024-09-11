@@ -20,7 +20,7 @@ from colpali_engine.collators.visual_retriever_collator import VisualRetrieverCo
 from colpali_engine.loss.late_interaction_losses import (
     ColbertLoss,
 )
-from colpali_engine.trainer.contrastive_trainer import ContrastiveNegativeTrainer, ContrastiveTrainer
+from colpali_engine.trainer.contrastive_trainer import ContrastiveTrainer
 from colpali_engine.trainer.eval_utils import CustomRetrievalEvaluator
 from colpali_engine.utils.gpu_stats import print_gpu_utilization, print_summary
 from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
@@ -120,26 +120,19 @@ class ColModelTraining:
     def train(self) -> None:
         if isinstance(self.collator, HardNegCollator):
             print("Training with hard negatives")
-            trainer = ContrastiveNegativeTrainer(
-                model=self.model,
-                train_dataset=self.dataset["train"],
-                eval_dataset=self.dataset["test"],
-                args=self.config.tr_args,
-                data_collator=self.collator,
-                loss_func=self.config.loss_func,
-                is_vision_model=self.config.processor is not None,
-            )
         else:
             print("Training with in-batch negatives")
-            trainer = ContrastiveTrainer(
-                model=self.model,
-                train_dataset=self.dataset["train"],
-                eval_dataset=self.dataset["test"],
-                args=self.config.tr_args,
-                data_collator=self.collator,
-                loss_func=self.config.loss_func,
-                is_vision_model=self.config.processor is not None,
-            )
+
+        trainer = ContrastiveTrainer(
+            model=self.model,
+            train_dataset=self.dataset["train"],
+            eval_dataset=self.dataset["test"],
+            args=self.config.tr_args,
+            data_collator=self.collator,
+            loss_func=self.config.loss_func,
+            is_vision_model=self.config.processor is not None,
+        )
+
         trainer.args.remove_unused_columns = False
 
         result = trainer.train(resume_from_checkpoint=self.config.tr_args.resume_from_checkpoint)
