@@ -78,7 +78,7 @@ scores = processor.score_multi_vector(querry_embeddings, image_embeddings)
 
 ### Inference
 
-This repository doesn't contain the code to run optimized retrieval for RAG pipelines. For this, we recommend using [`byaldi`](https://github.com/AnswerDotAI/byaldi) - [RAGatouille](https://github.com/AnswerDotAI/RAGatouille)'s little sister 🐭 - which share a similar API and leverages our `colpali-engine` package.
+You can find an example [here](https://github.com/illuin-tech/colpali/blob/2c75550b1fe15ee4ec56521dc155116631ae083f/scripts/infer/run_inference_with_python.py#L33). If you need an indexing system, we recommend using [`byaldi`](https://github.com/AnswerDotAI/byaldi) - [RAGatouille](https://github.com/AnswerDotAI/RAGatouille)'s little sister 🐭 - which share a similar API and leverages our `colpali-engine` package.
 
 ### Benchmarking
 
