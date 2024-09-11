@@ -11,11 +11,12 @@ class ContrastiveTrainer(Trainer):
     def compute_loss(self, model, inputs, return_outputs=False):
         query_outputs = model(input_ids=inputs["query_input_ids"], attention_mask=inputs["query_attention_mask"])
         if self.is_vision_model:
-            if "doc_pixel_attention_mask" not in inputs:
+            if "doc_pixel_attention_mask" in inputs:
                 doc_outputs = model(
                     input_ids=inputs["doc_input_ids"],
                     attention_mask=inputs["doc_attention_mask"],
                     pixel_values=inputs["doc_pixel_values"],
+                    pixel_attention_mask=inputs["doc_pixel_attention_mask"],
                 )
             # TODO: clean this up by just passing all args with doc suffix that are received
             elif "doc_image_grid_thw" in inputs:
@@ -30,7 +31,6 @@ class ContrastiveTrainer(Trainer):
                     input_ids=inputs["doc_input_ids"],
                     attention_mask=inputs["doc_attention_mask"],
                     pixel_values=inputs["doc_pixel_values"],
-                    pixel_attention_mask=inputs["doc_pixel_attention_mask"],
                 )
         else:
             doc_outputs = model(input_ids=inputs["doc_input_ids"], attention_mask=inputs["doc_attention_mask"])
