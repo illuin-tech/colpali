@@ -4,8 +4,13 @@
 [![GitHub](https://img.shields.io/badge/ViDoRe_Benchmark-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/illuin-tech/vidore-benchmark)
 [![Hugging Face](https://img.shields.io/badge/Vidore_Hf_Space-FFD21E?style=for-the-badge&logo=huggingface&logoColor=000)](https://huggingface.co/vidore)
 
+[![Test](https://github.com/illuin-tech/colpali/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/illuin-tech/colpali/actions/workflows/test.yml)
+[![Version](https://img.shields.io/pypi/v/colpali-engine?color=%2334D058&label=pypi%20package)](https://pypi.org/project/colpali-engine/)
+[![Downloads](https://static.pepy.tech/badge/colpali-engine)](https://pepy.tech/project/colpali-engine)
+
+---
+
 [[Model card]](https://huggingface.co/vidore/colpali)
-[[ViDoRe Benchmark]](https://huggingface.co/collections/vidore/vidore-benchmark-667173f98e70a1c0fa4db00d)
 [[ViDoRe Leaderboard]](https://huggingface.co/spaces/vidore/vidore-leaderboard)
 [[Demo]](https://huggingface.co/spaces/manu/ColPali-demo)
 [[Blog Post]](https://huggingface.co/blog/manu/colpali)
@@ -15,13 +20,11 @@
 
 ## Associated Paper
 
-This repository contains the code used for training the vision retrievers in the [**ColPali: Efficient Document Retrieval with Vision Language Models**](https://arxiv.org/abs/2407.01449) paper. In particular, it contains the code for training the ColPali model, which is a vision retriever based on the ColBERT architecture.
+This repository contains the code used for training the vision retrievers in the [*ColPali: Efficient Document Retrieval with Vision Language Models*](https://arxiv.org/abs/2407.01449) paper. In particular, it contains the code for training the ColPali model, which is a vision retriever based on the ColBERT architecture and the PaliGemma model.
 
 ## Setup
 
-We used Python 3.11.6 and PyTorch 2.2.2 to train and test our models, but the codebase is compatible with Python >=3.9 and recent PyTorch versions.
-
-The eval codebase depends on a few Python packages, which can be downloaded using the following command:
+We used Python 3.11.6 and PyTorch 2.2.2 to train and test our models, but the codebase is compatible with Python >=3.9 and recent PyTorch versions. To install the package, run:
 
 ```bash
 pip install colpali-engine
@@ -126,9 +129,7 @@ pip install colpali-engine==0.1.1
 
 **ColPali: Efficient Document Retrieval with Vision Language Models**  
 
-Authors: Manuel Faysse\*, Hugues Sibille\*, Tony Wu\*, Bilel Omrani, Gautier Viaud, Céline Hudelot, Pierre Colombo
-
-(\* Denotes Equal Contribution)
+Authors: **Manuel Faysse**\*, **Hugues Sibille**\*, **Tony Wu**\*, Bilel Omrani, Gautier Viaud, Céline Hudelot, Pierre Colombo (\* denotes equal contribution)
 
 ```latex
 @misc{faysse2024colpaliefficientdocumentretrieval,
