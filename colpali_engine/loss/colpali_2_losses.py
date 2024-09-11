@@ -53,8 +53,9 @@ class ColPali2Loss(BaseColbertLoss):
         """
         Compute the loss function for the single-vector head.
 
-        query_embeddings: (batch_size, dim)
-        doc_embeddings: (batch_size, dim)
+        Args:
+        - query_embeddings: (batch_size, dim)
+        - doc_embeddings: (batch_size, dim)
         """
 
         if query_embeddings.shape[0] != doc_embeddings.shape[0]:
@@ -78,8 +79,9 @@ class ColPali2Loss(BaseColbertLoss):
         """
         Compute the loss function for the multi-vector head.
 
-        query_embeddings: (batch_size, num_query_tokens, dim)
-        doc_embeddings: (batch_size, num_doc_tokens, dim)
+        Args:
+        - query_embeddings: (batch_size, num_query_tokens, dim)
+        - doc_embeddings: (batch_size, num_doc_tokens, dim)
 
         NOTE: If `return_scores` is True, the function will return only the positive scores, i.e.
         the diagonal of the scores matrix.
@@ -153,6 +155,10 @@ class ColPali2Loss(BaseColbertLoss):
     ) -> ColPali2LossOutputs:
         """
         Compute the total loss for the ColPali2 model.
+
+        Args:
+        - query_embeddings (ColPali2ModelOutput), all tensors with shape (batch_size, num_tokens, dim)
+        - doc_embeddings (ColPali2ModelOutput), all tensors with shape (batch_size, num_tokens, dim)
         """
 
         single_vector_loss, single_vector_scores = self.single_vector_loss(
