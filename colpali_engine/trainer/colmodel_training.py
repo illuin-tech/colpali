@@ -18,7 +18,7 @@ from transformers import (
 from colpali_engine.collators.hard_neg_collator import HardNegCollator
 from colpali_engine.collators.visual_retriever_collator import VisualRetrieverCollator
 from colpali_engine.loss.late_interaction_losses import (
-    ColbertLoss,
+    ColbertCELoss,
 )
 from colpali_engine.trainer.contrastive_trainer import ContrastiveTrainer
 from colpali_engine.trainer.eval_utils import CustomRetrievalEvaluator
@@ -38,7 +38,7 @@ class ColModelTrainingConfig:
     add_suffix: bool = False
     processor: BaseVisualRetrieverProcessor = None
     tokenizer: PreTrainedTokenizer = None
-    loss_func: Optional[Callable] = ColbertLoss()
+    loss_func: Optional[Callable] = ColbertCELoss()
     dataset_loading_func: Optional[Callable] = None
     eval_dataset_loader: Optional[Dict[str, Callable]] = None
     pretrained_peft_model_name_or_path: Optional[str] = None
