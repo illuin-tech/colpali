@@ -9,14 +9,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 
+- Add module-level imports for collators
+- Add sanity check in the run inference example script
 - Add E2E test for ColPali
 
 ### Changed
 
+- Improve code clarity the run inference example script
+- Subset the example dataset in the run inference example script
 - Rename scorer test to `test_processing_utils`
 
 ### Fixed
 
+- Import HardNegCollator at module-level if and only if datasets is available
+- Remove the need for `typer` in the run inference example script
 - Fix edge case when empty suffix `""` given to processor
 
 ## [0.3.0] - 2024-09-10
