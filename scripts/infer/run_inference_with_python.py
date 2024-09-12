@@ -2,7 +2,6 @@ import pprint
 from typing import List, cast
 
 import torch
-import typer
 from datasets import Dataset, load_dataset
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -87,6 +86,8 @@ def main():
     else:
         print("The top-1 retrieved documents are incorrect.")
 
+    return
+
 
 if __name__ == "__main__":
-    typer.run(main)
+    main()
