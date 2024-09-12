@@ -1,7 +1,6 @@
-try:
-    # NOTE: `HardNegCollator` requires the optional `datasets` dependency.
+import importlib.util
+
+if importlib.util.find_spec("datasets"):
     from .hard_neg_collator import HardNegCollator
-except ImportError:
-    pass
 
 from .visual_retriever_collator import VisualRetrieverCollator
