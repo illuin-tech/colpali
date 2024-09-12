@@ -24,8 +24,6 @@ class ContrastiveTrainer(Trainer):
         if not prediction_loss_only:
             raise ValueError("prediction_step is only called with prediction_loss_only=True")
 
-        breakpoint()
-
         with torch.no_grad():
             doc_outputs = model(**{k[4:]: v for k, v in inputs.items() if k.startswith("doc")})
             query_outputs = model(input_ids=inputs["query_input_ids"], attention_mask=inputs["query_attention_mask"])
