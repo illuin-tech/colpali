@@ -1,4 +1,5 @@
-from typing import cast
+import pprint
+from typing import List, cast
 
 import torch
 import typer
@@ -12,9 +13,9 @@ from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 from colpali_engine.utils.torch_utils import ListDataset, get_torch_device
 
 
-def main() -> None:
+def main():
     """
-    Example script to run inference with ColPali
+    Example script to run inference with ColPali.
     """
 
     device = get_torch_device("auto")
@@ -36,8 +37,15 @@ def main() -> None:
     if not isinstance(processor, BaseVisualRetrieverProcessor):
         raise ValueError("Processor should be a BaseVisualRetrieverProcessor")
 
-    images = cast(Dataset, load_dataset("vidore/docvqa_test_subsampled", split="test"))["image"]
-    queries = ["From which university does James V. Fiorca come ?", "Who is the japanese prime minister?"]
+    # NOTE: Only the first 16 images are used for demonstration purposes
+    dataset = cast(Dataset, load_dataset("vidore/docvqa_test_subsampled", split="test[:16]"))
+    images = dataset["image"]
+
+    # Select a few queries for demonstration purposes
+    query_indices = [12, 15]
+    queries = [dataset[idx]["query"] for idx in query_indices]
+    print("Selected queries:")
+    pprint.pprint(dict(zip(query_indices, queries)))
 
     # Run inference - docs
     dataloader = DataLoader(
@@ -46,7 +54,7 @@ def main() -> None:
         shuffle=False,
         collate_fn=lambda x: processor.process_images(x),
     )
-    ds = []
+    ds: List[torch.Tensor] = []
     for batch_doc in tqdm(dataloader):
         with torch.no_grad():
             batch_doc = {k: v.to(model.device) for k, v in batch_doc.items()}
@@ -61,7 +69,7 @@ def main() -> None:
         collate_fn=lambda x: processor.process_queries(x),
     )
 
-    qs = []
+    qs: List[torch.Tensor] = []
     for batch_query in dataloader:
         with torch.no_grad():
             batch_query = {k: v.to(model.device) for k, v in batch_query.items()}
@@ -70,7 +78,14 @@ def main() -> None:
 
     # Run scoring
     scores = processor.score(qs, ds).cpu().numpy()
-    print("Indices of the top-1 retrieved documents for each query:", scores.argmax(axis=1))
+    idx_top_1 = scores.argmax(axis=1)
+    print("Indices of the top-1 retrieved documents for each query:", idx_top_1)
+
+    # Sanity check
+    if idx_top_1.tolist() == query_indices:
+        print("The top-1 retrieved documents are correct.")
+    else:
+        print("The top-1 retrieved documents are incorrect.")
 
 
 if __name__ == "__main__":
