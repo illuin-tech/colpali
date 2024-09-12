@@ -184,26 +184,7 @@ class ColModelTraining:
         with torch.no_grad():
             for dataloader in [dataloader_with_query, dataloader_without_query]:
                 for batch in tqdm(dataloader):
-                    if "doc_pixel_values" not in batch:
-                        doc = self.model(
-                            input_ids=batch["doc_input_ids"].to(device),
-                            attention_mask=batch["doc_attention_mask"].to(device),
-                        )
-
-                    else:
-                        if "doc_pixel_attention_mask" in batch:
-                            doc = self.model(
-                                input_ids=batch["doc_input_ids"].to(device),
-                                attention_mask=batch["doc_attention_mask"].to(device),
-                                pixel_values=batch["doc_pixel_values"].to(device),
-                                pixel_attention_mask=batch["doc_pixel_attention_mask"].to(device),
-                            )
-                        else:
-                            doc = self.model(
-                                input_ids=batch["doc_input_ids"].to(device),
-                                attention_mask=batch["doc_attention_mask"].to(device),
-                                pixel_values=batch["doc_pixel_values"].to(device),
-                            )
+                    doc = self.model(**{k[4:]: v.to(device) for k, v in batch.items() if k.startswith("doc")})
 
                     ps.extend(list(torch.unbind(doc.to("cpu"))))
 
