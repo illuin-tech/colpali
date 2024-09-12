@@ -9,7 +9,7 @@ from tqdm import tqdm
 from colpali_engine.models import ColPali
 from colpali_engine.models.paligemma.colpali.processing_colpali import ColPaliProcessor
 from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
-from colpali_engine.utils.torch_utils import get_torch_device
+from colpali_engine.utils.torch_utils import ListDataset, get_torch_device
 
 
 def main() -> None:
@@ -41,7 +41,7 @@ def main() -> None:
 
     # Run inference - docs
     dataloader = DataLoader(
-        images,
+        dataset=ListDataset[str](images),
         batch_size=4,
         shuffle=False,
         collate_fn=lambda x: processor.process_images(x),
@@ -55,7 +55,7 @@ def main() -> None:
 
     # Run inference - queries
     dataloader = DataLoader(
-        queries,
+        dataset=ListDataset[str](queries),
         batch_size=4,
         shuffle=False,
         collate_fn=lambda x: processor.process_queries(x),
@@ -68,9 +68,9 @@ def main() -> None:
             embeddings_query = model(**batch_query)
         qs.extend(list(torch.unbind(embeddings_query.to("cpu"))))
 
-    # run evaluation
-    scores = processor.score(qs, ds)
-    print(scores.argmax(axis=1))
+    # Run scoring
+    scores = processor.score(qs, ds).cpu().numpy()
+    print("Indices of the top-1 retrieved documents for each query:", scores.argmax(axis=1))
 
 
 if __name__ == "__main__":
