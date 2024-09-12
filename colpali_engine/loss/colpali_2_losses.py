@@ -110,7 +110,7 @@ class ColPali2Loss(BaseColbertLoss):
         loss = F.softplus(neg_scores - pos_scores).mean()  # (1,)
 
         if return_scores:
-            return loss, pos_scores
+            return loss, scores
         else:
             return loss
 
@@ -118,37 +118,40 @@ class ColPali2Loss(BaseColbertLoss):
         self,
         teacher_scores: torch.Tensor,
         student_scores: torch.Tensor,
-        teacher_score_upper_bound: int,
     ) -> torch.Tensor:
         """
         Compute the distillation loss between the multi-vector head (teacher) and
         the single-vector head (student).
 
         Args:
-        - teacher_scores: (batch_size)
-        - student_scores: (batch_size)
-        - teacher_score_upper_bound: The upper bound of the teacher scores.
+        - teacher_scores: (batch_size, batch_size)
+        - student_scores: (batch_size, batch_size)
 
         Returns:
         - torch.Tensor: The loss value (1,)
         - Optional[torch.Tensor]: The scores matrix (batch_size, batch_size) if `return_scores` is True
         """
 
-        kl_div_loss = nn.KLDivLoss(reduction="batchmean")
+        if teacher_scores.shape != student_scores.shape:
+            raise ValueError("Teacher and student scores should have the same shape.")
+
+        kl_div_loss = nn.KLDivLoss(log_target=True)
 
         # NOTE: Both the teacher and student scores should be turned into log-probabilities before
         # computing the KL-divergence.
-        # The embeddings are normalized, thus we know the lower and upper bounds of the scores:
-        # - Teacher: the multi-vector scores (MaxSim) are between 0 and N_q, N_q being the number of query tokens
-        # - Student: the single-vector scores are between -1 and 1.
 
-        # Convert the scores to log-probabilities
-        teacher_logits = torch.logit(teacher_scores / teacher_score_upper_bound, eps=1e-6)
-        student_logits = torch.logit(student_scores, eps=1e-6)
+        # Convert the scores to probabilities
+        teacher_scores = torch.softmax(teacher_scores, dim=1)  # (batch_size, batch_size)
+        student_scores = torch.softmax(student_scores, dim=1)  # (batch_size, batch_size)
+
+        # Get log-probabilities
+        teacher_logits = torch.logit(teacher_scores, eps=1e-6)  # (batch_size, batch_size)
+        student_logits = torch.logit(student_scores, eps=1e-6)  # (batch_size, batch_size)
 
         # NOTE:
         # - KLDivLoss argument order is the opposite of the KL(·||·) mathematical function.
         # - KLDivLoss expects log-probabilities for `input` to avoid underflow issues.
+
         loss_kd = self.temperature**2 * kl_div_loss(
             input=student_logits / self.temperature,
             target=teacher_logits / self.temperature,
@@ -183,11 +186,7 @@ class ColPali2Loss(BaseColbertLoss):
 
         distillation_loss = None
         if self.use_distillation_loss:
-            distillation_loss = self.distillation_loss(
-                single_vector_scores,
-                multi_vector_scores,
-                teacher_score_upper_bound=query_embeddings.multi_vec_emb.shape[1],  # TODO: find the correct upper bound
-            )
+            distillation_loss = self.distillation_loss(single_vector_scores, multi_vector_scores)
             total_loss += self.beta * distillation_loss
 
         return ColPali2LossOutputs(
