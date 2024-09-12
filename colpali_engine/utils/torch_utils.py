@@ -1,9 +1,12 @@
 import gc
 import logging
+from typing import List, TypeVar
 
 import torch
+from torch.utils.data import Dataset
 
 logger = logging.getLogger(__name__)
+T = TypeVar("T")
 
 
 def get_torch_device(device: str = "auto") -> str:
@@ -35,3 +38,14 @@ def tear_down_torch():
     """
     gc.collect()
     torch.cuda.empty_cache()
+
+
+class ListDataset(Dataset[T]):
+    def __init__(self, elements: List[T]):
+        self.elements = elements
+
+    def __len__(self) -> int:
+        return len(self.elements)
+
+    def __getitem__(self, idx: int) -> T:
+        return self.elements[idx]
