@@ -10,31 +10,40 @@ class ContrastiveTrainer(Trainer):
 
     def compute_loss(self, model, inputs, return_outputs=False):
         # save matplotlib image visualization
-        query_outputs = model(input_ids=inputs["query_input_ids"], attention_mask=inputs["query_attention_mask"])
+        query_outputs = model(
+            input_ids=inputs["query_input_ids"],
+            pixel_values=inputs["query_pixel_values"],
+            attention_mask=inputs["query_attention_mask"],
+        )["text"]
         if self.is_vision_model:
-            if "doc_pixel_attention_mask" not in inputs and "doc_image_grid_thw" not in inputs:
-                doc_outputs = model(
-                    input_ids=inputs["doc_input_ids"],
-                    attention_mask=inputs["doc_attention_mask"],
-                    pixel_values=inputs["doc_pixel_values"],
-                )
-            elif "doc_pixel_attention_mask" in inputs:
-                doc_outputs = model(
-                    input_ids=inputs["doc_input_ids"],
-                    attention_mask=inputs["doc_attention_mask"],
-                    pixel_values=inputs["doc_pixel_values"],
-                    pixel_attention_mask=inputs["doc_pixel_attention_mask"],
-                )
-            elif "doc_image_grid_thw" in inputs:
-                doc_outputs = model(
-                    input_ids=inputs["doc_input_ids"],
-                    attention_mask=inputs["doc_attention_mask"],
-                    pixel_values=inputs["doc_pixel_values"],
-                    image_grid_thw=inputs["doc_image_grid_thw"],
-                )
+            # if "doc_pixel_attention_mask" not in inputs and "doc_image_grid_thw" not in inputs:
+            #     doc_outputs = model(
+            #         input_ids=inputs["doc_input_ids"],
+            #         attention_mask=inputs["doc_attention_mask"],
+            #         pixel_values=inputs["doc_pixel_values"],
+            #     )
+            # elif "doc_pixel_attention_mask" in inputs:
+            #     doc_outputs = model(
+            #         input_ids=inputs["doc_input_ids"],
+            #         attention_mask=inputs["doc_attention_mask"],
+            #         pixel_values=inputs["doc_pixel_values"],
+            #         pixel_attention_mask=inputs["doc_pixel_attention_mask"],
+            #     )
+            # elif "doc_image_grid_thw" in inputs:
+            #     doc_outputs = model(
+            #         input_ids=inputs["doc_input_ids"],
+            #         attention_mask=inputs["doc_attention_mask"],
+            #         pixel_values=inputs["doc_pixel_values"],
+            #         image_grid_thw=inputs["doc_image_grid_thw"],
+            #     )
 
+            doc_outputs = model(
+                input_ids=inputs["doc_input_ids"],
+                attention_mask=inputs["doc_attention_mask"],
+                pixel_values=inputs["doc_pixel_values"],
+            )["vision"]
         else:
-            doc_outputs = model(input_ids=inputs["doc_input_ids"], attention_mask=inputs["doc_attention_mask"])
+            doc_outputs = model(input_ids=inputs["doc_input_ids"])["text"]
 
         loss = self.loss_func(query_outputs, doc_outputs)
         return (loss, (query_outputs, doc_outputs)) if return_outputs else loss
@@ -46,30 +55,37 @@ class ContrastiveTrainer(Trainer):
 
         with torch.no_grad():
             if self.is_vision_model:
-                if "doc_pixel_attention_mask" not in inputs and "doc_image_grid_thw" not in inputs:
-                    doc_outputs = model(
-                        input_ids=inputs["doc_input_ids"],
-                        attention_mask=inputs["doc_attention_mask"],
-                        pixel_values=inputs["doc_pixel_values"],
-                    )
-                elif "doc_pixel_attention_mask" in inputs:
-                    doc_outputs = model(
-                        input_ids=inputs["doc_input_ids"],
-                        attention_mask=inputs["doc_attention_mask"],
-                        pixel_values=inputs["doc_pixel_values"],
-                        pixel_attention_mask=inputs["doc_pixel_attention_mask"],
-                    )
-                elif "doc_image_grid_thw" in inputs:
-                    doc_outputs = model(
-                        input_ids=inputs["doc_input_ids"],
-                        attention_mask=inputs["doc_attention_mask"],
-                        pixel_values=inputs["doc_pixel_values"],
-                        image_grid_thw=inputs["doc_image_grid_thw"],
-                    )
+                # if "doc_pixel_attention_mask" not in inputs and "doc_image_grid_thw" not in inputs:
+                #     doc_outputs = model(
+                #         input_ids=inputs["doc_input_ids"],
+                #         attention_mask=inputs["doc_attention_mask"],
+                #         pixel_values=inputs["doc_pixel_values"],
+                #     )
+                # elif "doc_pixel_attention_mask" in inputs:
+                #     doc_outputs = model(
+                #         input_ids=inputs["doc_input_ids"],
+                #         attention_mask=inputs["doc_attention_mask"],
+                #         pixel_values=inputs["doc_pixel_values"],
+                #         pixel_attention_mask=inputs["doc_pixel_attention_mask"],
+                #     )
+                # elif "doc_image_grid_thw" in inputs:
+                #     doc_outputs = model(
+                #         input_ids=inputs["doc_input_ids"],
+                #         attention_mask=inputs["doc_attention_mask"],
+                #         pixel_values=inputs["doc_pixel_values"],
+                #         image_grid_thw=inputs["doc_image_grid_thw"],
+                #     )
 
+                doc_outputs = model(
+                    input_ids=inputs["doc_input_ids"],
+                    attention_mask=inputs["doc_attention_mask"],
+                    pixel_values=inputs["doc_pixel_values"],
+                )["vision"]
                 query_outputs = model(
-                    input_ids=inputs["query_input_ids"], attention_mask=inputs["query_attention_mask"]
-                )
+                    input_ids=inputs["query_input_ids"],
+                    attention_mask=inputs["query_attention_mask"],
+                    pixel_values=inputs["query_pixel_values"],
+                )["text"]
 
             else:
 
@@ -105,7 +121,7 @@ class ContrastiveNegativeTrainer(Trainer):
                     pixel_values=inputs["doc_pixel_values"],
                     pixel_attention_mask=inputs["doc_pixel_attention_mask"],
                 )
-            
+
             elif "doc_image_grid_thw" in inputs:
                 doc_outputs = model(
                     input_ids=inputs["doc_input_ids"],
@@ -113,7 +129,6 @@ class ContrastiveNegativeTrainer(Trainer):
                     pixel_values=inputs["doc_pixel_values"],
                     image_grid_thw=inputs["doc_image_grid_thw"],
                 )
-
 
             if "neg_doc_pixel_attention_mask" not in inputs and "neg_doc_image_grid_thw" not in inputs:
                 neg_doc_outputs = model(
@@ -136,7 +151,7 @@ class ContrastiveNegativeTrainer(Trainer):
                     pixel_values=inputs["neg_doc_pixel_values"],
                     image_grid_thw=inputs["neg_doc_image_grid_thw"],
                 )
-           
+
         else:
             raise NotImplementedError("Only vision models are supported for now")
 
@@ -150,52 +165,51 @@ class ContrastiveNegativeTrainer(Trainer):
 
         with torch.no_grad():
             if self.is_vision_model:
-                    if "doc_pixel_attention_mask" not in inputs and "doc_image_grid_thw" not in inputs:
-                        doc_outputs = model(
-                            input_ids=inputs["doc_input_ids"],
-                            attention_mask=inputs["doc_attention_mask"],
-                            pixel_values=inputs["doc_pixel_values"],
-                        )
-                    elif "doc_pixel_attention_mask" in inputs:
-                        doc_outputs = model(
-                            input_ids=inputs["doc_input_ids"],
-                            attention_mask=inputs["doc_attention_mask"],
-                            pixel_values=inputs["doc_pixel_values"],
-                            pixel_attention_mask=inputs["doc_pixel_attention_mask"],
-                        )
-                    elif "doc_image_grid_thw" in inputs:
-                        doc_outputs = model(
-                            input_ids=inputs["doc_input_ids"],
-                            attention_mask=inputs["doc_attention_mask"],
-                            pixel_values=inputs["doc_pixel_values"],
-                            image_grid_thw=inputs["doc_image_grid_thw"],
-                        )
-                    if "neg_doc_pixel_attention_mask" not in inputs and "neg_doc_image_grid_thw" not in inputs:
-                        neg_doc_outputs = model(
-                            input_ids=inputs["neg_doc_input_ids"],
-                            attention_mask=inputs["neg_doc_attention_mask"],
-                            pixel_values=inputs["neg_doc_pixel_values"],
-                        )
-                    elif "neg_doc_pixel_attention_mask" in inputs:
-                        neg_doc_outputs = model(
-                            input_ids=inputs["neg_doc_input_ids"],
-                            attention_mask=inputs["neg_doc_attention_mask"],
-                            pixel_values=inputs["neg_doc_pixel_values"],
-                            pixel_attention_mask=inputs["neg_doc_pixel_attention_mask"],
-                        )
-
-                    elif "neg_doc_image_grid_thw" in inputs:
-                        neg_doc_outputs = model(
-                            input_ids=inputs["neg_doc_input_ids"],
-                            attention_mask=inputs["neg_doc_attention_mask"],
-                            pixel_values=inputs["neg_doc_pixel_values"],
-                            image_grid_thw=inputs["neg_doc_image_grid_thw"],
-                        )
-
-                    
-                    query_outputs = model(
-                        input_ids=inputs["query_input_ids"], attention_mask=inputs["query_attention_mask"]
+                if "doc_pixel_attention_mask" not in inputs and "doc_image_grid_thw" not in inputs:
+                    doc_outputs = model(
+                        input_ids=inputs["doc_input_ids"],
+                        attention_mask=inputs["doc_attention_mask"],
+                        pixel_values=inputs["doc_pixel_values"],
                     )
+                elif "doc_pixel_attention_mask" in inputs:
+                    doc_outputs = model(
+                        input_ids=inputs["doc_input_ids"],
+                        attention_mask=inputs["doc_attention_mask"],
+                        pixel_values=inputs["doc_pixel_values"],
+                        pixel_attention_mask=inputs["doc_pixel_attention_mask"],
+                    )
+                elif "doc_image_grid_thw" in inputs:
+                    doc_outputs = model(
+                        input_ids=inputs["doc_input_ids"],
+                        attention_mask=inputs["doc_attention_mask"],
+                        pixel_values=inputs["doc_pixel_values"],
+                        image_grid_thw=inputs["doc_image_grid_thw"],
+                    )
+                if "neg_doc_pixel_attention_mask" not in inputs and "neg_doc_image_grid_thw" not in inputs:
+                    neg_doc_outputs = model(
+                        input_ids=inputs["neg_doc_input_ids"],
+                        attention_mask=inputs["neg_doc_attention_mask"],
+                        pixel_values=inputs["neg_doc_pixel_values"],
+                    )
+                elif "neg_doc_pixel_attention_mask" in inputs:
+                    neg_doc_outputs = model(
+                        input_ids=inputs["neg_doc_input_ids"],
+                        attention_mask=inputs["neg_doc_attention_mask"],
+                        pixel_values=inputs["neg_doc_pixel_values"],
+                        pixel_attention_mask=inputs["neg_doc_pixel_attention_mask"],
+                    )
+
+                elif "neg_doc_image_grid_thw" in inputs:
+                    neg_doc_outputs = model(
+                        input_ids=inputs["neg_doc_input_ids"],
+                        attention_mask=inputs["neg_doc_attention_mask"],
+                        pixel_values=inputs["neg_doc_pixel_values"],
+                        image_grid_thw=inputs["neg_doc_image_grid_thw"],
+                    )
+
+                query_outputs = model(
+                    input_ids=inputs["query_input_ids"], attention_mask=inputs["query_attention_mask"]
+                )
             else:
 
                 query_outputs = model(

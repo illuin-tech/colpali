@@ -55,6 +55,8 @@ class CustomCollator:
             return self.forward_vision_phi(examples)
         if self.processor.__class__.__name__ == "Qwen2VLProcessor":
             return self.forward_vision_qwen(examples)
+        if self.processor.__class__.__name__ == "CLIPProcessor":
+            return self.forward_vision_clip(examples)
         raise ValueError("Processor not supported")
 
     def forward_text(self, examples):
@@ -307,4 +309,41 @@ class CustomCollator:
 
         return batch_doc
 
-    
+    def forward_vision_clip(self, examples):
+        texts_doc = []
+        texts_query = []
+
+        images = []
+
+        for example in examples:
+            image = example["image"].convert("RGB")
+            images.append(image)
+
+            texts_doc.append("Describe the image.")
+
+            texts_query.append(f"Question: {example['query']}")
+
+        batch_doc = self.processor(
+            text=texts_doc,
+            images=images,
+            return_tensors="pt",
+            padding="longest",
+            max_length=70,
+            truncation = True, 
+        )
+
+        batch_query = self.processor(
+            text=texts_query,
+            images = images, 
+            return_tensors="pt",
+            padding="longest",
+            max_length=70,
+            truncation = True, 
+        )
+
+
+        batch_doc = {f"doc_{k}": v for k, v in batch_doc.items()}
+        batch_query = {f"query_{k}": v for k, v in batch_query.items()}
+        batch_doc.update(batch_query)
+
+        return batch_doc
