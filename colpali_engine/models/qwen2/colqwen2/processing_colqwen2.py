@@ -15,6 +15,7 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.tokenizer.padding_side = "right"
 
     def process_images(
         self,

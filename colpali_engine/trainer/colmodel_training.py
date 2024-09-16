@@ -67,6 +67,8 @@ class ColModelTrainingConfig:
 
         if self.pretrained_peft_model_name_or_path is not None:
             self.model.load_adapter(self.pretrained_peft_model_name_or_path)
+            self.model.inference_mode = False
+
             print(f"Loaded pretrained adapter from {self.pretrained_peft_model_name_or_path}")
 
         if self.peft_config is not None:
