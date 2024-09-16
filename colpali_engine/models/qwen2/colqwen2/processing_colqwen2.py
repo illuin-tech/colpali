@@ -17,8 +17,8 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.tokenizer.padding_side = "right"
-        self.min_pixels =  3136 # 4 * 28 * 28
-        self.max_pixels =  802816 # 1024 * 28 * 28
+        self.min_pixels =  4 * 28 * 28
+        self.max_pixels =  512 * 28 * 28
         self.factor = 28
 
     def process_images(
@@ -36,9 +36,9 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
             resized_height, resized_width = smart_resize(image_size[1], image_size[0], factor=self.factor, min_pixels=self.min_pixels, max_pixels=self.max_pixels)
             return image.convert("RGB").resize((resized_width, resized_height))
 
-        # images = [resize_and_convert(image) for image in images]
+        images = [resize_and_convert(image) for image in images]
 
-        images = [image.convert("RGB").resize((448, 448)) for image in images]
+        # images = [image.convert("RGB").resize((448, 448)) for image in images]
 
         batch_doc = self(
             text=texts_doc,

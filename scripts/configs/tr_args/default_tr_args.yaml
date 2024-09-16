@@ -11,8 +11,8 @@ eval_strategy: "steps"
 # bf16: true
 save_steps: 500
 logging_steps: 10
-eval_steps: 10
-warmup_steps: 100
+eval_steps: 100
+warmup_steps: 1000
 learning_rate: 5e-5
 save_total_limit: 1
 # optim: "paged_adamw_8bit"
