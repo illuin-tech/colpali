@@ -38,7 +38,7 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
 
         # images = [resize_and_convert(image) for image in images]
 
-        images = [image.convert("RGB").resize((896, 896)) for image in images]
+        images = [image.convert("RGB").resize((448, 448)) for image in images]
 
         batch_doc = self(
             text=texts_doc,
