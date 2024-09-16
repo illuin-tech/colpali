@@ -106,7 +106,6 @@ class ColModelTraining:
             self.dataset = self.dataset[0]
             self.collator = HardNegCollator(
                 processor=self.config.processor,
-                tokenizer=self.config.tokenizer,
                 max_length=self.config.max_length,
                 image_dataset=neg_dataset,
             )
