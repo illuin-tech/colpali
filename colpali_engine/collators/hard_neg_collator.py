@@ -40,4 +40,4 @@ class HardNegCollator(VisualRetrieverCollator):
 
             examples += [{"image": pos_image, "query": pos_query, "neg_image": neg_image}]
 
-        return self(examples)
+        return super().__call__(examples)
