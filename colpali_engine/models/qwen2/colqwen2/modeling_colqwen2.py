@@ -17,7 +17,7 @@ class ColQwen2(Qwen2VLForConditionalGeneration):
         self.dim = 128
         self.custom_text_proj = nn.Linear(self.model.config.hidden_size, self.dim)
         self.padding_side = "right"
-        self.config.rope_scaling["mrope_section"] = [
+        self.rope_scaling["mrope_section"] = [
             16,
             24,
             24
