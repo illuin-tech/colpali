@@ -21,7 +21,8 @@ class ColQwen2(Qwen2VLForConditionalGeneration):
     def forward(self, *args, **kwargs) -> torch.Tensor:
         # Delete output_hidden_states from kwargs
         kwargs.pop("output_hidden_states", None)
-        outputs = super().forward(*args, output_hidden_states=True, **kwargs)  # (batch_size, sequence_length, hidden_size)
+        inputs = self.prepare_inputs_for_generation(*args, **kwargs, use_cache=False)
+        outputs = super().forward(**inputs, output_hidden_states=True)  # (batch_size, sequence_length, hidden_size)
         last_hidden_states = outputs.hidden_states[-1]  # (batch_size, sequence_length, hidden_size)
         proj = self.custom_text_proj(last_hidden_states)  # (batch_size, sequence_length, dim)
 
