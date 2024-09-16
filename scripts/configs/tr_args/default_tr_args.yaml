@@ -11,7 +11,7 @@ eval_strategy: "steps"
 # bf16: true
 save_steps: 500
 logging_steps: 10
-eval_steps: 10000
+eval_steps: 100
 warmup_steps: 500
 learning_rate: 5e-5
 save_total_limit: 1
