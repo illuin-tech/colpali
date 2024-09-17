@@ -9,7 +9,6 @@ class ContrastiveTrainer(Trainer):
         self.is_vision_model = is_vision_model
 
     def compute_loss(self, model, inputs, return_outputs=False):
-        # save matplotlib image visualization
         query_outputs = model(input_ids=inputs["query_input_ids"], attention_mask=inputs["query_attention_mask"])
         if self.is_vision_model:
             if "doc_pixel_attention_mask" not in inputs:
