@@ -2,8 +2,8 @@ from dataclasses import dataclass
 from typing import Optional, cast
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F  # noqa: N812
+from torch.nn import CrossEntropyLoss, KLDivLoss
 
 from colpali_engine.loss.base_late_interaction_loss import BaseColbertLoss
 from colpali_engine.loss.matryoshka_loss import MatryoshkaCELoss
@@ -40,7 +40,7 @@ class ColPali2Loss(BaseColbertLoss):
         self.use_distillation_loss = use_distillation_loss
         self.beta = beta
         self.temperature = temperature
-        self.single_vector_loss_fn = MatryoshkaCELoss() if self.use_matryoshka_loss else F.cross_entropy
+        self.single_vector_loss_fn = MatryoshkaCELoss() if self.use_matryoshka_loss else CrossEntropyLoss()
 
     def single_vector_loss(
         self,
@@ -67,8 +67,8 @@ class ColPali2Loss(BaseColbertLoss):
         loss = cast(
             torch.Tensor,
             self.single_vector_loss_fn(
-                scores,
-                torch.arange(scores.shape[0], device=scores.device),
+                input=scores,
+                target=torch.arange(scores.shape[0], device=scores.device, dtype=torch.long),
             ),
         )  # (1,)
 
@@ -136,7 +136,7 @@ class ColPali2Loss(BaseColbertLoss):
         if teacher_scores.shape != student_scores.shape:
             raise ValueError("Teacher and student scores should have the same shape.")
 
-        kl_div_loss = nn.KLDivLoss(log_target=True)
+        kl_div_loss = KLDivLoss(log_target=True)
 
         # NOTE: Both the teacher and student scores should be turned into log-probabilities before
         # computing the KL-divergence.
