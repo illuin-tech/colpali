@@ -1,18 +1,39 @@
 from dataclasses import dataclass
-from typing import ClassVar, cast
+from typing import Any, ClassVar, Dict, Optional, cast
 
 import torch
 from torch import nn
-from transformers.models.paligemma.modeling_paligemma import PaliGemmaForConditionalGeneration, PaliGemmaPreTrainedModel
+from transformers.models.paligemma import PaliGemmaForConditionalGeneration, PaliGemmaPreTrainedModel
+from transformers.utils import ModelOutput
 
 from colpali_engine.compression.pooling.multi_vector_pooler import MultiVectorPooler
 from colpali_engine.models.paligemma.colpali_2.configuration_colpali_2 import ColPali2Config
 
 
-@dataclass
-class ColPali2ModelOutput:
-    single_vec_emb: torch.Tensor
-    multi_vec_emb: torch.Tensor
+@dataclass(kw_only=True)
+class ColPali2LossOutputs:
+    single_vector_loss: torch.Tensor
+    multi_vector_loss: torch.Tensor
+    distillation_loss: Optional[torch.Tensor] = None
+    total_loss: torch.Tensor
+
+
+@dataclass(kw_only=True)
+class ColPali2ModelOutput(ModelOutput):
+    """
+    Base class for PaliGemmacausal language model (or autoregressive) outputs.
+
+    Args:
+    - loss (torch.FloatTensor, optional): Loss tensor.
+    - vlm_last_hidden_states (torch.Tensor, optional): Last hidden states of the VLM.
+    - single_vec_emb (torch.Tensor, optional): Single-vector embeddings.
+    - multi_vec_emb (torch.Tensor, optional): Multi-vector embeddings.
+    """
+
+    vlm_last_hidden_states: Optional[torch.Tensor] = None
+    single_vec_emb: Optional[torch.Tensor] = None
+    multi_vec_emb: Optional[torch.Tensor] = None
+    loss: Optional[ColPali2LossOutputs] = None
 
 
 class ColPali2(PaliGemmaPreTrainedModel):
@@ -43,7 +64,21 @@ class ColPali2(PaliGemmaPreTrainedModel):
     def multi_vector_projector_dim(self) -> int:
         return self.config.multi_vector_projector_dim
 
-    def forward(self, *args, **kwargs) -> ColPali2ModelOutput:
+    @staticmethod
+    def _prepare_forward_kwargs(kwargs: Dict[str, Any]) -> Dict[str, Any]:
+        kwargs = kwargs.copy()
+        kwargs.pop("input_ids", None)
+        kwargs.pop("attention_mask", None)
+        kwargs.pop("output_hidden_states", None)
+        return kwargs
+
+    def forward(
+        self,
+        input_ids: torch.Tensor,
+        attention_mask: torch.Tensor,
+        output_vlm_last_hidden_states: bool = False,
+        **kwargs,
+    ) -> ColPali2ModelOutput:
         """
         Forward pass through ColPali. Returns both single-vector and multi-vector embeddings.
 
@@ -59,9 +94,16 @@ class ColPali2(PaliGemmaPreTrainedModel):
             - single_vector (torch.Tensor): Single-vector embeddings of shape (batch_size, dim).
             - multi_vector (torch.Tensor): Multi-vector embeddings of shape (batch_size, num_tokens, dim).
         """
+        # Delete redundant kwargs
+        kwargs = self._prepare_forward_kwargs(kwargs)
 
         # Forward pass through the VLM
-        vlm_outputs = self.model(*args, output_hidden_states=True, **kwargs)
+        vlm_outputs = self.model(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            output_hidden_states=True,
+            **kwargs,
+        )
         vlm_last_hidden_states = vlm_outputs.hidden_states[-1]  # (batch_size, sequence_length, hidden_size)
 
         # Head 1: Single-vector embedding
@@ -74,30 +116,76 @@ class ColPali2(PaliGemmaPreTrainedModel):
             vlm_last_hidden_states[:, 1:, :]
         )  # (batch_size, sequence_length, hidden_size)
         multi_vec_emb = torch.nn.functional.normalize(multi_vec_emb, dim=-1)
-        multi_vec_emb = multi_vec_emb * kwargs["attention_mask"].unsqueeze(-1)
+        multi_vec_emb = multi_vec_emb * attention_mask.unsqueeze(-1)
 
-        return ColPali2ModelOutput(single_vec_emb=single_vec_emb, multi_vec_emb=multi_vec_emb)
+        return ColPali2ModelOutput(
+            vlm_last_hidden_states=vlm_last_hidden_states if output_vlm_last_hidden_states else None,
+            single_vec_emb=single_vec_emb,
+            multi_vec_emb=multi_vec_emb,
+        )
 
-    def forward_single_vector(self, *args, **kwargs) -> torch.Tensor:
+    def forward_single_vector(
+        self,
+        input_ids: torch.Tensor,
+        attention_mask: torch.Tensor,
+        output_vlm_last_hidden_states: bool = False,
+        **kwargs,
+    ) -> ColPali2ModelOutput:
         """
         Forward pass through ColPali. Returns only the single-vector embeddings.
         """
-        vlm_outputs = self.model(*args, output_hidden_states=True, **kwargs)
-        pooled_output = self.multi_vector_pooler(vlm_outputs.hidden_states[-1])  # (batch_size, hidden_size)
+        # Delete redundant kwargs
+        kwargs = self._prepare_forward_kwargs(kwargs)
+
+        # Forward pass through the VLM
+        vlm_outputs = self.model(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            output_hidden_states=True,
+            **kwargs,
+        )
+        vlm_last_hidden_states = vlm_outputs.hidden_states[-1]  # (batch_size, sequence_length, hidden_size)
+
+        # Forward pass through the single-vector head
+        pooled_output = self.multi_vector_pooler(vlm_last_hidden_states)  # (batch_size, hidden_size)
         single_vec_emb = self.single_vector_projector(pooled_output)  # (batch_size, hidden_size)
         single_vec_emb = torch.nn.functional.normalize(single_vec_emb, dim=-1)
 
-        return single_vec_emb
+        return ColPali2ModelOutput(
+            vlm_last_hidden_states=vlm_last_hidden_states if output_vlm_last_hidden_states else None,
+            single_vec_emb=single_vec_emb,
+        )
 
-    def forward_multi_vector(self, *args, **kwargs) -> torch.Tensor:
+    def forward_multi_vector(
+        self,
+        input_ids: torch.Tensor,
+        attention_mask: torch.Tensor,
+        output_vlm_last_hidden_states: bool = False,
+        **kwargs,
+    ) -> ColPali2ModelOutput:
         """
         Forward pass through ColPali. Returns only the multi-vector embeddings.
         """
-        vlm_outputs = self.model(*args, output_hidden_states=True, **kwargs)
+        # Delete redundant kwargs
+        kwargs = self._prepare_forward_kwargs(kwargs)
+
+        # Forward pass through the VLM
+        vlm_outputs = self.model(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            output_hidden_states=True,
+            **kwargs,
+        )
+        vlm_last_hidden_states = vlm_outputs.hidden_states[-1]  # (batch_size, sequence_length, hidden_size)
+
+        # Forward pass through the multi-vector head
         multi_vec_emb = self.multi_vector_projector(
-            vlm_outputs.hidden_states[-1]
+            vlm_last_hidden_states
         )  # (batch_size, sequence_length, hidden_size)
         multi_vec_emb = torch.nn.functional.normalize(multi_vec_emb, dim=-1)
-        multi_vec_emb = multi_vec_emb * kwargs["attention_mask"].unsqueeze(-1)
+        multi_vec_emb = multi_vec_emb * attention_mask.unsqueeze(-1)
 
-        return multi_vec_emb
+        return ColPali2ModelOutput(
+            vlm_last_hidden_states=vlm_last_hidden_states if output_vlm_last_hidden_states else None,
+            multi_vec_emb=multi_vec_emb,
+        )
