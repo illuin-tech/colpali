@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, Tuple, Union
+from typing import Optional, cast
 
 import torch
 import torch.nn as nn
@@ -7,15 +7,13 @@ import torch.nn.functional as F  # noqa: N812
 
 from colpali_engine.loss.base_late_interaction_loss import BaseColbertLoss
 from colpali_engine.loss.matryoshka_loss import MatryoshkaCELoss
-from colpali_engine.models.paligemma.colpali_2.modeling_colpali_2 import ColPali2ModelOutput
+from colpali_engine.models.paligemma.colpali_2.modeling_colpali_2 import ColPali2LossOutputs, ColPali2ModelOutput
 
 
 @dataclass(kw_only=True)
-class ColPali2LossOutputs:
-    single_vector_loss: torch.Tensor
-    multi_vector_loss: torch.Tensor
-    distillation_loss: Optional[torch.Tensor] = None
-    total_loss: torch.Tensor
+class ColPali2IntermediateLossOutputs:
+    loss: torch.Tensor
+    scores: Optional[torch.Tensor] = None
 
 
 class ColPali2Loss(BaseColbertLoss):
@@ -49,7 +47,7 @@ class ColPali2Loss(BaseColbertLoss):
         query_embeddings: torch.Tensor,
         doc_embeddings: torch.Tensor,
         return_scores: bool = False,
-    ) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
+    ) -> ColPali2IntermediateLossOutputs:
         """
         Compute the loss function for the single-vector head.
 
@@ -58,8 +56,7 @@ class ColPali2Loss(BaseColbertLoss):
         - doc_embeddings: (batch_size, dim)
 
         Returns:
-        - torch.Tensor: The loss value (1,)
-        - Optional[torch.Tensor]: The scores matrix (batch_size, batch_size) if `return_scores` is True
+        - ColPali2IntermediateLossOutputs
         """
 
         if query_embeddings.shape[0] != doc_embeddings.shape[0]:
@@ -67,19 +64,25 @@ class ColPali2Loss(BaseColbertLoss):
 
         scores = torch.einsum("bd,cd->bc", query_embeddings, doc_embeddings)  # (batch_size, batch_size)
 
-        loss = self.single_vector_loss_fn(scores, torch.arange(scores.shape[0], device=scores.device))  # (1,)
+        loss = cast(
+            torch.Tensor,
+            self.single_vector_loss_fn(
+                scores,
+                torch.arange(scores.shape[0], device=scores.device),
+            ),
+        )  # (1,)
 
-        if return_scores:
-            return loss, scores
-        else:
-            return loss
+        return ColPali2IntermediateLossOutputs(
+            loss=loss,
+            scores=scores if return_scores else None,
+        )
 
     def multi_vector_loss(
         self,
         query_embeddings: torch.Tensor,
         doc_embeddings: torch.Tensor,
         return_scores: bool = False,
-    ) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
+    ) -> ColPali2IntermediateLossOutputs:
         """
         Compute the loss function for the multi-vector head.
 
@@ -88,8 +91,7 @@ class ColPali2Loss(BaseColbertLoss):
         - doc_embeddings: (batch_size, num_doc_tokens, dim)
 
         Returns:
-        - torch.Tensor: The loss value (1,)
-        - Optional[torch.Tensor]: The scores matrix (batch_size, batch_size) if `return_scores` is True
+        - ColPali2IntermediateLossOutputs
         """
 
         if query_embeddings.shape[0] != doc_embeddings.shape[0]:
@@ -109,16 +111,16 @@ class ColPali2Loss(BaseColbertLoss):
         # Compute the margin loss
         loss = F.softplus(neg_scores - pos_scores).mean()  # (1,)
 
-        if return_scores:
-            return loss, scores
-        else:
-            return loss
+        return ColPali2IntermediateLossOutputs(
+            loss=loss,
+            scores=scores if return_scores else None,
+        )
 
     def distillation_loss(
         self,
         teacher_scores: torch.Tensor,
         student_scores: torch.Tensor,
-    ) -> torch.Tensor:
+    ) -> ColPali2IntermediateLossOutputs:
         """
         Compute the distillation loss between the multi-vector head (teacher) and
         the single-vector head (student).
@@ -128,8 +130,7 @@ class ColPali2Loss(BaseColbertLoss):
         - student_scores: (batch_size, batch_size)
 
         Returns:
-        - torch.Tensor: The loss value (1,)
-        - Optional[torch.Tensor]: The scores matrix (batch_size, batch_size) if `return_scores` is True
+        - ColPali2IntermediateLossOutputs
         """
 
         if teacher_scores.shape != student_scores.shape:
@@ -157,7 +158,7 @@ class ColPali2Loss(BaseColbertLoss):
             target=teacher_logits / self.temperature,
         )  # (1,)
 
-        return loss_kd
+        return ColPali2IntermediateLossOutputs(loss=loss_kd)
 
     def forward(
         self,
@@ -175,23 +176,39 @@ class ColPali2Loss(BaseColbertLoss):
         - ColPali2LossOutputs
         """
 
-        single_vector_loss, single_vector_scores = self.single_vector_loss(
-            query_embeddings.single_vec_emb, doc_embeddings.single_vec_emb, return_scores=True
-        )
-        multi_vector_loss, multi_vector_scores = self.multi_vector_loss(
-            query_embeddings.multi_vec_emb, doc_embeddings.multi_vec_emb, return_scores=True
+        assert query_embeddings.single_vec_emb is not None
+        assert doc_embeddings.single_vec_emb is not None
+
+        single_vector_loss_outputs = self.single_vector_loss(
+            query_embeddings.single_vec_emb,
+            doc_embeddings.single_vec_emb,
+            return_scores=True,
         )
 
-        total_loss = self.alpha * single_vector_loss + (1 - self.alpha) * multi_vector_loss
+        assert query_embeddings.multi_vec_emb is not None
+        assert doc_embeddings.multi_vec_emb is not None
 
-        distillation_loss = None
+        multi_vector_loss_outputs = self.multi_vector_loss(
+            query_embeddings.multi_vec_emb,
+            doc_embeddings.multi_vec_emb,
+            return_scores=True,
+        )
+
+        total_loss = self.alpha * single_vector_loss_outputs.loss + (1 - self.alpha) * multi_vector_loss_outputs.loss
+
+        distillation_loss_outputs = None
         if self.use_distillation_loss:
-            distillation_loss = self.distillation_loss(single_vector_scores, multi_vector_scores)
-            total_loss += self.beta * distillation_loss
+            assert single_vector_loss_outputs.scores is not None
+            assert multi_vector_loss_outputs.scores is not None
+
+            distillation_loss_outputs = self.distillation_loss(
+                single_vector_loss_outputs.scores, multi_vector_loss_outputs.scores
+            )
+            total_loss += self.beta * distillation_loss_outputs.loss
 
         return ColPali2LossOutputs(
-            single_vector_loss=single_vector_loss,
-            multi_vector_loss=multi_vector_loss,
-            distillation_loss=distillation_loss,
+            single_vector_loss=single_vector_loss_outputs.loss,
+            multi_vector_loss=multi_vector_loss_outputs.loss,
+            distillation_loss=distillation_loss_outputs.loss if distillation_loss_outputs is not None else None,
             total_loss=total_loss,
         )

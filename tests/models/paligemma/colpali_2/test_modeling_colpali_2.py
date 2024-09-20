@@ -128,9 +128,9 @@ class TestForwardSingleVector:
             outputs = colpali_2_from_config.forward_single_vector(**batch_images)
 
         # Assertions
-        assert isinstance(outputs, torch.Tensor)
-        assert outputs.dim() == 2
-        batch_size, emb_dim = outputs.shape
+        assert isinstance(outputs.single_vec_emb, torch.Tensor)
+        assert outputs.single_vec_emb.dim() == 2
+        batch_size, emb_dim = outputs.single_vec_emb.shape
         assert batch_size == len(batch_images["input_ids"])
         assert emb_dim == colpali_2_from_config.single_vector_projector_dim
 
@@ -145,9 +145,9 @@ class TestForwardSingleVector:
             outputs = colpali_2_from_config.forward_single_vector(**batch_queries)
 
         # Assertions
-        assert isinstance(outputs, torch.Tensor)
-        assert outputs.dim() == 2
-        batch_size, emb_dim = outputs.shape
+        assert isinstance(outputs.single_vec_emb, torch.Tensor)
+        assert outputs.single_vec_emb.dim() == 2
+        batch_size, emb_dim = outputs.single_vec_emb.shape
         assert batch_size == len(batch_queries["input_ids"])
         assert emb_dim == colpali_2_from_config.single_vector_projector_dim
 
@@ -168,9 +168,9 @@ class TestForwardMultiVector:
             outputs = colpali_2_from_config.forward_multi_vector(**batch_images)
 
         # Assertions
-        assert isinstance(outputs, torch.Tensor)
-        assert outputs.dim() == 3
-        batch_size, n_visual_tokens, emb_dim = outputs.shape
+        assert isinstance(outputs.multi_vec_emb, torch.Tensor)
+        assert outputs.multi_vec_emb.dim() == 3
+        batch_size, n_visual_tokens, emb_dim = outputs.multi_vec_emb.shape
         assert batch_size == len(batch_images["input_ids"])
         assert emb_dim == colpali_2_from_config.multi_vector_projector_dim
 
@@ -185,8 +185,8 @@ class TestForwardMultiVector:
             outputs = colpali_2_from_config.forward_multi_vector(**batch_queries)
 
         # Assertions
-        assert isinstance(outputs, torch.Tensor)
-        assert outputs.dim() == 3
-        batch_size, n_query_tokens, emb_dim = outputs.shape
+        assert isinstance(outputs.multi_vec_emb, torch.Tensor)
+        assert outputs.multi_vec_emb.dim() == 3
+        batch_size, n_query_tokens, emb_dim = outputs.multi_vec_emb.shape
         assert batch_size == len(batch_queries["input_ids"])
         assert emb_dim == colpali_2_from_config.multi_vector_projector_dim
