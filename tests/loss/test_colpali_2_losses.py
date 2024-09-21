@@ -31,11 +31,11 @@ def model_output(
 
 @pytest.fixture(
     params=[
-        (False, False),
-        (False, True),
-        # (True, False),
-        # (True, True),
-    ]  # TODO: test with Matryoshka loss
+        # (False, False),
+        # (False, True),
+        (True, False),
+        (True, True),
+    ]
 )
 def colpali_2_loss(request) -> ColPali2Loss:
     use_matryoshka_loss, use_distillation_loss = request.param
