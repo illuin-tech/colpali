@@ -43,16 +43,16 @@ class ColPali2(PaliGemmaPreTrainedModel):
         super().__init__(config=config)
 
         self.config = cast(ColPali2Config, self.config)
-        self.model = PaliGemmaForConditionalGeneration(self.config.vlm_config)
+        self.vlm_backbone = PaliGemmaForConditionalGeneration(self.config.vlm_config)
 
         self.single_vector_projector = nn.Linear(
-            in_features=self.model.config.text_config.hidden_size,
+            in_features=self.vlm_backbone.config.text_config.hidden_size,
             out_features=self.config.single_vector_projector_dim,
         )
 
         self.multi_vector_pooler = MultiVectorPooler(pooling_strategy=self.config.single_vector_pool_strategy)
         self.multi_vector_projector = nn.Linear(
-            in_features=self.model.config.text_config.hidden_size,
+            in_features=self.vlm_backbone.config.text_config.hidden_size,
             out_features=self.config.multi_vector_projector_dim,
         )
 
@@ -98,7 +98,7 @@ class ColPali2(PaliGemmaPreTrainedModel):
         kwargs = self._prepare_forward_kwargs(kwargs)
 
         # Forward pass through the VLM
-        vlm_outputs = self.model(
+        vlm_outputs = self.vlm_backbone(
             input_ids=input_ids,
             attention_mask=attention_mask,
             output_hidden_states=True,
@@ -138,7 +138,7 @@ class ColPali2(PaliGemmaPreTrainedModel):
         kwargs = self._prepare_forward_kwargs(kwargs)
 
         # Forward pass through the VLM
-        vlm_outputs = self.model(
+        vlm_outputs = self.vlm_backbone(
             input_ids=input_ids,
             attention_mask=attention_mask,
             output_hidden_states=True,
@@ -170,7 +170,7 @@ class ColPali2(PaliGemmaPreTrainedModel):
         kwargs = self._prepare_forward_kwargs(kwargs)
 
         # Forward pass through the VLM
-        vlm_outputs = self.model(
+        vlm_outputs = self.vlm_backbone(
             input_ids=input_ids,
             attention_mask=attention_mask,
             output_hidden_states=True,
@@ -189,3 +189,7 @@ class ColPali2(PaliGemmaPreTrainedModel):
             vlm_last_hidden_states=vlm_last_hidden_states if output_vlm_last_hidden_states else None,
             multi_vec_emb=multi_vec_emb,
         )
+
+
+if __name__ == "__main__":
+    pass

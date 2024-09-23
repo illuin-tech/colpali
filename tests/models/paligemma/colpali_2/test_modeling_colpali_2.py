@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 @pytest.fixture(scope="module")
 def colpali_2_config() -> Generator[ColPali2Config, None, None]:
     yield ColPali2Config(
-        vlm_config=cast(
+        vlm_backbone_config=cast(
             PaliGemmaConfig,
             PaliGemmaConfig.from_pretrained("google/paligemma-3b-mix-448"),
         ),
