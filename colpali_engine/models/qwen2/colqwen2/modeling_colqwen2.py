@@ -22,6 +22,10 @@ class ColQwen2(Qwen2VLForConditionalGeneration):
     def forward(self, *args, **kwargs) -> torch.Tensor:
         # Delete output_hidden_states from kwargs
         kwargs.pop("output_hidden_states", None)
+        # from kwargs, get the pixel_value shape and input_ids shape
+        print(f"pixel values shape: {kwargs['pixel_values'].shape}")
+        print(f"input_ids shape: {kwargs['input_ids'].shape}")
+
         # inputs = self.prepare_inputs_for_generation(*args, **kwargs, use_cache=False)
         # outputs = super().forward(**inputs, output_hidden_states=True)  # (batch_size, sequence_length, hidden_size)
         outputs = super().forward(*args, **kwargs, output_hidden_states=True)
