@@ -31,8 +31,8 @@ def model_output(
 
 @pytest.fixture(
     params=[
-        # (False, False),
-        # (False, True),
+        (False, False),
+        (False, True),
         (True, False),
         (True, True),
     ]
@@ -42,6 +42,7 @@ def colpali_2_loss(request) -> ColPali2Loss:
     return ColPali2Loss(
         use_matryoshka_loss=use_matryoshka_loss,
         use_distillation_loss=use_distillation_loss,
+        matryoshka_dims=[EMBEDDING_DIM, EMBEDDING_DIM // 2],
     )
 
 
