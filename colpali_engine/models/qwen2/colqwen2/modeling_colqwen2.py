@@ -16,7 +16,7 @@ class ColQwen2(Qwen2VLForConditionalGeneration):
         super().__init__(config=config)
         self.dim = 128
         self.custom_text_proj = nn.Linear(self.model.config.hidden_size, self.dim)
-        self.padding_side = "right"
+        self.padding_side = "left"
         self.post_init()
 
     def forward(self, *args, **kwargs) -> torch.Tensor:
@@ -24,13 +24,13 @@ class ColQwen2(Qwen2VLForConditionalGeneration):
         kwargs.pop("output_hidden_states", None)
         # from kwargs, get the pixel_value shape and input_ids shape
 
-        print(f"input_ids shape: {kwargs['input_ids'].shape}")
-
-        if "pixel_values" in kwargs:
-            print(f"pixel_values shape: {kwargs['pixel_values'].shape}")
+        # print(f"input_ids shape: {kwargs['input_ids'].shape}")
+        #
+        # if "pixel_values" in kwargs:
+        #     print(f"pixel_values shape: {kwargs['pixel_values'].shape}")
 
         inputs = self.prepare_inputs_for_generation(*args, **kwargs, use_cache=False)
-        print(inputs.keys())
+        # print(inputs.keys())
         outputs = super().forward(**inputs, output_hidden_states=True)  # (batch_size, sequence_length, hidden_size)
 
         # outputs = super().forward(*args, **kwargs, output_hidden_states=True)
