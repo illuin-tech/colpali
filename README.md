@@ -22,6 +22,8 @@
 
 This repository contains the code used for training the vision retrievers in the [*ColPali: Efficient Document Retrieval with Vision Language Models*](https://arxiv.org/abs/2407.01449) paper. In particular, it contains the code for training the ColPali model, which is a vision retriever based on the ColBERT architecture and the PaliGemma model.
 
+![ColPali Architecture](assets/colpali_architecture.webp)
+
 ## Setup
 
 We used Python 3.11.6 and PyTorch 2.2.2 to train and test our models, but the codebase is compatible with Python >=3.9 and recent PyTorch versions. To install the package, run:
