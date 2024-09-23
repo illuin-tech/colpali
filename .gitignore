@@ -5,6 +5,7 @@
 /data/
 /logs/
 /models/
+/skypilot/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
