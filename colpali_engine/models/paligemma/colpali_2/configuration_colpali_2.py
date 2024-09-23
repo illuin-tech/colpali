@@ -9,14 +9,14 @@ class ColPali2Config(PretrainedConfig):
 
     def __init__(
         self,
-        vlm_config: PaliGemmaConfig,
+        vlm_backbone_config: PaliGemmaConfig,
         single_vector_projector_dim: int = 128,
         single_vector_pool_strategy: str = "mean",
         multi_vector_projector_dim: int = 128,
         **kwargs,
     ):
         super().__init__(**kwargs)
-        self.vlm_config = vlm_config
+        self.vlm_config = vlm_backbone_config
         self.single_vector_projector_dim = single_vector_projector_dim
         self.single_vector_pool_strategy = single_vector_pool_strategy
         self.multi_vector_projector_dim = multi_vector_projector_dim
