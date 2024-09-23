@@ -34,11 +34,12 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
         def resize_and_convert(image):
             image_size = image.size
             resized_height, resized_width = smart_resize(image_size[1], image_size[0], factor=self.factor, min_pixels=self.min_pixels, max_pixels=self.max_pixels)
+            print(f"Resizing image from {image_size} to {(resized_height, resized_width)}")
             return image.convert("RGB").resize((resized_width, resized_height))
 
-        # images = [resize_and_convert(image) for image in images]
+        images = [resize_and_convert(image) for image in images]
 
-        images = [image.convert("RGB").resize((448, 448)) for image in images]
+        # images = [image.convert("RGB").resize((448, 448)) for image in images]
 
         batch_doc = self(
             text=texts_doc,
