@@ -1,12 +1,11 @@
 from dataclasses import dataclass
-from typing import Optional, cast
+from typing import List, Optional
 
 import torch
 import torch.nn.functional as F  # noqa: N812
 from torch.nn import CrossEntropyLoss, KLDivLoss
 
 from colpali_engine.loss.base_late_interaction_loss import BaseColbertLoss
-from colpali_engine.loss.matryoshka_loss import MatryoshkaCELoss
 from colpali_engine.models.paligemma.colpali_2.modeling_colpali_2 import ColPali2LossOutputs, ColPali2ModelOutput
 
 
@@ -30,17 +29,22 @@ class ColPali2Loss(BaseColbertLoss):
         self,
         alpha: float = 0.5,
         use_matryoshka_loss: bool = True,
+        matryoshka_dims: Optional[List[int]] = None,
+        matryoshka_weights: Optional[List[float]] = None,
         use_distillation_loss: bool = True,
         beta: float = 0.5,
         temperature: float = 2.0,
     ):
         super().__init__()
         self.alpha = alpha
+
         self.use_matryoshka_loss = use_matryoshka_loss
+        self.matryoshka_dims = matryoshka_dims
+        self.matryoshka_weights = matryoshka_weights
+
         self.use_distillation_loss = use_distillation_loss
         self.beta = beta
         self.temperature = temperature
-        self.single_vector_loss_fn = MatryoshkaCELoss() if self.use_matryoshka_loss else CrossEntropyLoss()
 
     def single_vector_loss(
         self,
@@ -62,15 +66,46 @@ class ColPali2Loss(BaseColbertLoss):
         if query_embeddings.shape[0] != doc_embeddings.shape[0]:
             raise ValueError("Batch size mismatch between query and document embeddings.")
 
-        scores = torch.einsum("bd,cd->bc", query_embeddings, doc_embeddings)  # (batch_size, batch_size)
+        if query_embeddings.shape[1] != doc_embeddings.shape[1]:
+            raise ValueError("Dimensionality mismatch between query and document embeddings.")
 
-        loss = cast(
-            torch.Tensor,
-            self.single_vector_loss_fn(
+        batch_size = query_embeddings.shape[0]
+        device = query_embeddings.device
+
+        ce_loss_fn = CrossEntropyLoss()
+
+        if not self.use_matryoshka_loss:
+            scores = torch.einsum("bd,cd->bc", query_embeddings, doc_embeddings)  # (batch_size, batch_size)
+            loss = ce_loss_fn.forward(
                 input=scores,
-                target=torch.arange(scores.shape[0], device=scores.device, dtype=torch.long),
-            ),
-        )  # (1,)
+                target=torch.arange(scores.shape[0], device=scores.device),
+            )  # ()
+
+        else:
+            if not self.matryoshka_dims:
+                raise ValueError("Matryoshka dimensions must be provided when using Matryoshka loss.")
+
+            # The target is independent of the Matryoshka dimensionality
+            target = torch.arange(
+                query_embeddings.shape[0],
+                dtype=torch.long,
+                device=query_embeddings.device,
+            )
+
+            # Initialize the scores matrix and the loss
+            prev_scores = torch.zeros(batch_size, batch_size, device=device)
+            scores = torch.zeros(batch_size, batch_size, device=device)
+            loss = torch.tensor(0.0, device=device)  # ()
+
+            # To efficiently compute the scores, we need the Matryoshka dimensions to be sorted.
+            matryoshka_dims = [0] + sorted(self.matryoshka_dims)
+
+            for prev_dim, dim in zip(matryoshka_dims, matryoshka_dims[1:]):
+                scores = prev_scores + torch.einsum(
+                    "bd,cd->bc", query_embeddings[:, prev_dim:dim], doc_embeddings[:, prev_dim:dim]
+                )  # (batch_size, batch_size)
+                loss += ce_loss_fn.forward(input=scores, target=target)  # ()
+                prev_scores = scores
 
         return ColPali2IntermediateLossOutputs(
             loss=loss,
@@ -109,7 +144,7 @@ class ColPali2Loss(BaseColbertLoss):
         neg_scores = neg_scores.max(dim=1)[0]  # (batch_size,)
 
         # Compute the margin loss
-        loss = F.softplus(neg_scores - pos_scores).mean()  # (1,)
+        loss = F.softplus(neg_scores - pos_scores).mean().squeeze()  # ()
 
         return ColPali2IntermediateLossOutputs(
             loss=loss,

@@ -12,4 +12,3 @@ from .late_interaction_losses import (
     ColbertPairwiseCELoss,
     ColbertPairwiseNegativeCELoss,
 )
-from .matryoshka_loss import MatryoshkaCELoss
