@@ -29,9 +29,11 @@ class ColQwen2(Qwen2VLForConditionalGeneration):
         if "pixel_values" in kwargs:
             print(f"pixel_values shape: {kwargs['pixel_values'].shape}")
 
-        # inputs = self.prepare_inputs_for_generation(*args, **kwargs, use_cache=False)
-        # outputs = super().forward(**inputs, output_hidden_states=True)  # (batch_size, sequence_length, hidden_size)
-        outputs = super().forward(*args, **kwargs, output_hidden_states=True)
+        inputs = self.prepare_inputs_for_generation(*args, **kwargs, use_cache=False)
+        print(inputs.keys())
+        outputs = super().forward(**inputs, output_hidden_states=True)  # (batch_size, sequence_length, hidden_size)
+
+        # outputs = super().forward(*args, **kwargs, output_hidden_states=True)
         last_hidden_states = outputs.hidden_states[-1]  # (batch_size, sequence_length, hidden_size)
         proj = self.custom_text_proj(last_hidden_states)  # (batch_size, sequence_length, dim)
 
