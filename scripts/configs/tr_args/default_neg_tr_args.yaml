@@ -10,6 +10,7 @@ eval_strategy: "steps"
 # dataloader_num_workers: 8
 # bf16: true
 save_steps: 500
+max_steps: 3698
 logging_steps: 10
 eval_steps: 50
 warmup_steps: 100
