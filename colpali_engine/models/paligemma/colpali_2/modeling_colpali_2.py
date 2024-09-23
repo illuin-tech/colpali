@@ -1,9 +1,11 @@
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, ClassVar, Dict, Optional, cast
+from typing import Any, ClassVar, Dict, Optional, Type
 
 import torch
 from torch import nn
-from transformers.models.paligemma import PaliGemmaForConditionalGeneration, PaliGemmaPreTrainedModel
+from transformers import PreTrainedModel
+from transformers.models.paligemma import PaliGemmaForConditionalGeneration
 from transformers.utils import ModelOutput
 
 from colpali_engine.compression.pooling.multi_vector_pooler import MultiVectorPooler
@@ -12,16 +14,20 @@ from colpali_engine.models.paligemma.colpali_2.configuration_colpali_2 import Co
 
 @dataclass(kw_only=True)
 class ColPali2LossOutputs:
-    single_vector_loss: torch.Tensor
-    multi_vector_loss: torch.Tensor
-    distillation_loss: Optional[torch.Tensor] = None
-    total_loss: torch.Tensor
+    """
+    Base class for ColPali2 embeddings output.
+    """
+
+    single_vector_loss: torch.FloatTensor
+    multi_vector_loss: torch.FloatTensor
+    distillation_loss: Optional[torch.FloatTensor] = None
+    total_loss: torch.FloatTensor
 
 
 @dataclass(kw_only=True)
 class ColPali2ModelOutput(ModelOutput):
     """
-    Base class for PaliGemmacausal language model (or autoregressive) outputs.
+    Base class for the ColPali2 outputs.
 
     Args:
     - loss (torch.FloatTensor, optional): Loss tensor.
@@ -36,14 +42,27 @@ class ColPali2ModelOutput(ModelOutput):
     loss: Optional[ColPali2LossOutputs] = None
 
 
-class ColPali2(PaliGemmaPreTrainedModel):
+class ColVision2(PreTrainedModel, ABC):
+    """
+    Base class for the ColVision2 architecture.
+
+    If your VLM backbone has a non-standard forward method, you can override the ColVision2 methods accordingly.
+    """
+
     main_input_name: ClassVar[str] = "doc_input_ids"  # transformers-related
 
+    @property
+    @abstractmethod
+    def vlm_class(self) -> Type[PreTrainedModel]:
+        pass
+
     def __init__(self, config: ColPali2Config):
+        if not hasattr(self, "vlm_class"):
+            raise ValueError("The `vlm_class` attribute must be defined in the child ColVision2 class.")
+
         super().__init__(config=config)
 
-        self.config = cast(ColPali2Config, self.config)
-        self.vlm_backbone = PaliGemmaForConditionalGeneration(self.config.vlm_config)
+        self.vlm_backbone = self.vlm_class(self.config.vlm_backbone_config)
 
         self.single_vector_projector = nn.Linear(
             in_features=self.vlm_backbone.config.text_config.hidden_size,
@@ -191,5 +210,14 @@ class ColPali2(PaliGemmaPreTrainedModel):
         )
 
 
-if __name__ == "__main__":
-    pass
+class ColPali2(ColVision2):
+    """
+    ColVision2 with the PaliGemma model as the VLM backbone.
+    """
+
+    @property
+    def vlm_class(self):
+        return PaliGemmaForConditionalGeneration
+
+    def __init__(self, config: ColPali2Config):
+        super().__init__(config=config)
