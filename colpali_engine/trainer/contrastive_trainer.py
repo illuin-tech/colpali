@@ -20,7 +20,7 @@ class ContrastiveTrainer(Trainer):
             pixel_values = torch.split(inputs["doc_pixel_values"], offsets.tolist())
             # pad pixel_values to the same length to be able to make it into a tensor
             max_length = max([len(pv) for pv in pixel_values])
-            pixel_values = [torch.cat([pv, torch.zeros(max_length - len(pv), dtype=pv.dtype, device=pv.device)]) for pv in pixel_values]
+            pixel_values = [torch.cat([pv, torch.zeros((max_length - len(pv), pv.shape[1]), dtype=pv.dtype, device=pv.device)]) for pv in pixel_values]
             inputs["doc_pixel_values"] = torch.stack(pixel_values)
 
             print(inputs["doc_pixel_values"].shape)
