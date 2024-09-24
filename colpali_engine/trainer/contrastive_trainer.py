@@ -15,7 +15,7 @@ class ContrastiveTrainer(Trainer):
         if "doc_image_grid_thw" in inputs:
             # compute pixel_values offsets
             offsets = inputs["doc_image_grid_thw"][:, 1] * inputs["doc_image_grid_thw"][:, 2]
-            print(offsets)
+            # print(offsets)
             # separate pixel_values for each image
             pixel_values = torch.split(inputs["doc_pixel_values"], offsets.tolist())
             # pad pixel_values to the same length to be able to make it into a tensor
@@ -23,7 +23,7 @@ class ContrastiveTrainer(Trainer):
             pixel_values = [torch.cat([pv, torch.zeros((max_length - len(pv), pv.shape[1]), dtype=pv.dtype, device=pv.device)]) for pv in pixel_values]
             inputs["doc_pixel_values"] = torch.stack(pixel_values)
 
-            print(inputs["doc_pixel_values"].shape)
+            # print(inputs["doc_pixel_values"].shape)
 
 
         doc_outputs = model(**{k[4:]: v for k, v in inputs.items() if k.startswith("doc")})
