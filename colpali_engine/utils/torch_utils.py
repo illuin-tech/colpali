@@ -34,10 +34,11 @@ def get_torch_device(device: str = "auto") -> str:
 def tear_down_torch():
     """
     Teardown for PyTorch.
-    Should be used after each torch-based vision retriever.
+    Clears GPU cache for both CUDA and MPS.
     """
     gc.collect()
     torch.cuda.empty_cache()
+    torch.mps.empty_cache()
 
 
 class ListDataset(Dataset[T]):
