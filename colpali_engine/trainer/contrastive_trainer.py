@@ -12,18 +12,18 @@ class ContrastiveTrainer(Trainer):
         query_outputs = model(input_ids=inputs["query_input_ids"], attention_mask=inputs["query_attention_mask"])
 
         # hacky, to make sure the scatter in DDP is done correctly
-        if "image_grid_thw" in inputs:
+        if "doc_image_grid_thw" in inputs:
             # compute pixel_values offsets
-            offsets = torch.cumsum(inputs["image_grid_thw"][:, 1] * inputs["image_grid_thw"][:, 2], 0)
+            offsets = torch.cumsum(inputs["doc_image_grid_thw"][:, 1] * inputs["doc_image_grid_thw"][:, 2], 0)
             print(offsets)
             # separate pixel_values for each image
-            pixel_values = torch.split(inputs["pixel_values"], offsets.tolist())
+            pixel_values = torch.split(inputs["doc_pixel_values"], offsets.tolist())
             # pad pixel_values to the same length to be able to make it into a tensor
             max_length = max([len(pv) for pv in pixel_values])
             pixel_values = [torch.cat([pv, torch.zeros(max_length - len(pv), dtype=pv.dtype, device=pv.device)]) for pv in pixel_values]
-            inputs["pixel_values"] = torch.stack(pixel_values)
+            inputs["doc_pixel_values"] = torch.stack(pixel_values)
 
-            print(inputs["pixel_values"].shape)
+            print(inputs["doc_pixel_values"].shape)
 
 
         doc_outputs = model(**{k[4:]: v for k, v in inputs.items() if k.startswith("doc")})
