@@ -39,9 +39,9 @@ def test_e2e_colpali():
         # Forward pass
         with torch.no_grad():
             image_embeddings = model(**batch_images)
-            querry_embeddings = model(**batch_queries)
+            query_embeddings = model(**batch_queries)
 
-        scores = processor.score_multi_vector(querry_embeddings, image_embeddings)
+        scores = processor.score_multi_vector(query_embeddings, image_embeddings)
         assert isinstance(scores, torch.Tensor)
 
     except Exception as e:
