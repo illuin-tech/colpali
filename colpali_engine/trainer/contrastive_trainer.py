@@ -14,7 +14,7 @@ class ContrastiveTrainer(Trainer):
         # hacky, to make sure the scatter in DDP is done correctly
         if "doc_image_grid_thw" in inputs:
             # compute pixel_values offsets
-            offsets = torch.cumsum(inputs["doc_image_grid_thw"][:, 1] * inputs["doc_image_grid_thw"][:, 2], 0)
+            offsets = inputs["doc_image_grid_thw"][:, 1] * inputs["doc_image_grid_thw"][:, 2]
             print(offsets)
             # separate pixel_values for each image
             pixel_values = torch.split(inputs["doc_pixel_values"], offsets.tolist())
