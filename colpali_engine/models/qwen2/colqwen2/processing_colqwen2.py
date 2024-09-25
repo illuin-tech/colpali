@@ -48,6 +48,19 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
             return_tensors="pt"
         )
 
+        print(batch_doc["pixel_values"].shape)
+        # compute pixel_values offsets
+        offsets = batch_doc["image_grid_thw"][:, 1] * batch_doc["image_grid_thw"][:, 2]
+        # print(offsets)
+        # separate pixel_values for each image
+        pixel_values = torch.split(batch_doc["pixel_values"], offsets.tolist())
+        # pad pixel_values to the same length to be able to make it into a tensor
+        max_length = max([len(pv) for pv in pixel_values])
+        pixel_values = [torch.cat([pv, torch.zeros((max_length - len(pv), pv.shape[1]), dtype=pv.dtype, device=pv.device)]) for pv in pixel_values]
+        batch_doc["pixel_values"] = torch.stack(pixel_values)
+
+        print(batch_doc["pixel_values"].shape)
+
         return batch_doc
 
     def process_queries(
