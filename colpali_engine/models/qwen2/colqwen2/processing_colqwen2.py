@@ -18,7 +18,7 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
         super().__init__(*args, **kwargs)
         self.tokenizer.padding_side = "left"
         self.min_pixels =  4 * 28 * 28
-        self.max_pixels =  512 * 28 * 28
+        self.max_pixels =  1024 * 28 * 28
         self.factor = 28
 
     def process_images(
