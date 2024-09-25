@@ -10,7 +10,7 @@ from colpali_engine.models.paligemma.colpali.processing_colpali import ColPaliPr
 class TestColPaliCollator:
     @pytest.fixture(scope="class")
     def colpali_processor_path(self) -> str:
-        return "google/paligemma-3b-mix-448"
+        return "vidore/colpali-v1.2"
 
     @pytest.fixture(scope="class")
     def processor_from_pretrained(self, colpali_processor_path: str) -> Generator[ColPaliProcessor, None, None]:

@@ -12,19 +12,19 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.fixture(scope="module")
-def colpali_model_path() -> str:
+def colpali_model_name() -> str:
     return "vidore/colpali-v1.2"
 
 
 @pytest.fixture(scope="module")
-def colpali_from_pretrained(colpali_model_path: str) -> Generator[ColPali, None, None]:
+def colpali_from_pretrained(colpali_model_name: str) -> Generator[ColPali, None, None]:
     device = get_torch_device("auto")
     logger.info(f"Device used: {device}")
 
     yield cast(
         ColPali,
         ColPali.from_pretrained(
-            colpali_model_path,
+            colpali_model_name,
             torch_dtype=torch.bfloat16,
             device_map=device,
         ),
@@ -33,8 +33,8 @@ def colpali_from_pretrained(colpali_model_path: str) -> Generator[ColPali, None,
 
 
 @pytest.fixture(scope="module")
-def processor() -> Generator[ColPaliProcessor, None, None]:
-    yield cast(ColPaliProcessor, ColPaliProcessor.from_pretrained("google/paligemma-3b-mix-448"))
+def processor(colpali_model_name: str) -> Generator[ColPaliProcessor, None, None]:
+    yield cast(ColPaliProcessor, ColPaliProcessor.from_pretrained(colpali_model_name))
 
 
 @pytest.mark.slow
