@@ -39,8 +39,9 @@ class ColQwen2(Qwen2VLForConditionalGeneration):
             # for pv, o in zip(kwargs["pixel_values"], offsets):
             #     new_pixel_values.append(pv[:o])
 
+            breakpoint()
             kwargs["pixel_values"] = torch.cat([pv[:o] for pv, o in zip(kwargs["pixel_values"], offsets)], dim=0)
-            print(kwargs["pixel_values"].shape)
+            # print(kwargs["pixel_values"].shape)
 
         inputs = self.prepare_inputs_for_generation(*args, **kwargs, use_cache=False)
         # print(inputs.keys())

@@ -52,7 +52,7 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
         offsets = batch_doc["image_grid_thw"][:, 1] * batch_doc["image_grid_thw"][:, 2]
         # print(offsets)
         # separate pixel_values for each image
-        print(batch_doc["pixel_values"].shape)
+        # print(batch_doc["pixel_values"].shape)
         pixel_values = torch.split(batch_doc["pixel_values"], offsets.tolist())
         # pad pixel_values to the same length to be able to make it into a tensor
         max_length = max([len(pv) for pv in pixel_values])
