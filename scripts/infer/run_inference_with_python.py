@@ -20,18 +20,18 @@ def main():
     device = get_torch_device("auto")
     print(f"Device used: {device}")
 
-    # Define adapter name
-    base_model_name = "vidore/colpaligemma-3b-pt-448-base"
-    adapter_name = "vidore/colpali-v1.2"
+    # Model name
+    model_name = "vidore/colpali-v1.2"
 
     # Load model
     model = ColPali.from_pretrained(
-        base_model_name,
+        model_name,
         torch_dtype=torch.bfloat16,
         device_map=device,
     ).eval()
-    model.load_adapter(adapter_name)
-    processor = cast(ColPaliProcessor, ColPaliProcessor.from_pretrained("google/paligemma-3b-mix-448"))
+
+    # Load processor
+    processor = cast(ColPaliProcessor, ColPaliProcessor.from_pretrained(model_name))
 
     if not isinstance(processor, BaseVisualRetrieverProcessor):
         raise ValueError("Processor should be a BaseVisualRetrieverProcessor")
