@@ -39,7 +39,6 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
 
         images = [resize_and_convert(image) for image in images]
 
-        # images = [image.convert("RGB").resize((448, 448)) for image in images]
 
         batch_doc = self(
             text=texts_doc,
@@ -48,18 +47,17 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
             return_tensors="pt"
         )
 
-        print(batch_doc["pixel_values"].shape)
-        # compute pixel_values offsets
+
+        # The following code is a hack to make sure the scatter in DDP is done correctly when training on multiple GPUs
         offsets = batch_doc["image_grid_thw"][:, 1] * batch_doc["image_grid_thw"][:, 2]
         # print(offsets)
         # separate pixel_values for each image
+        print(batch_doc["pixel_values"].shape)
         pixel_values = torch.split(batch_doc["pixel_values"], offsets.tolist())
         # pad pixel_values to the same length to be able to make it into a tensor
         max_length = max([len(pv) for pv in pixel_values])
         pixel_values = [torch.cat([pv, torch.zeros((max_length - len(pv), pv.shape[1]), dtype=pv.dtype, device=pv.device)]) for pv in pixel_values]
         batch_doc["pixel_values"] = torch.stack(pixel_values)
-
-        print(batch_doc["pixel_values"].shape)
 
         return batch_doc
 

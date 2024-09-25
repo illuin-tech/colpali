@@ -29,17 +29,18 @@ class ColQwen2(Qwen2VLForConditionalGeneration):
         # if "pixel_values" in kwargs:
         #     print(f"pixel_values shape: {kwargs['pixel_values'].shape}")
 
-        # reverse the operation with pixel_values for scatter
+        # The following code is a hack to make sure the scatter in DDP is done correctly when training on multiple GPUs
         if "pixel_values" in kwargs:
             # compute pixel_values offsets
             offsets = kwargs["image_grid_thw"][:, 1] * kwargs["image_grid_thw"][:, 2]
             # print(offsets)
             # iterate over the pixel_values and keep only their offset
-            new_pixel_values = []
-            for pv, o in zip(kwargs["pixel_values"], offsets):
-                new_pixel_values.append(pv[:o])
-            kwargs["pixel_values"] = torch.cat(new_pixel_values)
-            # print(kwargs["pixel_values"].shape)
+            # new_pixel_values = []
+            # for pv, o in zip(kwargs["pixel_values"], offsets):
+            #     new_pixel_values.append(pv[:o])
+
+            kwargs["pixel_values"] = torch.cat([pv[:o] for pv, o in zip(kwargs["pixel_values"], offsets)], dim=0)
+            print(kwargs["pixel_values"].shape)
 
         inputs = self.prepare_inputs_for_generation(*args, **kwargs, use_cache=False)
         # print(inputs.keys())
