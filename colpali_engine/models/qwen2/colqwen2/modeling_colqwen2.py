@@ -22,32 +22,19 @@ class ColQwen2(Qwen2VLForConditionalGeneration):
     def forward(self, *args, **kwargs) -> torch.Tensor:
         # Delete output_hidden_states from kwargs
         kwargs.pop("output_hidden_states", None)
-        # from kwargs, get the pixel_value shape and input_ids shape
 
-        # print(f"input_ids shape: {kwargs['input_ids'].shape}")
-        #
-        # if "pixel_values" in kwargs:
-        #     print(f"pixel_values shape: {kwargs['pixel_values'].shape}")
 
         # The following code is a hack to make sure the scatter in DDP is done correctly when training on multiple GPUs
         if "pixel_values" in kwargs:
             # compute pixel_values offsets
             offsets = kwargs["image_grid_thw"][:, 1] * kwargs["image_grid_thw"][:, 2]
-            # print(offsets)
-            # iterate over the pixel_values and keep only their offset
-            # new_pixel_values = []
-            # for pv, o in zip(kwargs["pixel_values"], offsets):
-            #     new_pixel_values.append(pv[:o])
-
-            breakpoint()
             kwargs["pixel_values"] = torch.cat([pv[:o] for pv, o in zip(kwargs["pixel_values"], offsets)], dim=0)
-            # print(kwargs["pixel_values"].shape)
 
         inputs = self.prepare_inputs_for_generation(*args, **kwargs, use_cache=False)
-        # print(inputs.keys())
         outputs = super().forward(**inputs, output_hidden_states=True)  # (batch_size, sequence_length, hidden_size)
 
         # outputs = super().forward(*args, **kwargs, output_hidden_states=True)
+
         last_hidden_states = outputs.hidden_states[-1]  # (batch_size, sequence_length, hidden_size)
         proj = self.custom_text_proj(last_hidden_states)  # (batch_size, sequence_length, dim)
 
