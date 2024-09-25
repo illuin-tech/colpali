@@ -2,7 +2,7 @@ from typing import ClassVar
 
 import torch
 from torch import nn
-from transformers.models.qwen2_vl import Qwen2VLConfig, Qwen2VLForConditionalGeneration, Qwen2VLPreTrainedModel
+from transformers.models.qwen2_vl import Qwen2VLConfig, Qwen2VLForConditionalGeneration
 
 
 class ColQwen2(Qwen2VLForConditionalGeneration):
