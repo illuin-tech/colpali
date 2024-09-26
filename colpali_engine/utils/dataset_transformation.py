@@ -45,8 +45,6 @@ def load_train_set_detailed() -> DatasetDict:
     dataset = cast(Dataset, concatenate_datasets(ds_tot))
     dataset = dataset.shuffle(seed=42)
     # split into train and test
-    # dataset_eval = dataset.select(range(500))
-    # dataset = dataset.select(range(500, len(dataset)))
     dataset_eval = dataset.select(range(500))
     dataset = dataset.select(range(500, len(dataset)))
     ds_dict = DatasetDict({"train": dataset, "test": dataset_eval})
