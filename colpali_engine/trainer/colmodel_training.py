@@ -185,6 +185,8 @@ class ColModelTraining:
             for dataloader in [dataloader_with_query, dataloader_without_query]:
                 for batch in tqdm(dataloader):
                     doc = self.model(**{k[4:]: v.to(device) for k, v in batch.items() if k.startswith("doc")})
+                    # Example for key="doc_input_ids":
+                    # `doc = self.model(input_ids=batch["doc_input_ids"].to(device))`
 
                     ps.extend(list(torch.unbind(doc.to("cpu"))))
 
