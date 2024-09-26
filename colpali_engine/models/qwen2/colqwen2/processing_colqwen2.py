@@ -63,6 +63,7 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
                                                dtype=pv.dtype, device=pv.device)]) for pv in pixel_values]
         batch_doc["pixel_values"] = torch.stack(pixel_values)
 
+
         return batch_doc
 
     def process_queries(
