@@ -79,12 +79,6 @@ class ColModelTrainingConfig:
                 self.model = get_peft_model(self.model, self.peft_config)
                 self.model.print_trainable_parameters()
             else:
-                # Ugly debugging hack
-                # if self.model.model.config.text_config.vocab_size == 32000:
-                #     print("DEBUG: Resizing token embeddings - This should not happen in a real scenario!")
-                #     self.model.model.text_model.resize_token_embeddings(32003)
-                #     self.model.model.vision_model.encoder.layers = self.model.model.vision_model.encoder.layers[0:2]
-                # self.model.enable_input_require_grads()
                 if self.pretrained_peft_model_name_or_path is None:
                     # self.model.add_adapter(self.peft_config)
                     # self.model.enable_adapters()
@@ -141,10 +135,6 @@ class ColModelTraining:
     def eval_dataset(self, test_dataset):
         self.model.eval()
 
-        # # debug
-        # if len(test_dataset) > 200:
-        #     test_dataset = test_dataset.select(range(0, 100))
-
         idx_with_query = [idx for idx, sample in enumerate(test_dataset["query"]) if sample is not None]
         idx_without_query = [idx for idx, sample in enumerate(test_dataset["query"]) if sample is None]
 
@@ -184,10 +174,8 @@ class ColModelTraining:
         with torch.no_grad():
             for dataloader in [dataloader_with_query, dataloader_without_query]:
                 for batch in tqdm(dataloader):
+                    # feed only kwargs with 'doc_' prefix
                     doc = self.model(**{k[4:]: v.to(device) for k, v in batch.items() if k.startswith("doc")})
-                    # Example for key="doc_input_ids":
-                    # `doc = self.model(input_ids=batch["doc_input_ids"].to(device))`
-
                     ps.extend(list(torch.unbind(doc.to("cpu"))))
 
                     if "query_input_ids" in batch:
