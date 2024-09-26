@@ -78,7 +78,8 @@ class VisualRetrieverCollator:
         batch_query = None
 
         if all([t is None for t in texts_query]):
-            print("All queries are `None`. Returning `None` for all queries.")
+            # print("All queries are `None`. Returning `None` for all queries.")
+            pass
         elif any([t is None for t in texts_query]):
             # If it's the first query that is not None but the rest are None, then it's hard negatives.
             raise ValueError("Some queries are None. This collator does not support None queries yet.")
