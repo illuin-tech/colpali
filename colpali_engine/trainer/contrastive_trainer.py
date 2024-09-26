@@ -6,7 +6,7 @@ class ContrastiveTrainer(Trainer):
     def __init__(self, loss_func, is_vision_model, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.loss_func = loss_func
-        self.is_vision_model = is_vision_model
+        self.is_vision_model = is_vision_model  # Unused argument, will be removed in 0.4.0
 
     def compute_loss(self, model, inputs, return_outputs=False):
         query_outputs = model(input_ids=inputs["query_input_ids"], attention_mask=inputs["query_attention_mask"])
