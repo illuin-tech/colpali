@@ -40,7 +40,6 @@ dependencies = [
     "requests",
     "torch>=2.2.0",
     "transformers>=4.45.0",
-    "qwen-vl-utils==0.0.4",
 ]
 
 [project.optional-dependencies]

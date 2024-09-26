@@ -1,8 +1,8 @@
+import math
 from typing import List, Optional, Union
 
 import torch
 from PIL import Image
-from qwen_vl_utils import smart_resize
 from transformers import BatchFeature
 from transformers.models.qwen2_vl import Qwen2VLProcessor
 
@@ -20,6 +20,50 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
         self.min_pixels =  4 * 28 * 28
         self.max_pixels =  768 * 28 * 28
         self.factor = 28
+        self.max_ratio = 200
+
+    @staticmethod
+    def round_by_factor(number: float, factor: int) -> int:
+        """Returns the closest integer to 'number' that is divisible by 'factor'."""
+        return round(number / factor) * factor
+
+    @staticmethod
+    def ceil_by_factor(number: float, factor: int) -> int:
+        """Returns the smallest integer greater than or equal to 'number' that is divisible by 'factor'."""
+        return math.ceil(number / factor) * factor
+
+    @staticmethod
+    def floor_by_factor(number: float, factor: int) -> int:
+        """Returns the largest integer less than or equal to 'number' that is divisible by 'factor'."""
+        return math.floor(number / factor) * factor
+
+
+    def smart_resize(self, height: int, width: int, factor: int, min_pixels: int, max_pixels: int) -> tuple[int, int]:
+        """
+        Rescales the image so that the following conditions are met:
+
+        1. Both dimensions (height and width) are divisible by 'factor'.
+
+        2. The total number of pixels is within the range ['min_pixels', 'max_pixels'].
+
+        3. The aspect ratio of the image is maintained as closely as possible.
+        """
+        if max(height, width) / min(height, width) > self.max_ratio:
+            raise ValueError(
+                f"absolute aspect ratio must be smaller than {self.max_ratio}, "
+                f"got {max(height, width) / min(height, width)}"
+            )
+        h_bar = max(factor, self.round_by_factor(height, factor))
+        w_bar = max(factor, self.round_by_factor(width, factor))
+        if h_bar * w_bar > max_pixels:
+            beta = math.sqrt((height * width) / max_pixels)
+            h_bar = self.floor_by_factor(height / beta, factor)
+            w_bar = self.floor_by_factor(width / beta, factor)
+        elif h_bar * w_bar < min_pixels:
+            beta = math.sqrt(min_pixels / (height * width))
+            h_bar = self.ceil_by_factor(height * beta, factor)
+            w_bar = self.ceil_by_factor(width * beta, factor)
+        return h_bar, w_bar
 
     def process_images(
         self,
@@ -33,7 +77,7 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
 
         def resize_and_convert(image):
             image_size = image.size
-            resized_height, resized_width = smart_resize(image_size[1],
+            resized_height, resized_width = self.smart_resize(image_size[1],
                                                          image_size[0],
                                                          factor=self.factor,
                                                          min_pixels=self.min_pixels,
