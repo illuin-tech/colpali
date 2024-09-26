@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Subset the example dataset in the run inference example script
 - Rename scorer test to `test_processing_utils`
 - Greatly simplify routing logic in Trainer selection and when feeding arguments to the model forward pass (refacto)
+- Removed class `ContrastiveNegativeTrainer` which is now just integrated in ContrastiveTrainer. This should not affect the user-facing API.
 - Bumped transformers version to 4.45.0 to get Qwen2-VL support
 
 ### Fixed
