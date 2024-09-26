@@ -75,7 +75,7 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
         texts_doc = (["<|im_start|>user\n<|vision_start|><|image_pad|><|vision_end|>Describe the image.<|im_end|>\n"]
                      * len(images))
 
-        def resize_and_convert(image):
+        def resize_and_convert(image: Image.Image) -> Image.Image:
             image_size = image.size
             resized_height, resized_width = self.smart_resize(image_size[1],
                                                          image_size[0],
