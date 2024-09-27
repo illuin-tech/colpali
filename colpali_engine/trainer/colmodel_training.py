@@ -20,7 +20,7 @@ from colpali_engine.collators.visual_retriever_collator import VisualRetrieverCo
 from colpali_engine.loss.late_interaction_losses import (
     ColbertLoss,
 )
-from colpali_engine.trainer.contrastive_trainer import ContrastiveNegativeTrainer, ContrastiveTrainer
+from colpali_engine.trainer.contrastive_trainer import ContrastiveTrainer
 from colpali_engine.trainer.eval_utils import CustomRetrievalEvaluator
 from colpali_engine.utils.gpu_stats import print_gpu_utilization, print_summary
 from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
@@ -67,6 +67,7 @@ class ColModelTrainingConfig:
 
         if self.pretrained_peft_model_name_or_path is not None:
             self.model.load_adapter(self.pretrained_peft_model_name_or_path)
+
             print(f"Loaded pretrained adapter from {self.pretrained_peft_model_name_or_path}")
 
         if self.peft_config is not None:
@@ -78,12 +79,6 @@ class ColModelTrainingConfig:
                 self.model = get_peft_model(self.model, self.peft_config)
                 self.model.print_trainable_parameters()
             else:
-                # Ugly debugging hack
-                # if self.model.model.config.text_config.vocab_size == 32000:
-                #     print("DEBUG: Resizing token embeddings - This should not happen in a real scenario!")
-                #     self.model.model.text_model.resize_token_embeddings(32003)
-                #     self.model.model.vision_model.encoder.layers = self.model.model.vision_model.encoder.layers[0:2]
-                # self.model.enable_input_require_grads()
                 if self.pretrained_peft_model_name_or_path is None:
                     # self.model.add_adapter(self.peft_config)
                     # self.model.enable_adapters()
@@ -105,7 +100,6 @@ class ColModelTraining:
             self.dataset = self.dataset[0]
             self.collator = HardNegCollator(
                 processor=self.config.processor,
-                tokenizer=self.config.tokenizer,
                 max_length=self.config.max_length,
                 image_dataset=neg_dataset,
             )
@@ -120,26 +114,19 @@ class ColModelTraining:
     def train(self) -> None:
         if isinstance(self.collator, HardNegCollator):
             print("Training with hard negatives")
-            trainer = ContrastiveNegativeTrainer(
-                model=self.model,
-                train_dataset=self.dataset["train"],
-                eval_dataset=self.dataset["test"],
-                args=self.config.tr_args,
-                data_collator=self.collator,
-                loss_func=self.config.loss_func,
-                is_vision_model=self.config.processor is not None,
-            )
         else:
             print("Training with in-batch negatives")
-            trainer = ContrastiveTrainer(
-                model=self.model,
-                train_dataset=self.dataset["train"],
-                eval_dataset=self.dataset["test"],
-                args=self.config.tr_args,
-                data_collator=self.collator,
-                loss_func=self.config.loss_func,
-                is_vision_model=self.config.processor is not None,
-            )
+
+        trainer = ContrastiveTrainer(
+            model=self.model,
+            train_dataset=self.dataset["train"],
+            eval_dataset=self.dataset["test"],
+            args=self.config.tr_args,
+            data_collator=self.collator,
+            loss_func=self.config.loss_func,
+            is_vision_model=self.config.processor is not None,
+        )
+
         trainer.args.remove_unused_columns = False
 
         result = trainer.train(resume_from_checkpoint=self.config.tr_args.resume_from_checkpoint)
@@ -147,10 +134,6 @@ class ColModelTraining:
 
     def eval_dataset(self, test_dataset):
         self.model.eval()
-
-        # # debug
-        # if len(test_dataset) > 200:
-        #     test_dataset = test_dataset.select(range(0, 100))
 
         idx_with_query = [idx for idx, sample in enumerate(test_dataset["query"]) if sample is not None]
         idx_without_query = [idx for idx, sample in enumerate(test_dataset["query"]) if sample is None]
@@ -191,27 +174,8 @@ class ColModelTraining:
         with torch.no_grad():
             for dataloader in [dataloader_with_query, dataloader_without_query]:
                 for batch in tqdm(dataloader):
-                    if "doc_pixel_values" not in batch:
-                        doc = self.model(
-                            input_ids=batch["doc_input_ids"].to(device),
-                            attention_mask=batch["doc_attention_mask"].to(device),
-                        )
-
-                    else:
-                        if "doc_pixel_attention_mask" in batch:
-                            doc = self.model(
-                                input_ids=batch["doc_input_ids"].to(device),
-                                attention_mask=batch["doc_attention_mask"].to(device),
-                                pixel_values=batch["doc_pixel_values"].to(device),
-                                pixel_attention_mask=batch["doc_pixel_attention_mask"].to(device),
-                            )
-                        else:
-                            doc = self.model(
-                                input_ids=batch["doc_input_ids"].to(device),
-                                attention_mask=batch["doc_attention_mask"].to(device),
-                                pixel_values=batch["doc_pixel_values"].to(device),
-                            )
-
+                    # feed only kwargs with 'doc_' prefix
+                    doc = self.model(**{k[4:]: v.to(device) for k, v in batch.items() if k.startswith("doc")})
                     ps.extend(list(torch.unbind(doc.to("cpu"))))
 
                     if "query_input_ids" in batch:

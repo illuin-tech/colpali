@@ -12,18 +12,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Add module-level imports for collators
 - Add sanity check in the run inference example script
 - Add E2E test for ColPali
+- Add Qwen2-VL support
 
 ### Changed
 
 - Improve code clarity the run inference example script
 - Subset the example dataset in the run inference example script
 - Rename scorer test to `test_processing_utils`
+- Greatly simplify routing logic in Trainer selection and when feeding arguments to the model forward pass (refacto)
+- Removed class `ContrastiveNegativeTrainer` which is now just integrated in ContrastiveTrainer. This should not affect the user-facing API.
+- Bumped transformers version to 4.45.0 to get Qwen2-VL support
 
 ### Fixed
 
 - Import HardNegCollator at module-level if and only if datasets is available
 - Remove the need for `typer` in the run inference example script
 - Fix edge case when empty suffix `""` given to processor
+- Fix bug in HardNegCollator since 0.3.0
 
 ## [0.3.0] - 2024-09-10
 
