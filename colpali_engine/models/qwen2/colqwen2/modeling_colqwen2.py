@@ -32,9 +32,9 @@ class ColQwen2(Qwen2VLForConditionalGeneration):
 
         position_ids, rope_deltas = self.get_rope_index(
             input_ids=kwargs["input_ids"],
-            image_grid_thw=kwargs["image_grid_thw"],
+            image_grid_thw=kwargs.get("image_grid_thw", None),
             video_grid_thw=None,
-            attention_mask=kwargs["attention_mask"],
+            attention_mask=kwargs.get("attention_mask", None),
         )
         outputs = super().forward(*args,
                                   **kwargs,
