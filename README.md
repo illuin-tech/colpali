@@ -46,8 +46,6 @@ pip install colpali-engine
 ### Quick start
 
 ```python
-from typing import cast
-
 import torch
 from PIL import Image
 
@@ -55,16 +53,13 @@ from colpali_engine.models import ColPali, ColPaliProcessor
 
 model_name = "vidore/colpali-v1.2"
 
-model = cast(
-    ColPali,
-    ColPali.from_pretrained(
-        model_name,
-        torch_dtype=torch.bfloat16,
-        device_map="cuda:0",  # or "mps" if on Apple Silicon
-    ),
+model = ColPali.from_pretrained(
+    model_name,
+    torch_dtype=torch.bfloat16,
+    device_map="cuda:0",  # or "mps" if on Apple Silicon
 )
 
-processor = cast(ColPaliProcessor, ColPaliProcessor.from_pretrained(model_name))
+processor = ColPaliProcessor.from_pretrained(model_name)
 
 # Your inputs
 images = [
