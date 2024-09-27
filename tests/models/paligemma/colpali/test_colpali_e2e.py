@@ -9,23 +9,23 @@ from colpali_engine.utils.torch_utils import get_torch_device
 
 
 @pytest.fixture(scope="module")
-def colpali_model_name() -> str:
+def model_name() -> str:
     return "vidore/colpali-v1.2"
 
 
 @pytest.mark.slow
-def test_e2e_colpali(colpali_model_name: str):
+def test_e2e_retrieval_and_scoring(model_name: str):
     model = cast(
         ColPali,
         ColPali.from_pretrained(
-            colpali_model_name,
+            model_name,
             torch_dtype=torch.bfloat16,
             device_map=get_torch_device("auto"),
         ),
     ).eval()
 
     try:
-        processor = cast(ColPaliProcessor, ColPaliProcessor.from_pretrained(colpali_model_name))
+        processor = cast(ColPaliProcessor, ColPaliProcessor.from_pretrained(model_name))
 
         # Your inputs
         images = [
