@@ -17,8 +17,8 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.tokenizer.padding_side = "left"
-        self.min_pixels =  4 * 28 * 28
-        self.max_pixels =  768 * 28 * 28
+        self.min_pixels = 4 * 28 * 28
+        self.max_pixels = 768 * 28 * 28
         self.factor = 28
         self.max_ratio = 200
 
@@ -36,7 +36,6 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
     def floor_by_factor(number: float, factor: int) -> int:
         """Returns the largest integer less than or equal to 'number' that is divisible by 'factor'."""
         return math.floor(number / factor) * factor
-
 
     def smart_resize(self, height: int, width: int, factor: int, min_pixels: int, max_pixels: int) -> tuple[int, int]:
         """
@@ -72,41 +71,45 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
         """
         Process images for ColPali.
         """
-        texts_doc = (["<|im_start|>user\n<|vision_start|><|image_pad|><|vision_end|>Describe the image.<|im_end|>\n"]
-                     * len(images))
+        texts_doc = [
+            "<|im_start|>user\n<|vision_start|><|image_pad|><|vision_end|>Describe the image.<|im_end|>\n"
+        ] * len(images)
 
         def resize_and_convert(image: Image.Image) -> Image.Image:
             image_size = image.size
-            resized_height, resized_width = self.smart_resize(image_size[1],
-                                                         image_size[0],
-                                                         factor=self.factor,
-                                                         min_pixels=self.min_pixels,
-                                                         max_pixels=self.max_pixels)
-            # print(f"Resizing image from {image_size} to {(resized_height, resized_width)}")
+            resized_height, resized_width = self.smart_resize(
+                image_size[1],
+                image_size[0],
+                factor=self.factor,
+                min_pixels=self.min_pixels,
+                max_pixels=self.max_pixels,
+            )
             return image.convert("RGB").resize((resized_width, resized_height))
 
         images = [resize_and_convert(image) for image in images]
-
 
         batch_doc = self(
             text=texts_doc,
             images=images,
             padding="longest",
-            return_tensors="pt"
+            return_tensors="pt",
         )
 
-
-        # The following code is a hack to make sure the scatter in DDP is done correctly when training on multiple GPUs
+        # NOTE: The following code is a hack to make sure the scatter in DDP is done correctly when training
+        # on multiple GPUs.
         offsets = batch_doc["image_grid_thw"][:, 1] * batch_doc["image_grid_thw"][:, 2]
+
         # separate pixel_values for each image
         pixel_values = torch.split(batch_doc["pixel_values"], offsets.tolist())
+
         # pad pixel_values to the same length to be able to make it into a tensor
         max_length = max([len(pv) for pv in pixel_values])
-        pixel_values = [torch.cat([pv,
-                                   torch.zeros((max_length - len(pv), pv.shape[1]),
-                                               dtype=pv.dtype, device=pv.device)]) for pv in pixel_values]
-        batch_doc["pixel_values"] = torch.stack(pixel_values)
 
+        pixel_values = [
+            torch.cat([pv, torch.zeros((max_length - len(pv), pv.shape[1]), dtype=pv.dtype, device=pv.device)])
+            for pv in pixel_values
+        ]
+        batch_doc["pixel_values"] = torch.stack(pixel_values)
 
         return batch_doc
 
@@ -132,7 +135,6 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
             text=texts_query,
             return_tensors="pt",
             padding="longest",
-            # max_length=max_length + self.image_seq_length,
         )
 
         return batch_query
