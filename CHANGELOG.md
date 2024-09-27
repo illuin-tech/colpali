@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## Unreleased
 
 ### Added
+### Changed
+### Fixed
+
+
+## [0.3.1] - 2024-09-27
+
+### Added
 
 - Add module-level imports for collators
 - Add sanity check in the run inference example script
