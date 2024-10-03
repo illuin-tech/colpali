@@ -96,8 +96,10 @@ class BiQwen2(Qwen2VLForConditionalGeneration):
                                   use_cache=False,
                                   output_hidden_states=True)  # (batch_size, sequence_length, hidden_size)
 
-        proj = torch.sum(last_hidden_states * kwargs["attention_mask"].unsqueeze(-1), dim=1) / torch.sum(
-            kwargs["attention_mask"], dim=1, keepdim=True
-        )
+        # proj = torch.sum(last_hidden_states * kwargs["attention_mask"].unsqueeze(-1), dim=1) / torch.sum(
+        #     kwargs["attention_mask"], dim=1, keepdim=True
+        # )
+        # take the last hidden state
+        proj = last_hidden_states[:, -1, :]
         proj = proj / proj.norm(dim=-1, keepdim=True)
         return proj
