@@ -2,7 +2,7 @@ from typing import List, Optional, Union
 
 import torch
 
-from colpali_engine.models import ColQwen2Processor
+from colpali_engine.models.qwen2.colqwen2 import ColQwen2Processor
 
 
 class BiQwen2Processor(ColQwen2Processor):
