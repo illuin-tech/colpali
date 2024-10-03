@@ -7,7 +7,7 @@ per_device_train_batch_size: 4
 # gradient_accumulation_steps: 4
 per_device_eval_batch_size: 4
 eval_strategy: "steps"
-# dataloader_num_workers: 8
+dataloader_num_workers: 8
 # bf16: true
 save_steps: 500
 logging_steps: 10
