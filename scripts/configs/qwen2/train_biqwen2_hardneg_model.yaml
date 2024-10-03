@@ -4,7 +4,7 @@ config:
   processor:
     (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
     class_to_instanciate: !ext colpali_engine.models.BiQwen2Processor
-    pretrained_model_name_or_path:  "./models/Qwen2-VL-2B-Instruct" # "./models/paligemma-3b-mix-448"
+    pretrained_model_name_or_path:  "./models/colqwen2_base" # "./models/paligemma-3b-mix-448"
     # max_length: 50
 
   model:
