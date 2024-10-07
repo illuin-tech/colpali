@@ -22,7 +22,7 @@ def test_e2e_colpali(colpali_model_name: str):
             torch_dtype=torch.bfloat16,
             device_map=get_torch_device("auto"),
         ),
-    )
+    ).eval()
 
     try:
         processor = cast(ColPaliProcessor, ColPaliProcessor.from_pretrained(colpali_model_name))

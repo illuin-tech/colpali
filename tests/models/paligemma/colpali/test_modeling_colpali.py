@@ -27,7 +27,7 @@ def colpali_from_pretrained(colpali_model_name: str) -> Generator[ColPali, None,
             colpali_model_name,
             torch_dtype=torch.bfloat16,
             device_map=device,
-        ),
+        ).eval(),
     )
     tear_down_torch()
 
