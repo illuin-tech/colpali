@@ -69,7 +69,7 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
         images: List[Image.Image],
     ) -> BatchFeature:
         """
-        Process images for ColPali.
+        Process images for ColQwen2.
         """
         texts_doc = [
             "<|im_start|>user\n<|vision_start|><|image_pad|><|vision_end|>Describe the image.<|im_end|>\n"
@@ -120,7 +120,7 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
         suffix: Optional[str] = None,
     ) -> BatchFeature:
         """
-        Process queries for ColPali.
+        Process queries for ColQwen2.
         """
         if suffix is None:
             suffix = "<pad>" * 10
