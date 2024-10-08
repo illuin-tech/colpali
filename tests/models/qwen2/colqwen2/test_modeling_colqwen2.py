@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 @pytest.fixture(scope="module")
 def model_name() -> str:
-    return "vidore/colqwen2-base"
+    return "vidore/colqwen2-v0.1"
 
 
 @pytest.fixture(scope="module")
@@ -80,7 +80,7 @@ def test_forward_queries(model_from_pretrained: ColQwen2, processor: ColQwen2Pro
 
     # Forward pass
     with torch.no_grad():
-        outputs = model_from_pretrained(**batch_queries, image_grid_thw=None)
+        outputs = model_from_pretrained(**batch_queries)
 
     # Assertions
     assert isinstance(outputs, torch.Tensor)
