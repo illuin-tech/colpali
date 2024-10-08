@@ -23,12 +23,14 @@ class ColQwen2(Qwen2VLForConditionalGeneration):
         # Delete output_hidden_states from kwargs
         kwargs.pop("output_hidden_states", None)
 
-
         # The following code is a hack to make sure the scatter in DDP is done correctly when training on multiple GPUs
         if "pixel_values" in kwargs:
             # compute pixel_values offsets
             offsets = kwargs["image_grid_thw"][:, 1] * kwargs["image_grid_thw"][:, 2]
-            kwargs["pixel_values"] = torch.cat([pv[:o] for pv, o in zip(kwargs["pixel_values"], offsets)], dim=0)
+            kwargs["pixel_values"] = torch.cat(
+                [pv[:o] for pv, o in zip(kwargs["pixel_values"], offsets)],
+                dim=0,
+            )
 
         position_ids, rope_deltas = self.get_rope_index(
             input_ids=kwargs["input_ids"],
@@ -36,15 +38,14 @@ class ColQwen2(Qwen2VLForConditionalGeneration):
             video_grid_thw=None,
             attention_mask=kwargs.get("attention_mask", None),
         )
-        outputs = super().forward(*args,
-                                  **kwargs,
-                                  position_ids=position_ids,
-                                  rope_deltas=rope_deltas,
-                                  use_cache=False,
-                                  output_hidden_states=True)  # (batch_size, sequence_length, hidden_size)
-
-        # inputs = self.prepare_inputs_for_generation(*args, **kwargs, use_cache=False)
-        # outputs = super().forward(*args, **kwargs, output_hidden_states=True)
+        outputs = super().forward(
+            *args,
+            **kwargs,
+            position_ids=position_ids,
+            rope_deltas=rope_deltas,
+            use_cache=False,
+            output_hidden_states=True,
+        )  # (batch_size, sequence_length, hidden_size)
 
         last_hidden_states = outputs.hidden_states[-1]  # (batch_size, sequence_length, hidden_size)
         proj = self.custom_text_proj(last_hidden_states)  # (batch_size, sequence_length, dim)
