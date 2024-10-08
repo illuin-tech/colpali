@@ -27,7 +27,7 @@ def model_from_pretrained(model_name: str) -> Generator[ColQwen2, None, None]:
             model_name,
             torch_dtype=torch.bfloat16,
             device_map=device,
-        ),
+        ).eval(),
     )
     tear_down_torch()
 
@@ -68,7 +68,6 @@ def test_forward_images(
     assert emb_dim == model_from_pretrained.dim
 
 
-# TODO: fix this test
 @pytest.mark.slow
 def test_forward_queries(
     model_from_pretrained: ColQwen2,
@@ -84,7 +83,7 @@ def test_forward_queries(
 
     # Forward pass
     with torch.no_grad():
-        outputs = model_from_pretrained(**batch_queries).to(model_from_pretrained.device)
+        outputs = model_from_pretrained(**batch_queries, image_grid_thw=None)
 
     # Assertions
     assert isinstance(outputs, torch.Tensor)
