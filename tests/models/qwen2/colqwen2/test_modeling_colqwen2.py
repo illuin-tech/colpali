@@ -69,10 +69,7 @@ def test_forward_images(
 
 
 @pytest.mark.slow
-def test_forward_queries(
-    model_from_pretrained: ColQwen2,
-    processor: ColQwen2Processor,
-):
+def test_forward_queries(model_from_pretrained: ColQwen2, processor: ColQwen2Processor):
     queries = [
         "Is attention really all you need?",
         "Are Benjamin, Antoine, Merve, and Jo best friends?",
@@ -91,3 +88,25 @@ def test_forward_queries(
     batch_size, n_query_tokens, emb_dim = outputs.shape
     assert batch_size == len(queries)
     assert emb_dim == model_from_pretrained.dim
+
+
+@pytest.mark.slow
+def test_is_model_deterministic(model_from_pretrained: ColQwen2, processor: ColQwen2Processor):
+    queries = [
+        "Is attention really all you need?",
+        "Are Benjamin, Antoine, Merve, and Jo best friends?",
+    ]
+
+    # Process the queries
+    batch_queries = processor.process_queries(queries).to(model_from_pretrained.device)
+
+    # Forward pass
+    with torch.no_grad():
+        outputs = model_from_pretrained(**batch_queries)
+
+    # Forward pass again
+    with torch.no_grad():
+        outputs_new = model_from_pretrained(**batch_queries)
+
+    # Assertions
+    assert torch.allclose(outputs, outputs_new, atol=1e-5)
