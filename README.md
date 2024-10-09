@@ -3,6 +3,7 @@
 [![arXiv](https://img.shields.io/badge/arXiv-2407.01449-b31b1b.svg?style=for-the-badge)](https://arxiv.org/abs/2407.01449)
 [![GitHub](https://img.shields.io/badge/ViDoRe_Benchmark-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/illuin-tech/vidore-benchmark)
 [![Hugging Face](https://img.shields.io/badge/Vidore_Hf_Space-FFD21E?style=for-the-badge&logo=huggingface&logoColor=000)](https://huggingface.co/vidore)
+[![GitHub](https://img.shields.io/badge/Cookbooks-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/tonywu71/colpali-cookbooks)
 
 [![Test](https://github.com/illuin-tech/colpali/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/illuin-tech/colpali/actions/workflows/test.yml)
 [![Version](https://img.shields.io/pypi/v/colpali-engine?color=%2334D058&label=pypi%20package)](https://pypi.org/project/colpali-engine/)
@@ -29,6 +30,15 @@ With our new model *ColPali*, we propose to leverage VLMs to construct efficient
 Using ColPali removes the need for potentially complex and brittle layout recognition and OCR pipelines with a single model that can take into account both the textual and visual content (layout, charts, ...) of a document.
 
 ![ColPali Architecture](assets/colpali_architecture.webp)
+
+## List of ColVision models
+
+| Model                                                        | Score on [ViDoRe](https://huggingface.co/spaces/vidore/vidore-leaderboard) 🏆 | License    | Comments                                                     | Currently supported |
+| ------------------------------------------------------------ | ------------------------------------------------------------ | ---------- | ------------------------------------------------------------ | ------------------- |
+| [vidore/colpali](https://huggingface.co/vidore/colpali)      | 81.3                                                         | Gemma      | • Based on `google/paligemma-3b-mix-448`.<br />• Checkpoint used in the ColPali paper. | ❌                   |
+| [vidore/colpali-v1.1](https://huggingface.co/vidore/colpali-v1.1) | 81.5                                                         | Gemma      | • Based on `google/paligemma-3b-mix-448`.                    | ✅                   |
+| [vidore/colpali-v1.2](https://huggingface.co/vidore/colpali-v1.2) | 83.1                                                         | Gemma      | • Based on `google/paligemma-3b-mix-448`.                    | ✅                   |
+| [vidore/colqwen2-v0.1](https://huggingface.co/vidore/colqwen2-v0.1) | 86.6                                                         | Apache 2.0 | • Based on `Qwen/Qwen2-VL-2B-Instruct`.<br />• Supports dynamic resolution.<br />• Trained using 768 image patches per page. | ✅                   |
 
 ## Setup
 
@@ -57,7 +67,7 @@ model = ColPali.from_pretrained(
     model_name,
     torch_dtype=torch.bfloat16,
     device_map="cuda:0",  # or "mps" if on Apple Silicon
-)
+).eval()
 
 processor = ColPaliProcessor.from_pretrained(model_name)
 

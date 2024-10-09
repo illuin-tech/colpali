@@ -4,28 +4,28 @@ import pytest
 import torch
 from PIL import Image
 
-from colpali_engine.models import ColPali, ColPaliProcessor
+from colpali_engine.models import ColQwen2, ColQwen2Processor
 from colpali_engine.utils.torch_utils import get_torch_device
 
 
 @pytest.fixture(scope="module")
 def model_name() -> str:
-    return "vidore/colpali-v1.2"
+    return "vidore/colqwen2-v0.1"
 
 
 @pytest.mark.slow
 def test_e2e_retrieval_and_scoring(model_name: str):
     model = cast(
-        ColPali,
-        ColPali.from_pretrained(
+        ColQwen2,
+        ColQwen2.from_pretrained(
             model_name,
             torch_dtype=torch.bfloat16,
             device_map=get_torch_device("auto"),
         ),
-    ).eval()
+    )
 
     try:
-        processor = cast(ColPaliProcessor, ColPaliProcessor.from_pretrained(model_name))
+        processor = cast(ColQwen2Processor, ColQwen2Processor.from_pretrained(model_name))
 
         # Your inputs
         images = [

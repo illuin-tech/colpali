@@ -5,7 +5,7 @@ import pytest
 import torch
 from PIL import Image
 
-from colpali_engine.models import ColPali, ColPaliProcessor
+from colpali_engine.models import ColQwen2, ColQwen2Processor
 from colpali_engine.utils.torch_utils import get_torch_device, tear_down_torch
 
 logger = logging.getLogger(__name__)
@@ -13,17 +13,17 @@ logger = logging.getLogger(__name__)
 
 @pytest.fixture(scope="module")
 def model_name() -> str:
-    return "vidore/colpali-v1.2"
+    return "vidore/colqwen2-v0.1"
 
 
 @pytest.fixture(scope="module")
-def model_from_pretrained(model_name: str) -> Generator[ColPali, None, None]:
+def model_from_pretrained(model_name: str) -> Generator[ColQwen2, None, None]:
     device = get_torch_device("auto")
     logger.info(f"Device used: {device}")
 
     yield cast(
-        ColPali,
-        ColPali.from_pretrained(
+        ColQwen2,
+        ColQwen2.from_pretrained(
             model_name,
             torch_dtype=torch.bfloat16,
             device_map=device,
@@ -33,19 +33,19 @@ def model_from_pretrained(model_name: str) -> Generator[ColPali, None, None]:
 
 
 @pytest.fixture(scope="module")
-def processor(model_name: str) -> Generator[ColPaliProcessor, None, None]:
-    yield cast(ColPaliProcessor, ColPaliProcessor.from_pretrained(model_name))
+def processor(model_name: str) -> Generator[ColQwen2Processor, None, None]:
+    yield cast(ColQwen2Processor, ColQwen2Processor.from_pretrained(model_name))
 
 
 @pytest.mark.slow
-def test_load_from_pretrained(model_from_pretrained: ColPali):
-    assert isinstance(model_from_pretrained, ColPali)
+def test_load_from_pretrained(model_from_pretrained: ColQwen2):
+    assert isinstance(model_from_pretrained, ColQwen2)
 
 
 @pytest.mark.slow
 def test_forward_images(
-    model_from_pretrained: ColPali,
-    processor: ColPaliProcessor,
+    model_from_pretrained: ColQwen2,
+    processor: ColQwen2Processor,
 ):
     # Create a batch of dummy images
     images = [
@@ -69,10 +69,7 @@ def test_forward_images(
 
 
 @pytest.mark.slow
-def test_forward_queries(
-    model_from_pretrained: ColPali,
-    processor: ColPaliProcessor,
-):
+def test_forward_queries(model_from_pretrained: ColQwen2, processor: ColQwen2Processor):
     queries = [
         "Is attention really all you need?",
         "Are Benjamin, Antoine, Merve, and Jo best friends?",
@@ -83,7 +80,7 @@ def test_forward_queries(
 
     # Forward pass
     with torch.no_grad():
-        outputs = model_from_pretrained(**batch_queries).to(model_from_pretrained.device)
+        outputs = model_from_pretrained(**batch_queries)
 
     # Assertions
     assert isinstance(outputs, torch.Tensor)
@@ -91,3 +88,25 @@ def test_forward_queries(
     batch_size, n_query_tokens, emb_dim = outputs.shape
     assert batch_size == len(queries)
     assert emb_dim == model_from_pretrained.dim
+
+
+@pytest.mark.slow
+def test_is_model_deterministic(model_from_pretrained: ColQwen2, processor: ColQwen2Processor):
+    queries = [
+        "Is attention really all you need?",
+        "Are Benjamin, Antoine, Merve, and Jo best friends?",
+    ]
+
+    # Process the queries
+    batch_queries = processor.process_queries(queries).to(model_from_pretrained.device)
+
+    # Forward pass
+    with torch.no_grad():
+        outputs = model_from_pretrained(**batch_queries)
+
+    # Forward pass again
+    with torch.no_grad():
+        outputs_new = model_from_pretrained(**batch_queries)
+
+    # Assertions
+    assert torch.allclose(outputs, outputs_new, atol=1e-5)
