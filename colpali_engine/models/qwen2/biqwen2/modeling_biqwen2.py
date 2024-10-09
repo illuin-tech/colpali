@@ -5,7 +5,7 @@ from torch import nn
 from transformers.models.qwen2_vl import Qwen2VLConfig, Qwen2VLForConditionalGeneration
 
 
-class ColQwen2(Qwen2VLForConditionalGeneration):
+class BiQwen2(Qwen2VLForConditionalGeneration):
     """
     ColQwen2 model implementation from the "ColPali: Efficient Document Retrieval with Vision Language Models" paper.
     """
@@ -77,14 +77,12 @@ class ColQwen2(Qwen2VLForConditionalGeneration):
         # Delete output_hidden_states from kwargs
         kwargs.pop("output_hidden_states", None)
 
+
         # The following code is a hack to make sure the scatter in DDP is done correctly when training on multiple GPUs
         if "pixel_values" in kwargs:
             # compute pixel_values offsets
             offsets = kwargs["image_grid_thw"][:, 1] * kwargs["image_grid_thw"][:, 2]
-            kwargs["pixel_values"] = torch.cat(
-                [pv[:o] for pv, o in zip(kwargs["pixel_values"], offsets)],
-                dim=0,
-            )
+            kwargs["pixel_values"] = torch.cat([pv[:o] for pv, o in zip(kwargs["pixel_values"], offsets)], dim=0)
 
         position_ids, rope_deltas = self.get_rope_index(
             input_ids=kwargs["input_ids"],
@@ -92,16 +90,16 @@ class ColQwen2(Qwen2VLForConditionalGeneration):
             video_grid_thw=None,
             attention_mask=kwargs.get("attention_mask", None),
         )
-
         last_hidden_states = self.inner_forward(*args,
                                   **kwargs,
                                   position_ids=position_ids,
                                   use_cache=False,
                                   output_hidden_states=True)  # (batch_size, sequence_length, hidden_size)
 
-        proj = self.custom_text_proj(last_hidden_states)  # (batch_size, sequence_length, dim)
-
-        # L2 normalization
-        proj = proj / proj.norm(dim=-1, keepdim=True)  # (batch_size, sequence_length, dim)
-        proj = proj * kwargs["attention_mask"].unsqueeze(-1)  # (batch_size, sequence_length, dim)
+        # proj = torch.sum(last_hidden_states * kwargs["attention_mask"].unsqueeze(-1), dim=1) / torch.sum(
+        #     kwargs["attention_mask"], dim=1, keepdim=True
+        # )
+        # take the last hidden state
+        proj = last_hidden_states[:, -1, :]
+        proj = proj / proj.norm(dim=-1, keepdim=True)
         return proj
