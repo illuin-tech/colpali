@@ -39,7 +39,7 @@ def generate_similarity_maps(
 
     # Sanity checks
     if model.config.name_or_path not in VIT_CONFIG:
-        raise ValueError(f"`{model.config.name_or_path}` is not referenced in the VIT_CONFIG dictionary.")
+        raise ValueError(f"`{model.config.name_or_path}` is not supported.`")
     vit_config = VIT_CONFIG[model.config.name_or_path]
 
     # Preprocess the inputs

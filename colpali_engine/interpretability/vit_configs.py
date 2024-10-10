@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Dict
 
 
-@dataclass
+@dataclass(kw_only=True)
 class ViTConfig:
     patch_size: int
     resolution: int
@@ -15,15 +15,8 @@ class ViTConfig:
 
 
 VIT_CONFIG: Dict[str, ViTConfig] = {
-    "google/siglip-so400m-patch14-384": ViTConfig(patch_size=14, resolution=384),
-    "timm/ViT-SO400M-14-SigLIP-384": ViTConfig(patch_size=14, resolution=384),
-    "google/paligemma-3b-mix-448": ViTConfig(
-        patch_size=14, resolution=448
-    ),  # based on "timm/ViT-SO400M-14-SigLIP-384" with increased resolution
-    "vidore/colpaligemma-3b-pt-448-base": ViTConfig(
-        patch_size=14, resolution=448
-    ),  # Copied from "google/paligemma-3b-mix-448"
-    "vidore/colpali": ViTConfig(patch_size=14, resolution=448),  # Copied from "google/paligemma-3b-mix-448"
-    "vidore/colpali-v1.1": ViTConfig(patch_size=14, resolution=448),  # Copied from "google/paligemma-3b-mix-448"
-    "vidore/colpali-v1.2": ViTConfig(patch_size=14, resolution=448),  # Copied from "google/paligemma-3b-mix-448"
+    "vidore/colpali": ViTConfig(patch_size=14, resolution=448),
+    "vidore/colpali-v1.1": ViTConfig(patch_size=14, resolution=448),
+    "vidore/colpali-v1.2": ViTConfig(patch_size=14, resolution=448),
+    "vidore/colpali-v1.2-merged": ViTConfig(patch_size=14, resolution=448),
 }
