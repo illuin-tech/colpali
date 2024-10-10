@@ -12,12 +12,11 @@ from einops import rearrange
 from PIL import Image
 from tqdm import trange
 
-from colpali_engine.interpretability.plot_utils import plot_similarity_heatmap, plot_similarity_patches
+from colpali_engine.interpretability.plot_utils import plot_similarity_heatmap
 from colpali_engine.interpretability.torch_utils import normalize_similarity_map_per_query_token
 from colpali_engine.interpretability.vit_configs import VIT_CONFIG
 from colpali_engine.models import ColPali, ColPaliProcessor
 
-SUPPORTED_PLOT_KINDS = ["patches", "heatmap"]
 OUTPUT_DIR = Path("outputs")
 
 
@@ -34,7 +33,6 @@ def gen_and_save_similarity_map_per_token(
     processor: ColPaliProcessor,
     query: str,
     image: Image.Image,
-    kind: str = "heatmap",
     figsize: Tuple[int, int] = (8, 8),
     add_title: bool = True,
     style: str = "dark_background",
@@ -100,41 +98,21 @@ def gen_and_save_similarity_map_per_token(
 
     # Iterate over the tokens and plot the similarity maps for each token
     for token_idx in trange(1, n_tokens - 1, desc="Iterating over tokens..."):  # exclude the <bos> and the "\n" tokens
-        if kind == "patches":
-            fig, axis = plot_similarity_patches(
-                input_image_square,
-                vit_config.patch_size,
-                vit_config.resolution,
-                similarity_map=similarity_map_normalized[0, token_idx, :, :],
-                figsize=figsize,
-                style=style,
+        fig, ax = plot_similarity_heatmap(
+            input_image_square,
+            vit_config.patch_size,
+            vit_config.resolution,
+            similarity_map=similarity_map_normalized[0, token_idx, :, :],
+            figsize=figsize,
+            style=style,
+        )
+        max_sim_score = similarity_map[0, token_idx, :, :].max().item()
+        max_sim_scores_per_token[f"{token_idx}: {list_query_tokens[token_idx]}"] = max_sim_score
+        if add_title:
+            ax.set_title(
+                f"Token #{token_idx}: `{list_query_tokens[token_idx]}`. MaxSim score: {max_sim_score:.2f}",
+                fontsize=14,
             )
-            max_sim_score = similarity_map[0, token_idx, :, :].max().item()
-            max_sim_scores_per_token[f"{token_idx}: {list_query_tokens[token_idx]}"] = max_sim_score
-            if add_title:
-                fig.suptitle(
-                    f"Token #{token_idx}: `{list_query_tokens[token_idx]}`. MaxSim score: {max_sim_score:.2f}",
-                    color="white",
-                    fontsize=14,
-                )
-        elif kind == "heatmap":
-            fig, ax = plot_similarity_heatmap(
-                input_image_square,
-                vit_config.patch_size,
-                vit_config.resolution,
-                similarity_map=similarity_map_normalized[0, token_idx, :, :],
-                figsize=figsize,
-                style=style,
-            )
-            max_sim_score = similarity_map[0, token_idx, :, :].max().item()
-            max_sim_scores_per_token[f"{token_idx}: {list_query_tokens[token_idx]}"] = max_sim_score
-            if add_title:
-                ax.set_title(
-                    f"Token #{token_idx}: `{list_query_tokens[token_idx]}`. MaxSim score: {max_sim_score:.2f}",
-                    fontsize=14,
-                )
-        else:
-            raise ValueError(f"Invalid `kind` input: {kind}. Supported values are: {SUPPORTED_PLOT_KINDS}")
 
         savepath = savedir / f"token_{token_idx}.png"
         fig.savefig(savepath, dpi=300, bbox_inches="tight")
