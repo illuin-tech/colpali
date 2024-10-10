@@ -65,6 +65,9 @@ all = ["colpali-engine[dev]", "colpali-engine[train]"]
 [project.urls]
 homepage = "https://github.com/illuin-tech/colpali"
 
+[project.scripts]
+generate-similarity-maps = "colpali_engine.interpretability.generate_similarity_maps:app"
+
 [tool.pytest.ini_options]
 filterwarnings = ["ignore::Warning"]
 markers = ["slow: marks test as slow"]
