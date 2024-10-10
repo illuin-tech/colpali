@@ -102,6 +102,24 @@ You can find an example [here](https://github.com/illuin-tech/colpali/blob/main/
 
 To benchmark ColPali to reproduce the results on the [ViDoRe leaderboard](https://huggingface.co/spaces/vidore/vidore-leaderboard), it is recommended to use the [`vidore-benchmark`](https://github.com/illuin-tech/vidore-benchmark) package.
 
+### Interpretability with similarity maps
+
+By superimposing the late interaction heatmap on top of the original image, we can visualize the most salient image patches with respect to each term of the query, yielding interpretable insights into model focus zones.
+
+You can generate similarity maps using the `generate-similarity-maps`. For instance, you can reproduce the similarity maps from the paper using the images from [`data/interpretability_examples`](https://github.com/illuin-tech/vidore-benchmark/tree/main/data/interpretability_examples) and by running the following command. You can also feed multiple documents and queries at once to generate multiple similarity maps.
+
+```bash
+generate-similarity-maps \
+    --model-name "vidore/colpali-v1.2" \
+    --documents "data/interpretability_examples/shift_kazakhstan.jpg" \
+    --queries "Quelle partie de la production pétrolière du Kazakhstan provient de champs en mer ?" \
+    --documents "data/interpretability_examples/energy_electricity_generation.jpeg" \
+    --queries "Which hour of the day had the highest overall electricity generation in 2019?"
+```
+
+> [!NOTE]
+> The current version of `vidore-benchmark` uses a different ColPali checkpoint than the one used in the paper. As a result, the similarity maps may differ slightly from the ones presented in the paper.
+
 ### Training
 
 To keep a lightweight repository, only the essential packages were installed. In particular, you must specify the dependencies to use the training script for ColPali. You can do this using the following command:
