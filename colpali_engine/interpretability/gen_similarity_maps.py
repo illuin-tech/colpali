@@ -1,5 +1,4 @@
 import pprint
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Optional, Tuple, Union
 from uuid import uuid4
@@ -18,14 +17,6 @@ from colpali_engine.interpretability.vit_configs import VIT_CONFIG
 from colpali_engine.models import ColPali, ColPaliProcessor
 
 OUTPUT_DIR = Path("outputs")
-
-
-@dataclass
-class InterpretabilityInput:
-    query: str
-    image: Image.Image
-    start_idx_token: int
-    end_idx_token: int
 
 
 def gen_and_save_similarity_map_per_token(
