@@ -114,7 +114,7 @@ First, you need to install the interpretability dependencies:
 pip install colpali-engine[interpretability]
 ```
 
-Then, you can generate the similarity maps using the following command:
+Then, you can generate the similarity maps using the following command. You can download the example images [here](https://github.com/tonywu71/colpali-cookbooks/blob/b5660cca71552d207ad228faff618252ec0a3545/examples/data/shift_kazakhstan.jpg) and [here](https://github.com/tonywu71/colpali-cookbooks/blob/b5660cca71552d207ad228faff618252ec0a3545/examples/data/energy_electricity_generation.jpg).
 
 ```bash
 generate-similarity-maps \
