@@ -11,7 +11,7 @@ from PIL import Image
 from tqdm import trange
 
 from colpali_engine.interpretability.similarity_maps import get_similarity_maps_from_embeddings, plot_similarity_heatmap
-from colpali_engine.interpretability.vit_configs import VIT_CONFIG
+from colpali_engine.interpretability.vit_configs import MODEL_NAME_TO_VIT_CONFIG, BaseViTConfig
 from colpali_engine.models import ColPali, ColPaliProcessor
 from colpali_engine.utils.torch_utils import get_torch_device
 
@@ -26,6 +26,7 @@ app = typer.Typer(
 def generate_similarity_maps(
     model: ColPali,
     processor: ColPaliProcessor,
+    vit_config: BaseViTConfig,
     query: str,
     image: Image.Image,
     savedir: str,
@@ -36,12 +37,6 @@ def generate_similarity_maps(
     """
     High-level function to generate and save the similarity maps for each token in the query.
     """
-
-    # Sanity checks
-    if model.config.name_or_path not in VIT_CONFIG:
-        raise ValueError(f"`{model.config.name_or_path}` is not supported.`")
-    vit_config = VIT_CONFIG[model.config.name_or_path]
-
     # Preprocess the inputs
     batch_images = processor.process_images([image]).to(model.device)
     batch_queries = processor.process_queries([query]).to(model.device)
@@ -54,10 +49,11 @@ def generate_similarity_maps(
     # Remove the special tokens from the output
     image_embeddings = image_embeddings[:, : processor.image_seq_length, :]  # (1, n_patches_x * n_patches_y, dim)
 
+    # Get the similarity maps
     similarity_maps = get_similarity_maps_from_embeddings(
         image_embeddings,
         query_embeddings,
-        n_patches=(vit_config.n_patch_per_dim, vit_config.n_patch_per_dim),
+        n_patches=vit_config.get_n_patches(image=image),
     )
 
     # Get the list of query tokens
@@ -78,9 +74,8 @@ def generate_similarity_maps(
     for token_idx in trange(1, n_tokens - 1, desc="Iterating over tokens..."):  # exclude the <bos> and the "\n" tokens
         fig, ax = plot_similarity_heatmap(
             image=image,
-            patch_size=vit_config.patch_size,
-            resolution=vit_config.resolution,
             similarity_map=similarity_maps[0, token_idx, :, :],
+            resolution=vit_config.resolution,
             figsize=figsize,
             style=style,
         )
@@ -142,7 +137,7 @@ def main(
     device = get_torch_device(device)
     print(f"Using device: {device}")
 
-    # Load the model and LORA adapter
+    # Load the model
     model = cast(
         ColPali,
         ColPali.from_pretrained(
@@ -156,14 +151,22 @@ def main(
     processor = cast(ColPaliProcessor, ColPaliProcessor.from_pretrained(model_name))
     print("Loaded custom processor.\n")
 
+    # Get the ViT config
+    if model_name not in MODEL_NAME_TO_VIT_CONFIG:
+        raise ValueError(f"`{model_name}` is not supported by the CLI tool.")
+    vit_config = MODEL_NAME_TO_VIT_CONFIG[model_name]
+
+    # Load the images
     images = [Image.open(img_filepath) for img_filepath in documents]
 
+    # Generate the similarity maps
     for query, image, filepath in zip(queries, images, documents):
         print(f"\n\nProcessing query `{query}` and document `{filepath}`\n")
         savedir = OUTPUT_DIR / "interpretability" / filepath.stem
         generate_similarity_maps(
             model=model,
             processor=processor,
+            vit_config=vit_config,
             query=query,
             image=image,
             savedir=str(savedir),

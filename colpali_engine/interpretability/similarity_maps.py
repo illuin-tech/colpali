@@ -65,9 +65,8 @@ def normalize_similarity_map(similarity_map: torch.Tensor) -> torch.Tensor:
 
 def plot_similarity_heatmap(
     image: Image.Image,
-    patch_size: int,
-    resolution: int,
     similarity_map: torch.Tensor,
+    resolution: Optional[Tuple[int, int]] = None,
     figsize: Tuple[int, int] = (8, 8),
     style: Optional[Union[Dict[str, Any], str]] = None,
     show_colorbar: bool = False,
@@ -78,15 +77,12 @@ def plot_similarity_heatmap(
     """
 
     # Resize the image
-    image_resized = image.resize((resolution, resolution))
+    if resolution is not None:
+        image = image.resize(resolution)
 
     # Convert the image to an array
     # NOTE: The last channel is the alpha channel in the RGBA format.
-    img_array = np.array(image_resized.convert("RGBA"))  # (height, width, channels)
-
-    # Get the number of patches
-    if resolution % patch_size != 0:
-        raise ValueError("The image resolution must be divisible by the patch size.")
+    img_array = np.array(image.convert("RGBA"))  # (height, width, channels)
 
     # Normalize the similarity map
     similarity_map_array = (
@@ -99,7 +95,7 @@ def plot_similarity_heatmap(
 
     # Get the attention map as a numpy array
     attention_map_image = Image.fromarray((similarity_map_array * 255).astype("uint8")).resize(
-        image_resized.size, Image.Resampling.BICUBIC
+        image.size, Image.Resampling.BICUBIC
     )
 
     # Create a figure
