@@ -104,29 +104,35 @@ To benchmark ColPali to reproduce the results on the [ViDoRe leaderboard](https:
 
 ### Interpretability with similarity maps
 
-By superimposing the late interaction heatmap on top of the original image, we can visualize the most salient image patches with respect to each term of the query, yielding interpretable insights into model focus zones.
+By superimposing the late interaction similarity maps on top of the original image, we can visualize the most salient image patches with respect to each term of the query, yielding interpretable insights into model focus zones.
 
-You can generate similarity maps using the `generate-similarity-maps`. For instance, you can reproduce the similarity maps from the paper using the images from [`data/interpretability_examples`](https://github.com/illuin-tech/vidore-benchmark/tree/main/data/interpretability_examples) and by running the following command. You can also feed multiple documents and queries at once to generate multiple similarity maps.
-
-First, you need to install the interpretability dependencies:
+To use the `interpretability` module, you need to install the `colpali-engine[interpretability]` package:
 
 ```bash
 pip install colpali-engine[interpretability]
 ```
 
-Then, you can generate the similarity maps using the following command. You can download the example images [here](https://github.com/tonywu71/colpali-cookbooks/blob/b5660cca71552d207ad228faff618252ec0a3545/examples/data/shift_kazakhstan.jpg) and [here](https://github.com/tonywu71/colpali-cookbooks/blob/b5660cca71552d207ad228faff618252ec0a3545/examples/data/energy_electricity_generation.jpg).
+Then, after generating your embeddings with ColPali, use the following code to plot the similarity maps for each query token:
 
-```bash
-generate-similarity-maps \
-    --model-name "vidore/colpali-v1.2" \
-    --documents "data/interpretability_examples/shift_kazakhstan.jpg" \
-    --queries "Quelle partie de la production pétrolière du Kazakhstan provient de champs en mer ?" \
-    --documents "data/interpretability_examples/energy_electricity_generation.jpeg" \
-    --queries "Which hour of the day had the highest overall electricity generation in 2019?"
+```python
+from colpali_engine.interpretability import get_similarity_maps_from_embeddings, plot_all_similarity_maps
+
+similarity_maps = get_similarity_maps_from_embeddings(
+    image_embeddings,
+    query_embeddings,
+    n_patches=(32, 32),  # for ColPali
+)
+
+plots = plot_all_similarity_maps(
+    image=image,
+    list_query_tokens=list_query_tokens,
+    similarity_maps=similarity_maps,
+    resolution=resolution,
+)
+
+for fig, ax in plots:
+    fig.show()
 ```
-
-> [!NOTE]
-> The current version of `vidore-benchmark` uses a different ColPali checkpoint than the one used in the paper. As a result, the similarity maps may differ slightly from the ones presented in the paper.
 
 ### Training
 

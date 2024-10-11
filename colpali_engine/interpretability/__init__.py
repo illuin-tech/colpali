@@ -1,5 +1,8 @@
-from .similarity_maps import (
+from .similarity_map_utils import (
     get_similarity_maps_from_embeddings,
     normalize_similarity_map,
-    plot_similarity_heatmap,
+)
+from .similarity_maps import (
+    plot_all_similarity_maps,
+    plot_similarity_map,
 )
