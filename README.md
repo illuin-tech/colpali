@@ -108,6 +108,14 @@ By superimposing the late interaction heatmap on top of the original image, we c
 
 You can generate similarity maps using the `generate-similarity-maps`. For instance, you can reproduce the similarity maps from the paper using the images from [`data/interpretability_examples`](https://github.com/illuin-tech/vidore-benchmark/tree/main/data/interpretability_examples) and by running the following command. You can also feed multiple documents and queries at once to generate multiple similarity maps.
 
+First, you need to install the interpretability dependencies:
+
+```bash
+pip install colpali-engine[interpretability]
+```
+
+Then, you can generate the similarity maps using the following command:
+
 ```bash
 generate-similarity-maps \
     --model-name "vidore/colpali-v1.2" \
