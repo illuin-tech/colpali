@@ -1,5 +1,5 @@
 import math
-from typing import List, Optional, Union
+from typing import ClassVar, List, Optional, Tuple, Union
 
 import torch
 from PIL import Image
@@ -9,10 +9,29 @@ from transformers.models.qwen2_vl import Qwen2VLProcessor
 from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 
 
+def round_by_factor(number: float, factor: int) -> int:
+    """Returns the closest integer to 'number' that is divisible by 'factor'."""
+    return round(number / factor) * factor
+
+
+def ceil_by_factor(number: float, factor: int) -> int:
+    """Returns the smallest integer greater than or equal to 'number' that is divisible by 'factor'."""
+    return math.ceil(number / factor) * factor
+
+
+def floor_by_factor(number: float, factor: int) -> int:
+    """Returns the largest integer less than or equal to 'number' that is divisible by 'factor'."""
+    return math.floor(number / factor) * factor
+
+
 class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
     """
     Processor for ColQwen2.
     """
+
+    visual_prompt: ClassVar[str] = (
+        "<|im_start|>user\n<|vision_start|><|image_pad|><|vision_end|>Describe the image.<|im_end|>\n"
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -23,46 +42,55 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
         self.max_ratio = 200
 
     @staticmethod
-    def round_by_factor(number: float, factor: int) -> int:
-        """Returns the closest integer to 'number' that is divisible by 'factor'."""
-        return round(number / factor) * factor
-
-    @staticmethod
-    def ceil_by_factor(number: float, factor: int) -> int:
-        """Returns the smallest integer greater than or equal to 'number' that is divisible by 'factor'."""
-        return math.ceil(number / factor) * factor
-
-    @staticmethod
-    def floor_by_factor(number: float, factor: int) -> int:
-        """Returns the largest integer less than or equal to 'number' that is divisible by 'factor'."""
-        return math.floor(number / factor) * factor
-
-    def smart_resize(self, height: int, width: int, factor: int, min_pixels: int, max_pixels: int) -> tuple[int, int]:
+    def smart_resize_helper(
+        width: int,
+        height: int,
+        factor: int,
+        max_ratio: int,
+        min_pixels: int,
+        max_pixels: int,
+    ) -> Tuple[int, int]:
         """
-        Rescales the image so that the following conditions are met:
-
+        Returns the image size so that the following conditions are met:
         1. Both dimensions (height and width) are divisible by 'factor'.
-
         2. The total number of pixels is within the range ['min_pixels', 'max_pixels'].
-
         3. The aspect ratio of the image is maintained as closely as possible.
         """
-        if max(height, width) / min(height, width) > self.max_ratio:
+
+        if max(height, width) / min(height, width) > max_ratio:
             raise ValueError(
-                f"absolute aspect ratio must be smaller than {self.max_ratio}, "
+                f"absolute aspect ratio must be smaller than {max_ratio}, "
                 f"got {max(height, width) / min(height, width)}"
             )
-        h_bar = max(factor, self.round_by_factor(height, factor))
-        w_bar = max(factor, self.round_by_factor(width, factor))
+
+        h_bar = max(factor, round_by_factor(height, factor))
+        w_bar = max(factor, round_by_factor(width, factor))
+
         if h_bar * w_bar > max_pixels:
             beta = math.sqrt((height * width) / max_pixels)
-            h_bar = self.floor_by_factor(height / beta, factor)
-            w_bar = self.floor_by_factor(width / beta, factor)
+            h_bar = floor_by_factor(height / beta, factor)
+            w_bar = floor_by_factor(width / beta, factor)
         elif h_bar * w_bar < min_pixels:
             beta = math.sqrt(min_pixels / (height * width))
-            h_bar = self.ceil_by_factor(height * beta, factor)
-            w_bar = self.ceil_by_factor(width * beta, factor)
+            h_bar = ceil_by_factor(height * beta, factor)
+            w_bar = ceil_by_factor(width * beta, factor)
+
         return h_bar, w_bar
+
+    def smart_resize(self, image: Image.Image) -> Image.Image:
+        """
+        Resize and convert the image to the required format.
+        """
+        image_size = image.size
+        resized_height, resized_width = self.smart_resize_helper(
+            width=image_size[0],
+            height=image_size[1],
+            factor=self.factor,
+            max_ratio=self.max_ratio,
+            min_pixels=self.min_pixels,
+            max_pixels=self.max_pixels,
+        )
+        return image.convert("RGB").resize((resized_width, resized_height))
 
     def process_images(
         self,
@@ -71,22 +99,9 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
         """
         Process images for ColQwen2.
         """
-        texts_doc = [
-            "<|im_start|>user\n<|vision_start|><|image_pad|><|vision_end|>Describe the image.<|im_end|>\n"
-        ] * len(images)
+        texts_doc = [self.visual_prompt] * len(images)
 
-        def resize_and_convert(image: Image.Image) -> Image.Image:
-            image_size = image.size
-            resized_height, resized_width = self.smart_resize(
-                image_size[1],
-                image_size[0],
-                factor=self.factor,
-                min_pixels=self.min_pixels,
-                max_pixels=self.max_pixels,
-            )
-            return image.convert("RGB").resize((resized_width, resized_height))
-
-        images = [resize_and_convert(image) for image in images]
+        images = [self.smart_resize(image) for image in images]
 
         batch_doc = self(
             text=texts_doc,
@@ -150,3 +165,23 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
         Compute the MaxSim score (ColBERT-like) for the given multi-vector query and passage embeddings.
         """
         return self.score_multi_vector(qs, ps, device=device, **kwargs)
+
+    def get_n_patches(
+        self,
+        image_size: Tuple[int, int],
+        patch_size: int,
+        spatial_merge_size: int,
+    ) -> Tuple[int, int]:
+        height_new, width_new = self.smart_resize_helper(
+            width=image_size[0],
+            height=image_size[1],
+            factor=self.factor,
+            max_ratio=self.max_ratio,
+            min_pixels=self.min_pixels,
+            max_pixels=self.max_pixels,
+        )
+
+        n_patches_x = width_new // patch_size // spatial_merge_size
+        n_patches_y = height_new // patch_size // spatial_merge_size
+
+        return n_patches_x, n_patches_y
