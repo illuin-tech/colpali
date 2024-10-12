@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import List, Optional, Tuple, Union
 
 import torch
 from PIL import Image
@@ -79,3 +79,13 @@ class ColPaliProcessor(BaseVisualRetrieverProcessor, PaliGemmaProcessor):
         Compute the MaxSim score (ColBERT-like) for the given multi-vector query and passage embeddings.
         """
         return self.score_multi_vector(qs, ps, device=device, **kwargs)
+
+    def get_n_patches(
+        self,
+        image_size: Tuple[int, int],
+        patch_size: int,
+    ) -> Tuple[int, int]:
+        n_patches_x = image_size[0] // patch_size
+        n_patches_y = image_size[1] // patch_size
+
+        return n_patches_x, n_patches_y
