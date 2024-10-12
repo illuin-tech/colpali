@@ -23,11 +23,11 @@ def get_similarity_maps_from_embeddings(
     # Rearrange the output image tensor to explicitly represent the 2D grid of patches
     image_embedding_grid = rearrange(
         image_embeddings, "b (h w) c -> b h w c", h=n_patches[0], w=n_patches[1]
-    )  # (1, n_patches_x, n_patches_y, dim)
+    )  # (batch_size, n_patches_x, n_patches_y, dim)
 
     similarity_maps = torch.einsum(
         "bnk,bijk->bnij", query_embeddings, image_embedding_grid
-    )  # (1, query_tokens, n_patches_x, n_patches_y)
+    )  # (batch_size, query_tokens, n_patches_x, n_patches_y)
 
     return similarity_maps
 
@@ -46,14 +46,15 @@ def normalize_similarity_map(similarity_map: torch.Tensor) -> torch.Tensor:
         )
 
     # Compute the minimum values along the last two dimensions (n_patch_x, n_patch_y)
-    min_vals = similarity_map.min(dim=-1, keepdim=True)[0].min(dim=-2, keepdim=True)[0]
+    min_vals = similarity_map.min(dim=-1, keepdim=True)[0].min(dim=-2, keepdim=True)[0]  # (1, 1) or (batch_size, 1, 1)
 
     # Compute the maximum values along the last two dimensions (n_patch_x, n_patch_y)
-    max_vals = similarity_map.max(dim=-1, keepdim=True)[0].max(dim=-2, keepdim=True)[0]
+    max_vals = similarity_map.max(dim=-1, keepdim=True)[0].max(dim=-2, keepdim=True)[0]  # (1, 1) or (batch_size, 1, 1)
 
     # Normalize the tensor
+    # NOTE: Add a small epsilon to avoid division by zero.
     similarity_map_normalized = (similarity_map - min_vals) / (
         max_vals - min_vals + EPSILON
-    )  # NOTE: add a small epsilon to avoid division by zero
+    )  # (n_patch_x, n_patch_y) or (batch_size, n_patch_x, n_patch_y)
 
     return similarity_map_normalized
