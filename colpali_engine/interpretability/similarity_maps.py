@@ -1,9 +1,10 @@
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 import torch
+from einops import rearrange
 from PIL import Image
 
 from colpali_engine.interpretability.similarity_map_utils import normalize_similarity_map
@@ -12,7 +13,6 @@ from colpali_engine.interpretability.similarity_map_utils import normalize_simil
 def plot_similarity_map(
     image: Image.Image,
     similarity_map: torch.Tensor,
-    resolution: Optional[Tuple[int, int]] = None,
     figsize: Tuple[int, int] = (8, 8),
     show_colorbar: bool = False,
 ) -> Tuple[plt.Figure, plt.Axes]:
@@ -26,11 +26,13 @@ def plot_similarity_map(
     To show the returned similarity map, use:
     >>> fig, ax = plot_similarity_map(...)
     >>> fig.show()
-    """
 
-    # Resize the image if necessary
-    if resolution is not None:
-        image = image.resize(resolution)
+    Args:
+        image: PIL image
+        similarity_map: tensor of shape (n_patches_x, n_patches_y)
+        figsize: size of the figure
+        show_colorbar: whether to show a colorbar
+    """
 
     # Convert the image to an array
     img_array = np.array(image.convert("RGBA"))  # (height, width, channels)
@@ -39,6 +41,10 @@ def plot_similarity_map(
     similarity_map_array = (
         normalize_similarity_map(similarity_map).to(torch.float32).cpu().numpy()
     )  # (n_patches_x, n_patches_y)
+
+    # Reshape the similarity map to match the PIL shape convention
+    similarity_map_array = rearrange(similarity_map_array, "h w -> w h")  # (n_patches_y, n_patches_x)
+
     similarity_map_image = Image.fromarray((similarity_map_array * 255).astype("uint8")).resize(
         image.size, Image.Resampling.BICUBIC
     )
@@ -66,7 +72,6 @@ def plot_all_similarity_maps(
     image: Image.Image,
     query_tokens: List[str],
     similarity_maps: torch.Tensor,
-    resolution: Optional[Tuple[int, int]] = None,
     figsize: Tuple[int, int] = (8, 8),
     show_colorbar: bool = False,
 ) -> List[Tuple[plt.Figure, plt.Axes]]:
@@ -99,13 +104,12 @@ def plot_all_similarity_maps(
     for idx, token in enumerate(query_tokens):
         fig, ax = plot_similarity_map(
             image=image,
-            similarity_map=similarity_maps[0, idx, :, :],
-            resolution=resolution,
+            similarity_map=similarity_maps[idx],
             figsize=figsize,
             show_colorbar=show_colorbar,
         )
 
-        max_sim_score = similarity_maps[0, idx, :, :].max().item()
+        max_sim_score = similarity_maps[idx].max().item()
         ax.set_title(f"Token #{idx}: `{token}`. MaxSim score: {max_sim_score:.2f}", fontsize=14)
 
         plots.append((fig, ax))

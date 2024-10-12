@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import List, Optional, Tuple, Union
 
 import torch
 from einops import rearrange
@@ -9,25 +9,52 @@ EPSILON = 1e-10
 def get_similarity_maps_from_embeddings(
     image_embeddings: torch.Tensor,
     query_embeddings: torch.Tensor,
-    n_patches: Tuple[int, int],
-) -> torch.Tensor:
+    n_patches: Union[Tuple[int, int], List[Tuple[int, int]]],
+    image_attention_mask: Optional[torch.Tensor] = None,
+) -> List[torch.Tensor]:
     """
-    Get the similarity maps between the query embeddings and the image embeddings.
+    Get the batched similarity maps between the query embeddings and the image embeddings.
+    Each element in the returned list is a tensor of shape (query_tokens, n_patches_x, n_patches_y).
 
     Args:
-        image_embeddings: tensor of shape (batch_size, n_patches_x * n_patches_y, dim)
+        image_embeddings: tensor of shape (batch_size, image_tokens, dim)
         query_embeddings: tensor of shape (batch_size, query_tokens, dim)
-        n_patches: tuple of integers representing the number of patches along the x and y dimensions
+        image_attention_mask: tensor of shape (batch_size, image_tokens) with 0s in the positions of the padding tokens
+            and 1s elsewhere.
+        n_patches: number of patches per dimension for each image in the batch. If a single tuple is provided, the same
+            number of patches is used for all images in the batch (broadcasted).
     """
 
-    # Rearrange the output image tensor to explicitly represent the 2D grid of patches
-    image_embedding_grid = rearrange(
-        image_embeddings, "b (h w) c -> b h w c", h=n_patches[0], w=n_patches[1]
-    )  # (batch_size, n_patches_x, n_patches_y, dim)
+    if isinstance(n_patches, tuple):
+        n_patches = [n_patches] * image_embeddings.size(0)
 
-    similarity_maps = torch.einsum(
-        "bnk,bijk->bnij", query_embeddings, image_embedding_grid
-    )  # (batch_size, query_tokens, n_patches_x, n_patches_y)
+    if image_attention_mask is None:
+        image_attention_mask = torch.ones(image_embeddings.size(0), image_embeddings.size(1), dtype=torch.bool)
+
+    similarity_maps: List[torch.Tensor] = []
+
+    for idx in range(image_embeddings.size(0)):
+        # Sanity check
+        if image_attention_mask[idx].sum() != n_patches[idx][0] * n_patches[idx][1]:
+            raise ValueError(
+                f"The number of patches ({n_patches[idx][0]} x {n_patches[idx][1]} = "
+                f"{n_patches[idx][0] * n_patches[idx][1]}) "
+                f"does not match the number of non-padded image tokens ({image_attention_mask[idx].sum()})."
+            )
+
+        # Rearrange the output image tensor to explicitly represent the 2D grid of patches
+        image_embedding_grid = rearrange(
+            image_embeddings[idx][image_attention_mask[idx] == 1],  # (n_patches_x * n_patches_y, dim)
+            "(h w) c -> w h c",
+            w=n_patches[idx][0],
+            h=n_patches[idx][1],
+        )  # (n_patches_x, n_patches_y, dim)
+
+        similarity_map = torch.einsum(
+            "nk,ijk->nij", query_embeddings[idx], image_embedding_grid
+        )  # (batch_size, query_tokens, n_patches_x, n_patches_y)
+
+        similarity_maps.append(similarity_map)
 
     return similarity_maps
 
