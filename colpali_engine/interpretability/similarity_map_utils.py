@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple, Union
+from typing import List, Tuple, Union
 
 import torch
 from einops import rearrange
@@ -10,7 +10,7 @@ def get_similarity_maps_from_embeddings(
     image_embeddings: torch.Tensor,
     query_embeddings: torch.Tensor,
     n_patches: Union[Tuple[int, int], List[Tuple[int, int]]],
-    image_attention_mask: Optional[torch.Tensor] = None,
+    image_mask: torch.Tensor,
 ) -> List[torch.Tensor]:
     """
     Get the batched similarity maps between the query embeddings and the image embeddings.
@@ -19,32 +19,29 @@ def get_similarity_maps_from_embeddings(
     Args:
         image_embeddings: tensor of shape (batch_size, image_tokens, dim)
         query_embeddings: tensor of shape (batch_size, query_tokens, dim)
-        image_attention_mask: tensor of shape (batch_size, image_tokens) with 0s in the positions of the padding tokens
-            and 1s elsewhere.
-        n_patches: number of patches per dimension for each image in the batch. If a single tuple is provided, the same
-            number of patches is used for all images in the batch (broadcasted).
+        n_patches: number of patches per dimension for each image in the batch. If a single tuple is provided,
+            the same number of patches is used for all images in the batch (broadcasted).
+        image_mask: tensor of shape (batch_size, image_tokens). Used to filter out the embeddings
+            that are not related to the image
     """
 
     if isinstance(n_patches, tuple):
         n_patches = [n_patches] * image_embeddings.size(0)
 
-    if image_attention_mask is None:
-        image_attention_mask = torch.ones(image_embeddings.size(0), image_embeddings.size(1), dtype=torch.bool)
-
     similarity_maps: List[torch.Tensor] = []
 
     for idx in range(image_embeddings.size(0)):
         # Sanity check
-        if image_attention_mask[idx].sum() != n_patches[idx][0] * n_patches[idx][1]:
+        if image_mask[idx].sum() != n_patches[idx][0] * n_patches[idx][1]:
             raise ValueError(
                 f"The number of patches ({n_patches[idx][0]} x {n_patches[idx][1]} = "
                 f"{n_patches[idx][0] * n_patches[idx][1]}) "
-                f"does not match the number of non-padded image tokens ({image_attention_mask[idx].sum()})."
+                f"does not match the number of non-padded image tokens ({image_mask[idx].sum()})."
             )
 
         # Rearrange the output image tensor to explicitly represent the 2D grid of patches
         image_embedding_grid = rearrange(
-            image_embeddings[idx][image_attention_mask[idx] == 1],  # (n_patches_x * n_patches_y, dim)
+            image_embeddings[idx][image_mask[idx]],  # (n_patches_x * n_patches_y, dim)
             "(h w) c -> w h c",
             w=n_patches[idx][0],
             h=n_patches[idx][1],
