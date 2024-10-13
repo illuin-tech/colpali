@@ -29,9 +29,15 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
     Processor for ColQwen2.
     """
 
-    visual_prompt: ClassVar[str] = (
+    visual_prompt_prefix: ClassVar[str] = (
         "<|im_start|>user\n<|vision_start|><|image_pad|><|vision_end|>Describe the image.<|im_end|>\n"
     )
+    query_augmentation_token: ClassVar[str] = "<pad>"
+    image_token: ClassVar[str] = "<|image_pad|>"
+
+    @property
+    def image_token_id(self) -> int:
+        return self.tokenizer.convert_tokens_to_ids(self.image_token)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -99,13 +105,13 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
         """
         Process images for ColQwen2.
         """
-        texts_doc = [self.visual_prompt] * len(images)
+        texts_doc = [self.visual_prompt_prefix] * len(images)
 
-        images = [self.smart_resize(image) for image in images]
+        resized_images: List[Image.Image] = [self.smart_resize(image) for image in images]
 
         batch_doc = self(
             text=texts_doc,
-            images=images,
+            images=resized_images,
             padding="longest",
             return_tensors="pt",
         )
@@ -138,7 +144,7 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
         Process queries for ColQwen2.
         """
         if suffix is None:
-            suffix = "<pad>" * 10
+            suffix = self.query_augmentation_token * 10
         texts_query: List[str] = []
 
         for query in queries:
@@ -185,3 +191,6 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
         n_patches_y = height_new // patch_size // spatial_merge_size
 
         return n_patches_x, n_patches_y
+
+    def get_image_mask(self, batch_images: BatchFeature) -> torch.Tensor:
+        return batch_images.input_ids == self.image_token_id

@@ -54,3 +54,11 @@ class ColQwen2(Qwen2VLForConditionalGeneration):
         proj = proj / proj.norm(dim=-1, keepdim=True)  # (batch_size, sequence_length, dim)
         proj = proj * kwargs["attention_mask"].unsqueeze(-1)  # (batch_size, sequence_length, dim)
         return proj
+
+    @property
+    def patch_size(self) -> int:
+        return self.visual.config.patch_size
+
+    @property
+    def spatial_merge_size(self) -> int:
+        return self.visual.config.spatial_merge_size
