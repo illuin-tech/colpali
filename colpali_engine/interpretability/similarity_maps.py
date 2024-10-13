@@ -77,6 +77,7 @@ def plot_all_similarity_maps(
     similarity_maps: torch.Tensor,
     figsize: Tuple[int, int] = (8, 8),
     show_colorbar: bool = False,
+    add_title: bool = True,
 ) -> List[Tuple[plt.Figure, plt.Axes]]:
     """
     For each token in the query, plot and overlay a similarity map over the input image.
@@ -91,6 +92,7 @@ def plot_all_similarity_maps(
         similarity_maps: tensor of shape (query_tokens, n_patches_x, n_patches_y)
         figsize: size of the figure
         show_colorbar: whether to show a colorbar
+        add_title: whether to add a title with the token and the max similarity score
 
     Example usage for one query-image pair:
 
@@ -139,8 +141,9 @@ def plot_all_similarity_maps(
             show_colorbar=show_colorbar,
         )
 
-        max_sim_score = similarity_maps[idx].max().item()
-        ax.set_title(f"Token #{idx}: `{token}`. MaxSim score: {max_sim_score:.2f}", fontsize=14)
+        if add_title:
+            max_sim_score = similarity_maps[idx].max().item()
+            ax.set_title(f"Token #{idx}: `{token}`. MaxSim score: {max_sim_score:.2f}", fontsize=14)
 
         plots.append((fig, ax))
 
