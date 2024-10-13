@@ -24,8 +24,11 @@ def plot_similarity_map(
     color of the patch.
 
     To show the returned similarity map, use:
-    >>> fig, ax = plot_similarity_map(...)
+
+    ```python
+    >>> fig, ax = plot_similarity_map(image, similarity_map)
     >>> fig.show()
+    ```
 
     Args:
         image: PIL image
@@ -82,21 +85,48 @@ def plot_all_similarity_maps(
     token and the associated image patch at position (i, j). Thus, the higher the similarity score, the brighter the
     color of the patch.
 
-    Example usage:
+    Args:
+        image: PIL image
+        query_tokens: list of query tokens
+        similarity_maps: tensor of shape (query_tokens, n_patches_x, n_patches_y)
+        figsize: size of the figure
+        show_colorbar: whether to show a colorbar
+
+    Example usage for one query-image pair:
+
+    ```python
     >>> from colpali_engine.interpretability.similarity_map_utils import get_similarity_maps_from_embeddings
-    >>> similarity_maps = get_similarity_maps_from_embeddings(
-            image_embeddings,
-            query_embeddings,
-            n_patches=(32, 32),
+
+    >>> batch_images = processor.process_images([image]).to(device)
+    >>> batch_queries = processor.process_queries([query]).to(device)
+
+    >>> with torch.no_grad():
+            image_embeddings = model.forward(**batch_images)
+            query_embeddings = model.forward(**batch_queries)
+
+    >>> n_patches = processor.get_n_patches(
+            image_size=image.size,
+            patch_size=model.patch_size
         )
+    >>> image_mask = processor.get_image_mask(batch_images)
+
+    >>> batched_similarity_maps = get_similarity_maps_from_embeddings(
+            image_embeddings=image_embeddings,
+            query_embeddings=query_embeddings,
+            n_patches=n_patches,
+            image_mask=image_mask,
+        )
+    >>> similarity_maps = batched_similarity_maps[0]  # (query_length, n_patches_x, n_patches_y)
+
     >>> plots = plot_all_similarity_maps(
             image=image,
             query_tokens=query_tokens,
             similarity_maps=similarity_maps,
-            resolution=resolution,
         )
+
     >>> for fig, ax in plots:
             fig.show()
+    ```
     """
 
     plots: List[Tuple[plt.Figure, plt.Axes]] = []
