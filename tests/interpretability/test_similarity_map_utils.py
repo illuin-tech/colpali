@@ -68,14 +68,14 @@ class TestGetSimilarityMapsFromEmbeddings:
         n_patches = (2, 3)  # For instance, 2 rows and 3 columns
 
         # Create an optional image attention mask (all ones, no padding)
-        image_attention_mask = torch.ones(batch_size, image_tokens, dtype=torch.bool)
+        image_mask = torch.ones(batch_size, image_tokens, dtype=torch.bool)
 
         # Call the function under test
         similarity_maps = get_similarity_maps_from_embeddings(
             image_embeddings=image_embeddings,
             query_embeddings=query_embeddings,
             n_patches=n_patches,
-            image_attention_mask=image_attention_mask,
+            image_mask=image_mask,
         )
 
         # Assertions to validate the output
@@ -104,16 +104,16 @@ class TestGetSimilarityMapsFromEmbeddings:
         n_patches = [(2, 3), (2, 4)]  # Different for each image
 
         # Create image attention masks for variable image tokens
-        image_attention_mask = torch.zeros(batch_size, max_image_tokens, dtype=torch.bool)
+        image_mask = torch.zeros(batch_size, max_image_tokens, dtype=torch.bool)
         for idx, tokens in enumerate(image_tokens_list):
-            image_attention_mask[idx, :tokens] = 1
+            image_mask[idx, :tokens] = 1
 
         # Call the function under test
         similarity_maps = get_similarity_maps_from_embeddings(
             image_embeddings=image_embeddings,
             query_embeddings=query_embeddings,
             n_patches=n_patches,
-            image_attention_mask=image_attention_mask,
+            image_mask=image_mask,
         )
 
         # Assertions to validate the output
@@ -125,41 +125,6 @@ class TestGetSimilarityMapsFromEmbeddings:
             assert similarity_map.shape == expected_shape, (
                 f"Similarity map at index {idx} has shape {similarity_map.shape}, " f"expected {expected_shape}."
             )
-
-    def test_get_similarity_maps_without_attention_mask(self):
-        # Define test parameters
-        batch_size = 1
-        image_tokens = 9  # Total number of image tokens
-        query_tokens = 2
-        dim = 5  # Embedding dimension
-
-        # Create dummy image embeddings and query embeddings
-        image_embeddings = torch.randn(batch_size, image_tokens, dim)
-        query_embeddings = torch.randn(batch_size, query_tokens, dim)
-
-        # Define n_patches as a tuple
-        n_patches = (3, 3)  # For instance, 3 rows and 3 columns
-
-        # No image attention mask provided
-        image_attention_mask = None
-
-        # Call the function under test
-        similarity_maps = get_similarity_maps_from_embeddings(
-            image_embeddings=image_embeddings,
-            query_embeddings=query_embeddings,
-            n_patches=n_patches,
-            image_attention_mask=image_attention_mask,
-        )
-
-        # Assertions to validate the output
-        assert isinstance(similarity_maps, list), "Output should be a list of tensors."
-        assert len(similarity_maps) == batch_size, "Output list length should match batch size."
-
-        similarity_map = similarity_maps[0]
-        expected_shape = (query_tokens, n_patches[0], n_patches[1])
-        assert (
-            similarity_map.shape == expected_shape
-        ), f"Similarity map has shape {similarity_map.shape}, expected {expected_shape}."
 
     def test_get_similarity_maps_with_incorrect_n_patches(self):
         # Define test parameters
@@ -175,12 +140,16 @@ class TestGetSimilarityMapsFromEmbeddings:
         # Define incorrect n_patches that do not match image_tokens
         n_patches = (2, 2)  # 2*2 != 6
 
+        # Create image attention masks for variable image tokens
+        image_mask = torch.ones(batch_size, image_tokens, dtype=torch.bool)
+
         # Expect an error due to shape mismatch
         with pytest.raises(ValueError):
             get_similarity_maps_from_embeddings(
                 image_embeddings=image_embeddings,
                 query_embeddings=query_embeddings,
                 n_patches=n_patches,
+                image_mask=image_mask,
             )
 
     def test_get_similarity_maps_with_padding(self):
@@ -198,14 +167,14 @@ class TestGetSimilarityMapsFromEmbeddings:
         n_patches = (3, 2)
 
         # Create an image attention mask with padding
-        image_attention_mask = torch.tensor([[1, 1, 1, 1, 1, 1, 0, 0, 0]], dtype=torch.bool)
+        image_mask = torch.tensor([[1, 1, 1, 1, 1, 1, 0, 0, 0]], dtype=torch.bool)
 
         # Call the function under test
         similarity_maps = get_similarity_maps_from_embeddings(
             image_embeddings=image_embeddings,
             query_embeddings=query_embeddings,
             n_patches=n_patches,
-            image_attention_mask=image_attention_mask,
+            image_mask=image_mask,
         )
 
         # Assertions to validate the output
