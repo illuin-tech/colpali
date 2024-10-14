@@ -32,7 +32,12 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
     visual_prompt_prefix: ClassVar[str] = (
         "<|im_start|>user\n<|vision_start|><|image_pad|><|vision_end|>Describe the image.<|im_end|>\n"
     )
+
+    # FIXME: `query_augmentation_token` was set to hardcoded value "<pad>" in the original code used to train
+    # "vidore/colqwen2-v0.1", while it should have been set to `processor.tokenizer.pad_token`.
+    # TODO: Fix training script for next ColQwen2 release.
     query_augmentation_token: ClassVar[str] = "<pad>"
+
     image_token: ClassVar[str] = "<|image_pad|>"
 
     @property
