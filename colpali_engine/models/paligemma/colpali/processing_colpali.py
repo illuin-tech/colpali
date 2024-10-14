@@ -14,7 +14,6 @@ class ColPaliProcessor(BaseVisualRetrieverProcessor, PaliGemmaProcessor):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.mock_image = Image.new("RGB", (16, 16), color="black")
 
     def process_images(
         self,
@@ -43,27 +42,29 @@ class ColPaliProcessor(BaseVisualRetrieverProcessor, PaliGemmaProcessor):
         """
         Process queries for ColPali.
         """
+        prefix = "Question: "
+
         if suffix is None:
             suffix = "<pad>" * 10
         texts_query: List[str] = []
 
         for query in queries:
-            query = f"Question: {query}"
+            query = self.tokenizer.bos_token + prefix + query
             query += suffix  # add suffix (pad tokens)
+
+            # NOTE: Make input ISO to PaliGemma's processor
+            query += "\n"
+
             texts_query.append(query)
 
-        batch_query = self(
-            images=[self.mock_image] * len(texts_query),
-            text=texts_query,
+        batch_query = self.tokenizer(
+            texts_query,
+            text_pair=None,
+            return_token_type_ids=False,
             return_tensors="pt",
             padding="longest",
-            max_length=max_length + self.image_seq_length,
+            max_length=max_length,
         )
-
-        del batch_query["pixel_values"]
-
-        batch_query["input_ids"] = batch_query["input_ids"][..., self.image_seq_length :]
-        batch_query["attention_mask"] = batch_query["attention_mask"][..., self.image_seq_length :]
 
         return batch_query
 
