@@ -13,10 +13,17 @@ class ColPaliProcessor(BaseVisualRetrieverProcessor, PaliGemmaProcessor):
     """
 
     visual_prompt_prefix: ClassVar[str] = "Question: "
-    query_augmentation_token: ClassVar[str] = "<pad>"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+    @property
+    def query_augmentation_token(self) -> str:
+        """
+        Return the query augmentation token.
+        Query augmentation buffers are used as reasoning buffers during inference.
+        """
+        return self.tokenizer.pad_token
 
     def process_images(
         self,
