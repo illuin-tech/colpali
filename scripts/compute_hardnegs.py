@@ -5,8 +5,9 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+from transformers import AutoProcessor
 
-from colpali_engine.models import BiPali, BiPaliProcessor
+from colpali_engine.models import BiPali
 from colpali_engine.utils.dataset_transformation import load_train_set
 from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 
@@ -29,7 +30,7 @@ if COMPUTE_HARDNEGS or COMPUTE_EMBEDDINGS:
     model = model.to("cuda")
 
     print("Loading processor")
-    processor = BiPaliProcessor.from_pretrained(model_name)
+    processor = AutoProcessor.from_pretrained(model_name)
     if not isinstance(processor, BaseVisualRetrieverProcessor):
         raise ValueError("Processor should be a BaseVisualRetrieverProcessor")
     processor = cast(BaseVisualRetrieverProcessor, processor)

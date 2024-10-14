@@ -1,2 +1,2 @@
-from .bipali import BiPali, BiPaliProj, BiPaliProcessor
+from .bipali import BiPali, BiPaliProj
 from .colpali import ColPali, ColPaliProcessor
