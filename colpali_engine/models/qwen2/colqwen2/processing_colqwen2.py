@@ -183,6 +183,13 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
         patch_size: int,
         spatial_merge_size: int,
     ) -> Tuple[int, int]:
+        """
+        Get the number of patches (n_patches_x, n_patches_y) that will be used to process an image of
+        size (height, width) with the given patch size.
+
+        The `spatial_merge_size` is the number of patches that will be merged spatially. It is stored in
+        as a `Qwen2VLForConditionalGeneration` attribute under `model.spatial_merge_size`.
+        """
         height_new, width_new = self.smart_resize_helper(
             width=image_size[0],
             height=image_size[1],
