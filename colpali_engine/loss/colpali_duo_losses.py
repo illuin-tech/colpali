@@ -6,18 +6,21 @@ import torch.nn.functional as F  # noqa: N812
 from torch.nn import CrossEntropyLoss, KLDivLoss
 
 from colpali_engine.loss.base_late_interaction_loss import BaseColbertLoss
-from colpali_engine.models.paligemma.colpali_2.modeling_colpali_2 import ColPali2LossOutputs, ColPali2ModelOutput
+from colpali_engine.models.paligemma.colpali_duo.modeling_colpali_duo import (
+    ColPaliDuoLossOutputs,
+    ColPaliDuoModelOutput,
+)
 
 
 @dataclass(kw_only=True)
-class ColPali2IntermediateLossOutputs:
+class ColPaliDuoIntermediateLossOutputs:
     loss: torch.Tensor
     scores: Optional[torch.Tensor] = None
 
 
-class ColPali2Loss(BaseColbertLoss):
+class ColPaliDuoLoss(BaseColbertLoss):
     """
-    Loss function for ColPali2.
+    Loss function for ColPaliDuo.
 
     The loss function is a combination of two losses:
     1. Single-vector loss: Cross-entropy (with optional Matryoshka) loss between the query and document
@@ -51,7 +54,7 @@ class ColPali2Loss(BaseColbertLoss):
         query_embeddings: torch.Tensor,
         doc_embeddings: torch.Tensor,
         return_scores: bool = False,
-    ) -> ColPali2IntermediateLossOutputs:
+    ) -> ColPaliDuoIntermediateLossOutputs:
         """
         Compute the loss function for the single-vector head.
 
@@ -60,7 +63,7 @@ class ColPali2Loss(BaseColbertLoss):
         - doc_embeddings: (batch_size, dim)
 
         Returns:
-        - ColPali2IntermediateLossOutputs
+        - ColPaliDuoIntermediateLossOutputs
         """
 
         if query_embeddings.shape[0] != doc_embeddings.shape[0]:
@@ -107,7 +110,7 @@ class ColPali2Loss(BaseColbertLoss):
                 loss += ce_loss_fn.forward(input=scores, target=target)  # ()
                 prev_scores = scores
 
-        return ColPali2IntermediateLossOutputs(
+        return ColPaliDuoIntermediateLossOutputs(
             loss=loss,
             scores=scores if return_scores else None,
         )
@@ -117,7 +120,7 @@ class ColPali2Loss(BaseColbertLoss):
         query_embeddings: torch.Tensor,
         doc_embeddings: torch.Tensor,
         return_scores: bool = False,
-    ) -> ColPali2IntermediateLossOutputs:
+    ) -> ColPaliDuoIntermediateLossOutputs:
         """
         Compute the loss function for the multi-vector head.
 
@@ -126,7 +129,7 @@ class ColPali2Loss(BaseColbertLoss):
         - doc_embeddings: (batch_size, num_doc_tokens, dim)
 
         Returns:
-        - ColPali2IntermediateLossOutputs
+        - ColPaliDuoIntermediateLossOutputs
         """
 
         if query_embeddings.shape[0] != doc_embeddings.shape[0]:
@@ -146,7 +149,7 @@ class ColPali2Loss(BaseColbertLoss):
         # Compute the margin loss
         loss = F.softplus(neg_scores - pos_scores).mean().squeeze()  # ()
 
-        return ColPali2IntermediateLossOutputs(
+        return ColPaliDuoIntermediateLossOutputs(
             loss=loss,
             scores=scores if return_scores else None,
         )
@@ -155,7 +158,7 @@ class ColPali2Loss(BaseColbertLoss):
         self,
         teacher_scores: torch.Tensor,
         student_scores: torch.Tensor,
-    ) -> ColPali2IntermediateLossOutputs:
+    ) -> ColPaliDuoIntermediateLossOutputs:
         """
         Compute the distillation loss between the multi-vector head (teacher) and
         the single-vector head (student).
@@ -165,7 +168,7 @@ class ColPali2Loss(BaseColbertLoss):
         - student_scores: (batch_size, batch_size)
 
         Returns:
-        - ColPali2IntermediateLossOutputs
+        - ColPaliDuoIntermediateLossOutputs
         """
 
         if teacher_scores.shape != student_scores.shape:
@@ -193,22 +196,22 @@ class ColPali2Loss(BaseColbertLoss):
             target=teacher_logits / self.temperature,
         )  # (1,)
 
-        return ColPali2IntermediateLossOutputs(loss=loss_kd)
+        return ColPaliDuoIntermediateLossOutputs(loss=loss_kd)
 
     def forward(
         self,
-        query_embeddings: ColPali2ModelOutput,
-        doc_embeddings: ColPali2ModelOutput,
-    ) -> ColPali2LossOutputs:
+        query_embeddings: ColPaliDuoModelOutput,
+        doc_embeddings: ColPaliDuoModelOutput,
+    ) -> ColPaliDuoLossOutputs:
         """
-        Compute the total loss for the ColPali2 model.
+        Compute the total loss for the ColPaliDuo model.
 
         Args:
-        - query_embeddings (ColPali2ModelOutput), all tensors with shape (batch_size, num_tokens, dim)
-        - doc_embeddings (ColPali2ModelOutput), all tensors with shape (batch_size, num_tokens, dim)
+        - query_embeddings (ColPaliDuoModelOutput), all tensors with shape (batch_size, num_tokens, dim)
+        - doc_embeddings (ColPaliDuoModelOutput), all tensors with shape (batch_size, num_tokens, dim)
 
         Returns:
-        - ColPali2LossOutputs
+        - ColPaliDuoLossOutputs
         """
 
         assert query_embeddings.single_vec_emb is not None
@@ -241,7 +244,7 @@ class ColPali2Loss(BaseColbertLoss):
             )
             total_loss += self.beta * distillation_loss_outputs.loss
 
-        return ColPali2LossOutputs(
+        return ColPaliDuoLossOutputs(
             single_vector_loss=single_vector_loss_outputs.loss,
             multi_vector_loss=multi_vector_loss_outputs.loss,
             distillation_loss=distillation_loss_outputs.loss if distillation_loss_outputs is not None else None,

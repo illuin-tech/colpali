@@ -7,15 +7,15 @@ from PIL import Image
 from transformers import BatchFeature
 from transformers.models.paligemma.configuration_paligemma import PaliGemmaConfig
 
-from colpali_engine.models import ColPali2Config, ColPali2Processor, ColVision2
+from colpali_engine.models import ColPaliDuoConfig, ColPaliDuoProcessor, ColVisionDuo
 from colpali_engine.utils.torch_utils import get_torch_device, tear_down_torch
 
 logger = logging.getLogger(__name__)
 
 
 @pytest.fixture(scope="module")
-def colpali_2_config() -> Generator[ColPali2Config, None, None]:
-    yield ColPali2Config(
+def colpali_duo_config() -> Generator[ColPaliDuoConfig, None, None]:
+    yield ColPaliDuoConfig(
         vlm_backbone_config=cast(
             PaliGemmaConfig,
             PaliGemmaConfig.from_pretrained("google/paligemma-3b-mix-448"),
@@ -27,28 +27,28 @@ def colpali_2_config() -> Generator[ColPali2Config, None, None]:
 
 
 @pytest.fixture(scope="module")
-def colpali_2_from_config(colpali_2_config: ColPali2Config) -> Generator[ColVision2, None, None]:
+def colpali_duo_from_config(colpali_duo_config: ColPaliDuoConfig) -> Generator[ColVisionDuo, None, None]:
     device = get_torch_device("auto")
     logger.info(f"Device used: {device}")
 
-    yield ColVision2(config=colpali_2_config)
+    yield ColVisionDuo(config=colpali_duo_config)
     tear_down_torch()
 
 
 @pytest.fixture(scope="module")
-def colpali_2_model_path() -> str:
+def colpali_duo_model_path() -> str:
     raise NotImplementedError("Please provide the path to the model in the hub")
 
 
 @pytest.fixture(scope="module")
-def colpali_2_from_pretrained(colpali_2_model_path: str) -> Generator[ColVision2, None, None]:
+def colpali_duo_from_pretrained(colpali_duo_model_path: str) -> Generator[ColVisionDuo, None, None]:
     device = get_torch_device("auto")
     logger.info(f"Device used: {device}")
 
     yield cast(
-        ColVision2,
-        ColVision2.from_pretrained(
-            colpali_2_model_path,
+        ColVisionDuo,
+        ColVisionDuo.from_pretrained(
+            colpali_duo_model_path,
             torch_dtype=torch.bfloat16,
             device_map=device,
         ),
@@ -57,8 +57,8 @@ def colpali_2_from_pretrained(colpali_2_model_path: str) -> Generator[ColVision2
 
 
 @pytest.fixture(scope="class")
-def processor() -> Generator[ColPali2Processor, None, None]:
-    yield cast(ColPali2Processor, ColPali2Processor.from_pretrained("google/paligemma-3b-mix-448"))
+def processor() -> Generator[ColPaliDuoProcessor, None, None]:
+    yield cast(ColPaliDuoProcessor, ColPaliDuoProcessor.from_pretrained("google/paligemma-3b-mix-448"))
 
 
 @pytest.fixture(scope="class")
@@ -79,114 +79,114 @@ def queries() -> Generator[List[str], None, None]:
 
 
 @pytest.fixture(scope="function")
-def batch_queries(processor: ColPali2Processor, queries: List[str]) -> Generator[BatchFeature, None, None]:
+def batch_queries(processor: ColPaliDuoProcessor, queries: List[str]) -> Generator[BatchFeature, None, None]:
     yield processor.process_queries(queries)
 
 
 @pytest.fixture(scope="function")
-def batch_images(processor: ColPali2Processor, images: List[Image.Image]) -> Generator[BatchFeature, None, None]:
+def batch_images(processor: ColPaliDuoProcessor, images: List[Image.Image]) -> Generator[BatchFeature, None, None]:
     yield processor.process_images(images)
 
 
-class TestLoadColPali2:
+class TestLoadColPaliDuo:
     """
-    Test the different ways to load ColPali2.
+    Test the different ways to load ColPaliDuo.
     """
 
     @pytest.mark.slow
-    def test_load_colpali_2_from_config(self, colpali_2_config: ColPali2Config):
+    def test_load_colpali_duo_from_config(self, colpali_duo_config: ColPaliDuoConfig):
         device = get_torch_device("auto")
         logger.info(f"Device used: {device}")
 
-        model = ColVision2(config=colpali_2_config)
+        model = ColVisionDuo(config=colpali_duo_config)
 
-        assert isinstance(model, ColVision2)
-        assert model.single_vector_projector_dim == colpali_2_config.single_vector_projector_dim
-        assert model.multi_vector_pooler.pooling_strategy == colpali_2_config.single_vector_pool_strategy
-        assert model.multi_vector_projector_dim == colpali_2_config.multi_vector_projector_dim
+        assert isinstance(model, ColVisionDuo)
+        assert model.single_vector_projector_dim == colpali_duo_config.single_vector_projector_dim
+        assert model.multi_vector_pooler.pooling_strategy == colpali_duo_config.single_vector_pool_strategy
+        assert model.multi_vector_projector_dim == colpali_duo_config.multi_vector_projector_dim
 
         tear_down_torch()
 
     @pytest.mark.slow
-    def test_load_colpali_2_from_pretrained(self, colpali_2_from_config: ColVision2):
-        assert isinstance(colpali_2_from_config, ColVision2)
+    def test_load_colpali_duo_from_pretrained(self, colpali_duo_from_config: ColVisionDuo):
+        assert isinstance(colpali_duo_from_config, ColVisionDuo)
 
 
 class TestForwardSingleVector:
     """
-    Test the forward pass of ColPali2 for single-vector embeddings.
+    Test the forward pass of ColPaliDuo for single-vector embeddings.
     """
 
     @pytest.mark.slow
-    def test_colpali_2_forward_images(
+    def test_colpali_duo_forward_images(
         self,
-        colpali_2_from_config: ColVision2,
+        colpali_duo_from_config: ColVisionDuo,
         batch_images: BatchFeature,
     ):
         # Forward pass
         with torch.no_grad():
-            outputs = colpali_2_from_config.forward_single_vector(**batch_images)
+            outputs = colpali_duo_from_config.forward_single_vector(**batch_images)
 
         # Assertions
         assert isinstance(outputs.single_vec_emb, torch.Tensor)
         assert outputs.single_vec_emb.dim() == 2
         batch_size, emb_dim = outputs.single_vec_emb.shape
         assert batch_size == len(batch_images["input_ids"])
-        assert emb_dim == colpali_2_from_config.single_vector_projector_dim
+        assert emb_dim == colpali_duo_from_config.single_vector_projector_dim
 
     @pytest.mark.slow
-    def test_colpali_2_forward_queries(
+    def test_colpali_duo_forward_queries(
         self,
-        colpali_2_from_config: ColVision2,
+        colpali_duo_from_config: ColVisionDuo,
         batch_queries: BatchFeature,
     ):
         # Forward pass
         with torch.no_grad():
-            outputs = colpali_2_from_config.forward_single_vector(**batch_queries)
+            outputs = colpali_duo_from_config.forward_single_vector(**batch_queries)
 
         # Assertions
         assert isinstance(outputs.single_vec_emb, torch.Tensor)
         assert outputs.single_vec_emb.dim() == 2
         batch_size, emb_dim = outputs.single_vec_emb.shape
         assert batch_size == len(batch_queries["input_ids"])
-        assert emb_dim == colpali_2_from_config.single_vector_projector_dim
+        assert emb_dim == colpali_duo_from_config.single_vector_projector_dim
 
 
 class TestForwardMultiVector:
     """
-    Test the forward pass of ColPali2 for multi-vector embeddings.
+    Test the forward pass of ColPaliDuo for multi-vector embeddings.
     """
 
     @pytest.mark.slow
-    def test_colpali_2_forward_images(
+    def test_colpali_duo_forward_images(
         self,
-        colpali_2_from_config: ColVision2,
+        colpali_duo_from_config: ColVisionDuo,
         batch_images: BatchFeature,
     ):
         # Forward pass
         with torch.no_grad():
-            outputs = colpali_2_from_config.forward_multi_vector(**batch_images)
+            outputs = colpali_duo_from_config.forward_multi_vector(**batch_images)
 
         # Assertions
         assert isinstance(outputs.multi_vec_emb, torch.Tensor)
         assert outputs.multi_vec_emb.dim() == 3
         batch_size, n_visual_tokens, emb_dim = outputs.multi_vec_emb.shape
         assert batch_size == len(batch_images["input_ids"])
-        assert emb_dim == colpali_2_from_config.multi_vector_projector_dim
+        assert emb_dim == colpali_duo_from_config.multi_vector_projector_dim
 
     @pytest.mark.slow
-    def test_colpali_2_forward_queries(
+    def test_colpali_duo_forward_queries(
         self,
-        colpali_2_from_config: ColVision2,
+        colpali_duo_from_config: ColVisionDuo,
         batch_queries: BatchFeature,
     ):
         # Forward pass
         with torch.no_grad():
-            outputs = colpali_2_from_config.forward_multi_vector(**batch_queries)
+            outputs = colpali_duo_from_config.forward_multi_vector(**batch_queries)
 
         # Assertions
         assert isinstance(outputs.multi_vec_emb, torch.Tensor)
         assert outputs.multi_vec_emb.dim() == 3
         batch_size, n_query_tokens, emb_dim = outputs.multi_vec_emb.shape
         assert batch_size == len(batch_queries["input_ids"])
-        assert emb_dim == colpali_2_from_config.multi_vector_projector_dim
+        assert emb_dim == colpali_duo_from_config.multi_vector_projector_dim

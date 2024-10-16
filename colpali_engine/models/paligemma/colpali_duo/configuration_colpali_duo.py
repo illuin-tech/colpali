@@ -1,9 +1,9 @@
 from transformers import PretrainedConfig
 
 
-class ColPali2Config(PretrainedConfig):
+class ColPaliDuoConfig(PretrainedConfig):
     """
-    Configuration for the ColPali2 model.
+    Configuration for the ColPaliDuo model.
     """
 
     def __init__(

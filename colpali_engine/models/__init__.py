@@ -3,10 +3,10 @@ from .paligemma import (
     BiPali,
     BiPaliProj,
     ColPali,
-    ColPali2,
-    ColPali2Config,
-    ColPali2ModelOutput,
-    ColPali2Processor,
+    ColPaliDuo,
+    ColPaliDuoConfig,
+    ColPaliDuoModelOutput,
+    ColPaliDuoProcessor,
     ColPaliProcessor,
 )
 from .qwen2 import ColQwen2, ColQwen2Processor
