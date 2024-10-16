@@ -35,7 +35,7 @@ def test_load_colpali_duo_from_pretrained(colpali_duo_config: ColPaliDuoConfig) 
 
 @pytest.fixture(scope="module")
 def colpali_duo_model_path() -> str:
-    return "vidore/colpali-duo-base-0.1"
+    return "vidore/colpali-duo-base"
 
 
 @pytest.fixture(scope="module")
