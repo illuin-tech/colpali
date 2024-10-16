@@ -9,7 +9,10 @@ from transformers.models.paligemma.modeling_paligemma import (
 )
 
 from colpali_engine.compression.pooling.multi_vector_pooler import MultiVectorPooler
-from colpali_engine.models.paligemma.colpali_duo.configuration_colpali_duo import ColPaliDuoConfig
+from colpali_engine.models.paligemma.colpali_duo.configuration_colpali_duo import (
+    ColPaliDuoConfig,
+    to_vlm_backbone_config,
+)
 
 
 @dataclass(kw_only=True)
@@ -47,10 +50,16 @@ class ColPaliDuo(PaliGemmaForConditionalGeneration):
     ColPali model with two heads that can generate both single-vector and multi-vector embeddings.
     """
 
-    main_input_name: ClassVar[str] = "doc_input_ids"  # transformers-related
+    main_input_name: ClassVar[str] = "doc_input_ids"  # transformers-relat ed
 
     def __init__(self, config: ColPaliDuoConfig):
-        super().__init__(config=config)
+        vlm_backbone_config = to_vlm_backbone_config(config)
+        super().__init__(vlm_backbone_config)
+
+        # Add the additional attributes
+        self.config.single_vector_projector_dim = config.single_vector_projector_dim
+        self.config.single_vector_pool_strategy = config.single_vector_pool_strategy
+        self.config.multi_vector_projector_dim = config.multi_vector_projector_dim
 
         self.single_vector_projector = nn.Linear(
             in_features=self.config.text_config.hidden_size,
