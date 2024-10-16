@@ -15,7 +15,7 @@ from colpali_engine.models.paligemma.colpali_duo.configuration_colpali_duo impor
 )
 
 
-@dataclass(kw_only=True)
+@dataclass
 class ColPaliDuoLossOutputs:
     """
     Base class for ColPaliDuo embeddings output.
@@ -23,11 +23,11 @@ class ColPaliDuoLossOutputs:
 
     single_vector_loss: torch.FloatTensor
     multi_vector_loss: torch.FloatTensor
-    distillation_loss: Optional[torch.FloatTensor] = None
     total_loss: torch.FloatTensor
+    distillation_loss: Optional[torch.FloatTensor] = None
 
 
-@dataclass(kw_only=True)
+@dataclass
 class ColPaliDuoModelOutput(PaliGemmaCausalLMOutputWithPast):
     """
     Base class for the ColPaliDuo outputs.

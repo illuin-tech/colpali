@@ -12,7 +12,7 @@ from colpali_engine.models.paligemma.colpali_duo.modeling_colpali_duo import (
 )
 
 
-@dataclass(kw_only=True)
+@dataclass
 class ColPaliDuoIntermediateLossOutputs:
     loss: torch.Tensor
     scores: Optional[torch.Tensor] = None
