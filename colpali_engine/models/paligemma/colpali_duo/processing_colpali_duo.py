@@ -1,9 +1,9 @@
 from colpali_engine.models.paligemma.colpali.processing_colpali import ColPaliProcessor
 
 
-class ColPali2Processor(ColPaliProcessor):
+class ColPaliDuoProcessor(ColPaliProcessor):
     """
-    Processor for ColPali2. Mirrors the `ColPaliProcessor` class.
+    Processor for ColPaliDuo. Mirrors the `ColPaliProcessor` class.
     """
 
     def __init__(self, *args, **kwargs):

@@ -9,13 +9,13 @@ from transformers.models.paligemma import PaliGemmaForConditionalGeneration
 from transformers.utils import ModelOutput
 
 from colpali_engine.compression.pooling.multi_vector_pooler import MultiVectorPooler
-from colpali_engine.models.paligemma.colpali_2.configuration_colpali_2 import ColPali2Config
+from colpali_engine.models.paligemma.colpali_duo.configuration_colpali_duo import ColPaliDuoConfig
 
 
 @dataclass(kw_only=True)
-class ColPali2LossOutputs:
+class ColPaliDuoLossOutputs:
     """
-    Base class for ColPali2 embeddings output.
+    Base class for ColPaliDuo embeddings output.
     """
 
     single_vector_loss: torch.FloatTensor
@@ -25,9 +25,9 @@ class ColPali2LossOutputs:
 
 
 @dataclass(kw_only=True)
-class ColPali2ModelOutput(ModelOutput):
+class ColPaliDuoModelOutput(ModelOutput):
     """
-    Base class for the ColPali2 outputs.
+    Base class for the ColPaliDuo outputs.
 
     Args:
     - loss (torch.FloatTensor, optional): Loss tensor.
@@ -39,14 +39,14 @@ class ColPali2ModelOutput(ModelOutput):
     vlm_last_hidden_states: Optional[torch.Tensor] = None
     single_vec_emb: Optional[torch.Tensor] = None
     multi_vec_emb: Optional[torch.Tensor] = None
-    loss: Optional[ColPali2LossOutputs] = None
+    loss: Optional[ColPaliDuoLossOutputs] = None
 
 
-class ColVision2(PreTrainedModel, ABC):
+class ColVisionDuo(PreTrainedModel, ABC):
     """
-    Base class for the ColVision2 architecture.
+    Base class for the ColVisionDuo architecture.
 
-    If your VLM backbone has a non-standard forward method, you can override the ColVision2 methods accordingly.
+    If your VLM backbone has a non-standard forward method, you can override the ColVisionDuo methods accordingly.
     """
 
     main_input_name: ClassVar[str] = "doc_input_ids"  # transformers-related
@@ -56,9 +56,9 @@ class ColVision2(PreTrainedModel, ABC):
     def vlm_class(self) -> Type[PreTrainedModel]:
         pass
 
-    def __init__(self, config: ColPali2Config):
+    def __init__(self, config: ColPaliDuoConfig):
         if not hasattr(self, "vlm_class"):
-            raise ValueError("The `vlm_class` attribute must be defined in the child ColVision2 class.")
+            raise ValueError("The `vlm_class` attribute must be defined in the child ColVisionDuo class.")
 
         super().__init__(config=config)
 
@@ -97,7 +97,7 @@ class ColVision2(PreTrainedModel, ABC):
         attention_mask: torch.Tensor,
         output_vlm_last_hidden_states: bool = False,
         **kwargs,
-    ) -> ColPali2ModelOutput:
+    ) -> ColPaliDuoModelOutput:
         """
         Forward pass through ColPali. Returns both single-vector and multi-vector embeddings.
 
@@ -137,7 +137,7 @@ class ColVision2(PreTrainedModel, ABC):
         multi_vec_emb = torch.nn.functional.normalize(multi_vec_emb, dim=-1)
         multi_vec_emb = multi_vec_emb * attention_mask.unsqueeze(-1)
 
-        return ColPali2ModelOutput(
+        return ColPaliDuoModelOutput(
             vlm_last_hidden_states=vlm_last_hidden_states if output_vlm_last_hidden_states else None,
             single_vec_emb=single_vec_emb,
             multi_vec_emb=multi_vec_emb,
@@ -149,7 +149,7 @@ class ColVision2(PreTrainedModel, ABC):
         attention_mask: torch.Tensor,
         output_vlm_last_hidden_states: bool = False,
         **kwargs,
-    ) -> ColPali2ModelOutput:
+    ) -> ColPaliDuoModelOutput:
         """
         Forward pass through ColPali. Returns only the single-vector embeddings.
         """
@@ -170,7 +170,7 @@ class ColVision2(PreTrainedModel, ABC):
         single_vec_emb = self.single_vector_projector(pooled_output)  # (batch_size, hidden_size)
         single_vec_emb = torch.nn.functional.normalize(single_vec_emb, dim=-1)
 
-        return ColPali2ModelOutput(
+        return ColPaliDuoModelOutput(
             vlm_last_hidden_states=vlm_last_hidden_states if output_vlm_last_hidden_states else None,
             single_vec_emb=single_vec_emb,
         )
@@ -181,7 +181,7 @@ class ColVision2(PreTrainedModel, ABC):
         attention_mask: torch.Tensor,
         output_vlm_last_hidden_states: bool = False,
         **kwargs,
-    ) -> ColPali2ModelOutput:
+    ) -> ColPaliDuoModelOutput:
         """
         Forward pass through ColPali. Returns only the multi-vector embeddings.
         """
@@ -204,20 +204,20 @@ class ColVision2(PreTrainedModel, ABC):
         multi_vec_emb = torch.nn.functional.normalize(multi_vec_emb, dim=-1)
         multi_vec_emb = multi_vec_emb * attention_mask.unsqueeze(-1)
 
-        return ColPali2ModelOutput(
+        return ColPaliDuoModelOutput(
             vlm_last_hidden_states=vlm_last_hidden_states if output_vlm_last_hidden_states else None,
             multi_vec_emb=multi_vec_emb,
         )
 
 
-class ColPali2(ColVision2):
+class ColPaliDuo(ColVisionDuo):
     """
-    ColVision2 with the PaliGemma model as the VLM backbone.
+    ColVisionDuo with the PaliGemma model as the VLM backbone.
     """
 
     @property
     def vlm_class(self):
         return PaliGemmaForConditionalGeneration
 
-    def __init__(self, config: ColPali2Config):
+    def __init__(self, config: ColPaliDuoConfig):
         super().__init__(config=config)

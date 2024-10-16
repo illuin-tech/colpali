@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from colpali_engine.loss.colpali_2_losses import ColPali2Loss, ColPali2ModelOutput
+from colpali_engine.loss.colpali_duo_losses import ColPaliDuoLoss, ColPaliDuoModelOutput
 
 BATCH_SIZE = 4
 EMBEDDING_DIM = 128
@@ -22,8 +22,8 @@ def multi_vector_embeddings() -> torch.Tensor:
 def model_output(
     single_vector_embeddings: torch.Tensor,
     multi_vector_embeddings: torch.Tensor,
-) -> ColPali2ModelOutput:
-    return ColPali2ModelOutput(
+) -> ColPaliDuoModelOutput:
+    return ColPaliDuoModelOutput(
         single_vec_emb=single_vector_embeddings,
         multi_vec_emb=multi_vector_embeddings,
     )
@@ -37,9 +37,9 @@ def model_output(
         (True, True),
     ]
 )
-def colpali_2_loss(request) -> ColPali2Loss:
+def colpali_duo_loss(request) -> ColPaliDuoLoss:
     use_matryoshka_loss, use_distillation_loss = request.param
-    return ColPali2Loss(
+    return ColPaliDuoLoss(
         use_matryoshka_loss=use_matryoshka_loss,
         use_distillation_loss=use_distillation_loss,
         matryoshka_dims=[EMBEDDING_DIM, EMBEDDING_DIM // 2],
@@ -47,13 +47,13 @@ def colpali_2_loss(request) -> ColPali2Loss:
 
 
 def test_single_vector_loss(
-    colpali_2_loss: ColPali2Loss,
+    colpali_duo_loss: ColPaliDuoLoss,
     single_vector_embeddings: torch.Tensor,
 ):
     query_embeddings = single_vector_embeddings
     doc_embeddings = single_vector_embeddings
 
-    outputs = colpali_2_loss.single_vector_loss(query_embeddings, doc_embeddings)
+    outputs = colpali_duo_loss.single_vector_loss(query_embeddings, doc_embeddings)
 
     assert outputs.loss is not None
     assert outputs.loss.shape == torch.Size([])
@@ -61,40 +61,40 @@ def test_single_vector_loss(
 
 
 def test_multi_vector_loss(
-    colpali_2_loss: ColPali2Loss,
+    colpali_duo_loss: ColPaliDuoLoss,
     multi_vector_embeddings: torch.Tensor,
 ):
     query_embeddings = multi_vector_embeddings
     doc_embeddings = multi_vector_embeddings
 
-    outputs = colpali_2_loss.multi_vector_loss(query_embeddings, doc_embeddings)
+    outputs = colpali_duo_loss.multi_vector_loss(query_embeddings, doc_embeddings)
 
     assert outputs.loss is not None
     assert outputs.loss.shape == torch.Size([])
     assert outputs.scores is None
 
 
-def test_distillation_loss(colpali_2_loss: ColPali2Loss):
+def test_distillation_loss(colpali_duo_loss: ColPaliDuoLoss):
     teacher_scores = torch.randn(BATCH_SIZE, BATCH_SIZE)
     student_scores = torch.randn(BATCH_SIZE, BATCH_SIZE)
 
-    outputs = colpali_2_loss.distillation_loss(teacher_scores, student_scores)
+    outputs = colpali_duo_loss.distillation_loss(teacher_scores, student_scores)
 
     assert outputs.loss is not None
     assert outputs.loss.shape == torch.Size([])
 
 
 def test_forward(
-    colpali_2_loss: ColPali2Loss,
-    model_output: ColPali2ModelOutput,
+    colpali_duo_loss: ColPaliDuoLoss,
+    model_output: ColPaliDuoModelOutput,
 ):
     query_embeddings = model_output
     doc_embeddings = model_output
 
-    outputs = colpali_2_loss.forward(query_embeddings, doc_embeddings)
+    outputs = colpali_duo_loss.forward(query_embeddings, doc_embeddings)
 
     assert outputs.single_vector_loss is not None
     assert outputs.multi_vector_loss is not None
     assert outputs.total_loss is not None
-    if colpali_2_loss.use_distillation_loss:
+    if colpali_duo_loss.use_distillation_loss:
         assert outputs.distillation_loss is not None
