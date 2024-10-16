@@ -1,10 +1,8 @@
-from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, ClassVar, Dict, Optional, Type
+from typing import Any, ClassVar, Dict, Optional
 
 import torch
 from torch import nn
-from transformers import PreTrainedModel
 from transformers.models.paligemma import PaliGemmaForConditionalGeneration
 from transformers.utils import ModelOutput
 
@@ -42,26 +40,14 @@ class ColPaliDuoModelOutput(ModelOutput):
     loss: Optional[ColPaliDuoLossOutputs] = None
 
 
-class ColVisionDuo(PreTrainedModel, ABC):
+class ColPaliDuo(PaliGemmaForConditionalGeneration):
     """
-    Base class for the ColVisionDuo architecture.
-
-    If your VLM backbone has a non-standard forward method, you can override the ColVisionDuo methods accordingly.
+    ColPali model with
     """
 
     main_input_name: ClassVar[str] = "doc_input_ids"  # transformers-related
 
-    @property
-    @abstractmethod
-    def vlm_class(self) -> Type[PreTrainedModel]:
-        pass
-
     def __init__(self, config: ColPaliDuoConfig):
-        if not hasattr(self, "vlm_class"):
-            raise ValueError("The `vlm_class` attribute must be defined in the child ColVisionDuo class.")
-
-        super().__init__(config=config)
-
         self.vlm_backbone = self.vlm_class(self.config.vlm_backbone_config)
 
         self.single_vector_projector = nn.Linear(
@@ -101,17 +87,14 @@ class ColVisionDuo(PreTrainedModel, ABC):
         """
         Forward pass through ColPali. Returns both single-vector and multi-vector embeddings.
 
-        NOTE: Both the text and image processors should prepend the <CLS> token to the input_ids tensor
-        before passing it to the model.
-
         Args:
-        - input_ids (torch.LongTensor): The input tokens tensor.
-        - attention_mask (torch.LongTensor): The attention mask tensor.
+            input_ids (torch.LongTensor): The input tokens tensor.
+            attention_mask (torch.LongTensor): The attention mask tensor.
 
         Returns:
-        - ColPaliModelOutput:
-            - single_vector (torch.Tensor): Single-vector embeddings of shape (batch_size, dim).
-            - multi_vector (torch.Tensor): Multi-vector embeddings of shape (batch_size, num_tokens, dim).
+            ColPaliModelOutput:
+                single_vector (torch.Tensor): Single-vector embeddings of shape (batch_size, dim).
+                multi_vector (torch.Tensor): Multi-vector embeddings of shape (batch_size, num_tokens, dim).
         """
         # Delete redundant kwargs
         kwargs = self._prepare_forward_kwargs(kwargs)
@@ -208,16 +191,3 @@ class ColVisionDuo(PreTrainedModel, ABC):
             vlm_last_hidden_states=vlm_last_hidden_states if output_vlm_last_hidden_states else None,
             multi_vec_emb=multi_vec_emb,
         )
-
-
-class ColPaliDuo(ColVisionDuo):
-    """
-    ColVisionDuo with the PaliGemma model as the VLM backbone.
-    """
-
-    @property
-    def vlm_class(self):
-        return PaliGemmaForConditionalGeneration
-
-    def __init__(self, config: ColPaliDuoConfig):
-        super().__init__(config=config)

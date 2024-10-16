@@ -7,7 +7,7 @@ from PIL import Image
 from transformers import BatchFeature
 from transformers.models.paligemma.configuration_paligemma import PaliGemmaConfig
 
-from colpali_engine.models import ColPaliDuoConfig, ColPaliDuoProcessor, ColVisionDuo
+from colpali_engine.models import ColPaliDuo, ColPaliDuoConfig, ColPaliDuoProcessor
 from colpali_engine.utils.torch_utils import get_torch_device, tear_down_torch
 
 logger = logging.getLogger(__name__)
@@ -27,11 +27,11 @@ def colpali_duo_config() -> Generator[ColPaliDuoConfig, None, None]:
 
 
 @pytest.fixture(scope="module")
-def colpali_duo_from_config(colpali_duo_config: ColPaliDuoConfig) -> Generator[ColVisionDuo, None, None]:
+def colpali_duo_from_config(colpali_duo_config: ColPaliDuoConfig) -> Generator[ColPaliDuo, None, None]:
     device = get_torch_device("auto")
     logger.info(f"Device used: {device}")
 
-    yield ColVisionDuo(config=colpali_duo_config)
+    yield ColPaliDuo(config=colpali_duo_config)
     tear_down_torch()
 
 
@@ -41,13 +41,13 @@ def colpali_duo_model_path() -> str:
 
 
 @pytest.fixture(scope="module")
-def colpali_duo_from_pretrained(colpali_duo_model_path: str) -> Generator[ColVisionDuo, None, None]:
+def colpali_duo_from_pretrained(colpali_duo_model_path: str) -> Generator[ColPaliDuo, None, None]:
     device = get_torch_device("auto")
     logger.info(f"Device used: {device}")
 
     yield cast(
-        ColVisionDuo,
-        ColVisionDuo.from_pretrained(
+        ColPaliDuo,
+        ColPaliDuo.from_pretrained(
             colpali_duo_model_path,
             torch_dtype=torch.bfloat16,
             device_map=device,
@@ -98,9 +98,9 @@ class TestLoadColPaliDuo:
         device = get_torch_device("auto")
         logger.info(f"Device used: {device}")
 
-        model = ColVisionDuo(config=colpali_duo_config)
+        model = ColPaliDuo(config=colpali_duo_config)
 
-        assert isinstance(model, ColVisionDuo)
+        assert isinstance(model, ColPaliDuo)
         assert model.single_vector_projector_dim == colpali_duo_config.single_vector_projector_dim
         assert model.multi_vector_pooler.pooling_strategy == colpali_duo_config.single_vector_pool_strategy
         assert model.multi_vector_projector_dim == colpali_duo_config.multi_vector_projector_dim
@@ -108,8 +108,8 @@ class TestLoadColPaliDuo:
         tear_down_torch()
 
     @pytest.mark.slow
-    def test_load_colpali_duo_from_pretrained(self, colpali_duo_from_config: ColVisionDuo):
-        assert isinstance(colpali_duo_from_config, ColVisionDuo)
+    def test_load_colpali_duo_from_pretrained(self, colpali_duo_from_config: ColPaliDuo):
+        assert isinstance(colpali_duo_from_config, ColPaliDuo)
 
 
 class TestForwardSingleVector:
@@ -120,7 +120,7 @@ class TestForwardSingleVector:
     @pytest.mark.slow
     def test_colpali_duo_forward_images(
         self,
-        colpali_duo_from_config: ColVisionDuo,
+        colpali_duo_from_config: ColPaliDuo,
         batch_images: BatchFeature,
     ):
         # Forward pass
@@ -137,7 +137,7 @@ class TestForwardSingleVector:
     @pytest.mark.slow
     def test_colpali_duo_forward_queries(
         self,
-        colpali_duo_from_config: ColVisionDuo,
+        colpali_duo_from_config: ColPaliDuo,
         batch_queries: BatchFeature,
     ):
         # Forward pass
@@ -160,7 +160,7 @@ class TestForwardMultiVector:
     @pytest.mark.slow
     def test_colpali_duo_forward_images(
         self,
-        colpali_duo_from_config: ColVisionDuo,
+        colpali_duo_from_config: ColPaliDuo,
         batch_images: BatchFeature,
     ):
         # Forward pass
@@ -177,7 +177,7 @@ class TestForwardMultiVector:
     @pytest.mark.slow
     def test_colpali_duo_forward_queries(
         self,
-        colpali_duo_from_config: ColVisionDuo,
+        colpali_duo_from_config: ColPaliDuo,
         batch_queries: BatchFeature,
     ):
         # Forward pass
