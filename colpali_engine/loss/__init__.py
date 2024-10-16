@@ -3,8 +3,12 @@ from .bi_encoder_losses import (
     BiPairwiseCELoss,
     BiPairwiseNegativeCELoss,
 )
+from .colpali_duo_losses import (
+    ColPaliDuoLoss,
+    ColPaliDuoLossOutputs,
+)
 from .late_interaction_losses import (
-    ColbertLoss,
+    ColbertCELoss,
     ColbertPairwiseCELoss,
     ColbertPairwiseNegativeCELoss,
 )
