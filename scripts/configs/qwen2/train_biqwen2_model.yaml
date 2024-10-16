@@ -33,7 +33,7 @@ config:
     (): transformers.training_args.TrainingArguments
     output_dir: null
     overwrite_output_dir: true
-    num_train_epochs: 1
+    num_train_epochs: 5
     per_device_train_batch_size: 4
     # 6 x 8 gpus = 48 batch size
     # gradient_accumulation_steps: 4
