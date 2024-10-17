@@ -15,10 +15,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Remove dummy image from `ColPaliProcessor.process_queries`
 
-### Changed
-
-### Fixed
-
 ## [0.3.1] - 2024-09-27
 
 ### Added
