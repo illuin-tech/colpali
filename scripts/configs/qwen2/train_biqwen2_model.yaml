@@ -10,7 +10,7 @@ config:
   model:
     (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
     class_to_instanciate: !ext colpali_engine.models.BiQwen2
-    pretrained_model_name_or_path: "./models/colqwen2_base"
+    pretrained_model_name_or_path: "./models/biqwen2-5e"
     torch_dtype:  !ext torch.bfloat16
     use_cache: false
 #    device_map: "auto"
