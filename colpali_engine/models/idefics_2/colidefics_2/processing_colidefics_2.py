@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import List, Optional, Tuple, Union
 
 import torch
 from PIL import Image
@@ -93,3 +93,10 @@ class ColIdefics2Processor(BaseVisualRetrieverProcessor, Idefics2Processor):
         Compute the MaxSim score (ColBERT-like) for the given multi-vector query and passage embeddings.
         """
         return self.score_multi_vector(qs, ps, device=device, **kwargs)
+
+    def get_n_patches(
+        self,
+        image_size: Tuple[int, int],
+        patch_size: int,
+    ) -> Tuple[int, int]:
+        raise NotImplementedError("This method is not implemented for ColIdefics2.")

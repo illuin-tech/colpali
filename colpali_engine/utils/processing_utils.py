@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional, Union
+from typing import List, Optional, Tuple, Union
 
 import torch
 from PIL import Image
@@ -101,3 +101,17 @@ class BaseVisualRetrieverProcessor(ABC):
 
         scores = scores.to(torch.float32)
         return scores
+
+    @abstractmethod
+    def get_n_patches(
+        self,
+        image_size: Tuple[int, int],
+        patch_size: int = 14,
+        *args,
+        **kwargs,
+    ) -> Tuple[int, int]:
+        """
+        Get the number of patches (n_patches_x, n_patches_y) that will be used to process an
+        image of size (height, width) with the given patch size.
+        """
+        pass

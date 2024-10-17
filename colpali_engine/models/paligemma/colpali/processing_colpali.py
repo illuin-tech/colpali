@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import ClassVar, List, Optional, Tuple, Union
 
 import torch
 from PIL import Image
@@ -12,8 +12,18 @@ class ColPaliProcessor(BaseVisualRetrieverProcessor, PaliGemmaProcessor):
     Processor for ColPali.
     """
 
+    visual_prompt_prefix: ClassVar[str] = "Question: "
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+    @property
+    def query_augmentation_token(self) -> str:
+        """
+        Return the query augmentation token.
+        Query augmentation buffers are used as reasoning buffers during inference.
+        """
+        return self.tokenizer.pad_token
 
     def process_images(
         self,
@@ -42,14 +52,13 @@ class ColPaliProcessor(BaseVisualRetrieverProcessor, PaliGemmaProcessor):
         """
         Process queries for ColPali.
         """
-        prefix = "Question: "
 
         if suffix is None:
-            suffix = "<pad>" * 10
+            suffix = self.query_augmentation_token * 10
         texts_query: List[str] = []
 
         for query in queries:
-            query = self.tokenizer.bos_token + prefix + query
+            query = self.tokenizer.bos_token + self.visual_prompt_prefix + query
             query += suffix  # add suffix (pad tokens)
 
             # NOTE: Make input ISO to PaliGemma's processor
@@ -79,3 +88,16 @@ class ColPaliProcessor(BaseVisualRetrieverProcessor, PaliGemmaProcessor):
         Compute the MaxSim score (ColBERT-like) for the given multi-vector query and passage embeddings.
         """
         return self.score_multi_vector(qs, ps, device=device, **kwargs)
+
+    def get_n_patches(
+        self,
+        image_size: Tuple[int, int],
+        patch_size: int,
+    ) -> Tuple[int, int]:
+        n_patches_x = self.image_processor.size["width"] // patch_size
+        n_patches_y = self.image_processor.size["height"] // patch_size
+
+        return n_patches_x, n_patches_y
+
+    def get_image_mask(self, batch_images: BatchFeature) -> torch.Tensor:
+        return batch_images.input_ids == self.image_token_id

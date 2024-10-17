@@ -80,3 +80,7 @@ class ColPali(PaliGemmaPreTrainedModel):
         self.model.vocab_size = model_embeds.num_embeddings
 
         return model_embeds
+
+    @property
+    def patch_size(self) -> int:
+        return self.model.vision_tower.config.patch_size

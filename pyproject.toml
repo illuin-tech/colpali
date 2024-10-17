@@ -49,7 +49,13 @@ train = [
     "configue>=5.0.0",
     "datasets>=2.19.1",
     "mteb>=1.12.22,<2.0.0",
-    "typer>=0.12.3",
+    "typer>=0.12.3, <1.0.0",
+]
+
+interpretability = [
+    "einops>=0.8.0,<1.0.0",
+    "matplotlib>=3.9.0,<4.0.0",
+    "seaborn>=0.13.2,<1.0.0",
 ]
 
 dev = ["pytest>=8.0.0", "ruff>=0.4.0"]
