@@ -9,11 +9,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 
-- Add `interpretability` module for generating similarity maps
+- Restore, refactor, and improve `interpretability` module for generating similarity maps
 
 ### Changed
 
 - Remove dummy image from `ColPaliProcessor.process_queries`
+
+### Fixed
+
+- Fix the `compute_hardnegs.py` script
+
+### Tests
+
+- Add missing `model.eval()` in tests
+- Add tests for ColQwen2
 
 ## [0.3.1] - 2024-09-27
 
