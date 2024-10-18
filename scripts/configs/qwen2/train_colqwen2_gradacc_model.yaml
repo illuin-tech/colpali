@@ -1,6 +1,6 @@
 config:
   (): colpali_engine.trainer.colmodel_training.ColModelTrainingConfig
-  output_dir: !path ../../../models/colqwen2-5e
+  output_dir: !path ../../../models/colqwen2-gradacc
   processor:
     (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
     class_to_instanciate: !ext colpali_engine.models.ColQwen2Processor
@@ -33,10 +33,10 @@ config:
     (): transformers.training_args.TrainingArguments
     output_dir: null
     overwrite_output_dir: true
-    num_train_epochs: 5
+    num_train_epochs: 1
     per_device_train_batch_size: 4
     # 6 x 8 gpus = 48 batch size
-    # gradient_accumulation_steps: 4
+    gradient_accumulation_steps: 4
     per_device_eval_batch_size: 4
     eval_strategy: "steps"
     # dataloader_num_workers: 8
@@ -44,7 +44,7 @@ config:
     save_steps: 500
     logging_steps: 10
     eval_steps: 100
-    warmup_steps: 500
+    warmup_steps: 125
     learning_rate: 5e-5
     save_total_limit: 1
     # optim: "paged_adamw_8bit"
