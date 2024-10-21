@@ -95,6 +95,6 @@ def test_forward(
 
     assert outputs.single_vector_loss is not None
     assert outputs.multi_vector_loss is not None
-    assert outputs.total_loss is not None
+    assert outputs.loss is not None
     if colpali_duo_loss.use_distillation_loss:
         assert outputs.distillation_loss is not None

@@ -23,7 +23,7 @@ class ColPaliDuoLossOutputs:
 
     single_vector_loss: torch.FloatTensor
     multi_vector_loss: torch.FloatTensor
-    total_loss: torch.FloatTensor
+    loss: torch.FloatTensor
     distillation_loss: Optional[torch.FloatTensor] = None
 
 

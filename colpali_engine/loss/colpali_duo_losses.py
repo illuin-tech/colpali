@@ -31,7 +31,7 @@ class ColPaliDuoLoss(BaseColbertLoss):
     def __init__(
         self,
         alpha: float = 0.5,
-        use_matryoshka_loss: bool = True,
+        use_matryoshka_loss: bool = False,
         matryoshka_dims: Optional[List[int]] = None,
         matryoshka_weights: Optional[List[float]] = None,
         use_distillation_loss: bool = True,
@@ -202,7 +202,7 @@ class ColPaliDuoLoss(BaseColbertLoss):
         self,
         query_embeddings: ColPaliDuoModelOutput,
         doc_embeddings: ColPaliDuoModelOutput,
-    ) -> ColPaliDuoLossOutputs:
+    ) -> torch.Tensor: # ColPaliDuoLossOutputs:
         """
         Compute the total loss for the ColPaliDuo model.
 
@@ -244,9 +244,14 @@ class ColPaliDuoLoss(BaseColbertLoss):
             )
             total_loss += self.beta * distillation_loss_outputs.loss
 
-        return ColPaliDuoLossOutputs(
+        # would be nice to log the individual losses
+        loss_dict =  ColPaliDuoLossOutputs(
             single_vector_loss=single_vector_loss_outputs.loss,
             multi_vector_loss=multi_vector_loss_outputs.loss,
             distillation_loss=distillation_loss_outputs.loss if distillation_loss_outputs is not None else None,
-            total_loss=total_loss,
+            loss=total_loss,
         )
+        # log losses
+        print(loss_dict)
+
+        return total_loss
