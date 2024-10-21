@@ -24,4 +24,7 @@ class ColPaliDuoProcessor(ColPaliProcessor):
         """
         Compute the MaxSim score (ColBERT-like) for the given multi-vector query and passage embeddings.
         """
-        return self.score_single_vector(qs, ps, device=device)
+        if self.mode == "single_vector":
+            return self.score_single_vector(qs, ps, device=device)
+        else:
+            return self.score_multi_vector(qs, ps, device=device, **kwargs)
