@@ -3,12 +3,12 @@ config:
   output_dir: !path ../../../models/colpali-duo
   processor:
     (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
-    class_to_instanciate: !ext colpali_engine.models.ColPaliProcessor
+    class_to_instanciate: !ext colpali_engine.models.ColPaliDuoProcessor
     pretrained_model_name_or_path:  "./models/colpaligemma-3b-mix-448-base"
     max_length: 50
   model:
     (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
-    class_to_instanciate: !ext colpali_engine.models.ColPali
+    class_to_instanciate: !ext colpali_engine.models.ColPaliDuo
     pretrained_model_name_or_path: "./models/colpali-duo-base"
     torch_dtype:  !ext torch.bfloat16
 #    device_map: "auto"
