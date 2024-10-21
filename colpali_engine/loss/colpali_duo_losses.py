@@ -48,6 +48,7 @@ class ColPaliDuoLoss(BaseColbertLoss):
         self.use_distillation_loss = use_distillation_loss
         self.beta = beta
         self.temperature = temperature
+        self.kl_div_loss = KLDivLoss(log_target=True)
 
     def single_vector_loss(
         self,
@@ -174,27 +175,17 @@ class ColPaliDuoLoss(BaseColbertLoss):
         if teacher_scores.shape != student_scores.shape:
             raise ValueError("Teacher and student scores should have the same shape.")
 
-        kl_div_loss = KLDivLoss(log_target=True)
+        # Convert scores to probabilities
+        teacher_probs = F.softmax(teacher_scores / self.temperature, dim=1)  # (batch_size, batch_size)
+        student_log_probs = F.log_softmax(student_scores / self.temperature, dim=1)  # (batch_size, batch_size)
 
-        # NOTE: Both the teacher and student scores should be turned into log-probabilities before
-        # computing the KL-divergence.
+        # Compute KL divergence (input: log-probabilities, target: probabilities)
+        loss_kd = self.temperature ** 2 * F.kl_div(
+            input=student_log_probs,  # log-probabilities of student
+            target=teacher_probs,  # probabilities of teacher
+            reduction='batchmean'  # reduction is typically used to average the loss
+        )
 
-        # Convert the scores to probabilities
-        teacher_scores = torch.softmax(teacher_scores, dim=1)  # (batch_size, batch_size)
-        student_scores = torch.softmax(student_scores, dim=1)  # (batch_size, batch_size)
-
-        # Get log-probabilities
-        teacher_logits = torch.logit(teacher_scores, eps=1e-6)  # (batch_size, batch_size)
-        student_logits = torch.logit(student_scores, eps=1e-6)  # (batch_size, batch_size)
-
-        # NOTE:
-        # - KLDivLoss argument order is the opposite of the KL(·||·) mathematical function.
-        # - KLDivLoss expects log-probabilities for `input` to avoid underflow issues.
-
-        loss_kd = self.temperature**2 * kl_div_loss(
-            input=student_logits / self.temperature,
-            target=teacher_logits / self.temperature,
-        )  # (1,)
 
         return ColPaliDuoIntermediateLossOutputs(loss=loss_kd)
 
