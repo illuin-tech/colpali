@@ -175,6 +175,8 @@ class ColPaliDuoLoss(BaseColbertLoss):
         if teacher_scores.shape != student_scores.shape:
             raise ValueError("Teacher and student scores should have the same shape.")
 
+        breakpoint()
+
         # Convert scores to probabilities
         teacher_probs = F.softmax(teacher_scores / self.temperature, dim=1)  # (batch_size, batch_size)
         student_log_probs = F.log_softmax(student_scores / self.temperature, dim=1)  # (batch_size, batch_size)
