@@ -21,10 +21,10 @@ class ColPaliDuoLossOutputs:
     Base class for ColPaliDuo embeddings output.
     """
 
-    single_vector_loss: torch.FloatTensor
-    multi_vector_loss: torch.FloatTensor
-    loss: torch.FloatTensor
-    distillation_loss: Optional[torch.FloatTensor] = None
+    single_vector_loss: torch.Tensor
+    multi_vector_loss: torch.Tensor
+    loss: torch.Tensor
+    distillation_loss: Optional[torch.Tensor] = None
 
 
 @dataclass

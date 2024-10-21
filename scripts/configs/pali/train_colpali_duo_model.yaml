@@ -4,12 +4,12 @@ config:
   processor:
     (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
     class_to_instanciate: !ext colpali_engine.models.ColPaliProcessor
-    pretrained_model_name_or_path:  "./models/colpali-duo-base" # "./models/paligemma-3b-mix-448"
+    pretrained_model_name_or_path:  "./models/colpaligemma-3b-mix-448-base"
     max_length: 50
   model:
     (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
     class_to_instanciate: !ext colpali_engine.models.ColPali
-    pretrained_model_name_or_path: "./models/colpaligemma-3b-mix-448-base"
+    pretrained_model_name_or_path: "./models/colpali-duo-base"
     torch_dtype:  !ext torch.bfloat16
 #    device_map: "auto"
 #    quantization_config:
