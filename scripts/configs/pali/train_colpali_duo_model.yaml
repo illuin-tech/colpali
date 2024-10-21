@@ -30,7 +30,7 @@ config:
     use_matryoshka_loss: false
     use_distillation_loss: true
     beta: 0.5
-    temperature: 2.0
+    temperature: 1.0
   tr_args: !import ../tr_args/default_tr_args.yaml
   peft_config:
     (): peft.LoraConfig

@@ -175,7 +175,7 @@ class ColPaliDuoLoss(BaseColbertLoss):
         if teacher_scores.shape != student_scores.shape:
             raise ValueError("Teacher and student scores should have the same shape.")
 
-        breakpoint()
+        # breakpoint()
 
         # Convert scores to probabilities
         teacher_probs = F.softmax(teacher_scores / self.temperature, dim=1)  # (batch_size, batch_size)
@@ -233,7 +233,7 @@ class ColPaliDuoLoss(BaseColbertLoss):
             assert multi_vector_loss_outputs.scores is not None
 
             distillation_loss_outputs = self.distillation_loss(
-                single_vector_loss_outputs.scores, multi_vector_loss_outputs.scores
+                multi_vector_loss_outputs.scores, single_vector_loss_outputs.scores,
             )
             total_loss += self.beta * distillation_loss_outputs.loss
 
