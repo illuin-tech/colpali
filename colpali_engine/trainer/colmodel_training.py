@@ -175,7 +175,17 @@ class ColModelTraining:
             for dataloader in [dataloader_with_query, dataloader_without_query]:
                 for batch in tqdm(dataloader):
                     # feed only kwargs with 'doc_' prefix
-                    doc = self.model(**{k[4:]: v.to(device) for k, v in batch.items() if k.startswith("doc")})
+                    output = self.model(**{k[4:]: v.to(device) for k, v in batch.items() if k.startswith("doc")})
+
+                    from colpali_engine.models.paligemma.colpali_duo.modeling_colpali_duo import ColPaliDuoModelOutput
+
+                    # hacky way to get the embeddings
+                    if isinstance(output, ColPaliDuoModelOutput):
+                        if True:
+                            doc = output.single_vec_emb
+                        else:
+                            doc = output.multi_vec_emb
+
                     ps.extend(list(torch.unbind(doc.to("cpu"))))
 
                     if "query_input_ids" in batch:
@@ -183,6 +193,13 @@ class ColModelTraining:
                             input_ids=batch["query_input_ids"].to(device),
                             attention_mask=batch["query_attention_mask"].to(device),
                         )
+
+                        if isinstance(query, ColPaliDuoModelOutput):
+                            if True:
+                                query = query.single_vec_emb
+                            else:
+                                query = query.multi_vec_emb
+
                         # variable len
                         qs.extend(list(torch.unbind(query.to("cpu"))))
 
