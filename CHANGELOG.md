@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+
+## [Unreleased] - 2024-10-21
+
+### Added
+
+- BiQwen model
+
+### Changed
+
+- Modified ColQwen and BiQwen to prevent the useless forward pass in the last layer of the original model (classification head).
+
+### Fixed
+
+
+
 ## [0.3.2] - 2024-10-17
 
 ### Added

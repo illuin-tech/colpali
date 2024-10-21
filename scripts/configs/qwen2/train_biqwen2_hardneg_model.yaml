@@ -1,15 +1,15 @@
 config:
   (): colpali_engine.trainer.colmodel_training.ColModelTrainingConfig
-  output_dir: !path ../../../models/colqwen2-5e
+  output_dir: !path ../../../models/biqwen2-hardneg
   processor:
     (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
-    class_to_instanciate: !ext colpali_engine.models.ColQwen2Processor
+    class_to_instanciate: !ext colpali_engine.models.BiQwen2Processor
     pretrained_model_name_or_path:  "./models/colqwen2_base" # "./models/paligemma-3b-mix-448"
     # max_length: 50
 
   model:
     (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
-    class_to_instanciate: !ext colpali_engine.models.ColQwen2
+    class_to_instanciate: !ext colpali_engine.models.BiQwen2
     pretrained_model_name_or_path: "./models/colqwen2_base"
     torch_dtype:  !ext torch.bfloat16
     use_cache: false
@@ -21,25 +21,25 @@ config:
 #      bnb_4bit_compute_dtype:  "bfloat16"
 #      bnb_4bit_use_double_quant: true
 
-  dataset_loading_func: !ext colpali_engine.utils.dataset_transformation.load_train_set_detailed
+  dataset_loading_func: !ext colpali_engine.utils.dataset_transformation.load_train_set_ir_negs
   eval_dataset_loader: !import ../data/test_data.yaml
 
   # max_length: 50
   run_eval: true
   add_suffix: true
   loss_func:
-    (): colpali_engine.loss.late_interaction_losses.ColbertPairwiseCELoss
+    (): colpali_engine.loss.bi_encoder_losses.BiPairwiseNegativeCELoss
   tr_args:
     (): transformers.training_args.TrainingArguments
     output_dir: null
     overwrite_output_dir: true
-    num_train_epochs: 5
+    num_train_epochs: 1
     per_device_train_batch_size: 4
     # 6 x 8 gpus = 48 batch size
     # gradient_accumulation_steps: 4
     per_device_eval_batch_size: 4
     eval_strategy: "steps"
-    # dataloader_num_workers: 8
+    dataloader_num_workers: 8
     # bf16: true
     save_steps: 500
     logging_steps: 10
@@ -47,9 +47,7 @@ config:
     warmup_steps: 500
     learning_rate: 5e-5
     save_total_limit: 1
-    resume_from_checkpoint: true
     # optim: "paged_adamw_8bit"
-
   peft_config:
     (): peft.LoraConfig
     r: 32
