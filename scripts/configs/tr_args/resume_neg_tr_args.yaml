@@ -15,5 +15,5 @@ eval_steps: 50
 warmup_steps: 100
 learning_rate: 5e-5
 save_total_limit: 1
-resume_from_checkpoint: true
+# resume_from_checkpoint: true
 # optim: "paged_adamw_8bit"
