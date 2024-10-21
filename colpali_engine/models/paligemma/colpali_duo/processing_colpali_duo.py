@@ -1,5 +1,7 @@
 from typing import List, Optional, Union
+
 import torch
+
 from colpali_engine.models.paligemma.colpali.processing_colpali import ColPaliProcessor
 
 
