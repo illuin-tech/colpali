@@ -1,6 +1,6 @@
 config:
   (): colpali_engine.trainer.colmodel_training.ColModelTrainingConfig
-  output_dir: !path ../../../models/colpali-duo
+  output_dir: !path ../../../models/colpali-duo-hp
   processor:
     (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
     class_to_instanciate: !ext colpali_engine.models.ColPaliDuoProcessor
@@ -29,8 +29,9 @@ config:
     (): colpali_engine.loss.colpali_duo_losses.ColPaliDuoLoss
     use_matryoshka_loss: false
     use_distillation_loss: true
+    alpha: 0.25
     beta: 0.5
-    temperature: 1.0
+    temperature: 2.0
   tr_args: !import ../tr_args/default_tr_args.yaml
   peft_config:
     (): peft.LoraConfig
