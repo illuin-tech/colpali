@@ -235,6 +235,7 @@ class ColPaliDuoLoss(BaseColbertLoss):
             assert multi_vector_loss_outputs.scores is not None
 
             # divide multi_vector_loss_outputs.scores by number of non-zero query_embeddings.multi_vec_emb for each row
+            breakpoint()
             query_lens =  (query_embeddings.multi_vec_emb.sum(dim=-1) == 0).sum(dim=-1)
             print(query_lens)
             normalized_mv_scores = multi_vector_loss_outputs.scores / query_lens.unsqueeze(-1)
