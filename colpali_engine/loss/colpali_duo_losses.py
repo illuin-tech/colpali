@@ -3,9 +3,9 @@ from typing import List, Optional
 
 import torch
 import torch.nn.functional as F  # noqa: N812
-from mpmath.libmp import normalize
+# from mpmath.libmp import normalize
 from torch.nn import CrossEntropyLoss, KLDivLoss
-from triton.language.math import normcdf
+# from triton.language.math import normcdf
 
 from colpali_engine.loss.base_late_interaction_loss import BaseColbertLoss
 from colpali_engine.models.paligemma.colpali_duo.modeling_colpali_duo import (
