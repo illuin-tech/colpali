@@ -3,7 +3,9 @@ from typing import List, Optional
 
 import torch
 import torch.nn.functional as F  # noqa: N812
+from mpmath.libmp import normalize
 from torch.nn import CrossEntropyLoss, KLDivLoss
+from triton.language.math import normcdf
 
 from colpali_engine.loss.base_late_interaction_loss import BaseColbertLoss
 from colpali_engine.models.paligemma.colpali_duo.modeling_colpali_duo import (
@@ -232,8 +234,14 @@ class ColPaliDuoLoss(BaseColbertLoss):
             assert single_vector_loss_outputs.scores is not None
             assert multi_vector_loss_outputs.scores is not None
 
+            # divide multi_vector_loss_outputs.scores by number of non-zero query_embeddings.multi_vec_emb for each row
+            query_lens =  (query_embeddings.multi_vec_emb.sum(dim=-1) == 0).sum(dim=-1)
+            print(query_lens)
+            normalized_mv_scores = multi_vector_loss_outputs.scores / query_lens.unsqueeze(-1)
+            print(normalized_mv_scores)
+            print(single_vector_loss_outputs.scores)
             distillation_loss_outputs = self.distillation_loss(
-                multi_vector_loss_outputs.scores, single_vector_loss_outputs.scores,
+                normalized_mv_scores, single_vector_loss_outputs.scores,
             )
             total_loss += self.beta * distillation_loss_outputs.loss
 
