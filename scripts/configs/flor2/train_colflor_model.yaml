@@ -12,7 +12,8 @@ config:
     (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
     class_to_instanciate: !ext colpali_engine.models.ColFlor
     pretrained_model_name_or_path: "./models/ColFlor-base"
-    torch_dtype:  !ext torch.bfloat16
+    # torch_dtype:  !ext torch.bfloat16
+    torch_dtype:  !ext torch.float32
     use_cache: false
 #    device_map: "auto"
 #    quantization_config:
@@ -38,7 +39,7 @@ config:
     per_device_train_batch_size: 16
     # 6 x 8 gpus = 48 batch size
     # gradient_accumulation_steps: 4
-    per_device_eval_batch_size: 4
+    per_device_eval_batch_size: 16
     eval_strategy: "steps"
     # dataloader_num_workers: 8
     # bf16: true
