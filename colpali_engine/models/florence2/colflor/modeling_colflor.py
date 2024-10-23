@@ -31,27 +31,18 @@ class ColFlor(Florence2VisionLanguageModel):
         kwargs.pop("output_hidden_states", None)
 
         # Create Full Attention Mask that includes both the image and text
-        if 'full_attention_mask' in kwargs:
-          full_attention_mask = kwargs['full_attention_mask'].type(self.dtype)
-          del kwargs['full_attention_mask']
-        else:
-          full_attention_mask = kwargs['attention_mask']
-
+        full_attention_mask = kwargs['attention_mask']
         # make sure pixel_values are in the same dtype as the model
         if 'pixel_values' in kwargs:
+            full_attention_mask = kwargs['full_attention_mask'].type(self.dtype)
+            del kwargs['full_attention_mask']
             kwargs['pixel_values'] = kwargs['pixel_values'].type(self.dtype)
-            # print(kwargs['pixel_values'].dtype)
 
         outputs = super().forward(*args, **kwargs)
 
         last_hidden_states = outputs['encoder_last_hidden_state']  # (batch_size, sequence_length, hidden_size)
-        # print("before proj", last_hidden_states.dtype)
         proj = self.custom_text_proj(last_hidden_states)  # (batch_size, sequence_length, dim)
-        # print("after custom", proj.dtype)
         # L2 normalization
         proj = proj / proj.norm(dim=-1, keepdim=True)  # (batch_size, sequence_length, dim)
-        # print("after norm ", proj.dtype)
         proj = proj * full_attention_mask.unsqueeze(-1)  # (batch_size, sequence_length, dim)
-
-        # print("after attention mask", proj.dtype)
         return proj
