@@ -39,7 +39,6 @@ class ColFlor(Florence2VisionLanguageModel):
 
         # make sure pixel_values are in the same dtype as the model
         if 'pixel_values' in kwargs:
-            breakpoint()
             kwargs['pixel_values'] = kwargs['pixel_values'].type(self.dtype)
 
         outputs = super().forward(*args,
