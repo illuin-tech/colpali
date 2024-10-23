@@ -3,10 +3,11 @@ from typing import List, Optional
 
 import torch
 import torch.nn.functional as F  # noqa: N812
+
 # from mpmath.libmp import normalize
 from torch.nn import CrossEntropyLoss, KLDivLoss
-# from triton.language.math import normcdf
 
+# from triton.language.math import normcdf
 from colpali_engine.loss.base_late_interaction_loss import BaseColbertLoss
 from colpali_engine.models.paligemma.colpali_duo.modeling_colpali_duo import (
     ColPaliDuoLossOutputs,
@@ -86,9 +87,6 @@ class ColPaliDuoLoss(BaseColbertLoss):
             # Positive scores are the diagonal of the scores matrix.
             pos_scores = scores.diagonal()  # (batch_size,)
 
-            # Negative score for a given query is the maximum of the scores against all all other pages.
-            # NOTE: We exclude the diagonal by setting it to a very low value. But since the embeddings are L2-normalized,
-            # their maximum score is 1. Thus, we can subtract 1 from the diagonal to exclude it from the maximum operation.
             neg_scores = scores - torch.eye(scores.shape[0], device=scores.device) * 1e6  # (batch_size, batch_size)
             neg_scores = neg_scores.max(dim=1)[0]  # (batch_size,)
 
@@ -248,7 +246,8 @@ class ColPaliDuoLoss(BaseColbertLoss):
             assert multi_vector_loss_outputs.scores is not None
 
             # divide multi_vector_loss_outputs.scores by number of non-zero query_embeddings.multi_vec_emb for each row
-            normalized_mv_scores = multi_vector_loss_outputs.scores/(query_embeddings.multi_vec_emb.sum(dim=-1) != 0).sum(dim=-1).unsqueeze(1)
+            normalized_mv_scores = (multi_vector_loss_outputs.scores/
+                                    (query_embeddings.multi_vec_emb.sum(dim=-1) != 0).sum(dim=-1).unsqueeze(1))
             distillation_loss_outputs = self.distillation_loss(
                 normalized_mv_scores, single_vector_loss_outputs.scores,
             )
