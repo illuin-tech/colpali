@@ -45,11 +45,13 @@ class ColFlor(Florence2VisionLanguageModel):
         outputs = super().forward(*args, **kwargs)
 
         last_hidden_states = outputs['encoder_last_hidden_state']  # (batch_size, sequence_length, hidden_size)
-
+        print("before proj", last_hidden_states.dtype)
         proj = self.custom_text_proj(last_hidden_states)  # (batch_size, sequence_length, dim)
+        print("after custom", proj.dtype)
         # L2 normalization
         proj = proj / proj.norm(dim=-1, keepdim=True)  # (batch_size, sequence_length, dim)
+        print("after norm ", proj.dtype)
         proj = proj * full_attention_mask.unsqueeze(-1)  # (batch_size, sequence_length, dim)
 
-        print(last_hidden_states.dtype, proj.dtype)
+        print("after attention mask", proj.dtype)
         return proj
