@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Tuple
 
 import torch
 from PIL import Image
@@ -66,6 +66,16 @@ class ColFlorProcessor(BaseVisualRetrieverProcessor, Florence2Processor):
         )
 
         return batch_query
+
+    def get_n_patches(
+        self,
+        image_size: Tuple[int, int],
+        patch_size: int,
+    ) -> Tuple[int, int]:
+        n_patches_x = self.image_processor.size["width"] // patch_size
+        n_patches_y = self.image_processor.size["height"] // patch_size
+
+        return n_patches_x, n_patches_y
 
     def score(
         self,
