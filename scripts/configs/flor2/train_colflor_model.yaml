@@ -14,7 +14,7 @@ config:
     pretrained_model_name_or_path: "./models/ColFlor-base"
     # torch_dtype:  !ext torch.bfloat16
     torch_dtype:  !ext torch.float32
-    use_cache: false
+    # use_cache: false
 #    device_map: "auto"
 #    quantization_config:
 #      (): transformers.BitsAndBytesConfig
