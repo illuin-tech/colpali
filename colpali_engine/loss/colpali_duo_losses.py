@@ -43,6 +43,7 @@ class ColPaliDuoLoss(BaseColbertLoss):
         super().__init__()
         self.alpha = alpha
 
+        # to test
         self.use_matryoshka_loss = use_matryoshka_loss
         self.matryoshka_dims = matryoshka_dims
         self.matryoshka_weights = matryoshka_weights
@@ -93,7 +94,7 @@ class ColPaliDuoLoss(BaseColbertLoss):
 
             loss = F.softplus(neg_scores - pos_scores).mean()  # (1,)
 
-            # # TODO - why modify ?
+            # # TODO - why modify the pairwise and be inconsistent ?
             # loss = ce_loss_fn.forward(
             #     input=scores,
             #     target=torch.arange(scores.shape[0], device=scores.device),

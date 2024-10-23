@@ -8,7 +8,6 @@ from transformers.models.paligemma.modeling_paligemma import (
     PaliGemmaForConditionalGeneration,
 )
 
-from colpali_engine.compression.pooling.multi_vector_pooler import MultiVectorPooler
 from colpali_engine.models.paligemma.colpali_duo.configuration_colpali_duo import (
     ColPaliDuoConfig,
     to_vlm_backbone_config,
@@ -66,7 +65,7 @@ class ColPaliDuo(PaliGemmaForConditionalGeneration):
             out_features=self.config.single_vector_projector_dim,
         )
 
-        self.multi_vector_pooler = MultiVectorPooler(pooling_strategy=self.config.single_vector_pool_strategy)
+        # self.multi_vector_pooler = MultiVectorPooler(pooling_strategy=self.config.single_vector_pool_strategy)
         self.multi_vector_projector = nn.Linear(
             in_features=self.config.text_config.hidden_size,
             out_features=self.config.multi_vector_projector_dim,
@@ -113,6 +112,7 @@ class ColPaliDuo(PaliGemmaForConditionalGeneration):
     def project_to_single_vector_embeddings(
         self,
         hidden_states: torch.Tensor,
+        attention_mask: torch.Tensor,
     ) -> torch.Tensor:
         """
         Project the hidden states to single-vector embeddings.
@@ -120,7 +120,10 @@ class ColPaliDuo(PaliGemmaForConditionalGeneration):
         Returns:
             torch.Tensor: Single-vector embeddings of shape (batch_size, hidden_size).
         """
-        pooled_output = self.multi_vector_pooler(hidden_states)  # (batch_size, hidden_size)
+        # pooled_output = self.multi_vector_pooler(hidden_states)  # (batch_size, hidden_size)
+        pooled_output = torch.sum(hidden_states * attention_mask.unsqueeze(-1), dim=1) / torch.sum(
+            attention_mask, dim=1, keepdim=True
+        )
         single_vec_emb = self.single_vector_projector(pooled_output)  # (batch_size, hidden_size)
         single_vec_emb = torch.nn.functional.normalize(single_vec_emb, dim=-1)  # (batch_size, hidden_size)
 
