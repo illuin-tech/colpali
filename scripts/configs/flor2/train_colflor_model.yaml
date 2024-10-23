@@ -12,8 +12,8 @@ config:
     (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
     class_to_instanciate: !ext colpali_engine.models.ColFlor
     pretrained_model_name_or_path: "./models/ColFlor-base"
-    # torch_dtype:  !ext torch.bfloat16
-    torch_dtype:  !ext torch.float32
+    torch_dtype:  !ext torch.bfloat16
+    # torch_dtype:  !ext torch.float32
     # use_cache: false
 #    device_map: "auto"
 #    quantization_config:
