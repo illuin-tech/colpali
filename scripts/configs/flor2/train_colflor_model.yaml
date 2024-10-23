@@ -4,13 +4,13 @@ config:
   processor:
     (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
     class_to_instanciate: !ext colpali_engine.models.ColFlorProcessor
-    pretrained_model_name_or_path:  "./models/Florence-2-base"
+    pretrained_model_name_or_path:  "./models/ColFlor-base"
     # max_length: 50
 
   model:
     (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
     class_to_instanciate: !ext colpali_engine.models.ColFlor
-    pretrained_model_name_or_path: "./models/Florence-2-base"
+    pretrained_model_name_or_path: "./models/ColFlor-base"
     torch_dtype:  !ext torch.bfloat16
     use_cache: false
 #    device_map: "auto"
