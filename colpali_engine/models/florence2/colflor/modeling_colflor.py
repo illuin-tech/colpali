@@ -14,7 +14,7 @@ class ColFlor(Florence2VisionLanguageModel):
 
     main_input_name: ClassVar[str] = "doc_input_ids"  # transformers-related
 
-    def __init__(self, config: Florence2Config, use_cache=False):
+    def __init__(self, config: Florence2Config):
         super().__init__(config=config)
 
         self.dim = 128
@@ -36,6 +36,11 @@ class ColFlor(Florence2VisionLanguageModel):
           del kwargs['full_attention_mask']
         else:
           full_attention_mask = kwargs['attention_mask']
+
+        # make sure pixel_values are in the same dtype as the model
+        if 'pixel_values' in kwargs:
+            breakpoint()
+            kwargs['pixel_values'] = kwargs['pixel_values'].type(self.dtype)
 
         outputs = super().forward(*args,
                                   **kwargs)  # (batch_size, sequence_length, hidden_size)

@@ -58,7 +58,6 @@ class ColFlorProcessor(BaseVisualRetrieverProcessor, Florence2Processor):
             texts_query.append(query)
 
         batch_query = self.tokenizer(
-            #images=[self.mock_image] * len(texts_query),
             text=texts_query,
             return_tensors="pt",
             padding="longest",
