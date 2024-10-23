@@ -175,7 +175,7 @@ class ColPaliDuo(PaliGemmaForConditionalGeneration):
         )  # (batch_size, seq_length, hidden_size)
 
         # Compute the embeddings
-        single_vec_emb = self.project_to_single_vector_embeddings(hidden_states)
+        single_vec_emb = self.project_to_single_vector_embeddings(hidden_states, attention_mask)
         multi_vec_emb = self.project_to_multi_vector_embeddings(hidden_states, attention_mask)
 
         return ColPaliDuoModelOutput(
