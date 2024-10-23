@@ -1,10 +1,10 @@
 from typing import ClassVar
-from colpali_engine.models.florence2.colflor.modeling_florence2 import Florence2VisionLanguageModel
 
 import torch
 from torch import nn
-from .modeling_florence2 import Florence2ForConditionalGeneration, Florence2VisionLanguageModel
+
 from .configuration_florence2 import Florence2Config
+from .modeling_florence2 import Florence2VisionLanguageModel
 
 
 class ColFlor(Florence2VisionLanguageModel):
@@ -41,7 +41,7 @@ class ColFlor(Florence2VisionLanguageModel):
                                   **kwargs)  # (batch_size, sequence_length, hidden_size)
 
         last_hidden_states = outputs['encoder_last_hidden_state']  # (batch_size, sequence_length, hidden_size)
-        
+
         proj = self.custom_text_proj(last_hidden_states)  # (batch_size, sequence_length, dim)
         # L2 normalization
         proj = proj / proj.norm(dim=-1, keepdim=True)  # (batch_size, sequence_length, dim)

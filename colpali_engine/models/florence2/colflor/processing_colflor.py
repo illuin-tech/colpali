@@ -4,9 +4,9 @@ import torch
 from PIL import Image
 from transformers import BatchFeature
 
-from .processing_florence2 import Florence2Processor
-
 from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
+
+from .processing_florence2 import Florence2Processor
 
 
 class ColFlorProcessor(BaseVisualRetrieverProcessor, Florence2Processor):

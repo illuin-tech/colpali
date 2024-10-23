@@ -1,3 +1,4 @@
+# ruff: noqa
 # coding=utf-8
 # Copyright 2024 Microsoft and the HuggingFace Inc. team. All rights reserved.
 #
@@ -14,36 +15,18 @@
 # limitations under the License.
 
 """ PyTorch Florence-2 model."""
+import math
+from collections import OrderedDict
 from dataclasses import dataclass
 from typing import List, Optional, Tuple, Union
 
-import math
 import torch
-import torch.utils.checkpoint
-from torch import nn
 import torch.nn.functional as F
+import torch.utils.checkpoint
 import torch.utils.checkpoint as checkpoint
-from torch.nn import CrossEntropyLoss 
-from collections import OrderedDict
 from einops import rearrange
 from timm.models.layers import DropPath, trunc_normal_
-
-from transformers.modeling_utils import PreTrainedModel
-from transformers.utils import (
-    ModelOutput,
-    add_start_docstrings,
-    add_start_docstrings_to_model_forward,
-    is_flash_attn_2_available,
-    logging,
-    replace_return_docstrings,
-    is_flash_attn_2_available,
-    is_flash_attn_greater_or_equal_2_10,
-)
-from .configuration_florence2 import Florence2Config 
-from .configuration_florence2 import Florence2LanguageConfig
-from .configuration_florence2 import Florence2VisionConfig
-
-
+from torch import nn
 from transformers.activations import ACT2FN
 from transformers.modeling_attn_mask_utils import (
     _prepare_4d_attention_mask,
@@ -57,7 +40,18 @@ from transformers.modeling_outputs import (
     Seq2SeqLMOutput,
     Seq2SeqModelOutput,
 )
+from transformers.modeling_utils import PreTrainedModel
+from transformers.utils import (
+    ModelOutput,
+    add_start_docstrings,
+    add_start_docstrings_to_model_forward,
+    is_flash_attn_2_available,
+    is_flash_attn_greater_or_equal_2_10,
+    logging,
+    replace_return_docstrings,
+)
 
+from .configuration_florence2 import Florence2Config, Florence2LanguageConfig, Florence2VisionConfig
 
 if is_flash_attn_2_available():
     from flash_attn.bert_padding import index_first_axis, pad_input, unpad_input  # noqa
@@ -397,9 +391,9 @@ def window_partition(x, window_size: int):
 
 
 def window_reverse(windows, batch_size: int, window_size: int, H: int, W: int):
-    B = batch_size 
+    B = batch_size
     # this will cause onnx conversion failed for dynamic axis, because treated as constant
-    # int(windows.shape[0] / (H * W / window_size / window_size)) 
+    # int(windows.shape[0] / (H * W / window_size / window_size))
     x = windows.view(B, H // window_size, W // window_size, window_size, window_size, -1)
     x = x.permute(0, 1, 3, 2, 4, 5).contiguous().view(B, H, W, -1)
     return x
@@ -662,7 +656,7 @@ class DaViT(nn.Module):
         x = self.forward_features(x)
         x = self.head(x)
         return x
-    
+
     @classmethod
     def from_config(cls, config):
         return cls(
@@ -2452,7 +2446,7 @@ class Florence2VisionModel(Florence2PreTrainedModel):
         self.vision_tower = DaViT.from_config(config=config)
 
         self.post_init()
-    
+
     def forward(self, pixel_values):
         if len(pixel_values.shape) == 4:
             x = self.vision_tower.forward_features_unpool(pixel_values)
@@ -2474,7 +2468,7 @@ class Florence2VisionModelWithProjection(Florence2PreTrainedModel):
         self._build_image_projection_layers(config)
 
         self.post_init()
-    
+
     def _build_image_projection_layers(self, config):
         image_dim_out = config.dim_embed[-1]
         dim_projection = config.projection_dim
@@ -2510,7 +2504,7 @@ class Florence2VisionModelWithProjection(Florence2PreTrainedModel):
             x = self.vision_tower.forward_features_unpool(pixel_values)
         else:
             raise ValueError(f'invalid image shape {pixel_values.shape}')
-        
+
         if self.image_pos_embed is not None:
             x = x.view(batch_size * T, -1, x.shape[-1])
             num_tokens = x.shape[-2]
@@ -2561,7 +2555,7 @@ class Florence2ForConditionalGeneration(Florence2PreTrainedModel):
         super().__init__(config)
         assert config.vision_config.model_type == 'davit', 'only DaViT is supported for now'
         self.vision_tower = DaViT.from_config(config=config.vision_config)
-        # remove unused layers 
+        # remove unused layers
         del self.vision_tower.head
         del self.vision_tower.norms
 
@@ -2577,7 +2571,7 @@ class Florence2ForConditionalGeneration(Florence2PreTrainedModel):
 
         self.pad_token_id = self.config.pad_token_id if self.config.pad_token_id is not None else -1
         self.post_init()
-    
+
     def _build_image_projection_layers(self, config):
         image_dim_out = config.vision_config.dim_embed[-1]
         dim_projection = config.vision_config.projection_dim
@@ -2622,7 +2616,7 @@ class Florence2ForConditionalGeneration(Florence2PreTrainedModel):
         self.config.vocab_size = model_embeds.num_embeddings
         self.vocab_size = model_embeds.num_embeddings
         return model_embeds
-    
+
     def _encode_image(self, pixel_values):
         if len(pixel_values.shape) == 4:
             batch_size, C, H, W = pixel_values.shape
@@ -2630,7 +2624,7 @@ class Florence2ForConditionalGeneration(Florence2PreTrainedModel):
             x = self.vision_tower.forward_features_unpool(pixel_values)
         else:
             raise ValueError(f'invalid image shape {pixel_values.shape}')
-        
+
         if self.image_pos_embed is not None:
             x = x.view(batch_size * T, -1, x.shape[-1])
             num_tokens = x.shape[-2]
@@ -2667,10 +2661,10 @@ class Florence2ForConditionalGeneration(Florence2PreTrainedModel):
         x = x @ self.image_projection
         x = self.image_proj_norm(x)
 
-        return x 
+        return x
 
     def _merge_input_ids_with_image_features(
-        self, image_features, inputs_embeds 
+        self, image_features, inputs_embeds
     ):
         batch_size, image_token_length = image_features.size()[:-1]
         device = image_features.device
@@ -2765,7 +2759,7 @@ class Florence2ForConditionalGeneration(Florence2PreTrainedModel):
 
         if inputs_embeds is not None:
             attention_mask = attention_mask.to(inputs_embeds.dtype)
-        
+
         outputs = self.language_model(
             attention_mask=attention_mask,
             labels=labels,
@@ -2806,7 +2800,7 @@ class Florence2ForConditionalGeneration(Florence2PreTrainedModel):
 
     def generate(
         self,
-        input_ids, 
+        input_ids,
         inputs_embeds=None,
         pixel_values=None,
         **kwargs
@@ -2820,7 +2814,7 @@ class Florence2ForConditionalGeneration(Florence2PreTrainedModel):
             if pixel_values is not None:
                 image_features = self._encode_image(pixel_values)
                 inputs_embeds, attention_mask = self._merge_input_ids_with_image_features(image_features, inputs_embeds)
-        
+
         return self.language_model.generate(
             input_ids=None,
             inputs_embeds=inputs_embeds,
@@ -2853,7 +2847,7 @@ class Florence2ForConditionalGeneration(Florence2PreTrainedModel):
                 remove_prefix_length = decoder_input_ids.shape[1] - 1
 
             decoder_input_ids = decoder_input_ids[:, remove_prefix_length:]
-        
+
         return {
             "input_ids": None,  # encoder_outputs is defined. input_ids not needed
             "encoder_outputs": encoder_outputs,
@@ -2867,7 +2861,7 @@ class Florence2ForConditionalGeneration(Florence2PreTrainedModel):
             "cross_attn_head_mask": cross_attn_head_mask,
             "use_cache": use_cache,  # change this to avoid caching (presumably for debugging)
         }
-    
+
     def prepare_decoder_input_ids_from_labels(self, labels: torch.Tensor):
         return self.language_model.shift_tokens_right(labels)
 
@@ -2885,7 +2879,7 @@ class Florence2VisionLanguageModel(Florence2PreTrainedModel):
 
         assert config.vision_config.model_type == 'davit', 'only DaViT is supported for now'
         self.vision_tower = DaViT.from_config(config=config.vision_config)
-        # remove unused layers 
+        # remove unused layers
         del self.vision_tower.head
         del self.vision_tower.norms
 
@@ -2898,7 +2892,7 @@ class Florence2VisionLanguageModel(Florence2PreTrainedModel):
 
         self.pad_token_id = self.config.pad_token_id if self.config.pad_token_id is not None else -1
         self.post_init()
-    
+
     def _build_image_projection_layers(self, config):
         image_dim_out = config.vision_config.dim_embed[-1]
         dim_projection = config.vision_config.projection_dim
@@ -2940,7 +2934,7 @@ class Florence2VisionLanguageModel(Florence2PreTrainedModel):
         self.config.vocab_size = model_embeds.num_embeddings
         self.vocab_size = model_embeds.num_embeddings
         return model_embeds
-    
+
     def _encode_image(self, pixel_values):
         if len(pixel_values.shape) == 4:
             batch_size, C, H, W = pixel_values.shape
@@ -2948,7 +2942,7 @@ class Florence2VisionLanguageModel(Florence2PreTrainedModel):
             x = self.vision_tower.forward_features_unpool(pixel_values)
         else:
             raise ValueError(f'invalid image shape {pixel_values.shape}')
-        
+
         if self.image_pos_embed is not None:
             x = x.view(batch_size * T, -1, x.shape[-1])
             num_tokens = x.shape[-2]
@@ -2985,10 +2979,10 @@ class Florence2VisionLanguageModel(Florence2PreTrainedModel):
         x = x @ self.image_projection
         x = self.image_proj_norm(x)
 
-        return x 
+        return x
 
     def _merge_input_ids_with_image_features(
-        self, image_features, inputs_embeds 
+        self, image_features, inputs_embeds
     ):
         batch_size, image_token_length = image_features.size()[:-1]
         device = image_features.device

@@ -1,3 +1,4 @@
+# ruff: noqa
 # coding=utf-8
 # Copyright 2024 Microsoft and the HuggingFace Inc. team. All rights reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,11 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import warnings
+
 """ Florence-2 configuration"""
 
-from typing import Optional
 
-from transformers import AutoConfig
 from transformers.configuration_utils import PretrainedConfig
 from transformers.utils import logging
 
