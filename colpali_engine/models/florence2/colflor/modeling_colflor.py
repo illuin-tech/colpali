@@ -40,6 +40,7 @@ class ColFlor(Florence2VisionLanguageModel):
         # make sure pixel_values are in the same dtype as the model
         if 'pixel_values' in kwargs:
             kwargs['pixel_values'] = kwargs['pixel_values'].type(self.dtype)
+            print(kwargs['pixel_values'].dtype)
 
         outputs = super().forward(*args, **kwargs)
 
@@ -50,5 +51,5 @@ class ColFlor(Florence2VisionLanguageModel):
         proj = proj / proj.norm(dim=-1, keepdim=True)  # (batch_size, sequence_length, dim)
         proj = proj * full_attention_mask.unsqueeze(-1)  # (batch_size, sequence_length, dim)
 
-        breakpoint()
+        print(last_hidden_states.dtype, proj.dtype)
         return proj
