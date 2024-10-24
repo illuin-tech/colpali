@@ -16,10 +16,6 @@
 [[Demo]](https://huggingface.co/spaces/manu/ColPali-demo)
 [[Blog Post]](https://huggingface.co/blog/manu/colpali)
 
-> [!TIP]
-> Some community projects have been developed around ColPali to facilitate usage. You can find them in the [Community Projects](#community-projects) section.
-
-
 ## Associated Paper
 
 This repository contains the code used for training the vision retrievers in the [*ColPali: Efficient Document Retrieval with Vision Language Models*](https://arxiv.org/abs/2407.01449) paper. In particular, it contains the code for training the ColPali model, which is a vision retriever based on the ColBERT architecture and the PaliGemma model.
@@ -215,47 +211,51 @@ sbatch --nodes=1 --cpus-per-task=16 --mem-per-cpu=32GB --time=20:00:00 --gres=gp
 sbatch --nodes=1  --time=5:00:00 -A cad15443 --gres=gpu:8  --constraint=MI250 --job-name=colpali --wrap="python scripts/train/train_colbert.py scripts/configs/pali/train_colpali_docmatix_hardneg_model.yaml"
 ```
 
-
 ## Community Projects
 
-Several community projects and ressources have been developed around ColPali to facilitate usage.
+Several community projects and ressources have been developed around ColPali to facilitate its usage. Feel free to reach out if you want to add your project to this list!
 
-### Libraries
+### Libraries 📚
 
-**Byaldi**: [`Byaldi`](https://github.com/AnswerDotAI/byaldi) is [RAGatouille](https://github.com/AnswerDotAI/RAGatouille)'s equivalent for ColPali  -it leverages our `colpali-engine` package and adds helpers to facilitate indexing and storing embeddings. The perfect quickstart for many simpler use cases !
+| Library Name  | Description                                                  |
+| ------------- | ------------------------------------------------------------ |
+| Byaldi        | [`Byaldi`](https://github.com/AnswerDotAI/byaldi) is [RAGatouille](https://github.com/AnswerDotAI/RAGatouille)'s equivalent for ColPali, leveraging the `colpali-engine` package to facilitate indexing and storing embeddings. |
+| PyVespa       | [`PyVespa`](https://pyvespa.readthedocs.io/en/latest/examples/colpali-document-retrieval-vision-language-models-cloud.html) allows interaction with [Vespa](https://vespa.ai/), a production-grade vector database, with detailed ColPali support. |
+| Candle        | [Candle](https://github.com/huggingface/candle/tree/main/candle-examples/examples/colpali) enables ColPali inference with an efficient ML framework for Rust. |
+| DocAI         | [DocAI](https://github.com/PragmaticMachineLearning/docai) uses ColPali with GPT-4o and Langchain to extract structured information from documents. |
+| VARAG         | [VARAG](https://github.com/adithya-s-k/VARAG) uses ColPali in a vision-only and a hybrid RAG pipeline. |
+| ColBERT Live! | [`ColBERT Live!`](https://github.com/jbellis/colbert-live/) enables ColPali usage with vector databases supporting large datasets, compression, and non-vector predicates. |
 
-**PyVespa** : [`PyVespa`](https://pyvespa.readthedocs.io/en/latest/examples/colpali-document-retrieval-vision-language-models-cloud.html) is a Python library that allows you to interact with [Vespa](https://vespa.ai/), a battle-tested vector database for production use cases ! ColPali support is well detailed.
+### Notebooks 📙
 
-**ColBERT Live!**: The [`ColBERT Live!`](https://github.com/jbellis/colbert-live/) package allows you to use ColPali with vector databases that support larger-than-memory datasets, compression, and composition with non-vector predicates.
+| Notebook Title               | Author & Link                                                |
+| ---------------------------- | ------------------------------------------------------------ |
+| ColPali Cookbooks            | [Tony's Cookbooks (ILLUIN)](https://github.com/tonywu71/colpali-cookbooks) 🙋🏻 |
+| Vision RAG Tutorial          | [Manu's Vision Rag Tutorial (ILLUIN)](https://github.com/ManuelFay/Tutorials/blob/main/Tuesday_Practical_2_Vision_RAG.ipynb) 🙋🏻 |
+| ColPali + Qwen2-VL for RAG   | [Merve's Notebook (HuggingFace 🤗)](https://github.com/merveenoyan/smol-vision/blob/main/ColPali_%2B_Qwen2_VL.ipynb) |
+| Weaviate Tutorial            | [Connor's ColPali POC (Weaviate)](https://github.com/weaviate/recipes/blob/main/weaviate-features/named-vectors/NamedVectors-ColPali-POC.ipynb) |
+| Data Generation              | [Daniel's Notebook (HuggingFace 🤗)](https://danielvanstrien.xyz/posts/post-with-code/colpali/2024-09-23-generate_colpali_dataset.html) |
+| Indexing ColPali with Qdrant | [Daniel's Notebook (HuggingFace 🤗)](https://danielvanstrien.xyz/posts/post-with-code/colpali-qdrant/2024-10-02_using_colpali_with_qdrant.html) |
 
+### Other resources
 
-### Notebooks
-**ColPali + Qwen2-VL for RAG**: [Merve's notebook (HuggingFace)](https://github.com/merveenoyan/smol-vision/blob/main/ColPali_%2B_Qwen2_VL.ipynb)
+- 📝 = blog post
+- 📋 = PDF / slides
+- 📹 = video
 
-**Cookbooks**: [Tony's Cookbooks (Illuin)](https://github.com/tonywu71/colpali-cookbooks)
-
-**Vision Rag Tutorial**: [Manu's Vision Rag Tutorial (Illuin)](https://github.com/ManuelFay/Tutorials/blob/main/Tuesday_Practical_2_Vision_RAG.ipynb)
-
-**Weaviate Tutorial**: [Connor's ColPali POC (Weaviate)](https://github.com/weaviate/recipes/blob/main/weaviate-features/named-vectors/NamedVectors-ColPali-POC.ipynb)
-
-**Data generation**: [Daniel's Data Generation (HuggingFace)](https://danielvanstrien.xyz/posts/post-with-code/colpali/2024-09-23-generate_colpali_dataset.html)
-
-### Blogs
-
-**Retrieval with ColPali & Vespa**: [Jo's Blog (Vespa)](https://blog.vespa.ai/retrieval-with-vision-language-models-colpali/)
-
-**Scaling ColPali to Billions of Docs**: [Jo's Blog (Vespa)](https://blog.vespa.ai/scaling-colpali-to-billions/)
-
-**Together AI Blog**: [Zain's Blog (Together AI)](https://www.together.ai/blog/multimodal-document-rag-with-llama-3-2-vision-and-colqwen2)
-
-**Detailed walkthrough**: [Antaripa's Blog](https://antaripasaha.notion.site/ColPali-Efficient-Document-Retrieval-with-Vision-Language-Models-10f5314a5639803d94d0d7ac191bb5b1)
-
-**Diagrams**: [Leonie's ColPali Diagrams](https://twitter.com/helloiamleonie/status/1839321865195851859)
-
-**Multimodal RAG**: [Jaykumaran (LearnOpenCV)](https://learnopencv.com/multimodal-rag-with-colpali/)
-
-**ColPali + Llava**: [Plaban's blog](https://medium.com/the-ai-forum/implement-multimodal-rag-with-colpali-and-vision-language-model-groq-llava-and-qwen2-vl-5c113b8c08fd)
-
+| Title                                                        | Author & Link                                                |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| LlamaIndex Webinar: ColPali - Efficient Document Retrieval with Vision Language Models | [LlamaIndex's Youtube video](https://youtu.be/nzcBvba7mzI?si=WL9MsyiAFJMyEolz) 📹 |
+| PDF Retrieval with Vision Language Models                    | [Jo's blog post #1 (Vespa)](https://blog.vespa.ai/retrieval-with-vision-language-models-colpali/) 📝 |
+| Scaling ColPali to billions of PDFs with Vespa               | [Jo's blog post #2 (Vespa)](https://blog.vespa.ai/scaling-colpali-to-billions/) 📝 |
+| Multimodal Document RAG with Llama 3.2 Vision and ColQwen2   | [Zain's blog post (Together AI)](https://www.together.ai/blog/multimodal-document-rag-with-llama-3-2-vision-and-colqwen2) 📝 |
+| ColPali: Document Retrieval with Vision Language Models      | [Antaripa's Notion blog post](https://antaripasaha.notion.site/ColPali-Efficient-Document-Retrieval-with-Vision-Language-Models-10f5314a5639803d94d0d7ac191bb5b1) 📝 |
+| Minimalist diagrams explaining ColPali                       | [Leonie's ColPali diagrams on X ](https://twitter.com/helloiamleonie/status/1839321865195851859)📝 |
+| Multimodal RAG with ColPali and Gemini : Financial Report Analysis Application | [Jaykumaran's blog post (LearnOpenCV)](https://learnopencv.com/multimodal-rag-with-colpali/) 📝 |
+| Multimodal RAG with ColPali and Gemini : Financial Report Analysis Application | [Plaban's blog post](https://medium.com/the-ai-forum/implement-multimodal-rag-with-colpali-and-vision-language-model-groq-llava-and-qwen2-vl-5c113b8c08fd) 📝 |
+| State of AI report 2024                                      | [Nathan's report](https://www.stateof.ai/) 📋                 |
+| multimodal AI. open-source. in a nutshell.                   | [Merve's Youtube video](https://youtu.be/IoGaGfU1CIg?si=yEhxMqJYxvMzGyUm) 📹 |
+| Technology Radar Volume 31 (October 2024)                    | [thoughtworks's report](https://www.thoughtworks.com/radar) 📋 |
 
 ## Paper result reproduction
 
