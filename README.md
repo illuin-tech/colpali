@@ -17,7 +17,10 @@
 [[Blog Post]](https://huggingface.co/blog/manu/colpali)
 
 > [!TIP]
-> For production usage in your RAG pipelines, we recommend using the [`byaldi`](https://github.com/AnswerDotAI/byaldi) package, which is a lightweight wrapper around the `colpali-engine` package developed by the author of the popular [RAGatouille](https://github.com/AnswerDotAI/RAGatouille) repostiory. 🐭
+> For production usage in your RAG pipelines, we recommend either
+> - the [`byaldi`](https://github.com/AnswerDotAI/byaldi) package, which is a lightweight wrapper around the `colpali-engine` package developed by the author of the popular [RAGatouille](https://github.com/AnswerDotAI/RAGatouille) repostiory, or
+> - the [`ColBERT Live!`](https://github.com/jbellis/colbert-live/) package, which allows you to use ColPali with vector databases that support larger-than-memory datasets, compression, and composition with non-vector predicates.
+> 🐭
 
 ## Associated Paper
 
