@@ -224,7 +224,7 @@ Several community projects and ressources have been developed around ColPali to 
 
 **Byaldi**: [`Byaldi`](https://github.com/AnswerDotAI/byaldi) is [RAGatouille](https://github.com/AnswerDotAI/RAGatouille)'s equivalent for ColPali  -it leverages our `colpali-engine` package and adds helpers to facilitate indexing and storing embeddings. The perfect quickstart for many simpler use cases !
 
-**PyVespa** : [`PyVespa`](https://pyvespa.readthedocs.io/en/latest/examples/colpali-document-retrieval-vision-language-models-cloud.html) is a Python library that allows you to interact with Vesp through a high-level API, including indexing, querying, and evaluation of search results. ColPali support is well detailed.
+**PyVespa** : [`PyVespa`](https://pyvespa.readthedocs.io/en/latest/examples/colpali-document-retrieval-vision-language-models-cloud.html) is a Python library that allows you to interact with [Vespa](https://vespa.ai/), a battle-tested vector database for production use cases ! ColPali support is well detailed.
 
 **ColBERT Live!**: The [`ColBERT Live!`](https://github.com/jbellis/colbert-live/) package allows you to use ColPali with vector databases that support larger-than-memory datasets, compression, and composition with non-vector predicates.
 
