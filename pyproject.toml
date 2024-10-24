@@ -48,7 +48,7 @@ train = [
     "bitsandbytes",
     "configue>=5.0.0",
     "datasets>=2.19.1",
-    "mteb>=1.12.22,<2.0.0",
+    "mteb>=1.12.22,<1.13",
     "typer>=0.12.3, <1.0.0",
 ]
 
