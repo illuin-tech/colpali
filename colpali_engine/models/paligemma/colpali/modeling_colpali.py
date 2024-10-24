@@ -24,7 +24,7 @@ class ColPali(PaliGemmaPreTrainedModel):
             self._tied_weights_keys = [f"model.language_model.{k}" for k in model.language_model._tied_weights_keys]
         self.model = model
 
-        # TODO: Wait for ColPali2 to create a ColPaliConfig to allow specifying the embedding dimension.
+        # TODO: Wait for ColPaliDuo to create a ColPaliConfig to allow specifying the embedding dimension.
         # We could do it now but it would break all the models trying to load the model from the checkpoint.
         self.dim = 128
         self.custom_text_proj = nn.Linear(self.model.config.text_config.hidden_size, self.dim)
