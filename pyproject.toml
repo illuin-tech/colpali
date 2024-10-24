@@ -39,7 +39,7 @@ dependencies = [
     "pillow>=9.2.0,<11.0.0",
     "requests",
     "torch>=2.2.0",
-    "transformers>=4.45.0",
+    "transformers>=4.45.0,<4.46.0",
 ]
 
 [project.optional-dependencies]
