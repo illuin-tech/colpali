@@ -1,0 +1,64 @@
+config:
+  (): colpali_engine.trainer.colmodel_training.ColModelTrainingConfig
+  output_dir: !path ../../../models/colflor-trained
+  processor:
+    (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
+    class_to_instanciate: !ext colpali_engine.models.ColFlorProcessor
+    pretrained_model_name_or_path:  "./models/ColFlor-base"
+    use_fast: false
+    # max_length: 50
+
+  model:
+    (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
+    class_to_instanciate: !ext colpali_engine.models.ColFlor
+    pretrained_model_name_or_path: "./models/ColFlor-base"
+    torch_dtype:  !ext torch.bfloat16
+    # torch_dtype:  !ext torch.float32
+    # use_cache: false
+#    device_map: "auto"
+#    quantization_config:
+#      (): transformers.BitsAndBytesConfig
+#      load_in_4bit: true
+#      bnb_4bit_quant_type: "nf4"
+#      bnb_4bit_compute_dtype:  "bfloat16"
+#      bnb_4bit_use_double_quant: true
+
+  dataset_loading_func: !ext colpali_engine.utils.dataset_transformation.load_train_set_detailed
+  eval_dataset_loader: !import ../data/test_data.yaml
+
+  # max_length: 50
+  run_eval: true
+  add_suffix: true
+  loss_func:
+    (): colpali_engine.loss.late_interaction_losses.ColbertPairwiseCELoss
+  tr_args:
+    (): transformers.training_args.TrainingArguments
+    output_dir: null
+    overwrite_output_dir: true
+    num_train_epochs: 3
+    per_device_train_batch_size: 16
+    # 6 x 8 gpus = 48 batch size
+    # gradient_accumulation_steps: 4
+    per_device_eval_batch_size: 16
+    eval_strategy: "steps"
+    # dataloader_num_workers: 8
+    # bf16: true
+    save_steps: 500
+    # max_steps: 100
+    logging_steps: 10
+    eval_steps: 100
+    warmup_steps: 100
+    learning_rate: 5e-5
+    save_total_limit: 1
+    # optim: "paged_adamw_8bit"
+
+#  peft_config:
+#    (): peft.LoraConfig
+#    r: 32
+#    lora_alpha: 32
+#    lora_dropout: 0.1
+#    init_lora_weights: "gaussian"
+#    bias: "none"
+#    task_type: "FEATURE_EXTRACTION"
+#    target_modules: '(.*(model).*(down_proj|gate_proj|up_proj|k_proj|q_proj|v_proj|o_proj).*$|.*(custom_text_proj).*$)'
+#    # target_modules: '(.*(language_model).*(down_proj|gate_proj|up_proj|k_proj|q_proj|v_proj|o_proj).*$|.*(custom_text_proj).*$)'
