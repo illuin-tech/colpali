@@ -48,7 +48,7 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
         super().__init__(*args, **kwargs)
         self.tokenizer.padding_side = "left"
         self.min_pixels = 4 * 28 * 28
-        self.max_pixels = 768 * 28 * 28
+        self.max_pixels = 2048 * 28 * 28
         self.factor = 28
         self.max_ratio = 200
 
