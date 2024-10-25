@@ -1,11 +1,11 @@
 config:
   (): colpali_engine.trainer.colmodel_training.ColModelTrainingConfig
-  output_dir: !path ../../../models/colqwen2-ba4-highres
+  output_dir: !path ../../../models/colqwen2-ba16 # ba4-highres
   processor:
     (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
     class_to_instanciate: !ext colpali_engine.models.ColQwen2Processor
     pretrained_model_name_or_path:  "./models/colqwen2_base" # "./models/paligemma-3b-mix-448"
-    num_image_tokens: 2048
+    # num_image_tokens: 2048
     # max_length: 50
 
   model:
@@ -36,7 +36,7 @@ config:
     output_dir: null
     overwrite_output_dir: true
     num_train_epochs: 1
-    per_device_train_batch_size: 8
+    per_device_train_batch_size: 16
     # 6 x 8 gpus = 48 batch size
     # gradient_accumulation_steps: 4
     per_device_eval_batch_size: 4
@@ -49,7 +49,7 @@ config:
     warmup_steps: 250
     learning_rate: 5e-5
     save_total_limit: 1
-    resume_from_checkpoint: true
+    # resume_from_checkpoint: true
     # optim: "paged_adamw_8bit"
 
   peft_config:
