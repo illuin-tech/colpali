@@ -24,6 +24,8 @@ class CustomRetrievalEvaluator:
     """
     Wrapper class for the MTEB retrieval evaluator.
     """
+    def __init__(self, k_values: list[int] = [1, 3, 5, 10, 20, 50, 100]):
+        self.k_values = k_values
 
     def compute_mteb_metrics(
         self,
