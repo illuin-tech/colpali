@@ -1,11 +1,11 @@
 config:
   (): colpali_engine.trainer.colmodel_training.ColModelTrainingConfig
-  output_dir: !path ../../../models/colqwen2-ba16
+  output_dir: !path ../../../models/colqwen2-ba4-highres
   processor:
     (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
     class_to_instanciate: !ext colpali_engine.models.ColQwen2Processor
     pretrained_model_name_or_path:  "./models/colqwen2_base" # "./models/paligemma-3b-mix-448"
-    num_image_tokens: 768
+    num_image_tokens: 2048
     # max_length: 50
 
   model:
