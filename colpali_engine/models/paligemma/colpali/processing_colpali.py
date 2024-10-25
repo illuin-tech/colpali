@@ -12,7 +12,8 @@ class ColPaliProcessor(BaseVisualRetrieverProcessor, PaliGemmaProcessor):
     Processor for ColPali.
     """
 
-    visual_prompt_prefix: ClassVar[str] = "Question: "
+    visual_prompt_prefix: ClassVar[str] = "Describe the image."
+    query_prefix: ClassVar[str] = "Question: "
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -32,7 +33,7 @@ class ColPaliProcessor(BaseVisualRetrieverProcessor, PaliGemmaProcessor):
         """
         Process images for ColPali.
         """
-        texts_doc = ["Describe the image."] * len(images)
+        texts_doc = [self.visual_prompt_prefix] * len(images)
         images = [image.convert("RGB") for image in images]
 
         batch_doc = self(
@@ -58,7 +59,7 @@ class ColPaliProcessor(BaseVisualRetrieverProcessor, PaliGemmaProcessor):
         texts_query: List[str] = []
 
         for query in queries:
-            query = self.tokenizer.bos_token + self.visual_prompt_prefix + query
+            query = self.tokenizer.bos_token + self.query_prefix + query
             query += suffix  # add suffix (pad tokens)
 
             # NOTE: Make input ISO to PaliGemma's processor
