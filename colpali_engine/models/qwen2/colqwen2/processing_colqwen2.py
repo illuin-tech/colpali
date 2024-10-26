@@ -45,10 +45,11 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
         return self.tokenizer.convert_tokens_to_ids(self.image_token)
 
     def __init__(self, *args, **kwargs):
+        num_image_tokens = kwargs.pop("num_image_tokens", 768)
         super().__init__(*args, **kwargs)
         self.tokenizer.padding_side = "left"
         self.min_pixels = 4 * 28 * 28
-        self.max_pixels = 768 * 28 * 28
+        self.max_pixels = num_image_tokens * 28 * 28
         self.factor = 28
         self.max_ratio = 200
 

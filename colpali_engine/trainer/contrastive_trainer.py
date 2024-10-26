@@ -8,7 +8,7 @@ class ContrastiveTrainer(Trainer):
         self.loss_func = loss_func
         self.is_vision_model = is_vision_model  # Unused argument, will be removed in 0.4.0
 
-    def compute_loss(self, model, inputs, return_outputs=False):
+    def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
         query_outputs = model(input_ids=inputs["query_input_ids"], attention_mask=inputs["query_attention_mask"])
         # feed only kwargs with 'doc_' prefix
         doc_outputs = model(**{k[4:]: v for k, v in inputs.items() if k.startswith("doc")})
