@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 - Modified ColQwen and BiQwen to prevent the useless forward pass in the last layer of the original model (classification head).
+- Bumped "breaking" dependencies on MTEB and Transformers version and made the corresponding changes in the code.
+- Added a "num_image_tokens" kwarg to the `ColQwenProcessor` to allow for different image resolutions.
+
 
 ### Fixed
 
