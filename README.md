@@ -256,6 +256,7 @@ Several community projects and ressources have been developed around ColPali to 
 | State of AI report 2024                                      | [Nathan's report](https://www.stateof.ai/) 📋                 |
 | multimodal AI. open-source. in a nutshell.                   | [Merve's Youtube video](https://youtu.be/IoGaGfU1CIg?si=yEhxMqJYxvMzGyUm) 📹 |
 | Technology Radar Volume 31 (October 2024)                    | [thoughtworks's report](https://www.thoughtworks.com/radar) 📋 |
+| Remove Complexity from Your RAG Applications | [Kyryl's Blog post (KOML)](https://kyrylai.com/2024/09/09/remove-complexity-from-your-rag-applications/) 📝 |
 
 ## Paper result reproduction
 
