@@ -228,14 +228,15 @@ Several community projects and ressources have been developed around ColPali to 
 
 ### Notebooks 📙
 
-| Notebook Title               | Author & Link                                                |
-| ---------------------------- | ------------------------------------------------------------ |
-| ColPali Cookbooks            | [Tony's Cookbooks (ILLUIN)](https://github.com/tonywu71/colpali-cookbooks) 🙋🏻 |
-| Vision RAG Tutorial          | [Manu's Vision Rag Tutorial (ILLUIN)](https://github.com/ManuelFay/Tutorials/blob/main/Tuesday_Practical_2_Vision_RAG.ipynb) 🙋🏻 |
-| ColPali + Qwen2-VL for RAG   | [Merve's Notebook (HuggingFace 🤗)](https://github.com/merveenoyan/smol-vision/blob/main/ColPali_%2B_Qwen2_VL.ipynb) |
-| Weaviate Tutorial            | [Connor's ColPali POC (Weaviate)](https://github.com/weaviate/recipes/blob/main/weaviate-features/named-vectors/NamedVectors-ColPali-POC.ipynb) |
-| Data Generation              | [Daniel's Notebook (HuggingFace 🤗)](https://danielvanstrien.xyz/posts/post-with-code/colpali/2024-09-23-generate_colpali_dataset.html) |
-| Indexing ColPali with Qdrant | [Daniel's Notebook (HuggingFace 🤗)](https://danielvanstrien.xyz/posts/post-with-code/colpali-qdrant/2024-10-02_using_colpali_with_qdrant.html) |
+| Notebook Title                                  | Author & Link                                                |
+| ----------------------------------------------- | ------------------------------------------------------------ |
+| ColPali Cookbooks                               | [Tony's Cookbooks (ILLUIN)](https://github.com/tonywu71/colpali-cookbooks) 🙋🏻 |
+| Vision RAG Tutorial                             | [Manu's Vision Rag Tutorial (ILLUIN)](https://github.com/ManuelFay/Tutorials/blob/main/Tuesday_Practical_2_Vision_RAG.ipynb) 🙋🏻 |
+| ColPali + Qwen2-VL for RAG                      | [Merve's Notebook (HuggingFace 🤗)](https://github.com/merveenoyan/smol-vision/blob/main/ColPali_%2B_Qwen2_VL.ipynb) |
+| Weaviate Tutorial                               | [Connor's ColPali POC (Weaviate)](https://github.com/weaviate/recipes/blob/main/weaviate-features/named-vectors/NamedVectors-ColPali-POC.ipynb) |
+| Data Generation                                 | [Daniel's Notebook (HuggingFace 🤗)](https://danielvanstrien.xyz/posts/post-with-code/colpali/2024-09-23-generate_colpali_dataset.html) |
+| Indexing ColPali with Qdrant                    | [Daniel's Notebook (HuggingFace 🤗)](https://danielvanstrien.xyz/posts/post-with-code/colpali-qdrant/2024-10-02_using_colpali_with_qdrant.html) |
+| Finance Report Analysis with ColPali and Gemini | [Jaykumaran (LearnOpenCV)](https://github.com/spmallick/learnopencv/tree/master/Multimodal-RAG-with-ColPali-Gemini) |
 
 ### Other resources
 
@@ -252,11 +253,11 @@ Several community projects and ressources have been developed around ColPali to 
 | ColPali: Document Retrieval with Vision Language Models      | [Antaripa's Notion blog post](https://antaripasaha.notion.site/ColPali-Efficient-Document-Retrieval-with-Vision-Language-Models-10f5314a5639803d94d0d7ac191bb5b1) 📝 |
 | Minimalist diagrams explaining ColPali                       | [Leonie's ColPali diagrams on X ](https://twitter.com/helloiamleonie/status/1839321865195851859)📝 |
 | Multimodal RAG with ColPali and Gemini : Financial Report Analysis Application | [Jaykumaran's blog post (LearnOpenCV)](https://learnopencv.com/multimodal-rag-with-colpali/) 📝 |
-| Multimodal RAG with ColPali and Gemini : Financial Report Analysis Application | [Plaban's blog post](https://medium.com/the-ai-forum/implement-multimodal-rag-with-colpali-and-vision-language-model-groq-llava-and-qwen2-vl-5c113b8c08fd) 📝 |
+| Implement Multimodal RAG with ColPali and Vision Language Model Groq(Llava) and Qwen2-VL | [Plaban's blog post](https://medium.com/the-ai-forum/implement-multimodal-rag-with-colpali-and-vision-language-model-groq-llava-and-qwen2-vl-5c113b8c08fd) 📝 |
 | State of AI report 2024                                      | [Nathan's report](https://www.stateof.ai/) 📋                 |
 | multimodal AI. open-source. in a nutshell.                   | [Merve's Youtube video](https://youtu.be/IoGaGfU1CIg?si=yEhxMqJYxvMzGyUm) 📹 |
 | Technology Radar Volume 31 (October 2024)                    | [thoughtworks's report](https://www.thoughtworks.com/radar) 📋 |
-| Remove Complexity from Your RAG Applications | [Kyryl's Blog post (KOML)](https://kyrylai.com/2024/09/09/remove-complexity-from-your-rag-applications/) 📝 |
+| Remove Complexity from Your RAG Applications                 | [Kyryl's Blog post (KOML)](https://kyrylai.com/2024/09/09/remove-complexity-from-your-rag-applications/) 📝 |
 
 ## Paper result reproduction
 
