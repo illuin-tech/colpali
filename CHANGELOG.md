@@ -5,23 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-
 ## [Unreleased] - 2024-10-21
 
 ### Added
 
-- BiQwen model
+- Add BiQwen2 model
 
 ### Changed
 
-- Modified ColQwen and BiQwen to prevent the useless forward pass in the last layer of the original model (classification head).
-- Bumped "breaking" dependencies on MTEB and Transformers version and made the corresponding changes in the code.
-- Added a "num_image_tokens" kwarg to the `ColQwenProcessor` to allow for different image resolutions.
-
+- Modified ColQwen and BiQwen to prevent the useless forward pass in the last layer of the original model (classification head)
+- Bumped "breaking" dependencies on MTEB and Transformers version and made the corresponding changes in the code
+- Added a "num_image_tokens" kwarg to the `ColQwenProcessor` to allow for different image resolutions
 
 ### Fixed
 
-
+- Fix wrong variable name for `ColPaliProcessor`'s prefixes
 
 ## [0.3.2] - 2024-10-17
 
