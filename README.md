@@ -258,6 +258,7 @@ Several community projects and ressources have been developed around ColPali to 
 | multimodal AI. open-source. in a nutshell.                   | [Merve's Youtube video](https://youtu.be/IoGaGfU1CIg?si=yEhxMqJYxvMzGyUm) 📹 |
 | Technology Radar Volume 31 (October 2024)                    | [thoughtworks's report](https://www.thoughtworks.com/radar) 📋 |
 | Remove Complexity from Your RAG Applications                 | [Kyryl's Blog post (KOML)](https://kyrylai.com/2024/09/09/remove-complexity-from-your-rag-applications/) 📝 |
+| Late interaction & efficient Multi-modal retrievers need more than a vector index | [Ayush Chaurasia (LanceDB)](https://blog.lancedb.com/late-interaction-efficient-multi-modal-retrievers-need-more-than-just-a-vector-index/) 📝 |
 
 ## Paper result reproduction
 
