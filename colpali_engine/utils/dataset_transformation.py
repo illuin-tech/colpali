@@ -92,7 +92,7 @@ def load_docmatix_ir_negs() -> Tuple[DatasetDict, Dataset, str]:
     ds_dict = DatasetDict({"train": dataset, "test": dataset_eval})
 
     base_path = "./data_dir/" if USE_LOCAL_DATASET else "HuggingFaceM4/"
-    anchor_ds = cast(Dataset, load_dataset(base_path + "Docmatix", split="train", subset="images"))
+    anchor_ds = cast(Dataset, load_dataset(base_path + "Docmatix", "images", split="train"))
 
     return ds_dict, anchor_ds, "docmatix"
 
