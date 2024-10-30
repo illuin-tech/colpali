@@ -7,13 +7,14 @@ from colpali_engine.collators.visual_retriever_collator import VisualRetrieverCo
 from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 
 
-class HardNegCollator(VisualRetrieverCollator):
+class CorpusQueryCollator(VisualRetrieverCollator):
     def __init__(
         self,
         processor: BaseVisualRetrieverProcessor,
         max_length: int = 2048,
         add_suffix: bool = True,
         image_dataset: Optional[Dataset] = None,
+        mined_negatives: bool = True,
     ):
         super().__init__(
             processor=processor,
@@ -23,8 +24,7 @@ class HardNegCollator(VisualRetrieverCollator):
         if image_dataset is None:
             raise ValueError("`image_dataset` must be provided")
         self.image_dataset = cast(Dataset, image_dataset)
-        # deprecation warning
-        print("The HardNegCollator will be replaced by the CorpusQueryCollator in the next major version")
+        self.mined_negatives = mined_negatives
 
     def get_image_from_image_dataset(self, image_idx):
         return self.image_dataset[int(image_idx)]["image"]
@@ -34,12 +34,14 @@ class HardNegCollator(VisualRetrieverCollator):
         examples = []
 
         for example in tmp_examples:
-            pos_image = self.get_image_from_image_dataset(example["gold_index"])
+            pos_image = self.get_image_from_image_dataset(example["positive_passages"][0]["doc_id"])
             pos_query = example["query"]
-
-            # Randomly sample a negative image amongst the top 10
-            neg_image = self.get_image_from_image_dataset(example["negs"][randint(0, 9)])
-
-            examples += [{"image": pos_image, "query": pos_query, "neg_image": neg_image}]
+            sample = {"image": pos_image, "query": pos_query}
+            if self.mined_negatives:
+                # Randomly sample a negative image
+                len_negs = len(example["negative_passages"])
+                neg_image = self.get_image_from_image_dataset(example["negative_passages"][randint(0, len_negs - 1)])
+                sample.update({"neg_image": neg_image})
+            examples += [sample]
 
         return super().__call__(examples)

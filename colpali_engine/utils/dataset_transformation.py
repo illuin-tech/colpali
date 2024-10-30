@@ -96,6 +96,19 @@ def load_docmatix_ir_negs() -> Tuple[DatasetDict, Dataset]:
 
     return ds_dict, anchor_ds
 
+def load_wikiss() -> Tuple[DatasetDict, Dataset]:
+    base_path = "./data_dir/" if USE_LOCAL_DATASET else "Tevatron/"
+    dataset = cast(Dataset, load_dataset(base_path + "wiki-ss-nq", split="train"))
+    dataset = dataset.select(range(400500))
+    dataset_eval = dataset.select(range(500))
+    dataset = dataset.select(range(500, len(dataset)))
+    ds_dict = DatasetDict({"train": dataset, "test": dataset_eval})
+
+    base_path = "./data_dir/" if USE_LOCAL_DATASET else "HuggingFaceM4/"
+    anchor_ds = cast(Dataset, load_dataset(base_path + "wiki-ss-corpus", split="train"))
+
+    return ds_dict, anchor_ds
+
 
 def load_train_set_ir_negs() -> Tuple[DatasetDict, Dataset]:
     base_path = "./data_dir/" if USE_LOCAL_DATASET else "manu/"

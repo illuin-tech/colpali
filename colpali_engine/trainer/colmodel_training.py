@@ -15,8 +15,7 @@ from transformers import (
     TrainingArguments,
 )
 
-from colpali_engine.collators.hard_neg_collator import HardNegCollator
-from colpali_engine.collators.visual_retriever_collator import VisualRetrieverCollator
+from colpali_engine.collators import CorpusQueryCollator, HardNegCollator, VisualRetrieverCollator
 from colpali_engine.loss.late_interaction_losses import (
     ColbertLoss,
 )
@@ -98,10 +97,16 @@ class ColModelTraining:
         if isinstance(self.dataset, Tuple):
             neg_dataset = self.dataset[1]
             self.dataset = self.dataset[0]
-            self.collator = HardNegCollator(
+            # self.collator = HardNegCollator(
+            #     processor=self.config.processor,
+            #     max_length=self.config.max_length,
+            #     image_dataset=neg_dataset,
+            # )
+            self.collator = CorpusQueryCollator(
                 processor=self.config.processor,
                 max_length=self.config.max_length,
                 image_dataset=neg_dataset,
+                mined_negatives=True,
             )
         else:
             self.collator = VisualRetrieverCollator(
