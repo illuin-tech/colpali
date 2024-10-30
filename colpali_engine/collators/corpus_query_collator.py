@@ -34,13 +34,13 @@ class CorpusQueryCollator(VisualRetrieverCollator):
         examples = []
 
         for example in tmp_examples:
-            pos_image = self.get_image_from_image_dataset(example["positive_passages"][0]["doc_id"])
+            pos_image = self.get_image_from_image_dataset(example["positive_passages"][0]["docid"])
             pos_query = example["query"]
             sample = {"image": pos_image, "query": pos_query}
             if self.mined_negatives:
                 # Randomly sample a negative image
                 len_negs = len(example["negative_passages"])
-                neg_image = self.get_image_from_image_dataset(example["negative_passages"][randint(0, len_negs - 1)])
+                neg_image = self.get_image_from_image_dataset(example["negative_passages"][randint(0, len_negs - 1)]["docid"])
                 sample.update({"neg_image": neg_image})
             examples += [sample]
 
