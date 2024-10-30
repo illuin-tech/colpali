@@ -42,7 +42,7 @@ config:
     # gradient_accumulation_steps: 4
     per_device_eval_batch_size: 64
     eval_strategy: "steps"
-    dataloader_num_workers: 16
+    dataloader_num_workers: 32
     # bf16: true
     save_steps: 500
     logging_steps: 10
