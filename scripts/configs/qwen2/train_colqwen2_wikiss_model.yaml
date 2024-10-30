@@ -15,7 +15,6 @@ config:
     torch_dtype:  !ext torch.bfloat16
     use_cache: false
     attn_implementation: "flash_attention_2"
-    gradient_checkpointing: true
 #    device_map: "auto"
 #    quantization_config:
 #      (): transformers.BitsAndBytesConfig
