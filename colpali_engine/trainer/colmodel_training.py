@@ -95,6 +95,7 @@ class ColModelTraining:
         self.model = self.config.model
         self.dataset = self.config.dataset_loading_func()
         if isinstance(self.dataset, Tuple):
+            corpus_format = self.dataset[2]
             neg_dataset = self.dataset[1]
             self.dataset = self.dataset[0]
             # self.collator = HardNegCollator(
@@ -107,7 +108,7 @@ class ColModelTraining:
                 max_length=self.config.max_length,
                 image_dataset=neg_dataset,
                 mined_negatives=True,
-                corpus_format=self.dataset[2],
+                corpus_format=corpus_format,
             )
         else:
             self.collator = VisualRetrieverCollator(
