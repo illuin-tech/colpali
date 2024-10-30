@@ -23,7 +23,7 @@ config:
 #      bnb_4bit_compute_dtype:  "bfloat16"
 #      bnb_4bit_use_double_quant: true
 
-  dataset_loading_func: !ext colpali_engine.utils.dataset_transformation.load_wiki_ss
+  dataset_loading_func: !ext colpali_engine.utils.dataset_transformation.load_wikiss
   eval_dataset_loader: !import ../data/test_data.yaml
 
   # max_length: 50
