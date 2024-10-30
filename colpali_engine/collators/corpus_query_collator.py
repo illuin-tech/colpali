@@ -26,21 +26,25 @@ class CorpusQueryCollator(VisualRetrieverCollator):
         self.image_dataset = cast(Dataset, image_dataset)
         self.mined_negatives = mined_negatives
 
-    def get_image_from_image_dataset(self, image_idx):
-        return self.image_dataset[int(image_idx)]["image"]
+        print("Mapping docids to indices")
+        self.docid_to_idx = {doc["docid"]: idx for idx, doc in enumerate(self.image_dataset)}
+
+    def get_image_from_docid(self, docid):
+        return self.image_dataset[self.docid_to_idx[docid]]["image"]
+
 
     def __call__(self, examples: List[Dict[str, Any]]) -> Dict[str, Any]:
         tmp_examples = examples
         examples = []
 
         for example in tmp_examples:
-            pos_image = self.get_image_from_image_dataset(example["positive_passages"][0]["docid"])
+            pos_image = self.get_image_from_docid(example["positive_passages"][0]["docid"])
             pos_query = example["query"]
             sample = {"image": pos_image, "query": pos_query}
             if self.mined_negatives:
                 # Randomly sample a negative image
                 len_negs = len(example["negative_passages"])
-                neg_image = self.get_image_from_image_dataset(example["negative_passages"][randint(0, len_negs - 1)]["docid"])
+                neg_image = self.get_image_from_docid(example["negative_passages"][randint(0, len_negs - 1)]["docid"])
                 sample.update({"neg_image": neg_image})
             examples += [sample]
 
