@@ -27,7 +27,7 @@ class CorpusQueryCollator(VisualRetrieverCollator):
         self.mined_negatives = mined_negatives
 
         print("Mapping docids to indices")
-        self.docid_to_idx = {doc["docid"]: idx for idx, doc in enumerate(self.image_dataset)}
+        self.docid_to_idx = {docid: idx for docid, idx in zip(self.image_dataset["docid"], range(len(self.image_dataset)))}
 
     def get_image_from_docid(self, docid):
         return self.image_dataset[self.docid_to_idx[docid]]["image"]
