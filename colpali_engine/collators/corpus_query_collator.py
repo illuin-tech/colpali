@@ -15,6 +15,7 @@ class CorpusQueryCollator(VisualRetrieverCollator):
         add_suffix: bool = True,
         image_dataset: Optional[Dataset] = None,
         mined_negatives: bool = True,
+        corpus_format: str = "wikiss",
     ):
         super().__init__(
             processor=processor,
@@ -25,12 +26,23 @@ class CorpusQueryCollator(VisualRetrieverCollator):
             raise ValueError("`image_dataset` must be provided")
         self.image_dataset = cast(Dataset, image_dataset)
         self.mined_negatives = mined_negatives
+        self.corpus_format = corpus_format
 
-        print("Mapping docids to indices")
-        self.docid_to_idx = {docid: idx for docid, idx in zip(self.image_dataset["docid"], range(len(self.image_dataset)))}
+        if self.corpus_format == "wikiss":
+            print("Mapping docids to indices")
+            self.docid_to_idx = {docid: idx for docid, idx in zip(self.image_dataset["docid"], range(len(self.image_dataset)))}
 
     def get_image_from_docid(self, docid):
-        return self.image_dataset[self.docid_to_idx[docid]]["image"]
+        if self.corpus_format == "wikiss":
+            return self.image_dataset[self.docid_to_idx[docid]]["image"]
+        elif self.corpus_format == "docmatix":
+            doc_page = int(docid.split("_")[1])
+            doc_id = int(docid.split("_")[0])
+            return self.image_dataset[doc_id]["images"][doc_page]
+        elif self.corpus_format == "vidore":
+            return self.image_dataset[int(docid)]["image"]
+        else:
+            raise NotImplementedError(f"Corpus format {self.corpus_format} not supported")
 
 
     def __call__(self, examples: List[Dict[str, Any]]) -> Dict[str, Any]:

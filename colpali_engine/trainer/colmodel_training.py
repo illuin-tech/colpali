@@ -107,6 +107,7 @@ class ColModelTraining:
                 max_length=self.config.max_length,
                 image_dataset=neg_dataset,
                 mined_negatives=True,
+                corpus_format=self.dataset[2],
             )
         else:
             self.collator = VisualRetrieverCollator(
