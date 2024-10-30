@@ -1,6 +1,6 @@
 config:
   (): colpali_engine.trainer.colmodel_training.ColModelTrainingConfig
-  output_dir: !path ../../../models/colqwen2-docmatix-ba64
+  output_dir: !path ../../../models/colqwen2-docmatix-ba256
   processor:
     (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
     class_to_instanciate: !ext colpali_engine.models.ColQwen2Processor
@@ -36,11 +36,11 @@ config:
     output_dir: null
     overwrite_output_dir: true
     num_train_epochs: 1
-    per_device_train_batch_size: 16
+    per_device_train_batch_size: 64
     gradient_checkpointing: true
     # 6 x 8 gpus = 48 batch size
     # gradient_accumulation_steps: 4
-    per_device_eval_batch_size: 16
+    per_device_eval_batch_size: 64
     eval_strategy: "steps"
     dataloader_num_workers: 16
     # bf16: true
