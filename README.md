@@ -31,15 +31,15 @@ Using ColPali removes the need for potentially complex and brittle layout recogn
 ## List of ColVision models
 
 | Model                                                        | Score on [ViDoRe](https://huggingface.co/spaces/vidore/vidore-leaderboard) 🏆 | License    | Comments                                                     | Currently supported |
-| ------------------------------------------------------------ | ------------------------------------------------------------ | ---------- | ------------------------------------------------------------ | ------------------- |
-| [vidore/colpali](https://huggingface.co/vidore/colpali)      | 81.3                                                         | Gemma      | • Based on `google/paligemma-3b-mix-448`.<br />• Checkpoint used in the ColPali paper. | ❌                   |
-| [vidore/colpali-v1.1](https://huggingface.co/vidore/colpali-v1.1) | 81.5                                                         | Gemma      | • Based on `google/paligemma-3b-mix-448`.                    | ✅                   |
-| [vidore/colpali-v1.2](https://huggingface.co/vidore/colpali-v1.2) | 83.1                                                         | Gemma      | • Based on `google/paligemma-3b-mix-448`.                    | ✅                   |
-| [vidore/colqwen2-v0.1](https://huggingface.co/vidore/colqwen2-v0.1) | 86.6                                                         | Apache 2.0 | • Based on `Qwen/Qwen2-VL-2B-Instruct`.<br />• Supports dynamic resolution.<br />• Trained using 768 image patches per page. | ✅                   |
+| ------------------------------------------------------------ |-------------------------------------------------------------------------------| ---------- | ------------------------------------------------------------ | ------------------- |
+| [vidore/colpali](https://huggingface.co/vidore/colpali)      | 81.3                                                                          | Gemma      | • Based on `google/paligemma-3b-mix-448`.<br />• Checkpoint used in the ColPali paper. | ❌                   |
+| [vidore/colpali-v1.1](https://huggingface.co/vidore/colpali-v1.1) | 81.5                                                                          | Gemma      | • Based on `google/paligemma-3b-mix-448`.                    | ✅                   |
+| [vidore/colpali-v1.2](https://huggingface.co/vidore/colpali-v1.2) | 83.9                                                                          | Gemma      | • Based on `google/paligemma-3b-mix-448`.                    | ✅                   |
+| [vidore/colqwen2-v0.1](https://huggingface.co/vidore/colqwen2-v0.1) | 87.3                                                                          | Apache 2.0 | • Based on `Qwen/Qwen2-VL-2B-Instruct`.<br />• Supports dynamic resolution.<br />• Trained using 768 image patches per page. | ✅                   |
 
 ## Setup
 
-We used Python 3.11.6 and PyTorch 2.2.2 to train and test our models, but the codebase is compatible with Python >=3.9 and recent PyTorch versions. To install the package, run:
+We used Python 3.11.6 and PyTorch 2.4 to train and test our models, but the codebase is compatible with Python >=3.9 and recent PyTorch versions. To install the package, run:
 
 ```bash
 pip install colpali-engine
@@ -56,17 +56,17 @@ pip install colpali-engine
 import torch
 from PIL import Image
 
-from colpali_engine.models import ColPali, ColPaliProcessor
+from colpali_engine.models import ColQwen2, ColQwen2Processor
 
-model_name = "vidore/colpali-v1.2"
+model_name = "vidore/colqwen2-v0.1"
 
-model = ColPali.from_pretrained(
+model = ColQwen2.from_pretrained(
     model_name,
     torch_dtype=torch.bfloat16,
     device_map="cuda:0",  # or "mps" if on Apple Silicon
 ).eval()
 
-processor = ColPaliProcessor.from_pretrained(model_name)
+processor = ColQwen2Processor.from_pretrained(model_name)
 
 # Your inputs
 images = [
@@ -226,17 +226,19 @@ Several community projects and ressources have been developed around ColPali to 
 | VARAG         | [VARAG](https://github.com/adithya-s-k/VARAG) uses ColPali in a vision-only and a hybrid RAG pipeline. |
 | ColBERT Live! | [`ColBERT Live!`](https://github.com/jbellis/colbert-live/) enables ColPali usage with vector databases supporting large datasets, compression, and non-vector predicates. |
 
+
 ### Notebooks 📙
 
-| Notebook Title                                  | Author & Link                                                |
-| ----------------------------------------------- | ------------------------------------------------------------ |
-| ColPali Cookbooks                               | [Tony's Cookbooks (ILLUIN)](https://github.com/tonywu71/colpali-cookbooks) 🙋🏻 |
-| Vision RAG Tutorial                             | [Manu's Vision Rag Tutorial (ILLUIN)](https://github.com/ManuelFay/Tutorials/blob/main/Tuesday_Practical_2_Vision_RAG.ipynb) 🙋🏻 |
-| ColPali + Qwen2-VL for RAG                      | [Merve's Notebook (HuggingFace 🤗)](https://github.com/merveenoyan/smol-vision/blob/main/ColPali_%2B_Qwen2_VL.ipynb) |
-| Weaviate Tutorial                               | [Connor's ColPali POC (Weaviate)](https://github.com/weaviate/recipes/blob/main/weaviate-features/named-vectors/NamedVectors-ColPali-POC.ipynb) |
-| Data Generation                                 | [Daniel's Notebook (HuggingFace 🤗)](https://danielvanstrien.xyz/posts/post-with-code/colpali/2024-09-23-generate_colpali_dataset.html) |
-| Indexing ColPali with Qdrant                    | [Daniel's Notebook (HuggingFace 🤗)](https://danielvanstrien.xyz/posts/post-with-code/colpali-qdrant/2024-10-02_using_colpali_with_qdrant.html) |
-| Finance Report Analysis with ColPali and Gemini | [Jaykumaran (LearnOpenCV)](https://github.com/spmallick/learnopencv/tree/master/Multimodal-RAG-with-ColPali-Gemini) |
+| Notebook Title                                    | Author & Link                                                                                                                                  |
+|---------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------|
+| ColPali Cookbooks                                 | [Tony's Cookbooks (ILLUIN)](https://github.com/tonywu71/colpali-cookbooks) 🙋🏻                                                                |
+| Vision RAG Tutorial                               | [Manu's Vision Rag Tutorial (ILLUIN)](https://github.com/ManuelFay/Tutorials/blob/main/Tuesday_Practical_2_Vision_RAG.ipynb) 🙋🏻              |
+| ColPali (Byaldi) + Qwen2-VL for RAG               | [Merve's Notebook (HuggingFace 🤗)](https://github.com/merveenoyan/smol-vision/blob/main/ColPali_%2B_Qwen2_VL.ipynb)                           |
+| Indexing ColPali with Qdrant                      | [Daniel's Notebook (HuggingFace 🤗)](https://danielvanstrien.xyz/posts/post-with-code/colpali-qdrant/2024-10-02_using_colpali_with_qdrant.html) |
+| Weaviate Tutorial                                 | [Connor's ColPali POC (Weaviate)](https://github.com/weaviate/recipes/blob/main/weaviate-features/named-vectors/NamedVectors-ColPali-POC.ipynb) |
+| Use ColPali for Multi-Modal Retrieval with Milvus | [Milvus Documentation](https://milvus.io/docs/use_ColPali_with_milvus.md)                                                              |
+| Data Generation                                   | [Daniel's Notebook (HuggingFace 🤗)](https://danielvanstrien.xyz/posts/post-with-code/colpali/2024-09-23-generate_colpali_dataset.html)        |
+| Finance Report Analysis with ColPali and Gemini   | [Jaykumaran (LearnOpenCV)](https://github.com/spmallick/learnopencv/tree/master/Multimodal-RAG-with-ColPali-Gemini)                            |
 
 ### Other resources
 
@@ -244,22 +246,23 @@ Several community projects and ressources have been developed around ColPali to 
 - 📋 = PDF / slides
 - 📹 = video
 
-| Title                                                        | Author & Link                                                |
-| ------------------------------------------------------------ | ------------------------------------------------------------ |
-| LlamaIndex Webinar: ColPali - Efficient Document Retrieval with Vision Language Models | [LlamaIndex's Youtube video](https://youtu.be/nzcBvba7mzI?si=WL9MsyiAFJMyEolz) 📹 |
-| PDF Retrieval with Vision Language Models                    | [Jo's blog post #1 (Vespa)](https://blog.vespa.ai/retrieval-with-vision-language-models-colpali/) 📝 |
-| Scaling ColPali to billions of PDFs with Vespa               | [Jo's blog post #2 (Vespa)](https://blog.vespa.ai/scaling-colpali-to-billions/) 📝 |
-| Multimodal Document RAG with Llama 3.2 Vision and ColQwen2   | [Zain's blog post (Together AI)](https://www.together.ai/blog/multimodal-document-rag-with-llama-3-2-vision-and-colqwen2) 📝 |
-| ColPali: Document Retrieval with Vision Language Models      | [Antaripa's Notion blog post](https://antaripasaha.notion.site/ColPali-Efficient-Document-Retrieval-with-Vision-Language-Models-10f5314a5639803d94d0d7ac191bb5b1) 📝 |
-| Minimalist diagrams explaining ColPali                       | [Leonie's ColPali diagrams on X ](https://twitter.com/helloiamleonie/status/1839321865195851859)📝 |
-| Multimodal RAG with ColPali and Gemini : Financial Report Analysis Application | [Jaykumaran's blog post (LearnOpenCV)](https://learnopencv.com/multimodal-rag-with-colpali/) 📝 |
-| Implement Multimodal RAG with ColPali and Vision Language Model Groq(Llava) and Qwen2-VL | [Plaban's blog post](https://medium.com/the-ai-forum/implement-multimodal-rag-with-colpali-and-vision-language-model-groq-llava-and-qwen2-vl-5c113b8c08fd) 📝 |
-| State of AI report 2024                                      | [Nathan's report](https://www.stateof.ai/) 📋                 |
-| multimodal AI. open-source. in a nutshell.                   | [Merve's Youtube video](https://youtu.be/IoGaGfU1CIg?si=yEhxMqJYxvMzGyUm) 📹 |
-| Technology Radar Volume 31 (October 2024)                    | [thoughtworks's report](https://www.thoughtworks.com/radar) 📋 |
-| Remove Complexity from Your RAG Applications                 | [Kyryl's Blog post (KOML)](https://kyrylai.com/2024/09/09/remove-complexity-from-your-rag-applications/) 📝 |
-| Late interaction & efficient Multi-modal retrievers need more than a vector index | [Ayush Chaurasia (LanceDB)](https://blog.lancedb.com/late-interaction-efficient-multi-modal-retrievers-need-more-than-just-a-vector-index/) 📝 |
-|  Optimizing Document Retrieval with ColPali and Qdrant's Binary Quantization  | [Sabrina Esaquino (Qdrant)]( https://youtu.be/_A90A-grwIc?si=MS5RV17D6sgirCRm)  📹 | 
+| Title                                                                                                  | Author & Link                                                                                                                                                        |
+|--------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| State of AI report 2024                                                                                | [Nathan's report](https://www.stateof.ai/) 📋                                                                                                                        |
+| Technology Radar Volume 31 (October 2024)                                                              | [thoughtworks's report](https://www.thoughtworks.com/radar) 📋                                                                                                       |
+| LlamaIndex Webinar: ColPali - Efficient Document Retrieval with Vision Language Models                 | [LlamaIndex's Youtube video](https://youtu.be/nzcBvba7mzI?si=WL9MsyiAFJMyEolz) 📹                                                                                    |
+| PDF Retrieval with Vision Language Models                                                              | [Jo's blog post #1 (Vespa)](https://blog.vespa.ai/retrieval-with-vision-language-models-colpali/) 📝                                                                 |
+| Scaling ColPali to billions of PDFs with Vespa                                                         | [Jo's blog post #2 (Vespa)](https://blog.vespa.ai/scaling-colpali-to-billions/) 📝                                                                                   |
+| Neural Search Talks: ColPali (with Manuel Faysse) | [Zeta Alpha's Podcast](https://open.spotify.com/episode/2s6ljhd6VQTL2mIU9cFzCb) 📹                                                                                   |
+| Multimodal Document RAG with Llama 3.2 Vision and ColQwen2                                             | [Zain's blog post (Together AI)](https://www.together.ai/blog/multimodal-document-rag-with-llama-3-2-vision-and-colqwen2) 📝                                         |
+| ColPali: Document Retrieval with Vision Language Models                                                | [Antaripa's Notion blog post](https://antaripasaha.notion.site/ColPali-Efficient-Document-Retrieval-with-Vision-Language-Models-10f5314a5639803d94d0d7ac191bb5b1) 📝 |
+| Minimalist diagrams explaining ColPali                                                                 | [Leonie's ColPali diagrams on X ](https://twitter.com/helloiamleonie/status/1839321865195851859)📝                                                                   |
+| Multimodal RAG with ColPali and Gemini : Financial Report Analysis Application                         | [Jaykumaran's blog post (LearnOpenCV)](https://learnopencv.com/multimodal-rag-with-colpali/) 📝                                                                      |
+| Implement Multimodal RAG with ColPali and Vision Language Model Groq(Llava) and Qwen2-VL               | [Plaban's blog post](https://medium.com/the-ai-forum/implement-multimodal-rag-with-colpali-and-vision-language-model-groq-llava-and-qwen2-vl-5c113b8c08fd) 📝        |
+| multimodal AI. open-source. in a nutshell.                                                             | [Merve's Youtube video](https://youtu.be/IoGaGfU1CIg?si=yEhxMqJYxvMzGyUm) 📹                                                                                         |
+| Remove Complexity from Your RAG Applications                                                           | [Kyryl's Blog post (KOML)](https://kyrylai.com/2024/09/09/remove-complexity-from-your-rag-applications/) 📝                                                          |
+| Late interaction & efficient Multi-modal retrievers need more than a vector index                      | [Ayush Chaurasia (LanceDB)](https://blog.lancedb.com/late-interaction-efficient-multi-modal-retrievers-need-more-than-just-a-vector-index/) 📝                       |
+| Optimizing Document Retrieval with ColPali and Qdrant's Binary Quantization                            | [Sabrina Esaquino (Qdrant)]( https://youtu.be/_A90A-grwIc?si=MS5RV17D6sgirCRm)  📹                                                                                   | 
 
 ## Paper result reproduction
 
