@@ -35,7 +35,7 @@ config:
     (): transformers.training_args.TrainingArguments
     output_dir: null
     overwrite_output_dir: true
-    num_train_epochs: 3
+    num_train_epochs: 1
     per_device_train_batch_size: 64
     gradient_checkpointing: true
     gradient_checkpointing_kwargs: { "use_reentrant": false }
@@ -49,7 +49,7 @@ config:
     save_steps: 500
     logging_steps: 10
     eval_steps: 100
-    warmup_steps: 100
+    warmup_steps: 50
     learning_rate: 5e-4
     save_total_limit: 1
     # resume_from_checkpoint: true
