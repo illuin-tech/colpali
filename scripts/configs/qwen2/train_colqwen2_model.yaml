@@ -60,9 +60,9 @@ config:
 
   peft_config:
     (): peft.LoraConfig
-    r: 128
-    lora_alpha: 128
-    lora_dropout: 0.0
+    r: 32
+    lora_alpha: 32
+    lora_dropout: 0.1
     init_lora_weights: "gaussian"
     bias: "none"
     task_type: "FEATURE_EXTRACTION"
