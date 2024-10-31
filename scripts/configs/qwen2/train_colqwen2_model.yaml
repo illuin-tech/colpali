@@ -53,7 +53,7 @@ config:
     # resume_from_checkpoint: true
     # optim: "paged_adamw_8bit"
     # wandb logging
-    wandb_project: "colqwen2"
+    # wandb_project: "colqwen2"
     # run_name: "colqwen2-ba32-nolora"
     report_to: "wandb"
 
