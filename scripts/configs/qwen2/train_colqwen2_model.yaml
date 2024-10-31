@@ -1,6 +1,6 @@
 config:
   (): colpali_engine.trainer.colmodel_training.ColModelTrainingConfig
-  output_dir: !path ../../../models/colqwen2-ba32-nolora
+  output_dir: !path ../../../models/colqwen2-ba32-highlora
   processor:
     (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
     class_to_instanciate: !ext colpali_engine.models.ColQwen2Processor
@@ -42,16 +42,21 @@ config:
     # gradient_accumulation_steps: 4
     per_device_eval_batch_size: 8
     eval_strategy: "steps"
-    dataloader_num_workers: 4
+    dataloader_num_workers: 16
     # bf16: true
     save_steps: 500
     logging_steps: 10
     eval_steps: 100
     warmup_steps: 100
-    learning_rate: 5e-4
+    learning_rate: 5e-5
     save_total_limit: 1
     # resume_from_checkpoint: true
     # optim: "paged_adamw_8bit"
+    # wandb logging
+    wandb_project: "colqwen2"
+    # run_name: "colqwen2-ba32-nolora"
+    report_to: "wandb"
+
 
   peft_config:
     (): peft.LoraConfig
