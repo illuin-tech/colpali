@@ -47,7 +47,7 @@ config:
     save_steps: 500
     logging_steps: 10
     eval_steps: 500
-    warmup_steps: 10000
+    warmup_steps: 1000
     learning_rate: 5e-4
     save_total_limit: 1
     # resume_from_checkpoint: true
