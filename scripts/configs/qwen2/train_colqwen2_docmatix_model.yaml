@@ -1,6 +1,6 @@
 config:
   (): colpali_engine.trainer.colmodel_training.ColModelTrainingConfig
-  output_dir: !path ../../../models/colqwen2-docmatix-ba64-nockpt
+  output_dir: !path ../../../models/colqwen2-docmatix-ba126-ckpt-1e
   processor:
     (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
     class_to_instanciate: !ext colpali_engine.models.ColQwen2Processor
@@ -48,8 +48,9 @@ config:
     save_steps: 500
     logging_steps: 10
     eval_steps: 500
-    warmup_steps: 1000
-    learning_rate: 5e-4
+    warmup_steps: 500
+    max_steps: 10000
+    learning_rate: 5e-5
     save_total_limit: 1
     # resume_from_checkpoint: true
     # optim: "paged_adamw_8bit"
