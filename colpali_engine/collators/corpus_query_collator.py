@@ -30,7 +30,8 @@ class CorpusQueryCollator(VisualRetrieverCollator):
 
         if self.corpus_format == "wikiss":
             print("Mapping docids to indices")
-            self.docid_to_idx = {docid: idx for docid, idx in zip(self.image_dataset["docid"], range(len(self.image_dataset)))}
+            self.docid_to_idx = {docid: idx for docid, idx in
+                                 zip(self.image_dataset["docid"], range(len(self.image_dataset)))}
 
     def get_image_from_docid(self, docid):
         if self.corpus_format == "wikiss":
