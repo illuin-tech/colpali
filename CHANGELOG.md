@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Removed `add_suffix` in the VisualRetrieverCollator and let the `suffix` be added in the individual processors.
 - Changed the incorrect `<pad>` token to `<|endoftext|>` fo query augmentation `ColQwen2Processor`. Note that previous models were trained with `<|endoftext|>` so this is simply a non-breaking inference upgrade patch.
 
+
 ## [0.3.3] - 2024-10-29
 
 ### Added
