@@ -27,7 +27,7 @@ config:
 
   # max_length: 50
   run_eval: true
-  add_suffix: true
+  
   loss_func:
     (): colpali_engine.loss.bi_encoder_losses.BiPairwiseCELoss
   tr_args:

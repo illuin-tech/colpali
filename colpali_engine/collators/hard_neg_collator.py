@@ -12,13 +12,11 @@ class HardNegCollator(VisualRetrieverCollator):
         self,
         processor: BaseVisualRetrieverProcessor,
         max_length: int = 2048,
-        add_suffix: bool = True,
         image_dataset: Optional[Dataset] = None,
     ):
         super().__init__(
             processor=processor,
             max_length=max_length,
-            add_suffix=add_suffix,
         )
         if image_dataset is None:
             raise ValueError("`image_dataset` must be provided")

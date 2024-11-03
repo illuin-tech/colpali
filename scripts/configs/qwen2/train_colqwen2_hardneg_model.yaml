@@ -26,7 +26,7 @@ config:
 
   # max_length: 50
   run_eval: true
-  add_suffix: true
+  
   loss_func:
     (): colpali_engine.loss.late_interaction_losses.ColbertPairwiseNegativeCELoss
   tr_args: !import ../tr_args/default_tr_args.yaml

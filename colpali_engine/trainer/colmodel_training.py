@@ -34,7 +34,6 @@ class ColModelTrainingConfig:
     run_eval: bool = True
     run_train: bool = True
     peft_config: Optional[LoraConfig] = None
-    add_suffix: bool = False
     processor: BaseVisualRetrieverProcessor = None
     tokenizer: PreTrainedTokenizer = None
     loss_func: Optional[Callable] = ColbertLoss()
