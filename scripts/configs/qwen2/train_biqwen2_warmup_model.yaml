@@ -1,6 +1,6 @@
 config:
   (): colpali_engine.trainer.colmodel_training.ColModelTrainingConfig
-  output_dir: !path ../../../models/biqwen2-warmup-256-newpad-1e
+  output_dir: !path ../../../models/biqwen2-warmup-256-newpad-0e
   processor:
     (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
     class_to_instanciate: !ext colpali_engine.models.BiQwen2Processor
@@ -46,6 +46,7 @@ config:
     # bf16: true
     save_steps: 500
     logging_steps: 10
+    max_steps: 1
     eval_steps: 100
     warmup_steps: 100
     learning_rate: 5e-5
