@@ -1,6 +1,6 @@
 config:
   (): colpali_engine.trainer.colmodel_training.ColModelTrainingConfig
-  output_dir: !path ../../../models/biqwen2-hardneg-256-newpad-nobuffer
+  output_dir: !path ../../../models/biqwen2-docmatix-256
   processor:
     (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
     class_to_instanciate: !ext colpali_engine.models.BiQwen2Processor
@@ -22,7 +22,7 @@ config:
 #      bnb_4bit_compute_dtype:  "bfloat16"
 #      bnb_4bit_use_double_quant: true
 
-  dataset_loading_func: !ext colpali_engine.utils.dataset_transformation.load_train_set_ir_negs
+  dataset_loading_func: !ext colpali_engine.utils.dataset_transformation.load_docmatix_ir_negs
   eval_dataset_loader: !import ../data/test_data.yaml
 
   # max_length: 50
@@ -48,7 +48,8 @@ config:
     logging_steps: 10
     eval_steps: 100
     warmup_steps: 100
-    learning_rate: 5e-4
+    max_steps: 2000
+    learning_rate: 5e-5
     save_total_limit: 1
     # optim: "paged_adamw_8bit"
   peft_config:
