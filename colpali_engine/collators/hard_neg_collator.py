@@ -14,30 +14,4 @@ class HardNegCollator(VisualRetrieverCollator):
         max_length: int = 2048,
         image_dataset: Optional[Dataset] = None,
     ):
-        super().__init__(
-            processor=processor,
-            max_length=max_length,
-        )
-        if image_dataset is None:
-            raise ValueError("`image_dataset` must be provided")
-        self.image_dataset = cast(Dataset, image_dataset)
-        # deprecation warning
-        print("The HardNegCollator will be replaced by the CorpusQueryCollator in the next major version")
-
-    def get_image_from_image_dataset(self, image_idx):
-        return self.image_dataset[int(image_idx)]["image"]
-
-    def __call__(self, examples: List[Dict[str, Any]]) -> Dict[str, Any]:
-        tmp_examples = examples
-        examples = []
-
-        for example in tmp_examples:
-            pos_image = self.get_image_from_image_dataset(example["gold_index"])
-            pos_query = example["query"]
-
-            # Randomly sample a negative image amongst the top 10
-            neg_image = self.get_image_from_image_dataset(example["negs"][randint(0, 9)])
-
-            examples += [{"image": pos_image, "query": pos_query, "neg_image": neg_image}]
-
-        return super().__call__(examples)
+        raise DeprecationWarning("Deprecated - use CorpusQueryCollator instead")
