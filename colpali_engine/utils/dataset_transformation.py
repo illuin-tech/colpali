@@ -112,13 +112,13 @@ def load_wikiss() -> Tuple[DatasetDict, Dataset, str]:
 
 def load_train_set_ir_negs() -> Tuple[DatasetDict, Dataset]:
     base_path = "./data_dir/" if USE_LOCAL_DATASET else "manu/"
-    dataset = cast(Dataset, load_dataset(base_path + "colpali-data-ir", split="train"))
+    dataset = cast(Dataset, load_dataset(base_path + "colpali-queries", split="train"))
 
     dataset_eval = dataset.select(range(500))
     dataset = dataset.select(range(500, len(dataset)))
     ds_dict = DatasetDict({"train": dataset, "test": dataset_eval})
 
-    anchor_ds = cast(Dataset, load_dataset(base_path + "colpali-data", split="train"))
+    anchor_ds = cast(Dataset, load_dataset(base_path + "colpali-corpus", split="train"))
     return ds_dict, anchor_ds, "vidore"
 
 
