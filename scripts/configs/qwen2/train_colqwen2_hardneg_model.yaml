@@ -1,6 +1,6 @@
 config:
   (): colpali_engine.trainer.colmodel_training.ColModelTrainingConfig
-  output_dir: !path ../../../models/colqwen2-multi-hardneg
+  output_dir: !path ../../../models/colqwen2-hardneg-256
   processor:
     (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
     class_to_instanciate: !ext colpali_engine.models.ColQwen2Processor
@@ -13,7 +13,8 @@ config:
     pretrained_model_name_or_path: "./models/colqwen2_base"
     torch_dtype:  !ext torch.bfloat16
     use_cache: false
-#    device_map: "auto"
+    attn_implementation: "flash_attention_2"
+  #    device_map: "auto"
 #    quantization_config:
 #      (): transformers.BitsAndBytesConfig
 #      load_in_4bit: true
@@ -29,7 +30,29 @@ config:
   
   loss_func:
     (): colpali_engine.loss.late_interaction_losses.ColbertPairwiseNegativeCELoss
-  tr_args: !import ../tr_args/default_tr_args.yaml
+
+  tr_args:
+    (): transformers.training_args.TrainingArguments
+    output_dir: null
+    overwrite_output_dir: true
+    num_train_epochs: 1
+    per_device_train_batch_size: 64
+    gradient_checkpointing: true
+    gradient_checkpointing_kwargs: {"use_reentrant": false}
+    # 6 x 8 gpus = 48 batch size
+    # gradient_accumulation_steps: 4
+    per_device_eval_batch_size: 64
+    eval_strategy: "steps"
+    dataloader_num_workers: 8
+    # bf16: true
+    save_steps: 500
+    logging_steps: 10
+    eval_steps: 500
+    warmup_steps: 100
+    learning_rate: 5e-5
+    save_total_limit: 1
+    # resume_from_checkpoint: true
+    # optim: "paged_adamw_8bit"  peft_config:
   peft_config:
     (): peft.LoraConfig
     r: 32
