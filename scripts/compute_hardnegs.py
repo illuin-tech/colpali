@@ -12,8 +12,8 @@ from colpali_engine.utils.dataset_transformation import load_train_set
 train_set = load_train_set()
 
 
-COMPUTE_EMBEDDINGS = True
-COMPUTE_HARDNEGS = True
+COMPUTE_EMBEDDINGS = False
+COMPUTE_HARDNEGS = False
 
 if COMPUTE_HARDNEGS or COMPUTE_EMBEDDINGS:
     print("Loading base model")
@@ -118,10 +118,10 @@ def mapper_fn(example, idx):
         "positive_passages": [filenames.index(example["image_filename"])],
     }
 
-    tmp["gold_in_top_100"] = tmp["gold_index"] in tmp["negs"]
+    tmp["gold_in_top_100"] = tmp["positive_passages"][0] in tmp["negative_passages"]
     # remove gold index from negs if it is there
     if tmp["gold_in_top_100"]:
-        tmp["negative_passages"].remove(tmp["gold_index"])
+        tmp["negative_passages"].remove(tmp["positive_passages"][0])
     return tmp
 
 
