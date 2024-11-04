@@ -30,6 +30,7 @@ config:
   
   loss_func:
     (): colpali_engine.loss.bi_encoder_losses.BiPairwiseNegativeCELoss
+    in_batch_term: true
   tr_args:
     (): transformers.training_args.TrainingArguments
     output_dir: null
