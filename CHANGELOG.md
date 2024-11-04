@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased] - 2024-11-xx
 
 ### Added
-- General `CorpusQueryCollator` for BEIR style dataset training or hard negative training. This will deprecate `HardNegCollator` at the next major version.
+- General `CorpusQueryCollator` for BEIR style dataset training or hard negative training. This deprecates `HardNegCollator` but all changes to the training loop are made for a seemless update.
 
 
 ### Changed
