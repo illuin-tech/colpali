@@ -49,7 +49,12 @@ class CorpusQueryCollator(VisualRetrieverCollator):
         examples = []
 
         for example in tmp_examples:
-            pos_image = self.get_image_from_docid(example["positive_passages"][0]["docid"])
+            if self.corpus_format == "wikiss" or self.corpus_format == "docmatix":
+                pos_image = self.get_image_from_docid(example["positive_passages"][0]["docid"])
+            elif self.corpus_format == "vidore":
+                pos_image = self.get_image_from_docid(example["positive_passages"][0])
+            else:
+                raise NotImplementedError(f"Corpus format {self.corpus_format} not supported")
             pos_query = example["query"]
             sample = {"image": pos_image, "query": pos_query}
             if self.mined_negatives:
