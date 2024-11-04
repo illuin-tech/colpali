@@ -51,17 +51,28 @@ class CorpusQueryCollator(VisualRetrieverCollator):
         for example in tmp_examples:
             if self.corpus_format == "wikiss" or self.corpus_format == "docmatix":
                 pos_image = self.get_image_from_docid(example["positive_passages"][0]["docid"])
+                pos_query = example["query"]
+                sample = {"image": pos_image, "query": pos_query}
+                if self.mined_negatives:
+                    # Randomly sample a negative image
+                    len_negs = len(example["negative_passages"])
+                    neg_image = self.get_image_from_docid(
+                        example["negative_passages"][randint(0, len_negs - 1)]["docid"])
+                    sample.update({"neg_image": neg_image})
+                examples += [sample]
+
             elif self.corpus_format == "vidore":
                 pos_image = self.get_image_from_docid(example["positive_passages"][0])
+                pos_query = example["query"]
+                sample = {"image": pos_image, "query": pos_query}
+                if self.mined_negatives:
+                    # Randomly sample a negative image
+                    len_negs = len(example["negative_passages"])
+                    neg_image = self.get_image_from_docid(example["negative_passages"][randint(0, len_negs - 1)])
+                    sample.update({"neg_image": neg_image})
+                examples += [sample]
             else:
                 raise NotImplementedError(f"Corpus format {self.corpus_format} not supported")
-            pos_query = example["query"]
-            sample = {"image": pos_image, "query": pos_query}
-            if self.mined_negatives:
-                # Randomly sample a negative image
-                len_negs = len(example["negative_passages"])
-                neg_image = self.get_image_from_docid(example["negative_passages"][randint(0, len_negs - 1)]["docid"])
-                sample.update({"neg_image": neg_image})
-            examples += [sample]
+
 
         return super().__call__(examples)
