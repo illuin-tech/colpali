@@ -53,6 +53,9 @@ class BiPali(PaliGemmaPreTrainedModel):
     def forward(self, *args, **kwargs):
         # delete output_hidden_states from kwargs
         kwargs.pop("output_hidden_states", None)
+        if "pixel_values" in kwargs:
+            kwargs["pixel_values"] = kwargs["pixel_values"].to(dtype=self.dtype)
+
         outputs = self.model(*args, output_hidden_states=True, **kwargs)
         last_hidden_states = outputs.hidden_states[-1]  # (batch_size, sequence_length, hidden_size)
         # pooling -mean on attention mask==1
