@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Bumped "breaking" dependencies on MTEB and Transformers version and made the corresponding changes in the code
 - Casted Image dtype in ColPali due to breaking 4.46 transformers update
 - Added a "num_image_tokens" kwarg to the `ColQwen2Processor` to allow for different image resolutions
+- Rename `x_idefics_2_y` files to `x_idefics2_y` to match the `transformers` naming convention
 
 ### Fixed
 
