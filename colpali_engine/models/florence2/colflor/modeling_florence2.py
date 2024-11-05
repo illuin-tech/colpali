@@ -25,7 +25,11 @@ import torch.nn.functional as F
 import torch.utils.checkpoint
 import torch.utils.checkpoint as checkpoint
 from einops import rearrange
-from timm.models.layers import DropPath, trunc_normal_
+import importlib
+try:
+    from timm.models.layers import DropPath, trunc_normal_
+except ImportError:
+    pass
 from torch import nn
 from transformers.activations import ACT2FN
 from transformers.modeling_attn_mask_utils import (
@@ -2443,6 +2447,10 @@ class Florence2VisionModel(Florence2PreTrainedModel):
     def __init__(self, config: Florence2VisionConfig):
         super().__init__(config)
         assert config.model_type == 'davit', 'only DaViT is supported for now'
+        spec = importlib.util.find_spec('timm')
+        if spec is None:
+            raise ImportError('timm is required to use DaViT model')
+
         self.vision_tower = DaViT.from_config(config=config)
 
         self.post_init()
