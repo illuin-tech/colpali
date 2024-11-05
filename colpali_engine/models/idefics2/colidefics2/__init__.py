@@ -1,0 +1,2 @@
+from .modeling_colidefics2 import ColIdefics2
+from .processing_colidefics2 import ColIdefics2Processor

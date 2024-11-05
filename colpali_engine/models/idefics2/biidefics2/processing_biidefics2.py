@@ -2,7 +2,7 @@ from typing import List, Optional, Union
 
 import torch
 
-from colpali_engine.models.idefics_2.colidefics_2.processing_colidefics_2 import ColIdefics2Processor
+from colpali_engine.models.idefics2.colidefics2.processing_colidefics2 import ColIdefics2Processor
 
 
 class BiIdefics2Processor(ColIdefics2Processor):
