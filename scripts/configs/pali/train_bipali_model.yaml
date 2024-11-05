@@ -1,6 +1,6 @@
 config:
   (): colpali_engine.trainer.colmodel_training.ColModelTrainingConfig
-  output_dir: !path ../../../models/right_pad/train_bipali_mean-3b-mix-448
+  output_dir: !path ../../../models/right_pad/train_bipali_reproduction
   processor:
     () : colpali_engine.utils.transformers_wrappers.AutoProcessorWrapper
     pretrained_model_name_or_path: "./models/paligemma-3b-mix-448"
@@ -8,7 +8,7 @@ config:
   model:
     (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
     class_to_instanciate: !ext colpali_engine.models.BiPali
-    pretrained_model_name_or_path: "./models/paligemma-3b-mix-448-base"
+    pretrained_model_name_or_path: "./models/paligemma-3b-mix-448"
     torch_dtype:  !ext torch.bfloat16
 #    device_map: "auto"
 #    quantization_config:
