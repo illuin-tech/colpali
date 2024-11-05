@@ -12,8 +12,8 @@ class ColPaliProcessor(BaseVisualRetrieverProcessor, PaliGemmaProcessor):
     Processor for ColPali.
     """
 
-    visual_prompt_prefix: ClassVar[str] = "Describe the image."
-    query_prefix: ClassVar[str] = "Question: "
+    visual_prompt_prefix: ClassVar[str] = "<image><bos>Describe the image."
+    query_prefix: ClassVar[str] = "Query: "
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
