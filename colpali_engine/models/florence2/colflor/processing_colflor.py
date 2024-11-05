@@ -53,7 +53,7 @@ class ColFlorProcessor(BaseVisualRetrieverProcessor, Florence2Processor):
         texts_query: List[str] = []
 
         for query in queries:
-            query = f"Question: {query}"
+            query = f"Query: {query}"
             query += suffix  # add suffix (pad tokens)
             texts_query.append(query)
 
