@@ -19,9 +19,6 @@ class ColFlor(Florence2VisionLanguageModel):
 
         self.dim = 128
         self.custom_text_proj = nn.Linear(self.config.text_config.d_model, self.dim)
-        # Now initialize weights properly
-        self.custom_text_proj.weight.data.normal_(mean=0.0, std=0.02)
-        self.custom_text_proj.bias.data.zero_()
 
         self.padding_side = "right"
         self.post_init()
