@@ -83,6 +83,7 @@ def load_train_set_with_tabfquad() -> DatasetDict:
 
 
 def load_docmatix_ir_negs() -> Tuple[DatasetDict, Dataset, str]:
+    """Returns the query dataset, then the anchor dataset with the documents, then the dataset type"""
     base_path = "./data_dir/" if USE_LOCAL_DATASET else "Tevatron/"
     dataset = cast(Dataset, load_dataset(base_path + "docmatix-ir", split="train"))
     # dataset = dataset.select(range(100500))
@@ -97,6 +98,7 @@ def load_docmatix_ir_negs() -> Tuple[DatasetDict, Dataset, str]:
     return ds_dict, anchor_ds, "docmatix"
 
 def load_wikiss() -> Tuple[DatasetDict, Dataset, str]:
+    """Returns the query dataset, then the anchor dataset with the documents, then the dataset type"""
     base_path = "./data_dir/" if USE_LOCAL_DATASET else "Tevatron/"
     dataset = cast(Dataset, load_dataset(base_path + "wiki-ss-nq", data_files="train.jsonl", split="train"))
     # dataset = dataset.select(range(400500))
@@ -110,7 +112,8 @@ def load_wikiss() -> Tuple[DatasetDict, Dataset, str]:
     return ds_dict, anchor_ds, "wikiss"
 
 
-def load_train_set_ir_negs() -> Tuple[DatasetDict, Dataset]:
+def load_train_set_ir_negs() -> Tuple[DatasetDict, Dataset, str]:
+    """Returns the query dataset, then the anchor dataset with the documents, then the dataset type"""
     base_path = "./data_dir/" if USE_LOCAL_DATASET else "manu/"
     dataset = cast(Dataset, load_dataset(base_path + "colpali-queries", split="train"))
 

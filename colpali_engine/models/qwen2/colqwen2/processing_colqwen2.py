@@ -32,10 +32,7 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
     visual_prompt_prefix: ClassVar[str] = (
         "<|im_start|>user\n<|vision_start|><|image_pad|><|vision_end|>Describe the image.<|im_end|><|endoftext|>"
     )
-
-    # FIXME: `query_augmentation_token` was set to hardcoded value "<pad>" in the original code used to train
-    # "vidore/colqwen2-v0.1", while it should have been set to `processor.tokenizer.pad_token`.
-    # TODO: Fix training script for next ColQwen2 release.
+    query_prefix: ClassVar[str] = "Query: "
     query_augmentation_token: ClassVar[str] = "<|endoftext|>"
     image_token: ClassVar[str] = "<|image_pad|>"
 
@@ -153,8 +150,7 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
         texts_query: List[str] = []
 
         for query in queries:
-            query = f"Query: {query}"
-            query += suffix  # add suffix (pad tokens)
+            query = self.query_prefix + query + suffix
             texts_query.append(query)
 
         batch_query = self(

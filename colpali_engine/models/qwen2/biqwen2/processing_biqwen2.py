@@ -25,8 +25,7 @@ class BiQwen2Processor(ColQwen2Processor):
         texts_query: List[str] = []
 
         for query in queries:
-            query = f"Query: {query}"
-            query += suffix  # add suffix (pad tokens)
+            query = self.query_prefix + query + suffix
             texts_query.append(query)
 
         batch_query = self(
