@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 
 ### Changed
+- Updates BiPali config files
 - Removed query augmentation tokens from BiQwen2Processor
 - Modified XQwen2Processor to place `<|endoftext|>` token at the end of the document prompt (non-breaking for ColQwen but helps BiQwen).
 - Removed `add_suffix` in the VisualRetrieverCollator and let the `suffix` be added in the individual processors.
