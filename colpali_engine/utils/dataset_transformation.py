@@ -82,31 +82,55 @@ def load_train_set_with_tabfquad() -> DatasetDict:
     return ds_dict
 
 
-def load_docmatix_ir_negs() -> Tuple[DatasetDict, Dataset]:
+def load_docmatix_ir_negs() -> Tuple[DatasetDict, Dataset, str]:
+    """Returns the query dataset, then the anchor dataset with the documents, then the dataset type"""
     base_path = "./data_dir/" if USE_LOCAL_DATASET else "Tevatron/"
     dataset = cast(Dataset, load_dataset(base_path + "docmatix-ir", split="train"))
-    dataset = dataset.select(range(100500))
+    # dataset = dataset.select(range(100500))
 
     dataset_eval = dataset.select(range(500))
     dataset = dataset.select(range(500, len(dataset)))
     ds_dict = DatasetDict({"train": dataset, "test": dataset_eval})
 
     base_path = "./data_dir/" if USE_LOCAL_DATASET else "HuggingFaceM4/"
-    anchor_ds = cast(Dataset, load_dataset(base_path + "Docmatix", split="train"))
+    anchor_ds = cast(Dataset, load_dataset(base_path + "Docmatix", "images", split="train"))
 
-    return ds_dict, anchor_ds
+    return ds_dict, anchor_ds, "docmatix"
+
+def load_wikiss() -> Tuple[DatasetDict, Dataset, str]:
+    """Returns the query dataset, then the anchor dataset with the documents, then the dataset type"""
+    base_path = "./data_dir/" if USE_LOCAL_DATASET else "Tevatron/"
+    dataset = cast(Dataset, load_dataset(base_path + "wiki-ss-nq", data_files="train.jsonl", split="train"))
+    # dataset = dataset.select(range(400500))
+    dataset_eval = dataset.select(range(500))
+    dataset = dataset.select(range(500, len(dataset)))
+    ds_dict = DatasetDict({"train": dataset, "test": dataset_eval})
+
+    base_path = "./data_dir/" if USE_LOCAL_DATASET else "HuggingFaceM4/"
+    anchor_ds = cast(Dataset, load_dataset(base_path + "wiki-ss-corpus", split="train"))
+
+    return ds_dict, anchor_ds, "wikiss"
 
 
-def load_train_set_ir_negs() -> Tuple[DatasetDict, Dataset]:
+def load_train_set_ir_negs() -> Tuple[DatasetDict, Dataset, str]:
+    """Returns the query dataset, then the anchor dataset with the documents, then the dataset type"""
     base_path = "./data_dir/" if USE_LOCAL_DATASET else "manu/"
-    dataset = cast(Dataset, load_dataset(base_path + "colpali-data-ir", split="train"))
+    dataset = cast(Dataset, load_dataset(base_path + "colpali-queries", split="train"))
+
+    print("Dataset size:", len(dataset))
+    # filter out queries with "gold_in_top_100" == False
+    dataset = dataset.filter(lambda x: x["gold_in_top_100"], num_proc=16)
+    print("Dataset size after filtering:", len(dataset))
+
+    # keep only top 20 negative passages
+    dataset = dataset.map(lambda x: {"negative_passages": x["negative_passages"][:20]})
 
     dataset_eval = dataset.select(range(500))
     dataset = dataset.select(range(500, len(dataset)))
     ds_dict = DatasetDict({"train": dataset, "test": dataset_eval})
 
-    anchor_ds = cast(Dataset, load_dataset(base_path + "colpali-data", split="train"))
-    return ds_dict, anchor_ds
+    anchor_ds = cast(Dataset, load_dataset(base_path + "colpali-corpus", split="train"))
+    return ds_dict, anchor_ds, "vidore"
 
 
 def load_train_set_with_docmatix() -> DatasetDict:

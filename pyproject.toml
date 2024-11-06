@@ -39,12 +39,12 @@ dependencies = [
     "pillow>=9.2.0,<11.0.0",
     "requests",
     "torch>=2.2.0",
-    "transformers>=4.46.0,<4.47.0",
+    "transformers>=4.46.1,<4.47.0",
 ]
 
 [project.optional-dependencies]
 train = [
-    "accelerate>=0.34.0",
+    "accelerate>=0.34.0,<1.1.0",
     "bitsandbytes",
     "configue>=5.0.0",
     "datasets>=2.19.1",

@@ -1,6 +1,6 @@
 config:
   (): colpali_engine.trainer.colmodel_training.ColModelTrainingConfig
-  output_dir: !path ../../../models/colqwen2-ba32-highres
+  output_dir: !path ../../../models/colqwen2-ba256-ckpt-5e-nopad
   processor:
     (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
     class_to_instanciate: !ext colpali_engine.models.ColQwen2Processor
@@ -28,21 +28,22 @@ config:
 
   # max_length: 50
   run_eval: true
-  add_suffix: true
   loss_func:
     (): colpali_engine.loss.late_interaction_losses.ColbertPairwiseCELoss
   tr_args:
     (): transformers.training_args.TrainingArguments
     output_dir: null
     overwrite_output_dir: true
-    num_train_epochs: 3
+    num_train_epochs: 5
     per_device_train_batch_size: 64
     gradient_checkpointing: true
+    gradient_checkpointing_kwargs: { "use_reentrant": false }
+    # gradient_checkpointing: true
     # 6 x 8 gpus = 48 batch size
     # gradient_accumulation_steps: 4
-    per_device_eval_batch_size: 4
+    per_device_eval_batch_size: 8
     eval_strategy: "steps"
-    # dataloader_num_workers: 8
+    dataloader_num_workers: 8
     # bf16: true
     save_steps: 500
     logging_steps: 10
@@ -52,6 +53,11 @@ config:
     save_total_limit: 1
     # resume_from_checkpoint: true
     # optim: "paged_adamw_8bit"
+    # wandb logging
+    # wandb_project: "colqwen2"
+    # run_name: "colqwen2-ba32-nolora"
+    report_to: "wandb"
+
 
   peft_config:
     (): peft.LoraConfig

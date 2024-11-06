@@ -16,12 +16,10 @@ class VisualRetrieverCollator:
         self,
         processor: BaseVisualRetrieverProcessor,
         max_length: int = 2048,
-        add_suffix: bool = True,
     ):
         self.processor = processor
         self.image_token_id = None
         self.max_length = max_length
-        self.suffix = ""
 
         if isinstance(self.processor, ColPaliProcessor) or isinstance(self.processor, ColIdefics2Processor):
             self.image_token_id = self.processor.tokenizer.additional_special_tokens_ids[
@@ -33,8 +31,6 @@ class VisualRetrieverCollator:
                 print("Setting padding side to right")
                 self.processor.tokenizer.padding_side = "right"
 
-        if add_suffix:
-            self.suffix = self.processor.tokenizer.pad_token * 10
 
     def __call__(
         self,
@@ -88,7 +84,6 @@ class VisualRetrieverCollator:
             batch_query = self.processor.process_queries(
                 queries=texts_query,
                 max_length=self.max_length,
-                suffix=self.suffix,
             )
 
         # Prefix each key with "doc_" or "query_" to avoid key conflicts

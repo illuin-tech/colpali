@@ -6,9 +6,8 @@ import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from colpali_engine.models import BiPali, BiPaliProcessor
+from colpali_engine.models import BiQwen2, BiQwen2Processor
 from colpali_engine.utils.dataset_transformation import load_train_set
-from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 
 train_set = load_train_set()
 
@@ -17,22 +16,16 @@ COMPUTE_EMBEDDINGS = False
 COMPUTE_HARDNEGS = False
 
 if COMPUTE_HARDNEGS or COMPUTE_EMBEDDINGS:
-    model_name = "./models/bipali"
-
     print("Loading base model")
-    model = BiPali.from_pretrained(
-        "./models/paligemma-3b-mix-448", torch_dtype=torch.bfloat16, device_map="cuda"
+    model = BiQwen2.from_pretrained(
+        "./models/biqwen2-warmup-256-newpad-0e",
+        torch_dtype=torch.bfloat16,
+        device_map="cuda",
+        attn_implementation="flash_attention_2" if torch.cuda.is_available() else None,
     ).eval()
 
-    print("Adding adapter")
-    model.load_adapter(model_name)
-    model = model.to("cuda")
-
     print("Loading processor")
-    processor = BiPaliProcessor.from_pretrained(model_name)
-    if not isinstance(processor, BaseVisualRetrieverProcessor):
-        raise ValueError("Processor should be a BaseVisualRetrieverProcessor")
-    processor = cast(BaseVisualRetrieverProcessor, processor)
+    processor = BiQwen2Processor.from_pretrained("./models/biqwen2-warmup-256-newpad-0e")
 
 if COMPUTE_EMBEDDINGS:
     print("Loading images")
@@ -120,15 +113,15 @@ filenames = list(filtered_dataset["image_filename"])
 
 def mapper_fn(example, idx):
     tmp = {
-        "negs": [int(x) for x in mined_hardnegs[idx][1:-2].strip().split(",")],
+        "negative_passages": [int(x) for x in mined_hardnegs[idx][1:-2].strip().split(",")],
         "query": example["query"],
-        "gold_index": filenames.index(example["image_filename"]),
+        "positive_passages": [filenames.index(example["image_filename"])],
     }
 
-    tmp["gold_in_top_100"] = tmp["gold_index"] in tmp["negs"]
+    tmp["gold_in_top_100"] = tmp["positive_passages"][0] in tmp["negative_passages"]
     # remove gold index from negs if it is there
     if tmp["gold_in_top_100"]:
-        tmp["negs"].remove(tmp["gold_index"])
+        tmp["negative_passages"].remove(tmp["positive_passages"][0])
     return tmp
 
 

@@ -1,10 +1,11 @@
 config:
   (): colpali_engine.trainer.colmodel_training.ColModelTrainingConfig
-  output_dir: !path ../../../models/colqwen2-hardneg-256-5e
+  output_dir: !path ../../../models/colqwen2-docmatix-ba256-ckpt-1000s
   processor:
     (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
     class_to_instanciate: !ext colpali_engine.models.ColQwen2Processor
     pretrained_model_name_or_path:  "./models/colqwen2_base" # "./models/paligemma-3b-mix-448"
+    # num_image_tokens: 2048
     # max_length: 50
 
   model:
@@ -14,7 +15,7 @@ config:
     torch_dtype:  !ext torch.bfloat16
     use_cache: false
     attn_implementation: "flash_attention_2"
-  #    device_map: "auto"
+#    device_map: "auto"
 #    quantization_config:
 #      (): transformers.BitsAndBytesConfig
 #      load_in_4bit: true
@@ -22,7 +23,7 @@ config:
 #      bnb_4bit_compute_dtype:  "bfloat16"
 #      bnb_4bit_use_double_quant: true
 
-  dataset_loading_func: !ext colpali_engine.utils.dataset_transformation.load_train_set_ir_negs
+  dataset_loading_func: !ext colpali_engine.utils.dataset_transformation.load_docmatix_ir_negs
   eval_dataset_loader: !import ../data/test_data.yaml
 
   # max_length: 50
@@ -30,12 +31,11 @@ config:
   
   loss_func:
     (): colpali_engine.loss.late_interaction_losses.ColbertPairwiseNegativeCELoss
-    in_batch_term: true
   tr_args:
     (): transformers.training_args.TrainingArguments
     output_dir: null
     overwrite_output_dir: true
-    num_train_epochs: 5
+    num_train_epochs: 1
     per_device_train_batch_size: 64
     gradient_checkpointing: true
     gradient_checkpointing_kwargs: {"use_reentrant": false}
@@ -47,12 +47,13 @@ config:
     # bf16: true
     save_steps: 500
     logging_steps: 10
-    eval_steps: 100
+    eval_steps: 500
     warmup_steps: 100
-    learning_rate: 5e-4
+    max_steps: 1000
+    learning_rate: 5e-5
     save_total_limit: 1
     # resume_from_checkpoint: true
-    # optim: "paged_adamw_8bit"  peft_config:
+    # optim: "paged_adamw_8bit"
   peft_config:
     (): peft.LoraConfig
     r: 32

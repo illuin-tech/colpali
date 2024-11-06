@@ -1,13 +1,14 @@
 config:
   (): colpali_engine.trainer.colmodel_training.ColModelTrainingConfig
-  output_dir: !path ../../../models/right_pad/train_bipali_pairwise_proj
+  output_dir: !path ../../../models/right_pad/train_bipali_pairwise_reproduction
   processor:
-    () : colpali_engine.utils.transformers_wrappers.AutoProcessorWrapper
+    (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
+    class_to_instanciate: !ext colpali_engine.models.BiPaliProcessor
     pretrained_model_name_or_path: "./models/paligemma-3b-mix-448"
     max_length: 50
   model:
     (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
-    class_to_instanciate: !ext colpali_engine.models.BiPaliProj
+    class_to_instanciate: !ext colpali_engine.models.BiPali
     pretrained_model_name_or_path: "./models/paligemma-3b-mix-448"
     torch_dtype:  !ext torch.bfloat16
 #    device_map: "auto"
@@ -18,12 +19,12 @@ config:
 #      bnb_4bit_compute_dtype:  "bfloat16"
 #      bnb_4bit_use_double_quant: true
 
-  dataset_loading_func: !ext colpali_engine.utils.dataset_transformation.load_train_set
+  dataset_loading_func: !ext colpali_engine.utils.dataset_transformation.load_train_set_detailed
   eval_dataset_loader: !import ../data/test_data.yaml
 
   max_length: 50
   run_eval: true
-  add_suffix: true
+  
   loss_func:
     (): colpali_engine.loss.bi_encoder_losses.BiPairwiseCELoss
   tr_args: !import ../tr_args/default_tr_args.yaml

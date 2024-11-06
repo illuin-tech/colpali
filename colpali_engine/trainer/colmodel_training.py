@@ -15,8 +15,7 @@ from transformers import (
     TrainingArguments,
 )
 
-from colpali_engine.collators.hard_neg_collator import HardNegCollator
-from colpali_engine.collators.visual_retriever_collator import VisualRetrieverCollator
+from colpali_engine.collators import CorpusQueryCollator, VisualRetrieverCollator
 from colpali_engine.loss.late_interaction_losses import (
     ColbertLoss,
 )
@@ -35,7 +34,6 @@ class ColModelTrainingConfig:
     run_eval: bool = True
     run_train: bool = True
     peft_config: Optional[LoraConfig] = None
-    add_suffix: bool = False
     processor: BaseVisualRetrieverProcessor = None
     tokenizer: PreTrainedTokenizer = None
     loss_func: Optional[Callable] = ColbertLoss()
@@ -96,12 +94,15 @@ class ColModelTraining:
         self.model = self.config.model
         self.dataset = self.config.dataset_loading_func()
         if isinstance(self.dataset, Tuple):
+            corpus_format = self.dataset[2]
             neg_dataset = self.dataset[1]
             self.dataset = self.dataset[0]
-            self.collator = HardNegCollator(
+            self.collator = CorpusQueryCollator(
                 processor=self.config.processor,
                 max_length=self.config.max_length,
                 image_dataset=neg_dataset,
+                mined_negatives=True,
+                corpus_format=corpus_format,
             )
         else:
             self.collator = VisualRetrieverCollator(
@@ -112,7 +113,7 @@ class ColModelTraining:
         self.retrieval_evaluator = CustomRetrievalEvaluator()
 
     def train(self) -> None:
-        if isinstance(self.collator, HardNegCollator):
+        if isinstance(self.collator, CorpusQueryCollator) and self.collator.mined_negatives:
             print("Training with hard negatives")
         else:
             print("Training with in-batch negatives")
