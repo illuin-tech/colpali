@@ -1,7 +1,7 @@
+from __future__ import annotations
+
 from random import randint
 from typing import Any, Dict, List, Optional
-
-from datasets import Dataset
 
 from colpali_engine.collators.visual_retriever_collator import VisualRetrieverCollator
 from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
@@ -12,7 +12,7 @@ class CorpusQueryCollator(VisualRetrieverCollator):
         self,
         processor: BaseVisualRetrieverProcessor,
         max_length: int = 2048,
-        image_dataset: Optional["Dataset"] = None,
+        image_dataset: Optional["Dataset"] = None, # noqa: F821
         mined_negatives: bool = True,
         corpus_format: str = "wikiss",
     ):
@@ -22,6 +22,7 @@ class CorpusQueryCollator(VisualRetrieverCollator):
         )
         if image_dataset is None:
             raise ValueError("`image_dataset` must be provided")
+        self.image_dataset = image_dataset
         self.mined_negatives = mined_negatives
         self.corpus_format = corpus_format
 
