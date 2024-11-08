@@ -8,22 +8,26 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## Unreleased
 
 ## Added
+
 - Added support for Idefics3 (and SmolVLM)
 
+### Fixed
+
+- Fix typing for `processor.score_multi_vector` (allow for both list and tensor inputs). This does not change how the scores are computed.
 
 ## [0.3.4] - 2024-11-07
 
 ### Added
+
 - General `CorpusQueryCollator` for BEIR style dataset training or hard negative training. This deprecates `HardNegCollator` but all changes to the training loop are made for a seemless update.
 
-
 ### Changed
+
 - Updates BiPali config files
 - Removed query augmentation tokens from BiQwen2Processor
 - Modified XQwen2Processor to place `<|endoftext|>` token at the end of the document prompt (non-breaking for ColQwen but helps BiQwen).
 - Removed `add_suffix` in the VisualRetrieverCollator and let the `suffix` be added in the individual processors.
 - Changed the incorrect `<pad>` token to `<|endoftext|>` fo query augmentation `ColQwen2Processor`. Note that previous models were trained with `<|endoftext|>` so this is simply a non-breaking inference upgrade patch.
-
 
 ## [0.3.3] - 2024-10-29
 
