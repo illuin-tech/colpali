@@ -239,6 +239,7 @@ Several community projects and ressources have been developed around ColPali to 
 | Use ColPali for Multi-Modal Retrieval with Milvus | [Milvus Documentation](https://milvus.io/docs/use_ColPali_with_milvus.md)                                                                       |
 | Data Generation                                   | [Daniel's Notebook (HuggingFace 🤗)](https://danielvanstrien.xyz/posts/post-with-code/colpali/2024-09-23-generate_colpali_dataset.html)         |
 | Finance Report Analysis with ColPali and Gemini   | [Jaykumaran (LearnOpenCV)](https://github.com/spmallick/learnopencv/tree/master/Multimodal-RAG-with-ColPali-Gemini)                             |
+| Multimodal Retrieval-Augmented Generation (RAG) with Document Retrieval (ColPali) and Vision Language Models (VLMs) | [Sergio Paniego](https://huggingface.co/learn/cookbook/multimodal_rag_using_document_retrieval_and_vlms)                            |
 
 ### Other resources
 
