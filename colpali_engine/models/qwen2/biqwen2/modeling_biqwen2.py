@@ -1,7 +1,6 @@
 from typing import ClassVar, List, Optional
 
 import torch
-from torch import nn
 from transformers.models.qwen2_vl import Qwen2VLConfig, Qwen2VLForConditionalGeneration
 
 
@@ -14,8 +13,6 @@ class BiQwen2(Qwen2VLForConditionalGeneration):
 
     def __init__(self, config: Qwen2VLConfig):
         super().__init__(config=config)
-        self.dim = 128
-        self.custom_text_proj = nn.Linear(self.model.config.hidden_size, self.dim)
         self.padding_side = "left"
         self.post_init()
 
