@@ -64,7 +64,7 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
         suffix: Optional[str] = None,
     ) -> BatchEncoding:
         """
-        Process queries for ColIdefics2.
+        Process queries for ColIdefics3.
         """
         if suffix is None:
             suffix = self.query_augmentation_token * 10
