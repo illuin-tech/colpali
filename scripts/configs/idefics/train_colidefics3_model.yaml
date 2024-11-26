@@ -41,9 +41,9 @@ config:
     # gradient_checkpointing: true
     # 6 x 8 gpus = 48 batch size
     # gradient_accumulation_steps: 4
-    per_device_eval_batch_size: 8
+    per_device_eval_batch_size: 32
     eval_strategy: "steps"
-    dataloader_num_workers: 8
+    dataloader_num_workers: 4
     # bf16: true
     save_steps: 500
     logging_steps: 10
