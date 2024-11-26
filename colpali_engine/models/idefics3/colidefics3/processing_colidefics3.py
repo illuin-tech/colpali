@@ -71,9 +71,8 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
         texts_query: List[str] = []
 
         for query in queries:
-            query = self.query_prefix + query + suffix
+            query = self.query_prefix + query + suffix + "\n"
             texts_query.append(query)
-
 
         batch_query = self.tokenizer(
             text=texts_query,
