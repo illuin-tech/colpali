@@ -12,9 +12,7 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
     Processor for ColIdefics3.
     """
 
-    visual_prompt_prefix: ClassVar[str] = (
-        "<|im_start|>user\n<|vision_start|><|image_pad|><|vision_end|>Describe the image.<|im_end|><|endoftext|>"
-    )
+    visual_prompt_prefix: ClassVar[str] = "<|im_start|>User:Can you describe the two images?<end_of_utterance>\n"
     query_prefix: ClassVar[str] = "Query: "
     query_augmentation_token: ClassVar[str] = "<end_of_utterance>"
     image_token: ClassVar[str] = "<image>"
@@ -70,30 +68,19 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
         """
         if suffix is None:
             suffix = self.query_augmentation_token * 10
-
         texts_query: List[str] = []
 
         for query in queries:
-            messages_query = [
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": self.query_prefix + query + suffix,
-                        },
-                    ],
-                },
-            ]
-            text_query = self.apply_chat_template(messages_query, add_generation_prompt=False).strip()
-            texts_query.append(text_query)
+            query = self.query_prefix + query + suffix
+            texts_query.append(query)
 
-        batch_query = self(
+
+        batch_query = self.tokenizer(
             text=texts_query,
             return_tensors="pt",
             padding="longest",
-            max_length=max_length,
         )
+
         return batch_query
 
     def score(
