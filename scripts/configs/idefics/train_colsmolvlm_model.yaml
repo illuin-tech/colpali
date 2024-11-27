@@ -4,14 +4,14 @@ config:
   processor:
     (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
     class_to_instanciate: !ext colpali_engine.models.ColIdefics3Processor
-    pretrained_model_name_or_path:  "./models/SmolVLM-Instruct" # "./models/paligemma-3b-mix-448"
+    pretrained_model_name_or_path:  "./models/ColSmolVLM-base"
     # num_image_tokens: 2048
     # max_length: 50
 
   model:
     (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
     class_to_instanciate: !ext colpali_engine.models.ColIdefics3
-    pretrained_model_name_or_path: "./models/SmolVLM-Instruct"
+    pretrained_model_name_or_path: "./models/ColSmolVLM-base"
     torch_dtype:  !ext torch.bfloat16
     # use_cache: false
     attn_implementation: "flash_attention_2"
