@@ -11,8 +11,6 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
     """
     Processor for ColIdefics3.
     """
-
-    visual_prompt_prefix: ClassVar[str] = "<|im_start|>User:Can you describe the two images?<end_of_utterance>\n"
     query_prefix: ClassVar[str] = "Query: "
     query_augmentation_token: ClassVar[str] = "<end_of_utterance>"
     image_token: ClassVar[str] = "<image>"
