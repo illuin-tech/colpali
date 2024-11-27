@@ -70,7 +70,6 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
         """
         if suffix is None:
             suffix = self.query_augmentation_token * 10
-
         texts_query: List[str] = []
 
         for query in queries:
@@ -81,7 +80,6 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
             text=texts_query,
             return_tensors="pt",
             padding="longest",
-            max_length=max_length,
         )
 
         return batch_query
