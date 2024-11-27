@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## Unreleased
+
+## Added
+- Added support for Idefics3 (and SmolVLM)
+
+
 ## [0.3.4] - 2024-11-07
 
 ### Added

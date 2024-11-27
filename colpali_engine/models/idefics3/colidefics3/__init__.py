@@ -1,0 +1,2 @@
+from .modeling_colidefics3 import ColIdefics3
+from .processing_colidefics3 import ColIdefics3Processor
