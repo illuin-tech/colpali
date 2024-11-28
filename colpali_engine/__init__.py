@@ -6,6 +6,8 @@ from .models import (
     BiQwen2Processor,
     ColIdefics2,
     ColIdefics2Processor,
+    ColIdefics3,
+    ColIdefics3Processor,
     ColPali,
     ColPaliProcessor,
     ColQwen2,
