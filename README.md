@@ -232,20 +232,20 @@ Several community projects and ressources have been developed around ColPali to 
 
 ### Notebooks 📙
 
-| Notebook Title                                    | Author & Link                                                                                                                                   |
-|---------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
-| ColPali Cookbooks                                 | [Tony's Cookbooks (ILLUIN)](https://github.com/tonywu71/colpali-cookbooks) 🙋🏻                                                                   |
-| Vision RAG Tutorial                               | [Manu's Vision Rag Tutorial (ILLUIN)](https://github.com/ManuelFay/Tutorials/blob/main/Tuesday_Practical_2_Vision_RAG.ipynb) 🙋🏻                 |
-| ColPali (Byaldi) + Qwen2-VL for RAG               | [Merve's Notebook (HuggingFace 🤗)](https://github.com/merveenoyan/smol-vision/blob/main/ColPali_%2B_Qwen2_VL.ipynb)                            |
-| Indexing ColPali with Qdrant                      | [Daniel's Notebook (HuggingFace 🤗)](https://danielvanstrien.xyz/posts/post-with-code/colpali-qdrant/2024-10-02_using_colpali_with_qdrant.html) |
-| Weaviate Tutorial                                 | [Connor's ColPali POC (Weaviate)](https://github.com/weaviate/recipes/blob/main/weaviate-features/named-vectors/NamedVectors-ColPali-POC.ipynb) |
-| Use ColPali for Multi-Modal Retrieval with Milvus | [Milvus Documentation](https://milvus.io/docs/use_ColPali_with_milvus.md)                                                                       |
-| Data Generation                                   | [Daniel's Notebook (HuggingFace 🤗)](https://danielvanstrien.xyz/posts/post-with-code/colpali/2024-09-23-generate_colpali_dataset.html)         |
-| Finance Report Analysis with ColPali and Gemini   | [Jaykumaran (LearnOpenCV)](https://github.com/spmallick/learnopencv/tree/master/Multimodal-RAG-with-ColPali-Gemini)                             |
-| Multimodal Retrieval-Augmented Generation (RAG) with Document Retrieval (ColPali) and Vision Language Models (VLMs) | [Sergio Paniego](https://huggingface.co/learn/cookbook/multimodal_rag_using_document_retrieval_and_vlms) |
-| Document Similarity Search with ColPali           | [Frank Sommers](https://colab.research.google.com/github/fsommers/documentai/blob/main/Document_Similarity_with_ColPali_0_2_2_version.ipynb)    |
-| End-to-end ColPali inference with EmbedAnything | [Akshay Ballal (EmbedAnything)](https://colab.research.google.com/drive/1-Eiaw8wMm8I1n69N1uKOHkmpw3yV22w8?usp=sharing) |
-| ColiVara: A ColPali Retrieval API | [A simple RAG Example](https://github.com/tjmlabs/ColiVara-docs/blob/main/cookbook/RAG.ipynb)
+| Notebook Title                                                                                                      | Author & Link                                                                                                                                   |
+|---------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
+| ColPali Cookbooks                                                                                                   | [Tony's Cookbooks (ILLUIN)](https://github.com/tonywu71/colpali-cookbooks) 🙋🏻                                                                   |
+| Vision RAG Tutorial                                                                                                 | [Manu's Vision Rag Tutorial (ILLUIN)](https://github.com/ManuelFay/Tutorials/blob/main/Tuesday_Practical_2_Vision_RAG.ipynb) 🙋🏻                 |
+| ColPali (Byaldi) + Qwen2-VL for RAG                                                                                 | [Merve's Notebook (HuggingFace 🤗)](https://github.com/merveenoyan/smol-vision/blob/main/ColPali_%2B_Qwen2_VL.ipynb)                            |
+| Indexing ColPali with Qdrant                                                                                        | [Daniel's Notebook (HuggingFace 🤗)](https://danielvanstrien.xyz/posts/post-with-code/colpali-qdrant/2024-10-02_using_colpali_with_qdrant.html) |
+| Weaviate Tutorial                                                                                                   | [Connor's ColPali POC (Weaviate)](https://github.com/weaviate/recipes/blob/main/weaviate-features/named-vectors/NamedVectors-ColPali-POC.ipynb) |
+| Use ColPali for Multi-Modal Retrieval with Milvus                                                                   | [Milvus Documentation](https://milvus.io/docs/use_ColPali_with_milvus.md)                                                                       |
+| Data Generation                                                                                                     | [Daniel's Notebook (HuggingFace 🤗)](https://danielvanstrien.xyz/posts/post-with-code/colpali/2024-09-23-generate_colpali_dataset.html)         |
+| Finance Report Analysis with ColPali and Gemini                                                                     | [Jaykumaran (LearnOpenCV)](https://github.com/spmallick/learnopencv/tree/master/Multimodal-RAG-with-ColPali-Gemini)                             |
+| Multimodal Retrieval-Augmented Generation (RAG) with Document Retrieval (ColPali) and Vision Language Models (VLMs) | [Sergio Paniego](https://huggingface.co/learn/cookbook/multimodal_rag_using_document_retrieval_and_vlms)                                        |
+| Document Similarity Search with ColPali                                                                             | [Frank Sommers](https://colab.research.google.com/github/fsommers/documentai/blob/main/Document_Similarity_with_ColPali_0_2_2_version.ipynb)    |
+| End-to-end ColPali inference with EmbedAnything                                                                     | [Akshay Ballal (EmbedAnything)](https://colab.research.google.com/drive/1-Eiaw8wMm8I1n69N1uKOHkmpw3yV22w8?usp=sharing)                          |
+| ColiVara: A ColPali Retrieval API                                                                                   | [A simple RAG Example](https://github.com/tjmlabs/ColiVara-docs/blob/main/cookbook/RAG.ipynb)                                                   |
 
 ### Other resources
 
