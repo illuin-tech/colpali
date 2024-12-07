@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 
 - Fix typing for `processor.score_multi_vector` (allow for both list and tensor inputs). This does not change how the scores are computed.
+- Fix `tear_down_torch` when used on a non-MPS machine
 
 ## [0.3.4] - 2024-11-07
 
