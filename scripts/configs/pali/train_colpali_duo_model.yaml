@@ -1,0 +1,65 @@
+config:
+  (): colpali_engine.trainer.colmodel_training.ColModelTrainingConfig
+  output_dir: !path ../../../models/colpali-duo-div-3
+  processor:
+    (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
+    class_to_instanciate: !ext colpali_engine.models.ColPaliDuoProcessor
+    pretrained_model_name_or_path:  "./models/colpaligemma-3b-mix-448-base"
+    max_length: 50
+  model:
+    (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
+    class_to_instanciate: !ext colpali_engine.models.ColPaliDuo
+    pretrained_model_name_or_path: "./models/colpali-duo-base"
+    torch_dtype:  !ext torch.bfloat16
+#    device_map: "auto"
+#    quantization_config:
+#      (): transformers.BitsAndBytesConfig
+#      load_in_4bit: true
+#      bnb_4bit_quant_type: "nf4"
+#      bnb_4bit_compute_dtype:  "bfloat16"
+#      bnb_4bit_use_double_quant: true
+
+  dataset_loading_func: !ext colpali_engine.utils.dataset_transformation.load_train_set_detailed
+  eval_dataset_loader: !import ../data/test_data.yaml
+
+  max_length: 50
+  run_eval: true
+  add_suffix: true
+  loss_func:
+    (): colpali_engine.loss.colpali_duo_losses.ColPaliDuoLoss
+    use_matryoshka_loss: false
+    use_distillation_loss: true
+    alpha: 0.25
+    beta: 0.5
+    temperature: 2.0
+  tr_args:
+    (): transformers.training_args.TrainingArguments
+    output_dir: null
+    overwrite_output_dir: true
+    num_train_epochs: 3
+    per_device_train_batch_size: 4
+    # 6 x 8 gpus = 48 batch size
+    # gradient_accumulation_steps: 4
+    per_device_eval_batch_size: 4
+    eval_strategy: "steps"
+    # dataloader_num_workers: 8
+    # bf16: true
+    save_steps: 500
+    logging_steps: 10
+    eval_steps: 100
+    warmup_steps: 500
+    learning_rate: 5e-5
+    save_total_limit: 1
+    resume_from_checkpoint: false
+    # optim: "paged_adamw_8bit"
+
+  peft_config:
+    (): peft.LoraConfig
+    r: 32
+    lora_alpha: 32
+    lora_dropout: 0.1
+    init_lora_weights: "gaussian"
+    bias: "none"
+    task_type: "FEATURE_EXTRACTION"
+    target_modules: '(.*(language_model).*(down_proj|gate_proj|up_proj|k_proj|q_proj|v_proj|o_proj).*$|.*(single_vector_projector|multi_vector_projector).*$)'
+    # target_modules: '(.*(language_model).*(down_proj|gate_proj|up_proj|k_proj|q_proj|v_proj|o_proj).*$|.*(custom_text_proj).*$)'
