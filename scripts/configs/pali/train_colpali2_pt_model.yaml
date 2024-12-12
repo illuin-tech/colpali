@@ -1,6 +1,6 @@
 config:
   (): colpali_engine.trainer.colmodel_training.ColModelTrainingConfig
-  output_dir: !path ../../../models/right_pad/train_colpali2-3b-pt-448
+  output_dir: !path ../../../models/train_colpali2-3b-pt-448-5e5
   processor:
     (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
     class_to_instanciate: !ext colpali_engine.models.ColPaliProcessor
