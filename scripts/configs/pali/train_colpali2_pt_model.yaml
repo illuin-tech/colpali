@@ -11,7 +11,8 @@ config:
     class_to_instanciate: !ext colpali_engine.models.ColPali
     pretrained_model_name_or_path: "./models/colpaligemma2-3b-pt-448-base"
     torch_dtype:  !ext torch.bfloat16
-#    device_map: "auto"
+    attn_implementation: "flash_attention_2"
+  #    device_map: "auto"
 #    quantization_config:
 #      (): transformers.BitsAndBytesConfig
 #      load_in_4bit: true
