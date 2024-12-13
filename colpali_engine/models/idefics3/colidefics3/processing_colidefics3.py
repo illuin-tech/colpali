@@ -11,6 +11,7 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
     """
     Processor for ColIdefics3.
     """
+
     query_prefix: ClassVar[str] = "Query: "
     query_augmentation_token: ClassVar[str] = "<end_of_utterance>"
     image_token: ClassVar[str] = "<image>"
