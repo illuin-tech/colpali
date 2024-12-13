@@ -12,9 +12,6 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
     Processor for ColIdefics3.
     """
 
-    visual_prompt_prefix: ClassVar[str] = (
-        "<|im_start|>user\n<|vision_start|><|image_pad|><|vision_end|>Describe the image.<|im_end|><|endoftext|>"
-    )
     query_prefix: ClassVar[str] = "Query: "
     query_augmentation_token: ClassVar[str] = "<end_of_utterance>"
     image_token: ClassVar[str] = "<image>"
