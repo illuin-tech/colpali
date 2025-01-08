@@ -34,12 +34,12 @@ classifiers = [
 
 dependencies = [
     "GPUtil",
-    "numpy<2.0.0",
-    "peft>=0.11.0,<0.12.0",
-    "pillow>=9.2.0,<11.0.0",
+    "numpy",
+    "peft>=0.11.0",
+    "pillow>=9.2.0",
     "requests",
     "torch>=2.2.0",
-    "transformers>=4.46.1,<4.47.0",
+    "transformers>=4.46.1",
 ]
 
 [project.optional-dependencies]
@@ -64,6 +64,11 @@ all = ["colpali-engine[dev]", "colpali-engine[train]"]
 
 [project.urls]
 homepage = "https://github.com/illuin-tech/colpali"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.4",
+]
 
 [tool.pytest.ini_options]
 filterwarnings = ["ignore::Warning"]
