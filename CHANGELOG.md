@@ -5,7 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## ## [0.3.5] - 2024-12-13
+## [Unreleased]
+
+## Added
+
+- Add expected scores in ColPali E2E test
+
+## Changed
+
+- Loosen package dependencies
+
+## [0.3.5] - 2024-12-13
 
 ## Added
 
@@ -22,7 +32,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - General `CorpusQueryCollator` for BEIR style dataset training or hard negative training. This deprecates `HardNegCollator` but all changes to the training loop are made for a seemless update.
 
-
 ### Changed
 
 - Updates BiPali config files
@@ -30,7 +39,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Modified XQwen2Processor to place `<|endoftext|>` token at the end of the document prompt (non-breaking for ColQwen but helps BiQwen).
 - Removed `add_suffix` in the VisualRetrieverCollator and let the `suffix` be added in the individual processors.
 - Changed the incorrect `<pad>` token to `<|endoftext|>` fo query augmentation `ColQwen2Processor`. Note that previous models were trained with `<|endoftext|>` so this is simply a non-breaking inference upgrade patch.
-
 
 ## [0.3.3] - 2024-10-29
 
