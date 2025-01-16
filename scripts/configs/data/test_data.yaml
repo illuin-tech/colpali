@@ -1,31 +1,31 @@
 # eval_dataset_loader:
 syntheticDocQA_energy:
   (): colpali_engine.utils.dataset_transformation.TestSetFactory
-  dataset_path: !path ../../../data_dir/syntheticDocQA_energy_test
+  dataset_path: !path ../../../data_dir/eval_vidore/syntheticDocQA_energy_test
 syntheticDocQA_healthcare_industry:
   (): colpali_engine.utils.dataset_transformation.TestSetFactory
-  dataset_path: !path ../../../data_dir/syntheticDocQA_healthcare_industry_test
+  dataset_path: !path ../../../data_dir/eval_vidore/syntheticDocQA_healthcare_industry_test
 syntheticDocQA_artificial_intelligence_test:
   (): colpali_engine.utils.dataset_transformation.TestSetFactory
-  dataset_path: !path ../../../data_dir/syntheticDocQA_artificial_intelligence_test
+  dataset_path: !path ../../../data_dir/eval_vidore/syntheticDocQA_artificial_intelligence_test
 syntheticDocQA_government_reports:
   (): colpali_engine.utils.dataset_transformation.TestSetFactory
-  dataset_path: !path ../../../data_dir/syntheticDocQA_government_reports_test
+  dataset_path: !path ../../../data_dir/eval_vidore/syntheticDocQA_government_reports_test
 infovqa_subsampled:
   (): colpali_engine.utils.dataset_transformation.TestSetFactory
-  dataset_path: !path ../../../data_dir/infovqa_test_subsampled
+  dataset_path: !path ../../../data_dir/eval_vidore/infovqa_test_subsampled
 docvqa_subsampled:
   (): colpali_engine.utils.dataset_transformation.TestSetFactory
-  dataset_path: !path ../../../data_dir/docvqa_test_subsampled
+  dataset_path: !path ../../../data_dir/eval_vidore/docvqa_test_subsampled
 arxivqa_subsampled:
   (): colpali_engine.utils.dataset_transformation.TestSetFactory
-  dataset_path: !path ../../../data_dir/arxivqa_test_subsampled
+  dataset_path: !path ../../../data_dir/eval_vidore/arxivqa_test_subsampled
 tabfquad_subsampled:
   (): colpali_engine.utils.dataset_transformation.TestSetFactory
-  dataset_path: !path ../../../data_dir/tabfquad_test_subsampled
+  dataset_path: !path ../../../data_dir/eval_vidore/tabfquad_test_subsampled
 tatdqa:
   (): colpali_engine.utils.dataset_transformation.TestSetFactory
-  dataset_path: !path ../../../data_dir/tatdqa_test
+  dataset_path: !path ../../../data_dir/eval_vidore/tatdqa_test
 shift_project:
   (): colpali_engine.utils.dataset_transformation.TestSetFactory
-  dataset_path: !path ../../../data_dir/shiftproject_test
+  dataset_path: !path ../../../data_dir/eval_vidore/shiftproject_test
