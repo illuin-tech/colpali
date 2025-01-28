@@ -10,7 +10,7 @@ from colpali_engine.utils.torch_utils import get_torch_device
 
 @pytest.fixture(scope="module")
 def model_name() -> str:
-    return "vidore/colqwen2-v0.1"
+    return "vidore/colqwen2-v1.0"
 
 
 @pytest.mark.slow
