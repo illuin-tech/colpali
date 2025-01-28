@@ -12,4 +12,6 @@ from .models import (
     ColPaliProcessor,
     ColQwen2,
     ColQwen2Processor,
+    ColQwen25,
+    ColQwen25Processor,
 )
