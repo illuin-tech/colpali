@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 @pytest.fixture(scope="module")
 def model_name() -> str:
-    return "vidore/colqwen2-v0.1"
+    return "vidore/colqwen2-v1.0"
 
 
 @pytest.fixture(scope="module")

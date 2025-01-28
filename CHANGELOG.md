@@ -5,19 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+
+- Fix checkpoints used for ColQwen2 tests
+
 ## [0.3.6] - 2025-01-10
 
-## Added
+### Added
 
 - Add expected scores in ColPali E2E test
 
-## Changed
+### Changed
 
 - Loosen package dependencies
 
 ## [0.3.5] - 2024-12-13
 
-## Added
+### Added
 
 - Added support for Idefics3 (and SmolVLM)
 
