@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- Bump transformers to `4.47` to support `colSmol-256M` and `colSmol-500M`
+
 ### Fixed
 
 - Fix checkpoints used for ColQwen2 tests
