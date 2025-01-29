@@ -5,7 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## Unreleased
+## [0.3.8] - 2025-01-29
+
+### Fixed
+
+- Fix peft version in `colpali-engine[train]`
+- Loosen upper bound for `accelerate`
 
 ### Tests
 
