@@ -24,7 +24,7 @@ def floor_by_factor(number: float, factor: int) -> int:
     return math.floor(number / factor) * factor
 
 
-class ColQwen2_5_Processor(BaseVisualRetrieverProcessor, Qwen2_5_VLProcessor): #noqa: N801
+class ColQwen2_5_Processor(BaseVisualRetrieverProcessor, Qwen2_5_VLProcessor):  # noqa: N801
     """
     Processor for ColQwen2.
     """
@@ -67,8 +67,7 @@ class ColQwen2_5_Processor(BaseVisualRetrieverProcessor, Qwen2_5_VLProcessor): #
 
         if max(height, width) / min(height, width) > max_ratio:
             raise ValueError(
-                f"absolute aspect ratio must be smaller than {max_ratio}, "
-                f"got {max(height, width) / min(height, width)}"
+                f"absolute aspect ratio must be smaller than {max_ratio}, got {max(height, width) / min(height, width)}"
             )
 
         h_bar = max(factor, round_by_factor(height, factor))
@@ -105,7 +104,7 @@ class ColQwen2_5_Processor(BaseVisualRetrieverProcessor, Qwen2_5_VLProcessor): #
         images: List[Image.Image],
     ) -> BatchFeature:
         """
-        Process images for ColQwen2.
+        Process images for ColQwen2.5.
         """
         texts_doc = [self.visual_prompt_prefix] * len(images)
 
@@ -143,7 +142,7 @@ class ColQwen2_5_Processor(BaseVisualRetrieverProcessor, Qwen2_5_VLProcessor): #
         suffix: Optional[str] = None,
     ) -> BatchFeature:
         """
-        Process queries for ColQwen2.
+        Process queries for ColQwen2.5.
         """
         if suffix is None:
             suffix = self.query_augmentation_token * 10
