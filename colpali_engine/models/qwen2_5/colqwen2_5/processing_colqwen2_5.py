@@ -24,7 +24,7 @@ def floor_by_factor(number: float, factor: int) -> int:
     return math.floor(number / factor) * factor
 
 
-class ColQwen25Processor(BaseVisualRetrieverProcessor, Qwen2_5_VLProcessor):
+class ColQwen2_5_Processor(BaseVisualRetrieverProcessor, Qwen2_5_VLProcessor): #noqa: N801
     """
     Processor for ColQwen2.
     """

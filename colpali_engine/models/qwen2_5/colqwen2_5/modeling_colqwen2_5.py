@@ -5,9 +5,10 @@ from torch import nn
 from transformers.models.qwen2_5_vl import Qwen2_5_VLConfig, Qwen2_5_VLForConditionalGeneration
 
 
-class ColQwen25(Qwen2_5_VLForConditionalGeneration):
+class ColQwen2_5(Qwen2_5_VLForConditionalGeneration):  # noqa: N801
     """
-    ColQwen2 model implementation from the "ColPali: Efficient Document Retrieval with Vision Language Models" paper.
+    ColQwen2.5 model implementation, following the achitecture from the article "ColPali: Efficient Document Retrieval
+    with Vision Language Models" paper. Based on the Qwen2.5-VL backbone.
     """
 
     main_input_name: ClassVar[str] = "doc_input_ids"  # transformers-related
@@ -19,24 +20,22 @@ class ColQwen25(Qwen2_5_VLForConditionalGeneration):
         self.padding_side = "left"
         self.post_init()
 
-
     def inner_forward(
-            self,
-            input_ids: torch.LongTensor = None,
-            attention_mask: Optional[torch.Tensor] = None,
-            position_ids: Optional[torch.LongTensor] = None,
-            past_key_values: Optional[List[torch.FloatTensor]] = None,
-            inputs_embeds: Optional[torch.FloatTensor] = None,
-            use_cache: Optional[bool] = None,
-            output_attentions: Optional[bool] = None,
-            output_hidden_states: Optional[bool] = None,
-            return_dict: Optional[bool] = None,
-            pixel_values: Optional[torch.Tensor] = None,
-            pixel_values_videos: Optional[torch.FloatTensor] = None,
-            image_grid_thw: Optional[torch.LongTensor] = None,
-            video_grid_thw: Optional[torch.LongTensor] = None,
+        self,
+        input_ids: torch.LongTensor = None,
+        attention_mask: Optional[torch.Tensor] = None,
+        position_ids: Optional[torch.LongTensor] = None,
+        past_key_values: Optional[List[torch.FloatTensor]] = None,
+        inputs_embeds: Optional[torch.FloatTensor] = None,
+        use_cache: Optional[bool] = None,
+        output_attentions: Optional[bool] = None,
+        output_hidden_states: Optional[bool] = None,
+        return_dict: Optional[bool] = None,
+        pixel_values: Optional[torch.Tensor] = None,
+        pixel_values_videos: Optional[torch.FloatTensor] = None,
+        image_grid_thw: Optional[torch.LongTensor] = None,
+        video_grid_thw: Optional[torch.LongTensor] = None,
     ) -> torch.Tensor:
-
         if inputs_embeds is None:
             inputs_embeds = self.model.embed_tokens(input_ids)
             if pixel_values is not None:
@@ -71,12 +70,9 @@ class ColQwen25(Qwen2_5_VLForConditionalGeneration):
         hidden_states = outputs[0]
         return hidden_states
 
-
-
     def forward(self, *args, **kwargs) -> torch.Tensor:
         # Delete output_hidden_states from kwargs
         kwargs.pop("output_hidden_states", None)
-
 
         # The following code is a hack to make sure the scatter in DDP is done correctly when training on multiple GPUs
         if "pixel_values" in kwargs:
@@ -93,11 +89,13 @@ class ColQwen25(Qwen2_5_VLForConditionalGeneration):
             video_grid_thw=None,
             attention_mask=kwargs.get("attention_mask", None),
         )
-        last_hidden_states = self.inner_forward(*args,
-                                  **kwargs,
-                                  position_ids=position_ids,
-                                  use_cache=False,
-                                  output_hidden_states=True)  # (batch_size, sequence_length, hidden_size)
+        last_hidden_states = self.inner_forward(
+            *args,
+            **kwargs,
+            position_ids=position_ids,
+            use_cache=False,
+            output_hidden_states=True,
+        )  # (batch_size, sequence_length, hidden_size)
 
         proj = self.custom_text_proj(last_hidden_states)  # (batch_size, sequence_length, dim)
 
