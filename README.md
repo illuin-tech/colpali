@@ -96,14 +96,9 @@ with torch.no_grad():
 scores = processor.score_multi_vector(query_embeddings, image_embeddings)
 ```
 
-### Inference
-
-You can find an example [here](https://github.com/illuin-tech/colpali/blob/main/scripts/infer/run_inference_with_python.py). 
-
-
 ### Benchmarking
 
-To benchmark ColPali to reproduce the results on the [ViDoRe leaderboard](https://huggingface.co/spaces/vidore/vidore-leaderboard), it is recommended to use the [`vidore-benchmark`](https://github.com/illuin-tech/vidore-benchmark) package.
+To benchmark ColPali on the [ViDoRe leaderboard](https://huggingface.co/spaces/vidore/vidore-leaderboard), use the [`vidore-benchmark`](https://github.com/illuin-tech/vidore-benchmark) package.
 
 ### Interpretability with similarity maps
 
