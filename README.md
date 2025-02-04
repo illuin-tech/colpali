@@ -181,6 +181,30 @@ for idx, (fig, ax) in enumerate(plots):
 
 For a more detailed example, you can refer to the interpretability notebooks from the [ColPali Cookbooks 👨🏻‍🍳](https://github.com/tonywu71/colpali-cookbooks) repository.
 
+### Token pooling
+
+[Token pooling](https://doi.org/10.48550/arXiv.2409.14683) is a CRUDE-compliant method (document addition/deletion-friendly) that aims at reducing the sequence length of multi-vector embeddings. For ColPali, many image patches share redundant information, e.g. white background patches. By pooling these patches together, we can reduce the amount of embeddings while retaining most of the page's signal. Retrieval performance with hierarchical mean token pooling on image embeddings can be found in the [ColPali paper](https://doi.org/10.48550/arXiv.2407.01449). In our experiments, we found that a pool factor of 3 offered the optimal trade-off: the total number of vectors is reduced by $66.7\%$ while $97.8\%$ of the original performance is maintained.
+
+To use token pooling, you can use the `HierarchicalEmbeddingPooler` class from the `colpali-engine` package:
+
+```python
+import torch
+
+from colpali_engine.compression.token_pooling import HierarchicalTokenPooler
+
+# Dummy embeddings
+list_embeddings = [
+    torch.rand(10, 768),
+    torch.rand(20, 768),
+]
+
+# Define the pooler with the desired level of compression
+pooler = HierarchicalTokenPooler(pool_factor=2)
+
+# Pool the embeddings
+outputs = pooler.pool_embeddings(list_embeddings)
+```
+
 ### Training
 
 To keep a lightweight repository, only the essential packages were installed. In particular, you must specify the dependencies to use the training script for ColPali. You can do this using the following command:
