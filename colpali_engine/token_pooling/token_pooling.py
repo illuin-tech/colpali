@@ -1,8 +1,21 @@
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from typing import Dict, List, Tuple, Union, cast
 
 import torch
 from scipy.cluster.hierarchy import fcluster, linkage
+
+
+@dataclass
+class TokenPoolingOutput:
+    """
+    Token pooling outputs:
+    - pooled_embeddings: A tensor of shape (num_clusters, embedding_dim).
+    - cluster_id_to_indices: A dictionary mapping cluster id to token indices.
+    """
+
+    pooled_embeddings: torch.Tensor
+    cluster_id_to_indices: Dict[int, Tuple[torch.Tensor]]
 
 
 class BaseTokenPooler(ABC):
@@ -14,7 +27,7 @@ class BaseTokenPooler(ABC):
     def pool_embeddings(
         self,
         embeddings: Union[torch.Tensor, List[torch.Tensor]],
-    ) -> List[Tuple[torch.Tensor, Dict[int, Tuple[torch.Tensor]]]]:
+    ) -> List[TokenPoolingOutput]:
         """
         Return the pooled multi-vector embeddings and the mapping from cluster id to token indices.
         """
@@ -37,20 +50,22 @@ class HierarchicalTokenPooler(BaseTokenPooler):
     def pool_embeddings(
         self,
         embeddings: Union[torch.Tensor, List[torch.Tensor]],
-    ) -> List[Tuple[torch.Tensor, Dict[int, Tuple[torch.Tensor]]]]:
+    ) -> List[TokenPoolingOutput]:
         """
         Return the pooled embeddings and the mapping from cluster id to token indices.
 
         Note: This method takes as input:
-        - a list of 2D tensors if the embeddings' sequence lengths are different
-        - a 3D tensor if the embeddings have the same length (no padding).
+        - A list of 2D tensors if the embeddings' sequence lengths are different.
+        - A 3D tensor if the embeddings have the same length (no padding).
 
         Args:
-            embedding: A tensor of shape (token_length, embedding_dim) or
-                       (batch_size, token_length, embedding_dim).
+            embeddings: A tensor of shape (token_length, embedding_dim) or
+                        (batch_size, token_length, embedding_dim).
 
         Returns:
-            A tuple for a single embedding or a list of tuples for batched embeddings.
+            A list of PooledOutput objects, each containing:
+              - pooled_embeddings: A tensor of shape (num_clusters, embedding_dim).
+              - cluster_id_to_indices: A dictionary mapping cluster id to token indices.
         """
         if isinstance(embeddings, torch.Tensor) and embeddings.dim() == 2:
             return [self._pool_single_embedding(embeddings)]
@@ -62,7 +77,7 @@ class HierarchicalTokenPooler(BaseTokenPooler):
     def _pool_single_embedding(
         self,
         embedding: torch.Tensor,
-    ) -> Tuple[torch.Tensor, Dict[int, Tuple[torch.Tensor]]]:
+    ) -> TokenPoolingOutput:
         """
         Return the pooled embedding and the mapping from cluster id to token indices.
 
@@ -70,16 +85,18 @@ class HierarchicalTokenPooler(BaseTokenPooler):
             embedding: A tensor of shape (token_length, embedding_dim).
 
         Returns:
-            pooled_embeddings: A tensor of shape (num_clusters, embedding_dim).
-            cluster_id_to_indices: A dictionary mapping cluster id to token indices.
+            A PooledOutput object containing:
+              - pooled_embeddings: A tensor of shape (num_clusters, embedding_dim).
+              - cluster_id_to_indices: A dictionary mapping cluster id to token indices.
         """
         if embedding.dim() != 2:
             raise ValueError("The input tensor must be a 2D tensor.")
+
+        token_length = embedding.size(0)
         if token_length == 1:
             raise ValueError("The input tensor must have more than one token.")
 
         list_pooled_embeddings: List[torch.Tensor] = []
-        token_length = embedding.size(0)
 
         similarities = torch.mm(embedding, embedding.t())
         distances = 1 - similarities.to(torch.float32).cpu().numpy()
@@ -105,4 +122,7 @@ class HierarchicalTokenPooler(BaseTokenPooler):
 
             pooled_embeddings = torch.stack(list_pooled_embeddings, dim=0)  # (num_clusters, embedding_dim)
 
-        return pooled_embeddings, cluster_id_to_indices
+        return TokenPoolingOutput(
+            pooled_embeddings=pooled_embeddings,
+            cluster_id_to_indices=cluster_id_to_indices,
+        )
