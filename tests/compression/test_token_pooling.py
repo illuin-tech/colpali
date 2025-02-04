@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from colpali_engine.token_pooling.token_pooling import HierarchicalTokenPooler, TokenPoolingOutput
+from colpali_engine.compression.token_pooling import HierarchicalTokenPooler, TokenPoolingOutput
 
 
 @pytest.fixture
