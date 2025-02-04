@@ -14,7 +14,7 @@ class TokenPoolingOutput:
     - cluster_id_to_indices: A dictionary mapping cluster id to token indices.
     """
 
-    pooled_embeddings: torch.Tensor
+    pooled_embedding: torch.Tensor
     cluster_id_to_indices: Dict[int, Tuple[torch.Tensor]]
 
 
@@ -27,7 +27,7 @@ class BaseTokenPooler(ABC):
     def pool_embeddings(
         self,
         embeddings: Union[torch.Tensor, List[torch.Tensor]],
-    ) -> List[TokenPoolingOutput]:
+    ) -> List[Union[torch.Tensor, TokenPoolingOutput]]:
         """
         Return the pooled multi-vector embeddings and the mapping from cluster id to token indices.
         """
@@ -50,34 +50,35 @@ class HierarchicalTokenPooler(BaseTokenPooler):
     def pool_embeddings(
         self,
         embeddings: Union[torch.Tensor, List[torch.Tensor]],
-    ) -> List[TokenPoolingOutput]:
+        return_dict: bool = False,
+    ) -> List[Union[torch.Tensor, TokenPoolingOutput]]:
         """
-        Return the pooled embeddings and the mapping from cluster id to token indices.
+        Return the pooled embeddings.
 
-        Note: This method takes as input:
+        The `embeddings` input can be one of the following:
         - A list of 2D tensors if the embeddings' sequence lengths are different.
         - A 3D tensor if the embeddings have the same length (no padding).
 
         Args:
-            embeddings: A tensor of shape (token_length, embedding_dim) or
-                        (batch_size, token_length, embedding_dim).
+            embeddings: A tensor of shape (token_length, embedding_dim) or (batch_size, token_length, embedding_dim).
+            return_dict: Whether or not to return a `TokenPoolingOutput` object (with the cluster id to token indices
+                         mapping) instead of just the pooled embeddings.
 
         Returns:
-            A list of PooledOutput objects, each containing:
-              - pooled_embeddings: A tensor of shape (num_clusters, embedding_dim).
-              - cluster_id_to_indices: A dictionary mapping cluster id to token indices.
+            A list of pooled embeddings or `PooledOutput` objects.
         """
         if isinstance(embeddings, torch.Tensor) and embeddings.dim() == 2:
-            return [self._pool_single_embedding(embeddings)]
+            return [self._pool_single_embedding(embeddings, return_dict=return_dict)]
         elif isinstance(embeddings, list) or embeddings.dim() == 3:
-            return [self._pool_single_embedding(batch_emb) for batch_emb in embeddings]
+            return [self._pool_single_embedding(batch_emb, return_dict) for batch_emb in embeddings]
         else:
             raise ValueError("The input tensor must be a list of 2D tensors or a 2D/3D tensor.")
 
     def _pool_single_embedding(
         self,
         embedding: torch.Tensor,
-    ) -> TokenPoolingOutput:
+        return_dict: bool = False,
+    ) -> Union[torch.Tensor, TokenPoolingOutput]:
         """
         Return the pooled embedding and the mapping from cluster id to token indices.
 
@@ -85,9 +86,7 @@ class HierarchicalTokenPooler(BaseTokenPooler):
             embedding: A tensor of shape (token_length, embedding_dim).
 
         Returns:
-            A PooledOutput object containing:
-              - pooled_embeddings: A tensor of shape (num_clusters, embedding_dim).
-              - cluster_id_to_indices: A dictionary mapping cluster id to token indices.
+            A list of pooled embeddings or `PooledOutput` objects.
         """
         if embedding.dim() != 2:
             raise ValueError("The input tensor must be a 2D tensor.")
@@ -122,7 +121,10 @@ class HierarchicalTokenPooler(BaseTokenPooler):
 
             pooled_embeddings = torch.stack(list_pooled_embeddings, dim=0)  # (num_clusters, embedding_dim)
 
+        if not return_dict:
+            return pooled_embeddings
+
         return TokenPoolingOutput(
-            pooled_embeddings=pooled_embeddings,
+            pooled_embedding=pooled_embeddings,
             cluster_id_to_indices=cluster_id_to_indices,
         )
