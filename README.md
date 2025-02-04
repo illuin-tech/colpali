@@ -59,6 +59,7 @@ pip install colpali-engine
 ```python
 import torch
 from PIL import Image
+from transformers.utils.import_utils import is_flash_attn_2_available
 
 from colpali_engine.models import ColQwen2, ColQwen2Processor
 
@@ -68,6 +69,7 @@ model = ColQwen2.from_pretrained(
     model_name,
     torch_dtype=torch.bfloat16,
     device_map="cuda:0",  # or "mps" if on Apple Silicon
+    attn_implementation="flash_attention_2" if is_flash_attn_2_available() else None,
 ).eval()
 
 processor = ColQwen2Processor.from_pretrained(model_name)
@@ -78,8 +80,8 @@ images = [
     Image.new("RGB", (16, 16), color="black"),
 ]
 queries = [
-    "Is attention really all you need?",
-    "Are Benjamin, Antoine, Merve, and Jo best friends?",
+    "What is the organizational structure for our R&D department?",
+    "Can you provide a breakdown of last year’s financial performance?",
 ]
 
 # Process the inputs
@@ -92,7 +94,6 @@ with torch.no_grad():
     query_embeddings = model(**batch_queries)
 
 scores = processor.score_multi_vector(query_embeddings, image_embeddings)
-
 ```
 
 ### Inference
