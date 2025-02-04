@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from colpali_engine.token_pooling.token_pooling import HierarchicalTokenPooler
+from colpali_engine.token_pooling.token_pooling import HierarchicalTokenPooler, TokenPoolingOutput
 
 
 @pytest.fixture
@@ -26,16 +26,18 @@ def test_hierarchical_embedding_pooler_initialization():
 
 def test_hierarchical_embedding_pooler_output_shape(sample_embeddings: torch.Tensor):
     pooler = HierarchicalTokenPooler(pool_factor=2)
-    pooled_embeddings, cluster_id_to_indices = pooler.pool_embeddings(sample_embeddings)
+    outputs = pooler.pool_embeddings(sample_embeddings)
 
-    assert isinstance(pooled_embeddings, torch.Tensor)
-    assert pooled_embeddings.shape[1] == sample_embeddings.shape[1]
-    assert pooled_embeddings.shape[0] <= len(cluster_id_to_indices)
+    assert isinstance(outputs, list)
+    assert len(outputs) == 1
+    assert isinstance(outputs[0], TokenPoolingOutput)
+    assert outputs[0].pooled_embeddings.shape[1] == sample_embeddings.shape[1]
+    assert outputs[0].pooled_embeddings.shape[0] <= len(outputs[0].cluster_id_to_indices)
 
 
 def test_hierarchical_embedding_pooler_output_values(sample_embeddings: torch.Tensor):
     pooler = HierarchicalTokenPooler(pool_factor=2)
-    pooled_embeddings, cluster_id_to_indices = pooler.pool_embeddings(sample_embeddings)
+    outputs = pooler.pool_embeddings(sample_embeddings)
 
     expected_pooled_embeddings = torch.tensor(
         [
@@ -51,10 +53,10 @@ def test_hierarchical_embedding_pooler_output_values(sample_embeddings: torch.Te
         3: (torch.tensor([2]),),
     }
 
-    assert torch.allclose(pooled_embeddings, expected_pooled_embeddings)
+    assert torch.allclose(outputs[0].pooled_embeddings, expected_pooled_embeddings)
     assert all(
         [
-            torch.allclose(cluster_id_to_indices[cluster_id][0], expected_cluster_indices[0])
+            torch.allclose(outputs[0].cluster_id_to_indices[cluster_id][0], expected_cluster_indices[0])
             for cluster_id, expected_cluster_indices in expected_cluster_id_to_indices.items()
         ]
     )
@@ -63,10 +65,10 @@ def test_hierarchical_embedding_pooler_output_values(sample_embeddings: torch.Te
 def test_hierarchical_embedding_pooler_with_different_pool_factors(sample_embeddings: torch.Tensor):
     for pool_factor in [1, 2, 3]:
         pooler = HierarchicalTokenPooler(pool_factor=pool_factor)
-        pooled_embeddings, cluster_id_to_indices = pooler.pool_embeddings(sample_embeddings)
+        outputs = pooler.pool_embeddings(sample_embeddings)
         expected_num_clusters = (sample_embeddings.shape[0] + pool_factor - 1) // pool_factor
-        assert pooled_embeddings.shape[0] <= expected_num_clusters
-        assert pooled_embeddings.shape[0] <= len(cluster_id_to_indices)
+        assert outputs[0].pooled_embeddings.shape[0] <= expected_num_clusters
+        assert outputs[0].pooled_embeddings.shape[0] <= len(outputs[0].cluster_id_to_indices)
 
 
 def test_hierarchical_embedding_pooler_should_raise_error_with_single_token():
@@ -77,11 +79,30 @@ def test_hierarchical_embedding_pooler_should_raise_error_with_single_token():
         pooler.pool_embeddings(single_token_embeddings)
 
 
-def test_hierarchical_embedding_pooler_large_input():
-    large_embeddings = torch.rand(1000, 768)
+def test_hierarchical_embedding_pooler_batched_input():
+    batch_embeddings = torch.rand(3, 10, 768)
 
-    pooler = HierarchicalTokenPooler(pool_factor=10)
-    pooled_embeddings, cluster_id_to_indices = pooler.pool_embeddings(large_embeddings)
+    pooler = HierarchicalTokenPooler(pool_factor=2)
+    outputs = pooler.pool_embeddings(batch_embeddings)
 
-    assert pooled_embeddings.shape[0] < large_embeddings.shape[0]
-    assert pooled_embeddings.shape[0] <= len(cluster_id_to_indices)
+    assert len(outputs) == 3
+    for output in outputs:
+        assert isinstance(output, TokenPoolingOutput)
+        assert output.pooled_embeddings.shape[1] == 768
+        assert output.pooled_embeddings.shape[0] <= 5
+
+
+def test_hierarchical_embedding_pooler_list_input():
+    list_embeddings = [
+        torch.rand(10, 768),
+        torch.rand(15, 768),
+    ]
+
+    pooler = HierarchicalTokenPooler(pool_factor=2)
+    outputs = pooler.pool_embeddings(list_embeddings)
+
+    assert len(outputs) == len(list_embeddings)
+    for input_embedding, output in zip(list_embeddings, outputs):
+        assert isinstance(output, TokenPoolingOutput)
+        assert output.pooled_embeddings.shape[1] == 768
+        assert output.pooled_embeddings.shape[0] <= input_embedding.shape[0] // 2
