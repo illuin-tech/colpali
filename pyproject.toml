@@ -38,6 +38,7 @@ dependencies = [
     "peft>=0.14.0,<0.15.0",
     "pillow>=10.0.0",
     "requests",
+    "scipy",
     "torch>=2.2.0",
     "transformers>=4.47.0,<4.48.0",
 ]
