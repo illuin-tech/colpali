@@ -2,7 +2,9 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Dict, List, Tuple, Union, cast
 
+import numpy as np
 import torch
+from numpy.typing import NDArray
 from scipy.cluster.hierarchy import fcluster, linkage
 
 
@@ -102,12 +104,13 @@ class HierarchicalTokenPooler(BaseTokenPooler):
 
         Z = linkage(distances, metric="euclidean", method="ward")  # noqa: N806
         max_clusters = max(token_length // self.pool_factor, 1)
-        cluster_labels = fcluster(Z, t=max_clusters, criterion="maxclust")
+        cluster_labels: NDArray[np.int32] = fcluster(Z, t=max_clusters, criterion="maxclust") - 1
+        # NOTE: The scipy cluster labels start from 1, so we subtract 1 to start from 0.
 
         cluster_id_to_indices: Dict[int, Tuple[torch.Tensor]] = {}
 
         with torch.no_grad():
-            for cluster_id in range(1, max_clusters + 1):
+            for cluster_id in range(max_clusters):
                 cluster_indices = cast(
                     Tuple[torch.Tensor],
                     torch.where(torch.tensor(cluster_labels == cluster_id)),
