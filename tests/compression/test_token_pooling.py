@@ -67,9 +67,9 @@ def test_hierarchical_embedding_pooler_output_values(sample_embeddings: torch.Te
         dtype=torch.float32,
     )
     expected_cluster_id_to_indices = {
-        1: (torch.tensor([0, 3, 4, 5]),),
-        2: (torch.tensor([1]),),
-        3: (torch.tensor([2]),),
+        0: (torch.tensor([0, 3, 4, 5]),),
+        1: (torch.tensor([1]),),
+        2: (torch.tensor([2]),),
     }
 
     assert torch.allclose(outputs[0].pooled_embedding, expected_pooled_embeddings)
