@@ -51,30 +51,30 @@ class HierarchicalTokenPooler(BaseTokenPooler):
 
     def pool_embeddings(
         self,
-        embeddings: Union[torch.Tensor, List[torch.Tensor]],
+        embeddings: Union[List[torch.Tensor], torch.Tensor],
         return_dict: bool = False,
     ) -> List[Union[torch.Tensor, TokenPoolingOutput]]:
         """
         Return the pooled embeddings.
 
-        The `embeddings` input can be one of the following:
-        - A list of 2D tensors if the embeddings' sequence lengths are different.
-        - A 3D tensor if the embeddings have the same length (no padding).
-
         Args:
-            embeddings: A tensor of shape (token_length, embedding_dim) or (batch_size, token_length, embedding_dim).
+            embeddings: A list of 2D tensors (token_length, embedding_dim) where each tensor can have its own
+                        token_length, or a 3D tensor of shape (batch_size, token_length, embedding_dim) without
+                        padding.
             return_dict: Whether or not to return a `TokenPoolingOutput` object (with the cluster id to token indices
                          mapping) instead of just the pooled embeddings.
 
         Returns:
             A list of pooled embeddings or `PooledOutput` objects.
         """
-        if isinstance(embeddings, torch.Tensor) and embeddings.dim() == 2:
-            return [self._pool_single_embedding(embeddings, return_dict=return_dict)]
-        elif isinstance(embeddings, list) or embeddings.dim() == 3:
+        if isinstance(embeddings, list) and not embeddings:
+            return []
+        elif (isinstance(embeddings, list) and embeddings[0].dim() == 2) or (
+            isinstance(embeddings, torch.Tensor) and embeddings.dim() == 3
+        ):
             return [self._pool_single_embedding(batch_emb, return_dict) for batch_emb in embeddings]
         else:
-            raise ValueError("The input tensor must be a list of 2D tensors or a 2D/3D tensor.")
+            raise ValueError("The input tensor must be a list of 2D tensors or a 3D tensor.")
 
     def _pool_single_embedding(
         self,
@@ -96,6 +96,14 @@ class HierarchicalTokenPooler(BaseTokenPooler):
         token_length = embedding.size(0)
         if token_length == 1:
             raise ValueError("The input tensor must have more than one token.")
+
+        if self.pool_factor == 1:
+            if not return_dict:
+                return embedding
+            return TokenPoolingOutput(
+                pooled_embedding=embedding,
+                cluster_id_to_indices={0: (torch.arange(token_length),)},
+            )
 
         list_pooled_embeddings: List[torch.Tensor] = []
 
