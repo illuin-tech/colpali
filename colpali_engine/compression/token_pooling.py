@@ -51,7 +51,7 @@ class HierarchicalTokenPooler(BaseTokenPooler):
 
     def pool_embeddings(
         self,
-        embeddings: Union[torch.Tensor, List[torch.Tensor]],
+        embeddings: Union[List[torch.Tensor], torch.Tensor],
         return_dict: bool = False,
     ) -> List[Union[torch.Tensor, TokenPoolingOutput]]:
         """
@@ -69,12 +69,14 @@ class HierarchicalTokenPooler(BaseTokenPooler):
         Returns:
             A list of pooled embeddings or `PooledOutput` objects.
         """
-        if isinstance(embeddings, torch.Tensor) and embeddings.dim() == 2:
-            return [self._pool_single_embedding(embeddings, return_dict=return_dict)]
-        elif isinstance(embeddings, list) or embeddings.dim() == 3:
+        if isinstance(embeddings, list) and not embeddings:
+            return []
+        elif (isinstance(embeddings, list) and embeddings[0].dim() == 2) or (
+            isinstance(embeddings, torch.Tensor) and embeddings.dim() == 3
+        ):
             return [self._pool_single_embedding(batch_emb, return_dict) for batch_emb in embeddings]
         else:
-            raise ValueError("The input tensor must be a list of 2D tensors or a 2D/3D tensor.")
+            raise ValueError("The input tensor must be a list of 2D tensors or a 3D tensor.")
 
     def _pool_single_embedding(
         self,
