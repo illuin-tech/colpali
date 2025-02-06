@@ -57,12 +57,10 @@ class HierarchicalTokenPooler(BaseTokenPooler):
         """
         Return the pooled embeddings.
 
-        The `embeddings` input can be one of the following:
-        - A list of 2D tensors if the embeddings' sequence lengths are different.
-        - A 3D tensor if the embeddings have the same length (no padding).
-
         Args:
-            embeddings: A tensor of shape (token_length, embedding_dim) or (batch_size, token_length, embedding_dim).
+            embeddings: A list of 2D tensors (token_length, embedding_dim) where each tensor can have its own
+                        token_length, or a 3D tensor of shape (batch_size, token_length, embedding_dim) without
+                        padding.
             return_dict: Whether or not to return a `TokenPoolingOutput` object (with the cluster id to token indices
                          mapping) instead of just the pooled embeddings.
 
