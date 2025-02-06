@@ -97,6 +97,14 @@ class HierarchicalTokenPooler(BaseTokenPooler):
         if token_length == 1:
             raise ValueError("The input tensor must have more than one token.")
 
+        if self.pool_factor == 1:
+            if not return_dict:
+                return embedding
+            return TokenPoolingOutput(
+                pooled_embedding=embedding,
+                cluster_id_to_indices={0: (torch.arange(token_length),)},
+            )
+
         list_pooled_embeddings: List[torch.Tensor] = []
 
         similarities = torch.mm(embedding, embedding.t())
