@@ -147,6 +147,7 @@ class HierarchicalTokenPooler(BaseTokenPooler):
             return embedding, cluster_id_to_indices
 
         # Move the embedding to CPU for better multi-threading performance
+        dtype = embedding.dtype
         device = embedding.device
         embedding = embedding.to(torch.float32).cpu()
 
@@ -177,7 +178,7 @@ class HierarchicalTokenPooler(BaseTokenPooler):
 
             pooled_embeddings = torch.stack(list_pooled_embeddings, dim=0)  # (num_clusters, embedding_dim)
 
-        # Move the pooled embeddings back to the original device
-        pooled_embeddings = pooled_embeddings.to(device)
+        # Restore the original device and dtype
+        pooled_embeddings = pooled_embeddings.to(device).to(dtype)
 
         return pooled_embeddings, cluster_id_to_indices
