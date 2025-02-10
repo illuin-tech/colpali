@@ -126,3 +126,53 @@ class TestHierarchicalTokenPooler:
         for input_embedding, pooled_embedding in zip(list_embeddings, outputs.pooled_embeddings):
             assert pooled_embedding.shape[1] == 768
             assert pooled_embedding.shape[0] <= input_embedding.shape[0] // 2
+
+    def test_pool_embeddings_padded_vs_list(self):
+        pooler = HierarchicalTokenPooler(pool_factor=1)
+
+        # Reference.
+        seq1 = torch.tensor(
+            [
+                [1.0, 1.0],
+                [2.0, 2.0],
+                [3.0, 3.0],
+            ],
+            dtype=torch.float32,
+        )
+        seq2 = torch.tensor(
+            [
+                [4.0, 4.0],
+                [5.0, 5.0],
+                [6.0, 6.0],
+                [7.0, 7.0],
+            ],
+            dtype=torch.float32,
+        )
+        list_embeddings = [seq1, seq2]
+
+        list_pooled_embeddings = pooler.pool_embeddings(list_embeddings, return_dict=False)
+        expected_pooled_embeddings = torch.nn.utils.rnn.pad_sequence(
+            list_pooled_embeddings,
+            batch_first=True,
+            padding_value=0.0,
+            padding_side="left",
+        )
+
+        # Pad the reference embeddngs.
+        padded_embeddings = torch.nn.utils.rnn.pad_sequence(
+            list_embeddings,
+            batch_first=True,
+            padding_value=0.0,
+            padding_side="left",
+        )
+
+        # Call pool_embeddings with the padded tensor. Note that we must pass padding=True.
+        pooled_embeddings = pooler.pool_embeddings(
+            padded_embeddings,
+            return_dict=False,
+            padding=True,
+            padding_value=0.0,
+            padding_side="left",
+        )
+
+        assert torch.allclose(pooled_embeddings, expected_pooled_embeddings)
