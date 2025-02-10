@@ -63,7 +63,7 @@ from transformers.utils.import_utils import is_flash_attn_2_available
 
 from colpali_engine.models import ColQwen2, ColQwen2Processor
 
-model_name = "vidore/colqwen2-v0.1"
+model_name = "vidore/colqwen2-v1.0"
 
 model = ColQwen2.from_pretrained(
     model_name,
