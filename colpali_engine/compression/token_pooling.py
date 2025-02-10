@@ -72,6 +72,10 @@ class HierarchicalTokenPooler(BaseTokenPooler):
                         optional padding.
             return_dict: Whether or not to return a `TokenPoolingOutput` object (with the cluster id to token indices
                          mapping) instead of just the pooled embeddings.
+            padding: Whether or not to unbind the padded 3D tensor into a list of 2D tensors. Does nothing if the input
+                     is a list of 2D tensors.
+            padding_value: The padding value used in the 3D tensor.
+            padding_side: The side where the padding was applied in the 3D tensor.
 
         Returns:
             A list of pooled embeddings or `TokenPoolingOutput` objects.
