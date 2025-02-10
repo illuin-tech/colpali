@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from concurrent.futures import ThreadPoolExecutor  # New import for parallelism
 from dataclasses import dataclass
 from typing import Dict, List, Tuple, Union, cast
 
@@ -12,7 +13,7 @@ from scipy.cluster.hierarchy import fcluster, linkage
 class TokenPoolingOutput:
     """
     Token pooling outputs:
-    - pooled_embeddings: A tensor of shape (num_clusters, embedding_dim).
+    - pooled_embedding: A tensor of shape (num_clusters, embedding_dim).
     - cluster_id_to_indices: A dictionary mapping cluster id to token indices.
     """
 
@@ -65,14 +66,18 @@ class HierarchicalTokenPooler(BaseTokenPooler):
                          mapping) instead of just the pooled embeddings.
 
         Returns:
-            A list of pooled embeddings or `PooledOutput` objects.
+            A list of pooled embeddings or `TokenPoolingOutput` objects.
         """
         if isinstance(embeddings, list) and not embeddings:
             return []
         elif (isinstance(embeddings, list) and embeddings[0].dim() == 2) or (
             isinstance(embeddings, torch.Tensor) and embeddings.dim() == 3
         ):
-            return [self._pool_single_embedding(batch_emb, return_dict) for batch_emb in embeddings]
+            with ThreadPoolExecutor() as executor:
+                # NOTE: We opted for a thread-based pool because most of the heavy lifting is done in C-level libraries
+                # (NumPy, Torch, and SciPy) which usually release the GIL.
+                results = list(executor.map(self._pool_single_embedding, embeddings, [return_dict] * len(embeddings)))
+            return results
         else:
             raise ValueError("The input tensor must be a list of 2D tensors or a 3D tensor.")
 
@@ -88,7 +93,7 @@ class HierarchicalTokenPooler(BaseTokenPooler):
             embedding: A tensor of shape (token_length, embedding_dim).
 
         Returns:
-            A list of pooled embeddings or `PooledOutput` objects.
+            A pooled embedding tensor or a `TokenPoolingOutput` object.
         """
         if embedding.dim() != 2:
             raise ValueError("The input tensor must be a 2D tensor.")
@@ -105,10 +110,14 @@ class HierarchicalTokenPooler(BaseTokenPooler):
                 cluster_id_to_indices={0: (torch.arange(token_length),)},
             )
 
+        # Move the embedding to CPU for better multi-threading performance
+        device = embedding.device
+        embedding = embedding.to(torch.float32).cpu()
+
         list_pooled_embeddings: List[torch.Tensor] = []
 
         similarities = torch.mm(embedding, embedding.t())
-        distances = 1 - similarities.to(torch.float32).cpu().numpy()
+        distances = 1 - similarities.numpy()
 
         Z = linkage(distances, metric="euclidean", method="ward")  # noqa: N806
         max_clusters = max(token_length // self.pool_factor, 1)
@@ -120,22 +129,22 @@ class HierarchicalTokenPooler(BaseTokenPooler):
         with torch.no_grad():
             for cluster_id in range(max_clusters):
                 cluster_indices = cast(
-                    Tuple[torch.Tensor],
+                    Tuple[torch.Tensor],  # we know it is a 1-tuple
                     torch.where(torch.tensor(cluster_labels == cluster_id)),
-                )  # we know it is a 1-tuple
+                )
                 cluster_id_to_indices[cluster_id] = cluster_indices
 
                 if cluster_indices[0].numel() > 0:
                     pooled_embedding = embedding[cluster_indices].mean(dim=0)  # (embedding_dim,)
-                    pooled_embedding = torch.nn.functional.normalize(pooled_embedding, p=2, dim=-1)  # (embedding_dim,)
+                    pooled_embedding = torch.nn.functional.normalize(pooled_embedding, p=2, dim=-1)
                     list_pooled_embeddings.append(pooled_embedding)
 
             pooled_embeddings = torch.stack(list_pooled_embeddings, dim=0)  # (num_clusters, embedding_dim)
 
         if not return_dict:
-            return pooled_embeddings
+            return pooled_embeddings.to(device)
 
         return TokenPoolingOutput(
-            pooled_embedding=pooled_embeddings,
+            pooled_embedding=pooled_embeddings.to(device),
             cluster_id_to_indices=cluster_id_to_indices,
         )
