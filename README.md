@@ -76,8 +76,8 @@ processor = ColQwen2Processor.from_pretrained(model_name)
 
 # Your inputs
 images = [
-    Image.new("RGB", (32, 32), color="white"),
-    Image.new("RGB", (16, 16), color="black"),
+    Image.new("RGB", (128, 128), color="white"),
+    Image.new("RGB", (64, 32), color="black"),
 ]
 queries = [
     "What is the organizational structure for our R&D department?",
@@ -203,6 +203,45 @@ pooler = HierarchicalTokenPooler(pool_factor=2)
 
 # Pool the embeddings
 outputs = pooler.pool_embeddings(list_embeddings)
+```
+
+If your inputs are padded 3D tensor embeddings instead of lists of 2D tensors, use `padding=True` and specify the padding used by your tokenizer to make sure the `HierarchicalTokenPooler` correctly removes the padding values before pooling:
+
+```python
+import torch
+from PIL import Image
+from transformers.utils.import_utils import is_flash_attn_2_available
+
+from colpali_engine.compression.token_pooling import HierarchicalTokenPooler
+from colpali_engine.models import ColQwen2, ColQwen2Processor
+
+model_name = "vidore/colqwen2-v1.0"
+model = ColQwen2.from_pretrained(
+    model_name,
+    torch_dtype=torch.bfloat16,
+    device_map="cuda:0",  # or "mps" if on Apple Silicon
+    attn_implementation="flash_attention_2" if is_flash_attn_2_available() else None,
+).eval()
+processor = ColQwen2Processor.from_pretrained(model_name)
+
+token_pooler = HierarchicalTokenPooler(pool_factor=2)
+
+# Your page images
+images = [
+    Image.new("RGB", (128, 128), color="white"),
+    Image.new("RGB", (32, 32), color="black"),
+]
+
+# Process the inputs
+batch_images = processor.process_images(images).to(model.device)
+
+# Forward pass
+with torch.no_grad():
+    image_embeddings = model(**batch_images)
+
+# Apply token pooling (reduces the sequence length of the multi-vector embeddings)
+image_embeddings = token_pooler.pool_embeddings(image_embeddings)
+
 ```
 
 ### Training
