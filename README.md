@@ -240,8 +240,11 @@ with torch.no_grad():
     image_embeddings = model(**batch_images)
 
 # Apply token pooling (reduces the sequence length of the multi-vector embeddings)
-image_embeddings = token_pooler.pool_embeddings(image_embeddings)
-
+image_embeddings = token_pooler.pool_embeddings(
+    image_embeddings,
+    padding=True,
+    padding_side=processor.tokenizer.padding_side,
+)
 ```
 
 ### Training
