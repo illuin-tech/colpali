@@ -5,6 +5,7 @@ import pytest
 import torch
 from datasets import load_dataset
 from PIL import Image
+from transformers.utils.import_utils import is_flash_attn_2_available
 
 from colpali_engine.models import ColQwen2, ColQwen2Processor
 from colpali_engine.utils.torch_utils import get_torch_device, tear_down_torch
@@ -22,12 +23,18 @@ def model(model_name: str) -> Generator[ColQwen2, None, None]:
     device = get_torch_device("auto")
     logger.info(f"Device used: {device}")
 
+    if device.startswith("cuda"):
+        attn_implementation = "flash_attention_2" if is_flash_attn_2_available() else None
+    else:
+        attn_implementation = "eager"
+
     yield cast(
         ColQwen2,
         ColQwen2.from_pretrained(
             model_name,
             torch_dtype=torch.bfloat16,
             device_map=device,
+            attn_implementation=attn_implementation,
         ).eval(),
     )
     tear_down_torch()
@@ -53,8 +60,8 @@ class TestColQwen2ModelIntegration:
     ):
         # Create a batch of dummy images
         images = [
-            Image.new("RGB", (32, 32), color="white"),
-            Image.new("RGB", (16, 16), color="black"),
+            Image.new("RGB", (64, 64), color="white"),
+            Image.new("RGB", (32, 32), color="black"),
         ]
 
         # Process the image
