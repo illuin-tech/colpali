@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-from typing import Dict, List, Tuple, Union, cast
+from typing import Dict, List, Optional, Tuple, Union, cast
 
 import numpy as np
 import torch
@@ -62,6 +62,7 @@ class HierarchicalTokenPooler(BaseTokenPooler):
         padding: bool = False,
         padding_value: float = 0.0,
         padding_side: str = "left",
+        num_workers: Optional[int] = None,
     ) -> Union[Union[torch.Tensor, List[torch.Tensor]], TokenPoolingOutput]:
         """
         Return the pooled embeddings.
@@ -99,7 +100,7 @@ class HierarchicalTokenPooler(BaseTokenPooler):
             else:
                 embeddings = list(embeddings.unbind(dim=0))
 
-        with ThreadPoolExecutor() as executor:
+        with ThreadPoolExecutor(num_workers) as executor:
             # NOTE: We opted for a thread-based pool because most of the heavy lifting is done in C-level libraries
             # (NumPy, Torch, and SciPy) which usually release the GIL.
             results = list(executor.map(self._pool_single_embedding, embeddings))
