@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
-### [0.3.9] - 2025-02-05
+### [0.3.9] - 2025-02-11
 
 - Add support for token pooling with `HierarchicalTokenPooler`.
 
