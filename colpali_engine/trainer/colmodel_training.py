@@ -220,6 +220,7 @@ class ColModelTraining:
             max_length=self.config.max_length,
         )
         if self.config.eval_dataset_loader is not None:
+            print("This evaluation slightly differs from vidore-benchmark and will be deprecated.")
             for test_name, test_dataset_loading_func in self.config.eval_dataset_loader.items():
                 print(f"Evaluating {test_name}")
                 test_ds = test_dataset_loading_func()
@@ -227,13 +228,14 @@ class ColModelTraining:
                 all_metrics[test_name] = metrics
                 print(f"Metrics for {test_name}: {metrics}")
 
-                # checkpoint dumps
-                with open(f"{self.config.output_dir}/results.json", "w") as f:
-                    json.dump(all_metrics, f)
+                # remove results storing because of deprecation
+                # with open(f"{self.config.output_dir}/results.json", "w") as f:
+                #     json.dump(all_metrics, f)
 
+        # remove results storing because of deprecation
         # save results as json
-        with open(f"{self.config.output_dir}/results.json", "w") as f:
-            json.dump(all_metrics, f)
+        # with open(f"{self.config.output_dir}/results.json", "w") as f:
+        #     json.dump(all_metrics, f)
 
     def save(self, config_file):
         # save model

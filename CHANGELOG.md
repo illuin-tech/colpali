@@ -7,7 +7,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
-### [0.3.9] - 2025-02-11
+
+### Changed
+
+- Warn about evaluation being different from Vidore, and do not store results to prevent confusion.
+
+
+## [0.3.9] - 2025-02-11
+
+### Added
 
 - Add support for token pooling with `HierarchicalTokenPooler`.
 
