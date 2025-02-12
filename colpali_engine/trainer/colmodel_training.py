@@ -1,4 +1,5 @@
 import os
+import warnings
 from dataclasses import dataclass
 from typing import Callable, Dict, Optional, Tuple
 
@@ -219,7 +220,10 @@ class ColModelTraining:
             max_length=self.config.max_length,
         )
         if self.config.eval_dataset_loader is not None:
-            print("This evaluation slightly differs from vidore-benchmark and will be deprecated.")
+            warnings.warn(
+                "The evaluation slightly differs from `vidore-benchmark` and will be deprecated.",
+                category=DeprecationWarning,
+            )
             for test_name, test_dataset_loading_func in self.config.eval_dataset_loader.items():
                 print(f"Evaluating {test_name}")
                 test_ds = test_dataset_loading_func()
