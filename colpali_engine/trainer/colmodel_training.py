@@ -227,15 +227,6 @@ class ColModelTraining:
                 all_metrics[test_name] = metrics
                 print(f"Metrics for {test_name}: {metrics}")
 
-                # remove results storing because of deprecation
-                # with open(f"{self.config.output_dir}/results.json", "w") as f:
-                #     json.dump(all_metrics, f)
-
-        # remove results storing because of deprecation
-        # save results as json
-        # with open(f"{self.config.output_dir}/results.json", "w") as f:
-        #     json.dump(all_metrics, f)
-
     def save(self, config_file):
         # save model
         self.model.save_pretrained(self.config.output_dir)
