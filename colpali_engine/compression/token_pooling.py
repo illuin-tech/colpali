@@ -45,6 +45,28 @@ class BaseTokenPooler(ABC):
 class HierarchicalTokenPooler(BaseTokenPooler):
     """
     Hierarchical token pooling of multi-vector embeddings based on the similarity between token embeddings.
+
+    Example with a list of 2D tensors:
+
+    ```python
+    list_embeddings = [torch.rand(10, 768), torch.rand(20, 768)]
+    pooler = HierarchicalTokenPooler(pool_factor=2)
+    outputs = pooler.pool_embeddings(list_embeddings)
+    ```
+
+    Example with a 0-padded 3D tensor:
+
+    ```python
+    list_embeddings = [torch.rand(10, 768), torch.rand(20, 768)]
+    padded_embeddings = torch.nn.utils.rnn.pad_sequence(
+            list_embeddings,
+            batch_first=True,
+            padding_value=0.0,
+            padding_side="left",
+        )
+    pooler = HierarchicalTokenPooler(pool_factor=2)
+    outputs = pooler.pool_embeddings(list_embeddings, padding=True, padding_side="left")
+    ```
     """
 
     def __init__(self, pool_factor: int):
@@ -68,19 +90,18 @@ class HierarchicalTokenPooler(BaseTokenPooler):
 
         Args:
             embeddings: A list of 2D tensors (token_length, embedding_dim) where each tensor can have its own token
-                        length, or a 3D tensor of shape (batch_size, token_length, embedding_dim) with padding.
+                        length, or a 3D tensor of shape (batch_size, token_length, embedding_dim) with 0-padding.
             return_dict: Whether or not to return a `TokenPoolingOutput` object (with the cluster id to token indices
                          mapping) instead of just the pooled embeddings.
             padding: Whether or not to unbind the padded 3D tensor into a list of 2D tensors. Does nothing if the input
                      is a list of 2D tensors.
-            padding_value: The padding value used in the 3D tensor.
             padding_side: The side where the padding was applied in the 3D tensor.
 
         Returns:
             If the `embeddings` input is:
             - A list of 2D tensors: Returns a list of 2D tensors (token_length, embedding_dim) where each tensor can
                                     have its own token_length.
-            - A 3D tensor: A 3D tensor of shape (batch_size, token_length, embedding_dim) with padding.
+            - A 3D tensor: A 3D tensor of shape (batch_size, token_length, embedding_dim) with 0-padding.
 
             If `return_dict` is True, the pooled embeddings are returned within a `TokenPoolingOutput` object, along
             with the cluster id to token indices mapping.
