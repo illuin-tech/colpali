@@ -60,7 +60,6 @@ class HierarchicalTokenPooler(BaseTokenPooler):
         embeddings: Union[List[torch.Tensor], torch.Tensor],
         return_dict: bool = False,
         padding: bool = False,
-        padding_value: float = 0.0,
         padding_side: str = "left",
         num_workers: Optional[int] = None,
     ) -> Union[Union[torch.Tensor, List[torch.Tensor]], TokenPoolingOutput]:
@@ -99,7 +98,7 @@ class HierarchicalTokenPooler(BaseTokenPooler):
             if padding:
                 embeddings = unbind_padded_multivector_embeddings(
                     embeddings,
-                    padding_value=padding_value,
+                    padding_value=0.0,
                     padding_side=padding_side,
                 )
             else:
@@ -119,7 +118,7 @@ class HierarchicalTokenPooler(BaseTokenPooler):
             pooled_embeddings = torch.nn.utils.rnn.pad_sequence(
                 pooled_embeddings,
                 batch_first=True,
-                padding_value=padding_value,
+                padding_value=0.0,
                 padding_side=padding_side,
             )
 

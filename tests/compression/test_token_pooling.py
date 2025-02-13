@@ -171,7 +171,6 @@ class TestHierarchicalTokenPooler:
             padded_embeddings,
             return_dict=False,
             padding=True,
-            padding_value=0.0,
             padding_side="left",
         )
 
