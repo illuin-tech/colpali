@@ -192,7 +192,7 @@ import torch
 
 from colpali_engine.compression.token_pooling import HierarchicalTokenPooler
 
-# Dummy embeddings
+# Dummy multivector embeddings
 list_embeddings = [
     torch.rand(10, 768),
     torch.rand(20, 768),
