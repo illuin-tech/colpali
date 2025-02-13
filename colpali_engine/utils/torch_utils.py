@@ -60,7 +60,7 @@ def unbind_padded_multivector_embeddings(
     padding_side: str = "left",
 ) -> List[torch.Tensor]:
     """
-    Removes padding elements from a batch of embeddings.
+    Removes padding elements from a batch of multivector embeddings.
 
     Args:
         embeddings (torch.Tensor): A tensor of shape (batch_size, seq_length, dim) with padding.
