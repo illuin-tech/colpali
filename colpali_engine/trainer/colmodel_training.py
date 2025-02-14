@@ -20,7 +20,7 @@ from colpali_engine.loss.late_interaction_losses import (
     ColbertLoss,
 )
 from colpali_engine.trainer.contrastive_trainer import ContrastiveTrainer
-from colpali_engine.trainer.eval_utils import CustomRetrievalEvaluator
+from colpali_engine.trainer.eval_utils import BenchmarkEvalCallback, CustomRetrievalEvaluator
 from colpali_engine.utils.gpu_stats import print_gpu_utilization, print_summary
 from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 
@@ -129,6 +129,18 @@ class ColModelTraining:
         )
 
         trainer.args.remove_unused_columns = False
+
+        if self.config.processor is not None:
+            trainer.add_callback(
+                BenchmarkEvalCallback(
+                    processor=self.config.processor,
+                    model=self.model,
+                    eval_dataset_loader=self.config.eval_dataset_loader,
+                    batch_query=self.config.tr_args.per_device_eval_batch_size,
+                    batch_passage=4,
+                    batch_score=4,
+                )
+            )
 
         result = trainer.train(resume_from_checkpoint=self.config.tr_args.resume_from_checkpoint)
         print_summary(result)

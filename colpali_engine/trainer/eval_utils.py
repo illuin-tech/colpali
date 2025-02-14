@@ -15,15 +15,18 @@ from mteb.evaluation.evaluators.utils import (
     recall_cap,
     top_k_accuracy,
 )
+from transformers import TrainerCallback, TrainerControl, TrainerState, TrainingArguments
+from vidore_benchmark.evaluation.vidore_evaluators import ViDoReEvaluatorQA
+from vidore_benchmark.retrievers import VisionRetriever
 
 logger = logging.getLogger(__name__)
-
 
 
 class CustomRetrievalEvaluator:
     """
     Wrapper class for the MTEB retrieval evaluator.
     """
+
     def __init__(self, k_values: list[int] = [1, 3, 5, 10, 20, 50, 100]):
         self.k_values = k_values
 
@@ -57,10 +60,10 @@ class CustomRetrievalEvaluator:
 
     @staticmethod
     def evaluate(
-            qrels: dict[str, dict[str, int]],
-            results: dict[str, dict[str, float]],
-            k_values: list[int],
-            ignore_identical_ids: bool = False,
+        qrels: dict[str, dict[str, int]],
+        results: dict[str, dict[str, float]],
+        k_values: list[int],
+        ignore_identical_ids: bool = False,
     ) -> tuple[
         dict[str, float],
         dict[str, float],
@@ -96,9 +99,7 @@ class CustomRetrievalEvaluator:
         ndcg_string = "ndcg_cut." + ",".join([str(k) for k in k_values])
         recall_string = "recall." + ",".join([str(k) for k in k_values])
         precision_string = "P." + ",".join([str(k) for k in k_values])
-        evaluator = pytrec_eval.RelevanceEvaluator(
-            qrels, {map_string, ndcg_string, recall_string, precision_string}
-        )
+        evaluator = pytrec_eval.RelevanceEvaluator(qrels, {map_string, ndcg_string, recall_string, precision_string})
         scores = evaluator.evaluate(results)
 
         for query_id in scores.keys():
@@ -129,11 +130,11 @@ class CustomRetrievalEvaluator:
 
     @staticmethod
     def evaluate_custom(
-            qrels: dict[str, dict[str, int]],
-            results: dict[str, dict[str, float]],
-            k_values: list[int],
-            metric: str,
-            output_type: str = "all",
+        qrels: dict[str, dict[str, int]],
+        results: dict[str, dict[str, float]],
+        k_values: list[int],
+        metric: str,
+        output_type: str = "all",
     ) -> tuple[dict[str, float], dict[str, float]]:
         if metric.lower() in ["mrr", "mrr@k", "mrr_cut"]:
             metric_scores = mrr(qrels, results, k_values, output_type)
@@ -160,19 +161,15 @@ class CustomRetrievalEvaluator:
 
     @staticmethod
     def evaluate_abstention(
-            results: dict[str, dict[str, float]],
-            metric_scores: dict[str, list[float]],
+        results: dict[str, dict[str, float]],
+        metric_scores: dict[str, list[float]],
     ) -> dict[str, float]:
         """Computes normalized Area Under the Curve on a set of evaluated instances as presented in
         the paper https://arxiv.org/abs/2402.12997"""
         all_sim_scores = [list(results[qid].values()) for qid in list(results.keys())]
-        all_conf_scores = [
-            confidence_scores(sim_scores) for sim_scores in all_sim_scores
-        ]
+        all_conf_scores = [confidence_scores(sim_scores) for sim_scores in all_sim_scores]
         conf_fcts = list(all_conf_scores[0].keys())
-        all_conf_scores = {
-            fct: np.array([x[fct] for x in all_conf_scores]) for fct in conf_fcts
-        }
+        all_conf_scores = {fct: np.array([x[fct] for x in all_conf_scores]) for fct in conf_fcts}
         metric_scores = {k: np.array(v) for k, v in metric_scores.items()}
         naucs = {}
 
@@ -181,3 +178,67 @@ class CustomRetrievalEvaluator:
                 naucs[f"nAUC_{metric_name}_{fct}"] = nAUC(conf_scores, scores)
 
         return naucs
+
+
+class BenchmarkEvalCallback(TrainerCallback):
+    def __init__(
+        self,
+        processor,
+        model,
+        eval_dataset_loader,
+        batch_query: int = 4,
+        batch_passage: int = 4,
+        batch_score: int = 4,
+    ):
+        """
+        :param processor: The processor instance (e.g., ColIdefics3Processor) needed for retrieval.
+        :param eval_dataset_name: The name of the single benchmark dataset to evaluate on.
+        :param eval_collection: The name of the collection (e.g., from Hugging Face Hub) to evaluate.
+        :param batch_query: Batch size for queries.
+        :param batch_passage: Batch size for passages.
+        :param batch_score: Batch size for scoring.
+        """
+        self.processor = processor
+        self.model = model
+        self.eval_dataset_loader = eval_dataset_loader
+        self.batch_query = batch_query
+        self.batch_passage = batch_passage
+        self.batch_score = batch_score
+
+    def on_evaluate(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
+        if self.processor is None:
+            print("Processor not provided. Skipping benchmark evaluation.")
+            return
+
+        print(f"\n=== Running benchmark evaluation at global step {state.global_step} ===")
+        # Set model to evaluation mode.
+        self.model.eval()
+
+        # Create a vision retriever with the current model checkpoint.
+        vision_retriever = VisionRetriever(
+            model=self.model,
+            processor=self.processor,
+        )
+        vidore_evaluator = ViDoReEvaluatorQA(vision_retriever)
+
+        # Evaluate on a collection.
+        if self.eval_dataset_loader is not None:
+            try:
+                metrics_collection = {}
+                for test_name, test_dataset_loading_func in self.eval_dataset_loader.items():
+                    ds_coll = test_dataset_loading_func()
+                    metrics = vidore_evaluator.evaluate_dataset(
+                        ds=ds_coll,
+                        batch_query=self.batch_query,
+                        batch_passage=self.batch_passage,
+                        batch_score=self.batch_score,
+                    )
+                    metrics_collection[test_name] = metrics
+                print(f"Benchmark metrics for tests datasets at step {state.global_step}:")
+                print(metrics_collection)
+            except Exception as e:
+                print(f"Error during benchmark evaluation on collection '{self.eval_collection}': {e}")
+
+        # Set model back to train mode.
+        self.model.train()
+        return
