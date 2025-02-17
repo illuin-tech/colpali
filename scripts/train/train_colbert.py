@@ -21,9 +21,6 @@ def main(config_file: Path) -> None:
         print("Training model")
         app.train()
         app.save(config_file=config_file)
-    if config.run_eval:
-        print("Running evaluation")
-        app.eval()
     print("Done!")
 
 

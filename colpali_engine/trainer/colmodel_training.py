@@ -3,11 +3,7 @@ import warnings
 from dataclasses import dataclass
 from typing import Callable, Dict, Optional, Tuple, cast
 
-import torch
-from datasets import concatenate_datasets
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
-from torch.utils.data import DataLoader
-from tqdm import tqdm
 from transformers import (
     AutoTokenizer,
     PreTrainedModel,
@@ -137,103 +133,8 @@ class ColModelTraining:
         result = trainer.train(resume_from_checkpoint=self.config.tr_args.resume_from_checkpoint)
         print_summary(result)
 
-    def eval_dataset(self, test_dataset):
-        self.model.eval()
-
-        idx_with_query = [idx for idx, sample in enumerate(test_dataset["query"]) if sample is not None]
-        idx_without_query = [idx for idx, sample in enumerate(test_dataset["query"]) if sample is None]
-
-        dataloader_with_query = DataLoader(
-            test_dataset.select(idx_with_query),
-            batch_size=self.config.tr_args.per_device_eval_batch_size,
-            shuffle=False,
-            collate_fn=self.collator,
-        )
-        dataloader_without_query = DataLoader(
-            test_dataset.select(idx_without_query),
-            batch_size=self.config.tr_args.per_device_eval_batch_size,
-            shuffle=False,
-            collate_fn=self.collator,
-        )
-
-        # dataset is ordered so that non-null queries come first
-        test_dataset = concatenate_datasets(
-            [test_dataset.select(idx_with_query), test_dataset.select(idx_without_query)]
-        )
-
-        relevant_docs = {}
-        docidx_2_docid = {}
-        qsidx_2_query = []
-        for idx, sample in enumerate(test_dataset):
-            doc_id = sample["image_filename"] if "image_filename" in sample else str(hash(sample["doc"]))
-            # query_id = sample["query_id"] if "query_id" in sample else str(hash(sample["query"]))
-            if sample["query"] is not None:
-                relevant_docs[str(idx)] = {doc_id: 1}
-                qsidx_2_query.append(str(idx))
-            docidx_2_docid[str(idx)] = doc_id
-
-        qs = []
-        ps = []
-
-        device = self.model.device
-        with torch.no_grad():
-            for dataloader in [dataloader_with_query, dataloader_without_query]:
-                for batch in tqdm(dataloader):
-                    # feed only kwargs with 'doc_' prefix
-                    doc = self.model(**{k[4:]: v.to(device) for k, v in batch.items() if k.startswith("doc")})
-                    ps.extend(list(torch.unbind(doc.to("cpu"))))
-
-                    if "query_input_ids" in batch:
-                        query = self.model(
-                            input_ids=batch["query_input_ids"].to(device),
-                            attention_mask=batch["query_attention_mask"].to(device),
-                        )
-                        # variable len
-                        qs.extend(list(torch.unbind(query.to("cpu"))))
-
-        print("Embeddings computed, evaluating")
-        scores = self.config.processor.score(qs, ps, device=self.model.device)
-        # scores is 2d array of shape (n_queries, n_docs)
-        # turn it into a dict
-        results = {}
-        assert scores.shape[0] == len(qsidx_2_query)
-        for idx, scores_per_query in enumerate(scores):
-            results[qsidx_2_query[idx]] = {
-                docidx_2_docid[str(docidx)]: float(score) for docidx, score in enumerate(scores_per_query)
-            }
-
-        # evaluate
-        metrics = self.retrieval_evaluator.compute_mteb_metrics(relevant_docs, results)
-        print("MTEB metrics:", metrics)
-
-        return metrics
-
     def eval(self) -> None:
-        all_metrics = {}
-        try:
-            print("Evaluating on validation set")
-            metrics = self.eval_dataset(self.dataset["test"])
-            print(f"Metrics for validation set: {metrics}")
-            all_metrics["validation_set"] = metrics
-        except Exception as e:
-            print(f"Error evaluating validation set: {e}")
-
-        # switching to normal collator
-        self.collator = VisualRetrieverCollator(
-            processor=self.config.processor,
-            max_length=self.config.max_length,
-        )
-        if self.config.eval_dataset_loader is not None:
-            warnings.warn(
-                "The evaluation slightly differs from `vidore-benchmark` and will be deprecated.",
-                category=DeprecationWarning,
-            )
-            for test_name, test_dataset_loading_func in self.config.eval_dataset_loader.items():
-                print(f"Evaluating {test_name}")
-                test_ds = test_dataset_loading_func()
-                metrics = self.eval_dataset(test_ds)
-                all_metrics[test_name] = metrics
-                print(f"Metrics for {test_name}: {metrics}")
+        raise NotImplementedError("Evaluation is not implemented yet.")
 
     def save(self, config_file: str):
         """
