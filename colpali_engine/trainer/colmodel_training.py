@@ -1,7 +1,7 @@
 import os
 import warnings
 from dataclasses import dataclass
-from typing import Callable, Dict, Optional, Tuple
+from typing import Callable, Dict, Optional, Tuple, cast
 
 import torch
 from datasets import concatenate_datasets
@@ -50,36 +50,37 @@ class ColModelTrainingConfig:
             self.output_dir = f"./models/{sanitized_name}"
 
         if self.tr_args is None:
+            print("No training arguments provided. Using default.")
             self.tr_args = TrainingArguments(output_dir=self.output_dir)
         elif self.tr_args.output_dir is None:
             self.tr_args.output_dir = self.output_dir
 
-        # cast if string
         if isinstance(self.tr_args.learning_rate, str):
+            print("Casting learning rate to float")
             self.tr_args.learning_rate = float(self.tr_args.learning_rate)
+
         self.tr_args.remove_unused_columns = False
 
         if self.processor is None and self.tokenizer is None:
-            print("Using textual model tokenization")
-            self.tokenizer = AutoTokenizer.from_pretrained(self.model.name_or_path)
+            print("No processor or tokenizer provided. Using default for textual model tokenization.")
+            self.tokenizer = cast(
+                PreTrainedTokenizer,
+                AutoTokenizer.from_pretrained(self.model.name_or_path),
+            )
 
         if self.pretrained_peft_model_name_or_path is not None:
+            print("Loading pretrained PEFT model")
             self.model.load_adapter(self.pretrained_peft_model_name_or_path)
-
-            print(f"Loaded pretrained adapter from {self.pretrained_peft_model_name_or_path}")
 
         if self.peft_config is not None:
             print("Configurating PEFT model")
             if self.processor is None:
-                # Might be deprecated - use the "else" branch
-                self.model = prepare_model_for_kbit_training(self.model)  # use_gradient_checkpointing=True
-                # self.model.enable_input_require_grads()
+                warnings.warn("Processor not provided. Using deprecated logic.")
+                self.model = prepare_model_for_kbit_training(self.model)
                 self.model = get_peft_model(self.model, self.peft_config)
                 self.model.print_trainable_parameters()
             else:
                 if self.pretrained_peft_model_name_or_path is None:
-                    # self.model.add_adapter(self.peft_config)
-                    # self.model.enable_adapters()
                     self.model = get_peft_model(self.model, self.peft_config)
                     self.model.print_trainable_parameters()
                 else:
@@ -92,8 +93,12 @@ class ColModelTraining:
     def __init__(self, config: ColModelTrainingConfig) -> None:
         self.config = config
         self.model = self.config.model
+        self.current_git_hash = os.popen("git rev-parse HEAD").read().strip()
+        self.retrieval_evaluator = CustomRetrievalEvaluator()
         self.dataset = self.config.dataset_loading_func()
+
         if isinstance(self.dataset, Tuple):
+            print("Dataset has BEIR/hard negatives format. Using CorpusQueryCollator.")
             corpus_format = self.dataset[2]
             neg_dataset = self.dataset[1]
             self.dataset = self.dataset[0]
@@ -105,12 +110,11 @@ class ColModelTraining:
                 corpus_format=corpus_format,
             )
         else:
+            print("Dataset has QA format. Using VisualRetrieverCollator.")
             self.collator = VisualRetrieverCollator(
                 processor=self.config.processor,
                 max_length=self.config.max_length,
             )
-        self.current_git_hash = os.popen("git rev-parse HEAD").read().strip()
-        self.retrieval_evaluator = CustomRetrievalEvaluator()
 
     def train(self) -> None:
         if isinstance(self.collator, CorpusQueryCollator) and self.collator.mined_negatives:
@@ -231,17 +235,19 @@ class ColModelTraining:
                 all_metrics[test_name] = metrics
                 print(f"Metrics for {test_name}: {metrics}")
 
-    def save(self, config_file):
-        # save model
+    def save(self, config_file: str):
+        """
+        Save the model with its training config, as well as the tokenizer and processor if provided.
+        """
         self.model.save_pretrained(self.config.output_dir)
         if self.config.tokenizer is not None:
             self.config.tokenizer.save_pretrained(self.config.output_dir)
         if self.config.processor is not None:
-            self.config.processor.save_pretrained(self.config.output_dir)  # save config
+            self.config.processor.save_pretrained(self.config.output_dir)
 
-        # copy-paste the yml file with os
+        # Copy-paste the training config
         os.system(f"cp {config_file} {self.config.output_dir}/training_config.yml")
 
-        # save git hash of the commit at beginning of training
+        # Save git hash of the commit at beginning of training
         with open(f"{self.config.output_dir}/git_hash.txt", "w") as f:
             f.write(self.current_git_hash)
