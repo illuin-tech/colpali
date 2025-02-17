@@ -16,7 +16,7 @@ from mteb.evaluation.evaluators.utils import (
     top_k_accuracy,
 )
 from transformers import TrainerCallback, TrainerControl, TrainerState, TrainingArguments
-from vidore_benchmark.evaluation.vidore_evaluators import ViDoReEvaluatorQA
+from vidore_benchmark.evaluation.vidore_evaluators import ViDoReEvaluatorBEIR, ViDoReEvaluatorQA
 from vidore_benchmark.retrievers import VisionRetriever
 
 logger = logging.getLogger(__name__)
@@ -189,14 +189,17 @@ class BenchmarkEvalCallback(TrainerCallback):
         batch_query: int = 4,
         batch_passage: int = 4,
         batch_score: int = 4,
+        run_frequency: int = 5,
+        dataset_format: str = "beir",
     ):
         """
         :param processor: The processor instance (e.g., ColIdefics3Processor) needed for retrieval.
-        :param eval_dataset_name: The name of the single benchmark dataset to evaluate on.
-        :param eval_collection: The name of the collection (e.g., from Hugging Face Hub) to evaluate.
+        :eval_dataset_loader: A dictionary with the test dataset names as keys and functions that load the datasets as
+        values.
         :param batch_query: Batch size for queries.
         :param batch_passage: Batch size for passages.
         :param batch_score: Batch size for scoring.
+        :param run_frequency: Frequency of evaluation ver the evaluation triggers.
         """
         self.processor = processor
         self.model = model
@@ -204,8 +207,17 @@ class BenchmarkEvalCallback(TrainerCallback):
         self.batch_query = batch_query
         self.batch_passage = batch_passage
         self.batch_score = batch_score
+        self.eval_steps_frequency = run_frequency
+        self.counter_eval = 0
+        self.eval_dataset_format = dataset_format
 
     def on_evaluate(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
+        if self.counter_eval % self.eval_steps_frequency != 0:
+            self.counter_eval += 1
+            return
+        else:
+            self.counter_eval = 1
+
         if self.processor is None:
             print("Processor not provided. Skipping benchmark evaluation.")
             return
@@ -219,7 +231,6 @@ class BenchmarkEvalCallback(TrainerCallback):
             model=self.model,
             processor=self.processor,
         )
-        vidore_evaluator = ViDoReEvaluatorQA(vision_retriever)
 
         # Evaluate on a collection.
         if self.eval_dataset_loader is not None:
@@ -227,6 +238,15 @@ class BenchmarkEvalCallback(TrainerCallback):
                 metrics_collection = {}
                 for test_name, test_dataset_loading_func in self.eval_dataset_loader.items():
                     ds_coll = test_dataset_loading_func()
+
+                    # Temporary before we are caplable of detecting ds format
+                    if self.eval_dataset_format == "beir":
+                        vidore_evaluator = ViDoReEvaluatorBEIR(vision_retriever=vision_retriever)
+                    elif self.eval_dataset_format == "qa":
+                        vidore_evaluator = ViDoReEvaluatorQA(vision_retriever=vision_retriever)
+                    else:
+                        raise ValueError(f"Invalid eval dataset format: {self.eval_dataset_format}")
+
                     metrics = vidore_evaluator.evaluate_dataset(
                         ds=ds_coll,
                         batch_query=self.batch_query,

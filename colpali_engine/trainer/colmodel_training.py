@@ -119,28 +119,35 @@ class ColModelTraining:
 
         trainer.args.remove_unused_columns = False
 
-        if self.config.processor is not None:
-            trainer.add_callback(
-                BenchmarkEvalCallback(
-                    processor=self.config.processor,
-                    model=self.model,
-                    eval_dataset_loader=self.config.eval_dataset_loader,
-                    batch_query=self.config.tr_args.per_device_eval_batch_size,
-                    batch_passage=4,
-                    batch_score=4,
+        if self.config.processor is not None and self.config.tr_args.get("run_vidore_evaluator", False):
+            vidore_eval_dataset_name = self.config.tr_args.get("vidore_eval_dataset_name", None)
+            vidore_eval_collection_name = self.config.tr_args.get("vidore_eval_collection_name", None)
+
+            if vidore_eval_dataset_name is not None and vidore_eval_collection_name is not None:
+                raise ValueError(
+                    "Both vidore_eval_dataset_name and vidore_eval_collection_name are provided. "
+                    "You should only provide one of the two"
                 )
-            )
+            elif vidore_eval_dataset_name is None and vidore_eval_collection_name is None:
+                print("WARNING : No dataset provided for ViDoRe evaluation. Skipping evaluation.")
+            else:
+                trainer.add_callback(
+                    BenchmarkEvalCallback(
+                        processor=self.config.processor,
+                        model=self.model,
+                        eval_dataset_loader=self.config.eval_dataset_loader,
+                        batch_query=self.config.tr_args.per_device_eval_batch_size,
+                        batch_passage=4,
+                        batch_score=4,
+                        run_frequency=self.config.tr_args.get("eval_steps_frequency", 5),
+                    )
+                )
 
         result = trainer.train(resume_from_checkpoint=self.config.tr_args.resume_from_checkpoint)
         print_summary(result)
 
-    def eval(self) -> None:
-        raise NotImplementedError("Evaluation is not implemented yet.")
-
-    def save(self, config_file: str):
-        """
-        Save the model with its training config, as well as the tokenizer and processor if provided.
-        """
+    def save(self, config_file):
+        # save model
         self.model.save_pretrained(self.config.output_dir)
         self.config.processor.save_pretrained(self.config.output_dir)
 
