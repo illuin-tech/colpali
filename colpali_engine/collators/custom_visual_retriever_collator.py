@@ -1,5 +1,5 @@
 from random import randint
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from PIL import Image
 
@@ -7,9 +7,9 @@ from colpali_engine.collators.visual_retriever_collator import VisualRetrieverCo
 from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 
 
-class CorpusQueryCollator(VisualRetrieverCollator):
+class CustomVisualRetrieverCollator(VisualRetrieverCollator):
     """
-    Collator for BEIR-style dataset training or hard negative training.
+    Custom collator for visual retriever models that use a corpus of images and queries.
     """
 
     def __init__(
@@ -18,7 +18,7 @@ class CorpusQueryCollator(VisualRetrieverCollator):
         max_length: int = 2048,
         image_dataset: Optional["Dataset"] = None,  # noqa: F821
         mined_negatives: bool = True,
-        corpus_format: str = "wikiss",
+        corpus_format: Literal["wikiss", "docmatix", "vidore"] = "wikiss",
     ):
         super().__init__(processor=processor, max_length=max_length)
         if image_dataset is None:

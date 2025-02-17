@@ -3,6 +3,7 @@ import warnings
 from dataclasses import dataclass
 from typing import Callable, Dict, Optional, Tuple, cast
 
+from datasets import DatasetDict
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from transformers import (
     AutoTokenizer,
@@ -11,7 +12,7 @@ from transformers import (
     TrainingArguments,
 )
 
-from colpali_engine.collators import CorpusQueryCollator, VisualRetrieverCollator
+from colpali_engine.collators import CustomVisualRetrieverCollator, VisualRetrieverCollator
 from colpali_engine.loss.late_interaction_losses import (
     ColbertLoss,
 )
@@ -93,12 +94,25 @@ class ColModelTraining:
         self.retrieval_evaluator = CustomRetrievalEvaluator()
         self.dataset = self.config.dataset_loading_func()
 
-        if isinstance(self.dataset, Tuple):
-            print("Dataset has BEIR/hard negatives format. Using CorpusQueryCollator.")
+        if isinstance(self.dataset, DatasetDict):
+            print("Dataset has QA format. Using VisualRetrieverCollator.")
+            self.collator = VisualRetrieverCollator(
+                processor=self.config.processor,
+                max_length=self.config.max_length,
+            )
+        elif isinstance(self.dataset, dict):
+            print("Dataset has BEIR format. Using VisualRetrieverCollator.")
+            self.collator = VisualRetrieverBEIRCollator(
+                processor=self.config.processor,
+                max_length=self.config.max_length,
+            )
+            raise NotImplementedError("BEIR format is not supported yet.")
+        elif isinstance(self.dataset, Tuple):
+            print("Custom format detected. Using CustomVisualRetrieverCollator.")
             corpus_format = self.dataset[2]
             neg_dataset = self.dataset[1]
             self.dataset = self.dataset[0]
-            self.collator = CorpusQueryCollator(
+            self.collator = CustomVisualRetrieverCollator(
                 processor=self.config.processor,
                 max_length=self.config.max_length,
                 image_dataset=neg_dataset,
@@ -106,14 +120,10 @@ class ColModelTraining:
                 corpus_format=corpus_format,
             )
         else:
-            print("Dataset has QA format. Using VisualRetrieverCollator.")
-            self.collator = VisualRetrieverCollator(
-                processor=self.config.processor,
-                max_length=self.config.max_length,
-            )
+            raise ValueError("Dataset must be of type DatasetDict or Tuple")
 
     def train(self) -> None:
-        if isinstance(self.collator, CorpusQueryCollator) and self.collator.mined_negatives:
+        if isinstance(self.collator, CustomVisualRetrieverCollator) and self.collator.mined_negatives:
             print("Training with hard negatives")
         else:
             print("Training with in-batch negatives")
