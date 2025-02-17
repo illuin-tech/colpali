@@ -3,11 +3,11 @@ from typing import Any, Dict, List, Literal, Optional
 
 from PIL import Image
 
-from colpali_engine.collators.visual_retriever_collator import VisualRetrieverCollator
+from colpali_engine.collators.visual_retriever_qa_collator import VisualRetrieverQACollator
 from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 
 
-class CustomVisualRetrieverCollator(VisualRetrieverCollator):
+class CustomVisualRetrieverCollator(VisualRetrieverQACollator):
     """
     Custom collator for visual retriever models that use a corpus of images and queries.
     """

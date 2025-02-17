@@ -12,7 +12,7 @@ from transformers import (
     TrainingArguments,
 )
 
-from colpali_engine.collators import CustomVisualRetrieverCollator, VisualRetrieverCollator
+from colpali_engine.collators import CustomVisualRetrieverCollator, VisualRetrieverQACollator
 from colpali_engine.loss.late_interaction_losses import (
     ColbertLoss,
 )
@@ -96,7 +96,7 @@ class ColModelTraining:
 
         if isinstance(self.dataset, DatasetDict):
             print("Dataset has QA format. Using VisualRetrieverCollator.")
-            self.collator = VisualRetrieverCollator(
+            self.collator = VisualRetrieverQACollator(
                 processor=self.config.processor,
                 max_length=self.config.max_length,
             )

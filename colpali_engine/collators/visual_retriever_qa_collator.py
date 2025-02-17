@@ -14,9 +14,9 @@ def prefix_keys(data: Dict[str, Any], prefix: str) -> Dict[str, Any]:
     return {f"{prefix}{k}": v for k, v in data.items()}
 
 
-class VisualRetrieverCollator:
+class VisualRetrieverQACollator:
     """
-    Collator for training vision retrieval models.
+    Collator for training vision retrieval models with a QA dataset.
     """
 
     def __init__(

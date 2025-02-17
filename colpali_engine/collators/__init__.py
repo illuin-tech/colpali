@@ -1,2 +1,2 @@
 from .custom_visual_retriever_collator import CustomVisualRetrieverCollator
-from .visual_retriever_collator import VisualRetrieverCollator
+from .visual_retriever_qa_collator import VisualRetrieverQACollator
