@@ -210,6 +210,21 @@ class TestSetFactory:
         return dataset
 
 
+class TestSetFactoryBEIR:
+    def __init__(self, dataset_path):
+        self.dataset_path = dataset_path
+
+    def __call__(self, *args, **kwargs):
+        split = "test"
+        dataset = {
+            "corpus": cast(Dataset, load_dataset(self.dataset_path, name="corpus", split=split)),
+            "queries": cast(Dataset, load_dataset(self.dataset_path, name="queries", split=split)),
+            "qrels": cast(Dataset, load_dataset(self.dataset_path, name="qrels", split=split)),
+        }
+
+        return dataset
+
+
 if __name__ == "__main__":
     ds = TestSetFactory("vidore/tabfquad_test_subsampled")()
     print(ds)
