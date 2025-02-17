@@ -140,6 +140,7 @@ class ColModelTraining:
                         batch_passage=4,
                         batch_score=4,
                         run_frequency=self.config.tr_args.get("eval_steps_frequency", 5),
+                        dataset_format=self.config.tr_args.get("eval_dataset_format", "beir"),
                     )
                 )
 
