@@ -47,7 +47,7 @@ config:
     # bf16: true
     save_steps: 500
     logging_steps: 10
-    eval_steps: 100
+    eval_steps: 20
     warmup_steps: 100
     learning_rate: 5e-4
     save_total_limit: 1
