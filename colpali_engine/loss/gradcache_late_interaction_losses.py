@@ -1,10 +1,9 @@
-import torch.nn as nn
 from functools import partial
-import tqdm
 
-
-from torch.utils.checkpoint import get_device_states, set_device_states
 import torch
+import torch.nn as nn
+import tqdm
+from torch.utils.checkpoint import get_device_states, set_device_states
 
 
 class RandContext:
@@ -156,7 +155,7 @@ class GradCacheColbertLoss(nn.Module):
         if torch.is_grad_enabled():
             # Step (2): Compute loss and cache gradients.
             loss = self.calculate_loss_and_cache_gradients(reps)
-            # Step (3): Re-run embeddings with gradients enabled and register a backward hook that uses the cached gradients.
+            # Step (3): Re-run embeddings with gradients enabled and register a hook that uses the cached gradients.
             loss.register_hook(partial(_backward_hook, sentence_features=[query_features, doc_features],
                                        random_states=self.random_states, loss_obj=self, model=model))
         else:
