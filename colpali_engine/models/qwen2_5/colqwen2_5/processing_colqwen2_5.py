@@ -4,7 +4,7 @@ from typing import ClassVar, List, Optional, Tuple, Union
 import torch
 from PIL import Image
 from transformers import BatchFeature
-from transformers.models.qwen2_5_vl import Qwen2_5_VLProcessor
+from transformers.models.qwen2_vl import Qwen2VLProcessor
 
 from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 
@@ -24,7 +24,7 @@ def floor_by_factor(number: float, factor: int) -> int:
     return math.floor(number / factor) * factor
 
 
-class ColQwen2_5_Processor(BaseVisualRetrieverProcessor, Qwen2_5_VLProcessor):  # noqa: N801
+class ColQwen2_5_Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):  # noqa: N801
     """
     Processor for ColQwen2.
     """
