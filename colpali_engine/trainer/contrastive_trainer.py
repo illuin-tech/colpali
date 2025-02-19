@@ -30,13 +30,15 @@ class ContrastiveTrainer(Trainer):
             raise ValueError("prediction_step is only called with prediction_loss_only=True")
 
         with torch.no_grad():
-            # feed only kwargs with 'doc_' prefix
-            doc_outputs = model(**{k[4:]: v for k, v in inputs.items() if k.startswith("doc")})
-            query_outputs = model(input_ids=inputs["query_input_ids"], attention_mask=inputs["query_attention_mask"])
-            if "neg_doc_input_ids" in inputs:
-                neg_doc_outputs = model(**{k[8:]: v for k, v in inputs.items() if k.startswith("neg_doc")})
-                loss = self.loss_func(query_outputs, doc_outputs, neg_doc_outputs)
-                return loss, None, None
-
-            loss = self.loss_func(query_outputs, doc_outputs)
+            if hasattr(self.loss_func, "gradcache_enabled") and self.loss_func.gradcache_enabled:
+                loss = self.loss_func(model, inputs)
+            else:
+                # feed only kwargs with 'doc_' prefix
+                doc_outputs = model(**{k[4:]: v for k, v in inputs.items() if k.startswith("doc")})
+                query_outputs = model(input_ids=inputs["query_input_ids"], attention_mask=inputs["query_attention_mask"])
+                if "neg_doc_input_ids" in inputs:
+                    neg_doc_outputs = model(**{k[8:]: v for k, v in inputs.items() if k.startswith("neg_doc")})
+                    loss = self.loss_func(query_outputs, doc_outputs, neg_doc_outputs)
+                    return loss, None, None
+                loss = self.loss_func(query_outputs, doc_outputs)
             return loss, None, None
