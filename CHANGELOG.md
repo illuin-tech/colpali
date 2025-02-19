@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 
+- Add ColQwen2.5 support
 - Add support for token pooling with `HierarchicalTokenPooler`.
 
 ### Changed
