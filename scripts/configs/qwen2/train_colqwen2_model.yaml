@@ -38,6 +38,7 @@ config:
     per_device_train_batch_size: 128
     gradient_checkpointing: true
     gradient_checkpointing_kwargs: { "use_reentrant": false }
+    ddp_find_unused_parameters: false
     # gradient_checkpointing: true
     # 6 x 8 gpus = 48 batch size
     # gradient_accumulation_steps: 4
