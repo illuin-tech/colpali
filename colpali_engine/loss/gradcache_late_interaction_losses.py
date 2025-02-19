@@ -54,10 +54,9 @@ def _backward_hook(grad_output, sentence_features, random_states, loss_obj, mode
             r_state = branch_random_states[idx]
             if r_state is not None:
                 with r_state:
-                    mini_embeds = model.inner_forward(**mini_feature)
+                    mini_embeds = model.forward(**mini_feature)
             else:
-                mini_embeds = model.inner_forward(**mini_feature)
-            breakpoint()
+                mini_embeds = model.forward(**mini_feature)
             mini_embeds = mini_embeds.detach().requires_grad_(True)
             cached_grad = branch_cache[idx]
             # Compute a surrogate loss that replays the cached gradient.
