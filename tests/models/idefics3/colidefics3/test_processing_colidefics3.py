@@ -4,24 +4,24 @@ import pytest
 import torch
 from PIL import Image
 
-from colpali_engine.models import ColQwen2Processor
+from colpali_engine.models import ColIdefics3Processor
 
 
 @pytest.fixture(scope="module")
 def model_name() -> str:
-    return "vidore/colqwen2-v1.0"
+    return "vidore/colSmol-256M"
 
 
 @pytest.fixture(scope="module")
-def processor_from_pretrained(model_name: str) -> Generator[ColQwen2Processor, None, None]:
-    yield cast(ColQwen2Processor, ColQwen2Processor.from_pretrained(model_name))
+def processor_from_pretrained(model_name: str) -> Generator[ColIdefics3Processor, None, None]:
+    yield cast(ColIdefics3Processor, ColIdefics3Processor.from_pretrained(model_name))
 
 
-def test_load_processor_from_pretrained(processor_from_pretrained: ColQwen2Processor):
-    assert isinstance(processor_from_pretrained, ColQwen2Processor)
+def test_load_processor_from_pretrained(processor_from_pretrained: ColIdefics3Processor):
+    assert isinstance(processor_from_pretrained, ColIdefics3Processor)
 
 
-def test_process_images(processor_from_pretrained: ColQwen2Processor):
+def test_process_images(processor_from_pretrained: ColIdefics3Processor):
     # Create a dummy image
     image_size = (16, 32)
     image = Image.new("RGB", image_size, color="black")
@@ -32,12 +32,10 @@ def test_process_images(processor_from_pretrained: ColQwen2Processor):
 
     # Assertions
     assert "pixel_values" in batch_feature
-    assert isinstance(batch_feature["pixel_values"], torch.Tensor)
-    assert batch_feature["pixel_values"].shape[0] == 1
-    assert batch_feature["pixel_values"].shape[-1] == 1176
+    assert batch_feature["pixel_values"].shape == torch.Size([1, 9, 3, 512, 512])
 
 
-def test_process_queries(processor_from_pretrained: ColQwen2Processor):
+def test_process_queries(processor_from_pretrained: ColIdefics3Processor):
     queries = [
         "Is attention really all you need?",
         "Are Benjamin, Antoine, Merve, and Jo best friends?",

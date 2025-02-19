@@ -5,9 +5,8 @@ import pytest
 import torch
 from datasets import load_dataset
 from PIL import Image
-from transformers.utils.import_utils import is_flash_attn_2_available
 
-from colpali_engine.models import ColQwen2, ColQwen2Processor
+from colpali_engine.models import ColIdefics3, ColIdefics3Processor
 from colpali_engine.utils.torch_utils import get_torch_device, tear_down_torch
 
 logger = logging.getLogger(__name__)
@@ -15,53 +14,47 @@ logger = logging.getLogger(__name__)
 
 @pytest.fixture(scope="module")
 def model_name() -> str:
-    return "vidore/colqwen2-v1.0"
+    return "vidore/colSmol-256M"
 
 
 @pytest.fixture(scope="module")
-def model(model_name: str) -> Generator[ColQwen2, None, None]:
+def model(model_name: str) -> Generator[ColIdefics3, None, None]:
     device = get_torch_device("auto")
     logger.info(f"Device used: {device}")
 
-    if device.startswith("cuda"):
-        attn_implementation = "flash_attention_2" if is_flash_attn_2_available() else None
-    else:
-        attn_implementation = "eager"
-
     yield cast(
-        ColQwen2,
-        ColQwen2.from_pretrained(
+        ColIdefics3,
+        ColIdefics3.from_pretrained(
             model_name,
             torch_dtype=torch.bfloat16,
             device_map=device,
-            attn_implementation=attn_implementation,
         ).eval(),
     )
     tear_down_torch()
 
 
 @pytest.fixture(scope="module")
-def processor(model_name: str) -> Generator[ColQwen2Processor, None, None]:
-    yield cast(ColQwen2Processor, ColQwen2Processor.from_pretrained(model_name))
+def processor(model_name: str) -> Generator[ColIdefics3Processor, None, None]:
+    yield cast(ColIdefics3Processor, ColIdefics3Processor.from_pretrained(model_name))
 
 
-class TestColQwen2Model:
+class TestColIdefics3Model:
     @pytest.mark.slow
-    def test_load_model_from_pretrained(self, model: ColQwen2):
-        assert isinstance(model, ColQwen2)
+    def test_load_model_from_pretrained(self, model: ColIdefics3):
+        assert isinstance(model, ColIdefics3)
 
 
-class TestColQwen2ModelIntegration:
+class TestColIdefics3ModelIntegration:
     @pytest.mark.slow
     def test_forward_images_integration(
         self,
-        model: ColQwen2,
-        processor: ColQwen2Processor,
+        model: ColIdefics3,
+        processor: ColIdefics3Processor,
     ):
         # Create a batch of dummy images
         images = [
-            Image.new("RGB", (64, 64), color="white"),
-            Image.new("RGB", (32, 32), color="black"),
+            Image.new("RGB", (32, 32), color="white"),
+            Image.new("RGB", (16, 16), color="black"),
         ]
 
         # Process the image
@@ -81,8 +74,8 @@ class TestColQwen2ModelIntegration:
     @pytest.mark.slow
     def test_forward_queries_integration(
         self,
-        model: ColQwen2,
-        processor: ColQwen2Processor,
+        model: ColIdefics3,
+        processor: ColIdefics3Processor,
     ):
         queries = [
             "Is attention really all you need?",
@@ -106,8 +99,8 @@ class TestColQwen2ModelIntegration:
     @pytest.mark.slow
     def test_retrieval_integration(
         self,
-        model: ColQwen2,
-        processor: ColQwen2Processor,
+        model: ColIdefics3,
+        processor: ColIdefics3Processor,
     ):
         # Load the test dataset
         ds = load_dataset("hf-internal-testing/document-visual-retrieval-test", split="test")

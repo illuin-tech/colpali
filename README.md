@@ -38,6 +38,8 @@ Using ColPali removes the need for potentially complex and brittle layout recogn
 | [vidore/colpali-v1.3](https://huggingface.co/vidore/colpali-v1.3)   | 84.8                                                                          | Gemma      | • Similar to `vidore/colpali-v1.2`.<br />• Trained with a larger effective batch size of 256 batch size for 3 epochs.                                          | ✅                   |
 | [vidore/colqwen2-v0.1](https://huggingface.co/vidore/colqwen2-v0.1) | 87.3                                                                          | Apache 2.0 | • Based on `Qwen/Qwen2-VL-2B-Instruct`.<br />• Supports dynamic resolution.<br />• Trained using 768 image patches per page and an effective batch size of 32. | ✅                   |
 | [vidore/colqwen2-v1.0](https://huggingface.co/vidore/colqwen2-v1.0) | 89.3                                                                          | Apache 2.0 | • Similar to `vidore/colqwen2-v0.1`, but trained with more powerful GPUs and with a larger effective batch size (256).                                         | ✅                   |
+| [vidore/colSmol-256M](https://huggingface.co/vidore/colSmol-256M)   | 80.1                                                                          | Apache 2.0 | • Based on `HuggingFaceTB/SmolVLM-256M-Instruct`.                                                                                                              | ✅                   |
+| [vidore/colSmol-500M](https://huggingface.co/vidore/colSmol-500M)   | 82.3                                                                          | Apache 2.0 | • Based on `HuggingFaceTB/SmolVLM-500M-Instruct`.                                                                                                              | ✅                   |
 
 ## Setup
 
@@ -57,27 +59,29 @@ pip install colpali-engine
 ```python
 import torch
 from PIL import Image
+from transformers.utils.import_utils import is_flash_attn_2_available
 
 from colpali_engine.models import ColQwen2, ColQwen2Processor
 
-model_name = "vidore/colqwen2-v0.1"
+model_name = "vidore/colqwen2-v1.0"
 
 model = ColQwen2.from_pretrained(
     model_name,
     torch_dtype=torch.bfloat16,
     device_map="cuda:0",  # or "mps" if on Apple Silicon
+    attn_implementation="flash_attention_2" if is_flash_attn_2_available() else None,  # or "eager" if "mps"
 ).eval()
 
 processor = ColQwen2Processor.from_pretrained(model_name)
 
 # Your inputs
 images = [
-    Image.new("RGB", (32, 32), color="white"),
-    Image.new("RGB", (16, 16), color="black"),
+    Image.new("RGB", (128, 128), color="white"),
+    Image.new("RGB", (64, 32), color="black"),
 ]
 queries = [
-    "Is attention really all you need?",
-    "Are Benjamin, Antoine, Merve, and Jo best friends?",
+    "What is the organizational structure for our R&D department?",
+    "Can you provide a breakdown of last year’s financial performance?",
 ]
 
 # Process the inputs
@@ -90,17 +94,11 @@ with torch.no_grad():
     query_embeddings = model(**batch_queries)
 
 scores = processor.score_multi_vector(query_embeddings, image_embeddings)
-
 ```
-
-### Inference
-
-You can find an example [here](https://github.com/illuin-tech/colpali/blob/main/scripts/infer/run_inference_with_python.py). 
-
 
 ### Benchmarking
 
-To benchmark ColPali to reproduce the results on the [ViDoRe leaderboard](https://huggingface.co/spaces/vidore/vidore-leaderboard), it is recommended to use the [`vidore-benchmark`](https://github.com/illuin-tech/vidore-benchmark) package.
+To benchmark ColPali on the [ViDoRe leaderboard](https://huggingface.co/spaces/vidore/vidore-leaderboard), use the [`vidore-benchmark`](https://github.com/illuin-tech/vidore-benchmark) package.
 
 ### Interpretability with similarity maps
 
@@ -182,6 +180,72 @@ for idx, (fig, ax) in enumerate(plots):
 ```
 
 For a more detailed example, you can refer to the interpretability notebooks from the [ColPali Cookbooks 👨🏻‍🍳](https://github.com/tonywu71/colpali-cookbooks) repository.
+
+### Token pooling
+
+[Token pooling](https://doi.org/10.48550/arXiv.2409.14683) is a CRUDE-compliant method (document addition/deletion-friendly) that aims at reducing the sequence length of multi-vector embeddings. For ColPali, many image patches share redundant information, e.g. white background patches. By pooling these patches together, we can reduce the amount of embeddings while retaining most of the page's signal. Retrieval performance with hierarchical mean token pooling on image embeddings can be found in the [ColPali paper](https://doi.org/10.48550/arXiv.2407.01449). In our experiments, we found that a pool factor of 3 offered the optimal trade-off: the total number of vectors is reduced by $66.7\%$ while $97.8\%$ of the original performance is maintained.
+
+To use token pooling, you can use the `HierarchicalEmbeddingPooler` class from the `colpali-engine` package:
+
+```python
+import torch
+
+from colpali_engine.compression.token_pooling import HierarchicalTokenPooler
+
+# Dummy multivector embeddings
+list_embeddings = [
+    torch.rand(10, 768),
+    torch.rand(20, 768),
+]
+
+# Define the pooler with the desired level of compression
+pooler = HierarchicalTokenPooler(pool_factor=2)
+
+# Pool the embeddings
+outputs = pooler.pool_embeddings(list_embeddings)
+```
+
+If your inputs are padded 3D tensor embeddings instead of lists of 2D tensors, use `padding=True` and specify the padding used by your tokenizer to make sure the `HierarchicalTokenPooler` correctly removes the padding values before pooling:
+
+```python
+import torch
+from PIL import Image
+from transformers.utils.import_utils import is_flash_attn_2_available
+
+from colpali_engine.compression.token_pooling import HierarchicalTokenPooler
+from colpali_engine.models import ColQwen2, ColQwen2Processor
+
+model_name = "vidore/colqwen2-v1.0"
+model = ColQwen2.from_pretrained(
+    model_name,
+    torch_dtype=torch.bfloat16,
+    device_map="cuda:0",  # or "mps" if on Apple Silicon
+    attn_implementation="flash_attention_2" if is_flash_attn_2_available() else None,
+).eval()
+processor = ColQwen2Processor.from_pretrained(model_name)
+
+token_pooler = HierarchicalTokenPooler(pool_factor=2)
+
+# Your page images
+images = [
+    Image.new("RGB", (128, 128), color="white"),
+    Image.new("RGB", (32, 32), color="black"),
+]
+
+# Process the inputs
+batch_images = processor.process_images(images).to(model.device)
+
+# Forward pass
+with torch.no_grad():
+    image_embeddings = model(**batch_images)
+
+# Apply token pooling (reduces the sequence length of the multi-vector embeddings)
+image_embeddings = token_pooler.pool_embeddings(
+    image_embeddings,
+    padding=True,
+    padding_side=processor.tokenizer.padding_side,
+)
+```
 
 ### Training
 

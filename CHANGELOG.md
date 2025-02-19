@@ -5,19 +5,51 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## Unreleased
+
+### Added
+
+- Add support for token pooling with `HierarchicalTokenPooler`.
+
+### Changed
+
+- Warn about evaluation being different from Vidore, and do not store results to prevent confusion.
+
+## [0.3.8] - 2025-01-29
+
+### Fixed
+
+- Fix peft version in `colpali-engine[train]`
+- Loosen upper bound for `accelerate`
+
+### Tests
+
+- Reorganize modeling tests
+- Add test for ColIdefics3 (and ColSmol)
+
+## [0.3.7] - 2025-01-28
+
+### Changed
+
+- Bump transformers to `4.47` to support `colSmol-256M` and `colSmol-500M`
+
+### Fixed
+
+- Fix checkpoints used for ColQwen2 tests
+
 ## [0.3.6] - 2025-01-10
 
-## Added
+### Added
 
 - Add expected scores in ColPali E2E test
 
-## Changed
+### Changed
 
 - Loosen package dependencies
 
 ## [0.3.5] - 2024-12-13
 
-## Added
+### Added
 
 - Added support for Idefics3 (and SmolVLM)
 
