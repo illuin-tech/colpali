@@ -29,13 +29,13 @@ config:
   # max_length: 50
   run_eval: true
   loss_func:
-    (): colpali_engine.loss.gradcache_late_interaction_losses.GradCacheColbertLoss # GradCacheColbertPairwiseCELoss
+    (): colpali_engine.loss.gradcache_late_interaction_losses.GradCacheColbertPairwiseCELoss # GradCacheColbertLoss #
   tr_args:
     (): transformers.training_args.TrainingArguments
     output_dir: null
     overwrite_output_dir: true
     num_train_epochs: 1
-    per_device_train_batch_size: 512
+    per_device_train_batch_size: 256
     gradient_checkpointing: true
     gradient_checkpointing_kwargs: { "use_reentrant": false }
     # gradient_checkpointing: true
