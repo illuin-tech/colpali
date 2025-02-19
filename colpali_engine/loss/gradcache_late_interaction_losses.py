@@ -60,6 +60,7 @@ def _backward_hook(grad_output, sentence_features, random_states, loss_obj, mode
             mini_embeds = mini_embeds.detach().requires_grad_(True)
             cached_grad = branch_cache[idx]
             # Compute a surrogate loss that replays the cached gradient.
+            breakpoint()
             surrogate = torch.dot(mini_embeds.flatten(), cached_grad.flatten()) * grad_output
             surrogate.backward()
 
