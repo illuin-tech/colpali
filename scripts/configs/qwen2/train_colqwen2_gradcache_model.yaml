@@ -43,11 +43,11 @@ config:
     # gradient_accumulation_steps: 4
     per_device_eval_batch_size: 16
     eval_strategy: "steps"
-    dataloader_num_workers: 4
+    dataloader_num_workers: 8
     # bf16: true
     save_steps: 500
     logging_steps: 10
-    eval_steps: 20
+    eval_steps: 100
     warmup_steps: 100
     learning_rate: 5e-4
     save_total_limit: 1
