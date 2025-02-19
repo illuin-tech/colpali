@@ -42,27 +42,30 @@ def _backward_hook(grad_output, sentence_features, random_states, loss_obj, mode
     """
     mini_batch_size = loss_obj.mini_batch_size
     # sentence_features: a list with two dicts [query_features, doc_features]
-    # random_states: a list with two lists of RandContext objects.
-    for branch_feature, branch_cache, branch_random_states in zip(sentence_features, loss_obj.cache, random_states):
-        input_ids = branch_feature["input_ids"]
-        bsz = input_ids.size(0)
-        # Iterate over mini-batches.
-        for idx, start in enumerate(range(0, bsz, mini_batch_size)):
-            end = start + mini_batch_size
-            mini_feature = {k: v[start:end] for k, v in branch_feature.items()}
-            # Use the stored RandContext if available.
-            r_state = branch_random_states[idx]
-            if r_state is not None:
-                with r_state:
+    # random_states: a list with two lists of RandContext objects.1
+    assert loss_obj.cache is not None
+    assert random_states is not None
+    with torch.enable_grad():
+        for branch_feature, branch_cache, branch_random_states in zip(sentence_features, loss_obj.cache, random_states):
+            input_ids = branch_feature["input_ids"]
+            bsz = input_ids.size(0)
+            # Iterate over mini-batches.
+            for idx, start in enumerate(range(0, bsz, mini_batch_size)):
+                end = start + mini_batch_size
+                mini_feature = {k: v[start:end] for k, v in branch_feature.items()}
+                # Use the stored RandContext if available.
+                r_state = branch_random_states[idx]
+                if r_state is not None:
+                    with r_state:
+                        mini_embeds = model.forward(**mini_feature)
+                else:
                     mini_embeds = model.forward(**mini_feature)
-            else:
-                mini_embeds = model.forward(**mini_feature)
-            mini_embeds = mini_embeds.detach().requires_grad_(True)
-            cached_grad = branch_cache[idx]
-            # Compute a surrogate loss that replays the cached gradient.
-            breakpoint()
-            surrogate = torch.dot(mini_embeds.flatten(), cached_grad.flatten()) * grad_output
-            surrogate.backward()
+                # mini_embeds = mini_embeds.detach().requires_grad_(True)
+                cached_grad = branch_cache[idx]
+                # Compute a surrogate loss that replays the cached gradient.
+                breakpoint()
+                surrogate = torch.dot(mini_embeds.flatten(), cached_grad.flatten()) * grad_output
+                surrogate.backward()
 
 
 class GradCacheColbertLoss(nn.Module):
