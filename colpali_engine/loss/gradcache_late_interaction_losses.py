@@ -43,7 +43,7 @@ def _backward_hook(grad_output, sentence_features, random_states, loss_obj, mode
     mini_batch_size = loss_obj.mini_batch_size
     # sentence_features: a list with two dicts [query_features, doc_features]
     # random_states: a list with two lists of RandContext objects.
-    for branch_feature, branch_cache, branch_random_states in zip(sentence_features, random_states):
+    for branch_feature, branch_cache, branch_random_states in zip(sentence_features, loss_obj.cache, random_states):
         input_ids = branch_feature["input_ids"]
         bsz = input_ids.size(0)
         # Iterate over mini-batches.
