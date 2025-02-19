@@ -9,7 +9,7 @@ from colpali_engine.models import ColQwen2_5_Processor
 
 @pytest.fixture(scope="module")
 def model_name() -> str:
-    return "vidore/colqwen2_5-v0.1"
+    return "vidore/colqwen2.5-v0.2"
 
 
 @pytest.fixture(scope="module")
