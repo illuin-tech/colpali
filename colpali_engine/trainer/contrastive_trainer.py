@@ -10,7 +10,6 @@ class ContrastiveTrainer(Trainer):
     def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
         # If the loss function supports gradcache, delegate the computation.
         if hasattr(self.loss_func, "gradcache_enabled") and self.loss_func.gradcache_enabled:
-            breakpoint()
             loss = self.loss_func(model, inputs)
             return (loss, None) if return_outputs else loss
         else:

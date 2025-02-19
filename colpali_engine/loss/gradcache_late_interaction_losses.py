@@ -88,6 +88,7 @@ class GradCacheColbertLoss(nn.Module):
         bsz = input_ids.size(0)
         for start in tqdm.trange(0, bsz, self.mini_batch_size, desc="Embedding minibatches",
                                  disable=not self.show_progress_bar):
+            breakpoint()
             end = start + self.mini_batch_size
             mini_feature = {k: v[start:end] for k, v in sentence_feature.items()}
             random_state = None
