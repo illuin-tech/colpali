@@ -96,7 +96,7 @@ class GradCacheColbertLoss(nn.Module):
             grad_context = torch.enable_grad() if with_grad else torch.no_grad()
             with grad_context:
                 mini_embeds = model.forward(**mini_feature)
-                mini_embeds = mini_embeds.detach().requires_grad_(with_grad)
+                mini_embeds = mini_embeds.detach().requires_grad_(True) # is this the key ?
             yield mini_embeds, random_state
 
     def calculate_loss(self, reps: list[list[torch.Tensor]], with_backward: bool = False) -> torch.Tensor:
