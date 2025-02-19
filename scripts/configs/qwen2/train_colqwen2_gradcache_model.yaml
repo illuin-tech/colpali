@@ -56,7 +56,7 @@ config:
     # wandb logging
     # wandb_project: "colqwen2"
     # run_name: "colqwen2-ba32-nolora"
-    dataloader_pin_memory: true
+    dataloader_pin_memory: false # true
     torch_compile: true
     report_to: "wandb"
 
