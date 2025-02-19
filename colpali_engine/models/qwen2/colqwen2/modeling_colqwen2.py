@@ -57,6 +57,7 @@ class ColQwen2(Qwen2VLForConditionalGeneration):
             video_grid_thw: Optional[torch.LongTensor] = None,
     ) -> torch.Tensor:
 
+        breakpoint()
         if inputs_embeds is None:
             inputs_embeds = self.model.embed_tokens(input_ids)
             if pixel_values is not None:
