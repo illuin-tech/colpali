@@ -95,7 +95,6 @@ class GradCacheColbertLoss(nn.Module):
                 random_state = RandContext(*mini_feature.values())
             grad_context = torch.enable_grad() if with_grad else torch.no_grad()
             with grad_context:
-                breakpoint()
                 mini_embeds = model.forward(**mini_feature)
                 mini_embeds = mini_embeds.detach().requires_grad_(with_grad)
             yield mini_embeds, random_state
