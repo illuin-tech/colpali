@@ -5,9 +5,7 @@ from .bi_encoder_losses import (
 )
 
 from .gradcache_late_interaction_losses import (
-    CachedColbertLoss,
-    CachedColbertPairwiseCELoss,
-    CachedColbertPairwiseNegativeCELoss,
+    GradCacheColbertLoss
 )
 
 from .late_interaction_losses import (
