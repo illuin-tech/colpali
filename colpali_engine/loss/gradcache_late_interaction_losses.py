@@ -110,7 +110,6 @@ class GradCacheColbertLoss(nn.Module):
         scores = torch.einsum("bnd,csd->bcns", embeddings_query, embeddings_doc).max(dim=3)[0].sum(dim=2)
         batch_size = scores.size(0)
         labels = torch.arange(batch_size, device=scores.device)
-        breakpoint()
         loss = self.ce_loss(scores * self.scale, labels)
         if with_backward:
             loss.backward()
