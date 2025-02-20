@@ -36,7 +36,7 @@ config:
     output_dir: null
     overwrite_output_dir: true
     num_train_epochs: 1
-    per_device_train_batch_size: 64
+    per_device_train_batch_size: 256
     gradient_checkpointing: true
     gradient_checkpointing_kwargs: { "use_reentrant": false }
     # gradient_checkpointing: true
@@ -44,7 +44,7 @@ config:
     # gradient_accumulation_steps: 4
     per_device_eval_batch_size: 16
     eval_strategy: "steps"
-    dataloader_num_workers: 8
+    dataloader_num_workers: 4
     # bf16: true
     save_steps: 500
     logging_steps: 10
@@ -57,7 +57,7 @@ config:
     # wandb logging
     # wandb_project: "colqwen2"
     # run_name: "colqwen2-ba32-nolora"
-    dataloader_pin_memory: true # false
+    dataloader_pin_memory: false # true # false
     torch_compile: true
     report_to: "wandb"
 
