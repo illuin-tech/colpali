@@ -238,6 +238,7 @@ class GradCacheColbertPairwiseCELoss(nn.Module):
         # Loop over query chunks
         for query_chunk in reps[0]:
             chunk_size = query_chunk.size(0)
+            print(f"Shape of query chunk: {query_chunk.shape}, Shape of embeddings doc: {embeddings_doc.shape}")
             # Compute pairwise scores:
             # Resulting shape: (chunk_size, total_docs, num_query_tokens, num_doc_tokens)
             scores_chunk = torch.einsum("bnd,csd->bcns", query_chunk, embeddings_doc)
