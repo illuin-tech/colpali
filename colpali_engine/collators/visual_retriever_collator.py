@@ -54,6 +54,7 @@ class VisualRetrieverCollator:
         tmp_batch_neg_doc = []
         for i in range(0, len(examples), self.minibatch_size):
             # Process the documents
+            breakpoint()
             tmp_batch_doc += [self.processor.process_images(
                 images=examples[i : i + self.minibatch_size]["image"],
             )]
