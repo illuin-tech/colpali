@@ -1,5 +1,7 @@
 from typing import Any, Dict, List, Union, cast
 
+from PIL.Image import Image
+
 from colpali_engine.models.idefics_2 import ColIdefics2Processor
 from colpali_engine.models.paligemma import ColPaliProcessor
 from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
@@ -37,20 +39,35 @@ class VisualRetrieverCollator:
         """
         Collate function for the vision retriever associated to the collator's processor.
         """
-        # if self.processor is None or not isinstance(self.processor, BaseVisualRetrieverProcessor):
-        #     raise ValueError("Processor should be provided for vision collator.")
+        # Placeholders
+        texts_query: Union[List[str], List[None], List[Union[str, None]]] = []  # some documents don't have a query
+        images: List[Image] = []
+        neg_images: List[Image] = []
+
+        if self.processor is None or not isinstance(self.processor, BaseVisualRetrieverProcessor):
+            raise ValueError("Processor should be provided for vision collator.")
+
+        # Process each example
+        for example in examples:
+            texts_query.append(example["query"])
+            if example["image"] is None:
+                raise ValueError("Image is None - This collator does not support None images yet.")
+
+            images.append(cast(Image, example["image"]))
+
+            if "neg_image" in example and example["neg_image"] is not None:
+                neg_images.append(cast(Image, example["neg_image"]))
 
         # Process the documents
-        breakpoint()
         batch_doc = self.processor.process_images(
-            images=examples["image"]
+            images=images,
         )
 
         # Process the negative documents (if available)
         batch_neg_doc = None
-        if "neg_image" in examples:
+        if len(neg_images) > 0:
             batch_neg_doc = self.processor.process_images(
-                images=examples["neg_image"]
+                images=neg_images,
             )
 
         # Process the queries
@@ -63,18 +80,21 @@ class VisualRetrieverCollator:
             # If it's the first query that is not None but the rest are None, then it's hard negatives.
             raise ValueError("Some queries are None. This collator does not support None queries yet.")
         else:
+            texts_query = cast(List[str], texts_query)
             batch_query = self.processor.process_queries(
-                queries=examples["query"],
+                queries=texts_query,
                 max_length=self.max_length,
             )
 
         # Prefix each key with "doc_" or "query_" to avoid key conflicts
         batch_all = {f"doc_{k}": v for k, v in batch_doc.items()}
-
+        del batch_doc
         if batch_query is not None:
-            batch_all.update({f"query_{k}": v for k, v in batch_query.items()})
-
+            batch_query = {f"query_{k}": v for k, v in batch_query.items()}
+            batch_all.update(batch_query)
+            del batch_query
         if batch_neg_doc is not None:
-            batch_all.update({f"neg_doc_{k}": v for k, v in batch_neg_doc.items()})
+            batch_neg_doc = {f"neg_doc_{k}": v for k, v in batch_neg_doc.items()}
+            batch_all.update(batch_neg_doc)
 
         return batch_all
