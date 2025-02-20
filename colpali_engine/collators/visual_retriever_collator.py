@@ -1,7 +1,5 @@
 from typing import Any, Dict, List, Union, cast
 
-from PIL.Image import Image
-
 from colpali_engine.models.idefics_2 import ColIdefics2Processor
 from colpali_engine.models.paligemma import ColPaliProcessor
 from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
@@ -16,11 +14,12 @@ class VisualRetrieverCollator:
         self,
         processor: BaseVisualRetrieverProcessor,
         max_length: int = 2048,
+        minibatch_size: int = 32,
     ):
         self.processor = processor
         self.image_token_id = None
         self.max_length = max_length
-        self.minibatch_size = 32
+        self.minibatch_size = minibatch_size
 
         if isinstance(self.processor, ColPaliProcessor) or isinstance(self.processor, ColIdefics2Processor):
             self.image_token_id = self.processor.tokenizer.additional_special_tokens_ids[
@@ -51,6 +50,7 @@ class VisualRetrieverCollator:
         batch_neg_doc = []
         for i in range(0, len(examples), self.minibatch_size):
             # Process the documents
+            breakpoint()
             batch_doc += [self.processor.process_images(
                 images=examples[i : i + self.minibatch_size]["image"],
             )]
@@ -89,3 +89,30 @@ class VisualRetrieverCollator:
             batch_all.update({f"neg_doc_{k}": v for k, v in batch_neg_doc.items()})
 
         return batch_all
+
+
+if __name__ == "__main__":
+    from PIL import Image
+
+    processor = ColPaliProcessor.from_pretrained("vidore/colpali")
+    collator = VisualRetrieverCollator(processor=processor, minibatch_size=2)
+    examples = [
+        {
+            "image": Image.new("RGB", (100, 100)),
+            "query": "What is this?",
+        },
+        {
+            "image": Image.new("RGB", (150, 100)),
+            "query": "What is this?",
+        },
+        {
+            "image": Image.new("RGB", (200, 100)),
+            "query": "What is this?",
+        },
+        {
+            "image": Image.new("RGB", (100, 200)),
+            "query": "What is this?",
+        },
+    ]
+    from datasets import Dataset
+    collator(Dataset.from_list(examples))
