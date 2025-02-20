@@ -193,22 +193,74 @@ class GradCacheColbertPairwiseCELoss(nn.Module):
                 mini_embeds = mini_embeds.detach().requires_grad_(True)
             yield mini_embeds, random_state
 
+    # def calculate_loss(self, reps: list[list[torch.Tensor]], with_backward: bool = False) -> torch.Tensor:
+    #     """
+    #     Compute the ColBERTPairwiseCELoss using cached embeddings.
+    #     reps is a list with two elements: reps[0] for query embeddings and reps[1] for doc embeddings.
+    #     """
+    #     embeddings_query = torch.cat(reps[0], dim=0)  # shape: (batch, num_query_tokens, dim)
+    #     embeddings_doc = torch.cat(reps[1], dim=0)
+    #     # shape: (batch, num_doc_tokens, dim)
+    #     print(f"embeddings_query.shape: {embeddings_query.shape}; embeddings_doc.shape: {embeddings_doc.shape}")
+    #     # breakpoint()
+    #     scores = torch.einsum("bnd,csd->bcns", embeddings_query, embeddings_doc) \
+    #                 .max(dim=3)[0].sum(dim=2)  # (batch, batch)
+    #     pos_scores = scores.diagonal()
+    #     neg_scores = scores - torch.eye(scores.shape[0], device=scores.device) * 1e6
+    #     neg_scores = neg_scores.max(dim=1)[0]
+    #     loss = F.softplus(neg_scores - pos_scores).mean()
+    #     if with_backward:
+    #         loss.backward()
+    #     return loss
+
     def calculate_loss(self, reps: list[list[torch.Tensor]], with_backward: bool = False) -> torch.Tensor:
         """
-        Compute the ColBERTPairwiseCELoss using cached embeddings.
-        reps is a list with two elements: reps[0] for query embeddings and reps[1] for doc embeddings.
+        Compute the ColBERTPairwiseCELoss using cached embeddings without concatenating query embeddings.
+        reps[0] contains query embedding chunks (each of shape: (chunk_size, num_query_tokens, dim)),
+        while reps[1] contains doc embeddings, which we concatenate.
+
+        For each query chunk, we:
+          - Compute scores with all docs using an einsum.
+          - Reduce the scores by taking a max over the doc tokens and summing over query tokens.
+          - Extract the positive score for each query based on its overall index (assuming query i matches doc i).
+          - Mask out the positive score and take the max over negatives.
+          - Compute the softplus loss over the difference (neg_score - pos_score).
+
+        The overall loss is the average over all queries, and remains differentiable.
         """
-        embeddings_query = torch.cat(reps[0], dim=0)  # shape: (batch, num_query_tokens, dim)
+        # Concatenate document embeddings (shape: (total_docs, num_doc_tokens, dim))
         embeddings_doc = torch.cat(reps[1], dim=0)
-        # shape: (batch, num_doc_tokens, dim)
-        print(f"embeddings_query.shape: {embeddings_query.shape}; embeddings_doc.shape: {embeddings_doc.shape}")
-        # breakpoint()
-        scores = torch.einsum("bnd,csd->bcns", embeddings_query, embeddings_doc) \
-                    .max(dim=3)[0].sum(dim=2)  # (batch, batch)
-        pos_scores = scores.diagonal()
-        neg_scores = scores - torch.eye(scores.shape[0], device=scores.device) * 1e6
-        neg_scores = neg_scores.max(dim=1)[0]
-        loss = F.softplus(neg_scores - pos_scores).mean()
+
+        total_loss = 0.0
+        total_queries = 0
+        global_index = 0  # Tracks the overall index for positive pairing
+
+        # Loop over query chunks
+        for query_chunk in reps[0]:
+            chunk_size = query_chunk.size(0)
+            # Compute pairwise scores:
+            # Resulting shape: (chunk_size, total_docs, num_query_tokens, num_doc_tokens)
+            scores_chunk = torch.einsum("bnd,csd->bcns", query_chunk, embeddings_doc)
+            # Reduce: max over document tokens then sum over query tokens -> shape: (chunk_size, total_docs)
+            scores_chunk = scores_chunk.max(dim=3)[0].sum(dim=2)
+
+            # For each query in the chunk, the positive doc index is global_index + local_index
+            row_idx = torch.arange(chunk_size, device=scores_chunk.device)
+            pos_idx = torch.arange(global_index, global_index + chunk_size, device=scores_chunk.device)
+            pos_scores = scores_chunk[row_idx, pos_idx]
+
+            # Mask out the positive scores by setting them to a very low value, then take the max over negatives
+            scores_masked = scores_chunk.clone()
+            scores_masked[row_idx, pos_idx] = -1e6
+            neg_scores = scores_masked.max(dim=1)[0]
+
+            # Compute loss for this chunk (sum over the chunk's queries)
+            chunk_loss = F.softplus(neg_scores - pos_scores).sum()
+            total_loss += chunk_loss
+            total_queries += chunk_size
+            global_index += chunk_size
+
+        loss = total_loss / total_queries
         if with_backward:
             loss.backward()
         return loss
