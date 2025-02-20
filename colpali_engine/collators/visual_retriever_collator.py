@@ -1,4 +1,8 @@
+import torch
+
 from typing import Any, Dict, List, Union, cast
+
+from transformers.image_processing_base import BatchFeature
 
 from colpali_engine.models.idefics_2 import ColIdefics2Processor
 from colpali_engine.models.paligemma import ColPaliProcessor
@@ -46,23 +50,33 @@ class VisualRetrieverCollator:
         #     raise ValueError("Processor should be provided for vision collator.")
 
         # Process each example
-        batch_doc = []
-        batch_neg_doc = []
+        tmp_batch_doc = []
+        tmp_batch_neg_doc = []
         for i in range(0, len(examples), self.minibatch_size):
             # Process the documents
-            breakpoint()
-            batch_doc += [self.processor.process_images(
+            tmp_batch_doc += [self.processor.process_images(
                 images=examples[i : i + self.minibatch_size]["image"],
             )]
 
             # Process the negative documents (if available)
             batch_neg_doc = None
             if "neg_image" in examples[i]:
-                batch_neg_doc += [self.processor.process_images(
+                tmp_batch_neg_doc += [self.processor.process_images(
                     images=examples[i : i + self.minibatch_size]["neg_image"],
                 )]
 
-        breakpoint()
+        batch_doc = {}
+        batch_neg_doc = None if tmp_batch_neg_doc is None else {}
+        for key in tmp_batch_doc[0].keys():
+            batch_doc[key] = torch.nn.utils.rnn.pad_sequence([a for b in tmp_batch_doc for a in b[key]], batch_first=True, padding_value=0)
+
+        batch_doc = BatchFeature(batch_doc)
+
+        if tmp_batch_neg_doc is not None:
+            for key in tmp_batch_neg_doc[0].keys():
+                batch_neg_doc[key] = torch.nn.utils.rnn.pad_sequence([a for b in tmp_batch_neg_doc for a in b[key]], batch_first=True, padding_value=0)
+
+            batch_neg_doc = BatchFeature(batch_neg_doc)
 
         # Process the queries
         batch_query = None
