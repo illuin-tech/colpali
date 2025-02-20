@@ -199,7 +199,10 @@ class GradCacheColbertPairwiseCELoss(nn.Module):
         reps is a list with two elements: reps[0] for query embeddings and reps[1] for doc embeddings.
         """
         embeddings_query = torch.cat(reps[0], dim=0)  # shape: (batch, num_query_tokens, dim)
-        embeddings_doc = torch.cat(reps[1], dim=0)      # shape: (batch, num_doc_tokens, dim)
+        embeddings_doc = torch.cat(reps[1], dim=0)
+        # shape: (batch, num_doc_tokens, dim)
+        print(f"embeddings_query.shape: {embeddings_query.shape}; embeddings_doc.shape: {embeddings_doc.shape}")
+        breakpoint()
         scores = torch.einsum("bnd,csd->bcns", embeddings_query, embeddings_doc) \
                     .max(dim=3)[0].sum(dim=2)  # (batch, batch)
         pos_scores = scores.diagonal()
