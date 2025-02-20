@@ -30,7 +30,7 @@ config:
   run_eval: true
   loss_func:
     (): colpali_engine.loss.gradcache_late_interaction_losses.GradCacheColbertPairwiseCELoss # GradCacheColbertLoss #
-    mini_batch_size: 64
+    mini_batch_size: 32
   tr_args:
     (): transformers.training_args.TrainingArguments
     output_dir: null
