@@ -52,6 +52,7 @@ class VisualRetrieverCollator:
         # Process each example
         tmp_batch_doc = []
         tmp_batch_neg_doc = []
+        breakpoint()
         for i in range(0, len(examples), self.minibatch_size):
             # Process the documents
             breakpoint()
