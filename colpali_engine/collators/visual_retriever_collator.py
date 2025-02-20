@@ -20,6 +20,7 @@ class VisualRetrieverCollator:
         self.processor = processor
         self.image_token_id = None
         self.max_length = max_length
+        self.minibatch_size = 32
 
         if isinstance(self.processor, ColPaliProcessor) or isinstance(self.processor, ColIdefics2Processor):
             self.image_token_id = self.processor.tokenizer.additional_special_tokens_ids[
@@ -41,34 +42,27 @@ class VisualRetrieverCollator:
         """
         # Placeholders
         texts_query: Union[List[str], List[None], List[Union[str, None]]] = []  # some documents don't have a query
-        images: List[Image] = []
-        neg_images: List[Image] = []
 
-        if self.processor is None or not isinstance(self.processor, BaseVisualRetrieverProcessor):
-            raise ValueError("Processor should be provided for vision collator.")
+        # if self.processor is None or not isinstance(self.processor, BaseVisualRetrieverProcessor):
+        #     raise ValueError("Processor should be provided for vision collator.")
 
         # Process each example
-        for example in examples:
-            texts_query.append(example["query"])
-            if example["image"] is None:
-                raise ValueError("Image is None - This collator does not support None images yet.")
+        batch_doc = []
+        batch_neg_doc = []
+        for i in range(0, len(examples), self.minibatch_size):
+            # Process the documents
+            batch_doc += [self.processor.process_images(
+                images=examples[i : i + self.minibatch_size]["image"],
+            )]
 
-            images.append(cast(Image, example["image"]))
+            # Process the negative documents (if available)
+            batch_neg_doc = None
+            if "neg_image" in examples[i]:
+                batch_neg_doc += [self.processor.process_images(
+                    images=examples[i : i + self.minibatch_size]["neg_image"],
+                )]
 
-            if "neg_image" in example and example["neg_image"] is not None:
-                neg_images.append(cast(Image, example["neg_image"]))
-
-        # Process the documents
-        batch_doc = self.processor.process_images(
-            images=images,
-        )
-
-        # Process the negative documents (if available)
-        batch_neg_doc = None
-        if len(neg_images) > 0:
-            batch_neg_doc = self.processor.process_images(
-                images=neg_images,
-            )
+        breakpoint()
 
         # Process the queries
         batch_query = None
@@ -80,21 +74,18 @@ class VisualRetrieverCollator:
             # If it's the first query that is not None but the rest are None, then it's hard negatives.
             raise ValueError("Some queries are None. This collator does not support None queries yet.")
         else:
-            texts_query = cast(List[str], texts_query)
             batch_query = self.processor.process_queries(
-                queries=texts_query,
+                queries=examples["query"],
                 max_length=self.max_length,
             )
 
         # Prefix each key with "doc_" or "query_" to avoid key conflicts
         batch_all = {f"doc_{k}": v for k, v in batch_doc.items()}
-        del batch_doc
+
         if batch_query is not None:
-            batch_query = {f"query_{k}": v for k, v in batch_query.items()}
-            batch_all.update(batch_query)
-            del batch_query
+            batch_all.update({f"query_{k}": v for k, v in batch_query.items()})
+
         if batch_neg_doc is not None:
-            batch_neg_doc = {f"neg_doc_{k}": v for k, v in batch_neg_doc.items()}
-            batch_all.update(batch_neg_doc)
+            batch_all.update({f"neg_doc_{k}": v for k, v in batch_neg_doc.items()})
 
         return batch_all
