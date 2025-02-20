@@ -43,7 +43,7 @@ class VisualRetrieverCollator:
         texts_query: Union[List[str], List[None], List[Union[str, None]]] = []  # some documents don't have a query
         images: List[Image] = []
         neg_images: List[Image] = []
-        breakpoint()
+        # breakpoint()
 
         if self.processor is None or not isinstance(self.processor, BaseVisualRetrieverProcessor):
             raise ValueError("Processor should be provided for vision collator.")
