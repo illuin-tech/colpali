@@ -37,13 +37,11 @@ class VisualRetrieverCollator:
         """
         Collate function for the vision retriever associated to the collator's processor.
         """
-        # Placeholders
-        texts_query: Union[List[str], List[None], List[Union[str, None]]] = []  # some documents don't have a query
-
-        if self.processor is None or not isinstance(self.processor, BaseVisualRetrieverProcessor):
-            raise ValueError("Processor should be provided for vision collator.")
+        # if self.processor is None or not isinstance(self.processor, BaseVisualRetrieverProcessor):
+        #     raise ValueError("Processor should be provided for vision collator.")
 
         # Process the documents
+        breakpoint()
         batch_doc = self.processor.process_images(
             images=examples["image"]
         )
