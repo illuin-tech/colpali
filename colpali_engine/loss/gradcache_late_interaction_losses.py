@@ -250,9 +250,9 @@ class GradCacheColbertPairwiseCELoss(nn.Module):
             pos_scores = scores_chunk[row_idx, pos_idx]
 
             # Mask out the positive scores by setting them to a very low value, then take the max over negatives
-            scores_masked = scores_chunk.clone()
-            scores_masked[row_idx, pos_idx] = -1e6
-            neg_scores = scores_masked.max(dim=1)[0]
+            # scores_masked = scores_chunk.clone()
+            scores_chunk[row_idx, pos_idx] = -1e6
+            neg_scores = scores_chunk.max(dim=1)[0]
 
             # Compute loss for this chunk (sum over the chunk's queries)
             chunk_loss = F.softplus(neg_scores - pos_scores).sum()
