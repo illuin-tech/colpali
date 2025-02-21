@@ -111,7 +111,7 @@ class ColModelTraining:
             )
 
         self.dataset = self.dataset.map(lambda x: self.preprocess_example(x, self.config.processor),
-                                        num_proc=self.config.tr_args.dataloader_num_workers)
+                                        num_proc=1) # self.config.tr_args.dataloader_num_workers)
         breakpoint()
         self.current_git_hash = os.popen("git rev-parse HEAD").read().strip()
         self.retrieval_evaluator = CustomRetrievalEvaluator()
