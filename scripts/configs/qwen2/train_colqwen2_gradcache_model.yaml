@@ -44,7 +44,7 @@ config:
     # gradient_accumulation_steps: 4
     per_device_eval_batch_size: 16
     eval_strategy: "steps"
-    dataloader_num_workers: 4
+    dataloader_num_workers: 2 # 4
     # bf16: true
     save_steps: 500
     logging_steps: 10
@@ -57,7 +57,7 @@ config:
     # wandb logging
     # wandb_project: "colqwen2"
     # run_name: "colqwen2-ba32-nolora"
-    dataloader_pin_memory: false # true # false
+    dataloader_pin_memory: true # true # false
     torch_compile: true
     report_to: "wandb"
 
