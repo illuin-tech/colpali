@@ -105,7 +105,7 @@ class VisualRetrieverCollator:
         return batch_all
 
 
-    def offline_procesing(
+    def offline_processing(
         self,
         examples: List[Dict[str, Any]],
     ) -> Dict[str, Any]:

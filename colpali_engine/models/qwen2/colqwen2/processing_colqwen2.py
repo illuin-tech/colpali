@@ -124,7 +124,6 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
 
         # separate pixel_values for each image
         pixel_values = torch.split(batch_doc["pixel_values"], offsets.tolist())
-        breakpoint()
 
         # pad pixel_values to the same length to be able to make it into a tensor
         max_length = max([len(pv) for pv in pixel_values])
