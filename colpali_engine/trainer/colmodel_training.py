@@ -136,6 +136,8 @@ class ColModelTraining:
         # self.dataset = self.dataset.map(lambda x: self.preprocess_example(x, self.config.processor),
         #                                 num_proc=self.config.tr_args.dataloader_num_workers)
 
+        self.dataset = self.dataset.map(lambda x: {"image": self.config.processor.smart_resize(x["image"])}, num_proc=1)
+
 
         trainer = ContrastiveTrainer(
             model=self.model,
