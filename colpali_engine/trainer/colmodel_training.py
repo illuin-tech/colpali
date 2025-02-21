@@ -109,14 +109,32 @@ class ColModelTraining:
                 processor=self.config.processor,
                 max_length=self.config.max_length,
             )
+
         self.current_git_hash = os.popen("git rev-parse HEAD").read().strip()
         self.retrieval_evaluator = CustomRetrievalEvaluator()
+
+    @staticmethod
+    def preprocess_example(example: Dict, processor):
+        processed = processor.process_images([example["image"]])
+        new_example = {}
+        for key in processed:
+            new_example[key] = processed[key].squeeze(0)
+        if "neg_image" in example and example["neg_image"] is not None:
+            neg_processed = processor.process_images([example["neg_image"]])
+            for key in neg_processed:
+                new_example[f"neg_{key}"] = neg_processed[key].squeeze(0)
+
+        return new_example
 
     def train(self) -> None:
         if isinstance(self.collator, CorpusQueryCollator) and self.collator.mined_negatives:
             print("Training with hard negatives")
         else:
             print("Training with in-batch negatives")
+
+
+        # self.dataset = self.dataset.map(lambda x: self.preprocess_example(x, self.config.processor),
+        #                                 num_proc=self.config.tr_args.dataloader_num_workers, writer_batch_size=32)
 
         trainer = ContrastiveTrainer(
             model=self.model,

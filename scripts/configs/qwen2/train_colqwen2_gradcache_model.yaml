@@ -1,6 +1,6 @@
 config:
   (): colpali_engine.trainer.colmodel_training.ColModelTrainingConfig
-  output_dir: !path ../../../models/colqwen2-ba256-ckpt-5e-nopad
+  output_dir: !path ../../../models/colqwen2-gradcache-2048-3e
   processor:
     (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
     class_to_instanciate: !ext colpali_engine.models.ColQwen2Processor
@@ -29,27 +29,27 @@ config:
   # max_length: 50
   run_eval: true
   loss_func:
-    (): colpali_engine.loss.late_interaction_losses.ColbertPairwiseCELoss
+    (): colpali_engine.loss.gradcache_late_interaction_losses.GradCacheColbertPairwiseCELoss # GradCacheColbertLoss #
+    mini_batch_size: 32
   tr_args:
     (): transformers.training_args.TrainingArguments
     output_dir: null
     overwrite_output_dir: true
-    num_train_epochs: 5
-    per_device_train_batch_size: 128
+    num_train_epochs: 3
+    per_device_train_batch_size: 256
     gradient_checkpointing: true
     gradient_checkpointing_kwargs: { "use_reentrant": false }
-    ddp_find_unused_parameters: false
     # gradient_checkpointing: true
     # 6 x 8 gpus = 48 batch size
     # gradient_accumulation_steps: 4
-    per_device_eval_batch_size: 8
+    per_device_eval_batch_size: 16
     eval_strategy: "steps"
-    dataloader_num_workers: 8
+    dataloader_num_workers: 4 # 4
     # bf16: true
     save_steps: 500
     logging_steps: 10
     eval_steps: 100
-    warmup_steps: 100
+    warmup_steps: 20
     learning_rate: 5e-4
     save_total_limit: 1
     # resume_from_checkpoint: true
@@ -57,7 +57,7 @@ config:
     # wandb logging
     # wandb_project: "colqwen2"
     # run_name: "colqwen2-ba32-nolora"
-    dataloader_pin_memory: true
+    dataloader_pin_memory: true # true # false
     torch_compile: true
     report_to: "wandb"
 

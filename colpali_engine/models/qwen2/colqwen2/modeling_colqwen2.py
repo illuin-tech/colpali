@@ -41,21 +41,22 @@ class ColQwen2(Qwen2VLForConditionalGeneration):
         )
 
     def inner_forward(
-        self,
-        input_ids: torch.LongTensor = None,
-        attention_mask: Optional[torch.Tensor] = None,
-        position_ids: Optional[torch.LongTensor] = None,
-        past_key_values: Optional[List[torch.FloatTensor]] = None,
-        inputs_embeds: Optional[torch.FloatTensor] = None,
-        use_cache: Optional[bool] = None,
-        output_attentions: Optional[bool] = None,
-        output_hidden_states: Optional[bool] = None,
-        return_dict: Optional[bool] = None,
-        pixel_values: Optional[torch.Tensor] = None,
-        pixel_values_videos: Optional[torch.FloatTensor] = None,
-        image_grid_thw: Optional[torch.LongTensor] = None,
-        video_grid_thw: Optional[torch.LongTensor] = None,
+            self,
+            input_ids: torch.LongTensor = None,
+            attention_mask: Optional[torch.Tensor] = None,
+            position_ids: Optional[torch.LongTensor] = None,
+            past_key_values: Optional[List[torch.FloatTensor]] = None,
+            inputs_embeds: Optional[torch.FloatTensor] = None,
+            use_cache: Optional[bool] = None,
+            output_attentions: Optional[bool] = None,
+            output_hidden_states: Optional[bool] = None,
+            return_dict: Optional[bool] = None,
+            pixel_values: Optional[torch.Tensor] = None,
+            pixel_values_videos: Optional[torch.FloatTensor] = None,
+            image_grid_thw: Optional[torch.LongTensor] = None,
+            video_grid_thw: Optional[torch.LongTensor] = None,
     ) -> torch.Tensor:
+
         if inputs_embeds is None:
             inputs_embeds = self.model.embed_tokens(input_ids)
             if pixel_values is not None:
@@ -90,11 +91,13 @@ class ColQwen2(Qwen2VLForConditionalGeneration):
         hidden_states = outputs[0]
         return hidden_states
 
+
+
     def forward(self, *args, **kwargs) -> torch.Tensor:
         # Delete output_hidden_states from kwargs
         kwargs.pop("output_hidden_states", None)
 
-        # The following code is a hack to make sure the scatter in DDP is done correctly when training on multiple GPUs
+        # Hack to make sure scatter in DDP is done correctly on multiple GPUs.
         if "pixel_values" in kwargs:
             # compute pixel_values offsets
             offsets = kwargs["image_grid_thw"][:, 1] * kwargs["image_grid_thw"][:, 2]
@@ -109,15 +112,14 @@ class ColQwen2(Qwen2VLForConditionalGeneration):
             video_grid_thw=None,
             attention_mask=kwargs.get("attention_mask", None),
         )
-        last_hidden_states = self.inner_forward(
-            *args, **kwargs, position_ids=position_ids, use_cache=False, output_hidden_states=True
-        )  # (batch_size, sequence_length, hidden_size)
-
-        proj = self.custom_text_proj(last_hidden_states)  # (batch_size, sequence_length, dim)
-
-        # L2 normalization
-        proj = proj / proj.norm(dim=-1, keepdim=True)  # (batch_size, sequence_length, dim)
-        proj = proj * kwargs["attention_mask"].unsqueeze(-1)  # (batch_size, sequence_length, dim)
+        last_hidden_states = self.inner_forward(*args,
+                                  **kwargs,
+                                  position_ids=position_ids,
+                                  use_cache=False,
+                                  output_hidden_states=True)
+        proj = self.custom_text_proj(last_hidden_states)
+        proj = proj / proj.norm(dim=-1, keepdim=True)  # L2 normalization
+        proj = proj * kwargs["attention_mask"].unsqueeze(-1)
         return proj
 
     @property
