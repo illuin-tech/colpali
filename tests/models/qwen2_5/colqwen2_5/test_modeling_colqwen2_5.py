@@ -23,18 +23,13 @@ def model(model_name: str) -> Generator[ColQwen2_5, None, None]:
     device = get_torch_device("auto")
     logger.info(f"Device used: {device}")
 
-    if device.startswith("cuda"):
-        attn_implementation = "flash_attention_2" if is_flash_attn_2_available() else None
-    else:
-        attn_implementation = "eager"
-
     yield cast(
         ColQwen2_5,
         ColQwen2_5.from_pretrained(
             model_name,
             torch_dtype=torch.bfloat16,
             device_map=device,
-            attn_implementation=attn_implementation,
+            attn_implementation="flash_attention_2" if is_flash_attn_2_available() else None,
         ).eval(),
     )
     tear_down_torch()

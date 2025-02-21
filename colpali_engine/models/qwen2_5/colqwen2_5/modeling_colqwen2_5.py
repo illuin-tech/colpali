@@ -1,3 +1,4 @@
+import warnings
 from typing import ClassVar, List, Optional
 
 import torch
@@ -19,6 +20,26 @@ class ColQwen2_5(Qwen2_5_VLForConditionalGeneration):  # noqa: N801
         self.custom_text_proj = nn.Linear(self.model.config.hidden_size, self.dim)
         self.padding_side = "left"
         self.post_init()
+
+    @classmethod
+    def from_pretrained(
+        cls,
+        *args,
+        device_map: Optional[str] = None,
+        attn_implementation: Optional[str] = None,
+        **kwargs,
+    ):
+        # NOTE: Qwen2VL uses SDPA attention by default, even when device is not set to "cuda".
+        # We need to change the attention implementation to "eager" in this case.
+        if device_map in ["cpu", torch.device("cpu"), "mps", torch.device("mps")]:
+            warnings.warn("Using 'eager' attention implementation for CPU/MPS inference.")
+            attn_implementation = "eager"
+        return super().from_pretrained(
+            *args,
+            device_map=device_map,
+            attn_implementation=attn_implementation,
+            **kwargs,
+        )
 
     def inner_forward(
         self,

@@ -1,3 +1,4 @@
+import warnings
 from typing import ClassVar, List, Optional
 
 import torch
@@ -19,24 +20,42 @@ class ColQwen2(Qwen2VLForConditionalGeneration):
         self.padding_side = "left"
         self.post_init()
 
+    @classmethod
+    def from_pretrained(
+        cls,
+        *args,
+        device_map: Optional[str] = None,
+        attn_implementation: Optional[str] = None,
+        **kwargs,
+    ):
+        # NOTE: Qwen2VL uses SDPA attention by default, even when device is not set to "cuda".
+        # We need to change the attention implementation to "eager" in this case.
+        if device_map in ["cpu", torch.device("cpu"), "mps", torch.device("mps")]:
+            warnings.warn("Forcing 'eager' attention implementation for CPU/MPS inference.")
+            attn_implementation = "eager"
+        return super().from_pretrained(
+            *args,
+            device_map=device_map,
+            attn_implementation=attn_implementation,
+            **kwargs,
+        )
 
     def inner_forward(
-            self,
-            input_ids: torch.LongTensor = None,
-            attention_mask: Optional[torch.Tensor] = None,
-            position_ids: Optional[torch.LongTensor] = None,
-            past_key_values: Optional[List[torch.FloatTensor]] = None,
-            inputs_embeds: Optional[torch.FloatTensor] = None,
-            use_cache: Optional[bool] = None,
-            output_attentions: Optional[bool] = None,
-            output_hidden_states: Optional[bool] = None,
-            return_dict: Optional[bool] = None,
-            pixel_values: Optional[torch.Tensor] = None,
-            pixel_values_videos: Optional[torch.FloatTensor] = None,
-            image_grid_thw: Optional[torch.LongTensor] = None,
-            video_grid_thw: Optional[torch.LongTensor] = None,
+        self,
+        input_ids: torch.LongTensor = None,
+        attention_mask: Optional[torch.Tensor] = None,
+        position_ids: Optional[torch.LongTensor] = None,
+        past_key_values: Optional[List[torch.FloatTensor]] = None,
+        inputs_embeds: Optional[torch.FloatTensor] = None,
+        use_cache: Optional[bool] = None,
+        output_attentions: Optional[bool] = None,
+        output_hidden_states: Optional[bool] = None,
+        return_dict: Optional[bool] = None,
+        pixel_values: Optional[torch.Tensor] = None,
+        pixel_values_videos: Optional[torch.FloatTensor] = None,
+        image_grid_thw: Optional[torch.LongTensor] = None,
+        video_grid_thw: Optional[torch.LongTensor] = None,
     ) -> torch.Tensor:
-
         if inputs_embeds is None:
             inputs_embeds = self.model.embed_tokens(input_ids)
             if pixel_values is not None:
@@ -71,12 +90,9 @@ class ColQwen2(Qwen2VLForConditionalGeneration):
         hidden_states = outputs[0]
         return hidden_states
 
-
-
     def forward(self, *args, **kwargs) -> torch.Tensor:
         # Delete output_hidden_states from kwargs
         kwargs.pop("output_hidden_states", None)
-
 
         # The following code is a hack to make sure the scatter in DDP is done correctly when training on multiple GPUs
         if "pixel_values" in kwargs:
@@ -93,11 +109,9 @@ class ColQwen2(Qwen2VLForConditionalGeneration):
             video_grid_thw=None,
             attention_mask=kwargs.get("attention_mask", None),
         )
-        last_hidden_states = self.inner_forward(*args,
-                                  **kwargs,
-                                  position_ids=position_ids,
-                                  use_cache=False,
-                                  output_hidden_states=True)  # (batch_size, sequence_length, hidden_size)
+        last_hidden_states = self.inner_forward(
+            *args, **kwargs, position_ids=position_ids, use_cache=False, output_hidden_states=True
+        )  # (batch_size, sequence_length, hidden_size)
 
         proj = self.custom_text_proj(last_hidden_states)  # (batch_size, sequence_length, dim)
 
