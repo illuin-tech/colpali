@@ -109,11 +109,11 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
         """
         texts_doc = [self.visual_prompt_prefix] * len(images)
 
-        resized_images: List[Image.Image] = [self.smart_resize(image) for image in images]
+        # resized_images: List[Image.Image] = [self.smart_resize(image) for image in images]
 
         batch_doc = self(
             text=texts_doc,
-            images=resized_images,
+            images=images,
             padding="longest",
             return_tensors="pt",
         )
