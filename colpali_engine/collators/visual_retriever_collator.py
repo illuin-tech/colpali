@@ -1,5 +1,6 @@
-from typing import Any, Dict, List, Union, cast
+from typing import Any, Dict, List, Union
 
+import torch
 from PIL.Image import Image
 
 from colpali_engine.models.idefics_2 import ColIdefics2Processor
@@ -16,10 +17,12 @@ class VisualRetrieverCollator:
         self,
         processor: BaseVisualRetrieverProcessor,
         max_length: int = 2048,
+        process_images_before_training: bool = False,
     ):
         self.processor = processor
         self.image_token_id = None
         self.max_length = max_length
+        self.process_images_before_training = process_images_before_training
 
         if isinstance(self.processor, ColPaliProcessor) or isinstance(self.processor, ColIdefics2Processor):
             self.image_token_id = self.processor.tokenizer.additional_special_tokens_ids[
@@ -36,6 +39,15 @@ class VisualRetrieverCollator:
         self,
         examples: List[Dict[str, Any]],
     ) -> Dict[str, Any]:
+        if self.process_images_before_training:
+            return self.offline_processing(examples)
+        return self.online_processing(examples)
+
+
+    def online_processing(
+        self,
+        examples: List[Dict[str, Any]],
+    ) -> Dict[str, Any]:
         """
         Collate function for the vision retriever associated to the collator's processor.
         """
@@ -45,19 +57,14 @@ class VisualRetrieverCollator:
         neg_images: List[Image] = []
         # breakpoint()
 
-        if self.processor is None or not isinstance(self.processor, BaseVisualRetrieverProcessor):
-            raise ValueError("Processor should be provided for vision collator.")
 
         # Process each example
         for example in examples:
             texts_query.append(example["query"])
-            if example["image"] is None:
-                raise ValueError("Image is None - This collator does not support None images yet.")
-
-            images.append(cast(Image, example["image"]))
+            images.append(example["image"])
 
             if "neg_image" in example and example["neg_image"] is not None:
-                neg_images.append(cast(Image, example["neg_image"]))
+                neg_images.append(example["neg_image"])
 
         # Process the documents
         batch_doc = self.processor.process_images(
@@ -77,11 +84,8 @@ class VisualRetrieverCollator:
         if all([t is None for t in texts_query]):
             # print("All queries are `None`. Returning `None` for all queries.")
             pass
-        elif any([t is None for t in texts_query]):
-            # If it's the first query that is not None but the rest are None, then it's hard negatives.
-            raise ValueError("Some queries are None. This collator does not support None queries yet.")
         else:
-            texts_query = cast(List[str], texts_query)
+            texts_query: List[str] = texts_query
             batch_query = self.processor.process_queries(
                 queries=texts_query,
                 max_length=self.max_length,
@@ -97,5 +101,86 @@ class VisualRetrieverCollator:
         if batch_neg_doc is not None:
             batch_neg_doc = {f"neg_doc_{k}": v for k, v in batch_neg_doc.items()}
             batch_all.update(batch_neg_doc)
+
+        return batch_all
+
+
+    def offline_procesing(
+        self,
+        examples: List[Dict[str, Any]],
+    ) -> Dict[str, Any]:
+        """
+        Collate function for the vision retriever associated to the collator's processor.
+        """
+        # Placeholders
+        texts_query = []
+        pixel_values = []
+        image_grid_thw = []
+        input_ids = []
+        attention_mask = []
+        neg_pixel_values = []
+        neg_image_grid_thw = []
+        neg_input_ids = []
+        neg_attention_mask = []
+
+        breakpoint()
+
+        for example in examples:
+            texts_query.append(example["query"])
+            pixel_values.append(example["pixel_values"])
+            image_grid_thw.append(example["image_grid_thw"])
+            input_ids.append(example["input_ids"])
+            attention_mask.append(example["attention_mask"])
+
+            if "neg_pixel_values" in example:
+                neg_pixel_values.append(example["neg_pixel_values"])
+                neg_image_grid_thw.append(example["neg_image_grid_thw"])
+                neg_input_ids.append(example["neg_input_ids"])
+                neg_attention_mask.append(example["neg_attention_mask"])
+
+        # Pad pixel values
+        pixel_values = torch.nn.utils.rnn.pad_sequence(pixel_values, batch_first=True, padding_value=0)
+        image_grid_thw = torch.stack(image_grid_thw)
+
+        # Pad input sequences
+        batch_doc = self.processor.tokenizer.pad(
+            {"input_ids": input_ids, "attention_mask": attention_mask},
+            padding=True,
+            return_tensors="pt"
+        )
+
+        batch_all = {
+            "doc_pixel_values": pixel_values,
+            "doc_image_grid_thw": image_grid_thw,
+            "doc_input_ids": batch_doc["input_ids"],
+            "doc_attention_mask": batch_doc["attention_mask"],
+        }
+
+        # Process queries
+        if any(texts_query):  # Ensure there are valid queries
+            batch_query = self.processor.process_queries(
+                queries=texts_query,
+                max_length=self.max_length
+            )
+            batch_all["query_input_ids"] = batch_query["input_ids"]
+            batch_all["query_attention_mask"] = batch_query["attention_mask"]
+
+        # Process negatives if present
+        if neg_pixel_values:
+            neg_pixel_values = torch.nn.utils.rnn.pad_sequence(neg_pixel_values, batch_first=True, padding_value=0)
+            neg_image_grid_thw = torch.stack(neg_image_grid_thw)
+
+            batch_neg_doc = self.processor.tokenizer.pad(
+                {"input_ids": neg_input_ids, "attention_mask": neg_attention_mask},
+                padding=True,
+                return_tensors="pt"
+            )
+
+            batch_all.update({
+                "neg_doc_pixel_values": neg_pixel_values,
+                "neg_doc_image_grid_thw": neg_image_grid_thw,
+                "neg_doc_input_ids": batch_neg_doc["input_ids"],
+                "neg_doc_attention_mask": batch_neg_doc["attention_mask"],
+            })
 
         return batch_all

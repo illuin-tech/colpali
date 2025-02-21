@@ -15,16 +15,19 @@ class CorpusQueryCollator(VisualRetrieverCollator):
         image_dataset: Optional["Dataset"] = None, # noqa: F821
         mined_negatives: bool = True,
         corpus_format: str = "wikiss",
+        process_images_before_training: bool = False,
     ):
         super().__init__(
             processor=processor,
             max_length=max_length,
+            process_images_before_training=process_images_before_training,
         )
         if image_dataset is None:
             raise ValueError("`image_dataset` must be provided")
         self.image_dataset = image_dataset
         self.mined_negatives = mined_negatives
         self.corpus_format = corpus_format
+        self.process_images_before_training = process_images_before_training
 
         if self.corpus_format == "wikiss":
             print("Mapping docids to indices")

@@ -109,8 +109,23 @@ class ColModelTraining:
                 processor=self.config.processor,
                 max_length=self.config.max_length,
             )
+
+        breakpoint()
+        self.dataset = self.dataset.map(self.preprocess_example, num_proc=self.config.tr_args.dataloader_num_workers)
+        breakpoint()
         self.current_git_hash = os.popen("git rev-parse HEAD").read().strip()
         self.retrieval_evaluator = CustomRetrievalEvaluator()
+
+    def preprocess_example(self, example: Dict):
+        processed = self.config.processor.process_images([example["image"]])
+        for key in processed:
+            example[key] = processed[key].squeeze(0)
+        if "neg_image" in example and example["neg_image"] is not None:
+            neg_processed = self.config.processor.process_images([example["neg_image"]])
+            for key in neg_processed:
+                example[f"neg_{key}"] = neg_processed[key].squeeze(0)
+
+        return example
 
     def train(self) -> None:
         if isinstance(self.collator, CorpusQueryCollator) and self.collator.mined_negatives:
