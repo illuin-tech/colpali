@@ -110,15 +110,14 @@ class ColModelTraining:
                 max_length=self.config.max_length,
             )
 
-        self.dataset = self.dataset.map(lambda x: self.preprocess_example(x, self.config.processor),
-                                        num_proc=1) # self.config.tr_args.dataloader_num_workers)
-        breakpoint()
         self.current_git_hash = os.popen("git rev-parse HEAD").read().strip()
         self.retrieval_evaluator = CustomRetrievalEvaluator()
 
     @staticmethod
     def preprocess_example(example: Dict, processor):
+        breakpoint()
         processed = processor.process_images([example["image"]])
+        breakpoint()
         for key in processed:
             example[key] = processed[key].squeeze(0)
         if "neg_image" in example and example["neg_image"] is not None:
@@ -133,6 +132,11 @@ class ColModelTraining:
             print("Training with hard negatives")
         else:
             print("Training with in-batch negatives")
+
+
+        self.dataset = self.dataset.map(lambda x: self.preprocess_example(x, self.config.processor),
+                                        num_proc=1) # self.config.tr_args.dataloader_num_workers)
+
 
         trainer = ContrastiveTrainer(
             model=self.model,
