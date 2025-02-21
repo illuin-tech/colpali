@@ -115,17 +115,16 @@ class ColModelTraining:
 
     @staticmethod
     def preprocess_example(example: Dict, processor):
-        breakpoint()
         processed = processor.process_images([example["image"]])
-        breakpoint()
+        new_example = {}
         for key in processed:
-            example[key] = processed[key].squeeze(0)
+            new_example[key] = processed[key].squeeze(0)
         if "neg_image" in example and example["neg_image"] is not None:
             neg_processed = processor.process_images([example["neg_image"]])
             for key in neg_processed:
-                example[f"neg_{key}"] = neg_processed[key].squeeze(0)
+                new_example[f"neg_{key}"] = neg_processed[key].squeeze(0)
 
-        return example
+        return new_example
 
     def train(self) -> None:
         if isinstance(self.collator, CorpusQueryCollator) and self.collator.mined_negatives:
