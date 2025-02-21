@@ -123,8 +123,6 @@ class VisualRetrieverCollator:
         neg_input_ids = []
         neg_attention_mask = []
 
-        breakpoint()
-
         for example in examples:
             texts_query.append(example["query"])
             pixel_values.append(example["pixel_values"])
