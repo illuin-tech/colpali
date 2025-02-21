@@ -1,11 +1,9 @@
-import logging
+import warnings
 from typing import ClassVar, List, Optional
 
 import torch
 from torch import nn
 from transformers.models.qwen2_vl import Qwen2VLConfig, Qwen2VLForConditionalGeneration
-
-logger = logging.getLogger(__name__)
 
 
 class ColQwen2(Qwen2VLForConditionalGeneration):
@@ -33,7 +31,7 @@ class ColQwen2(Qwen2VLForConditionalGeneration):
         # NOTE: Qwen2VL uses SDPA attention by default, even when device is not set to "cuda".
         # We need to change the attention implementation to "eager" in this case.
         if device_map in ["cpu", torch.device("cpu"), "mps", torch.device("mps")]:
-            logger.info("Using 'eager' attention implementation for CPU/MPS inference.")
+            warnings.warn("Forcing 'eager' attention implementation for CPU/MPS inference.")
             attn_implementation = "eager"
         return super().from_pretrained(
             *args,
