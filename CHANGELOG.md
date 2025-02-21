@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Fix peft version in `colpali-engine[train]`
 - Loosen upper bound for `accelerate`
-- Fix ColQwen2 attention error when using a non-CUDA device
+- Fix ColQwen2/ColQwen2.5 attention error when using a non-CUDA device
 
 ### Tests
 
