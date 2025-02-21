@@ -30,7 +30,7 @@ config:
   run_eval: true
   loss_func:
     (): colpali_engine.loss.gradcache_late_interaction_losses.GradCacheColbertPairwiseCELoss # GradCacheColbertLoss #
-    mini_batch_size: 32
+    mini_batch_size: 128
   tr_args:
     (): transformers.training_args.TrainingArguments
     output_dir: null
@@ -44,7 +44,7 @@ config:
     # gradient_accumulation_steps: 4
     per_device_eval_batch_size: 16
     eval_strategy: "steps"
-    dataloader_num_workers: 1
+    dataloader_num_workers: 2
     # bf16: true
     save_steps: 500
     logging_steps: 10
