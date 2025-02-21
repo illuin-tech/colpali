@@ -136,7 +136,72 @@ class ColModelTraining:
         # self.dataset = self.dataset.map(lambda x: self.preprocess_example(x, self.config.processor),
         #                                 num_proc=self.config.tr_args.dataloader_num_workers, writer_batch_size=32)
 
-        self.dataset = self.dataset.map(lambda x: {"image": self.config.processor.smart_resize(x["image"])},
+        from PIL import Image
+        import math
+
+        def round_by_factor(number: float, factor: int) -> int:
+            """Returns the closest integer to 'number' that is divisible by 'factor'."""
+            return round(number / factor) * factor
+
+        def ceil_by_factor(number: float, factor: int) -> int:
+            """Returns the smallest integer greater than or equal to 'number' that is divisible by 'factor'."""
+            return math.ceil(number / factor) * factor
+
+        def floor_by_factor(number: float, factor: int) -> int:
+            """Returns the largest integer less than or equal to 'number' that is divisible by 'factor'."""
+            return math.floor(number / factor) * factor
+
+        def smart_resize_helper(
+                width: int,
+                height: int,
+                factor: int,
+                max_ratio: int,
+                min_pixels: int,
+                max_pixels: int,
+        ) -> Tuple[int, int]:
+            """
+            Returns the image size so that the following conditions are met:
+            1. Both dimensions (height and width) are divisible by 'factor'.
+            2. The total number of pixels is within the range ['min_pixels', 'max_pixels'].
+            3. The aspect ratio of the image is maintained as closely as possible.
+            """
+
+            if max(height, width) / min(height, width) > max_ratio:
+                raise ValueError(
+                    f"absolute aspect ratio must be smaller than {max_ratio}, "
+                    f"got {max(height, width) / min(height, width)}"
+                )
+
+            h_bar = max(factor, round_by_factor(height, factor))
+            w_bar = max(factor, round_by_factor(width, factor))
+
+            if h_bar * w_bar > max_pixels:
+                beta = math.sqrt((height * width) / max_pixels)
+                h_bar = floor_by_factor(height / beta, factor)
+                w_bar = floor_by_factor(width / beta, factor)
+            elif h_bar * w_bar < min_pixels:
+                beta = math.sqrt(min_pixels / (height * width))
+                h_bar = ceil_by_factor(height * beta, factor)
+                w_bar = ceil_by_factor(width * beta, factor)
+
+            return h_bar, w_bar
+
+        def smart_resize(image: Image.Image) -> Image.Image:
+            """
+            Resize and convert the image to the required format.
+            """
+            image_size = image.size
+            resized_height, resized_width = smart_resize_helper(
+                width=image_size[0],
+                height=image_size[1],
+                factor=28,
+                max_ratio=200,
+                min_pixels=self.config.processor.min_pixels,
+                max_pixels=self.config.processor.max_pixels,
+            )
+            return image.convert("RGB").resize((resized_width, resized_height))
+
+        self.dataset = self.dataset.map(lambda x: {"image": smart_resize(x["image"])},
                                         num_proc=self.config.tr_args.dataloader_num_workers*8,
                                         writer_batch_size=32)
 
