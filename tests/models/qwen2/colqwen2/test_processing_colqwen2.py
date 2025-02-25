@@ -23,7 +23,7 @@ def test_load_processor_from_pretrained(processor_from_pretrained: ColQwen2Proce
 
 def test_process_images(processor_from_pretrained: ColQwen2Processor):
     # Create a dummy image
-    image_size = (16, 32)
+    image_size = (64, 32)
     image = Image.new("RGB", image_size, color="black")
     images = [image]
 
