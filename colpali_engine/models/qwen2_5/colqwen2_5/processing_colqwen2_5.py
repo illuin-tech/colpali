@@ -1,32 +1,22 @@
-import math
 from typing import ClassVar, List, Optional, Tuple, Union
 
 import torch
 from PIL import Image
 from transformers import BatchFeature
 from transformers.models.qwen2_vl import Qwen2VLProcessor
+from transformers.models.qwen2_vl.image_processing_qwen2_vl import smart_resize
 
 from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 
 
-def round_by_factor(number: float, factor: int) -> int:
-    """Returns the closest integer to 'number' that is divisible by 'factor'."""
-    return round(number / factor) * factor
-
-
-def ceil_by_factor(number: float, factor: int) -> int:
-    """Returns the smallest integer greater than or equal to 'number' that is divisible by 'factor'."""
-    return math.ceil(number / factor) * factor
-
-
-def floor_by_factor(number: float, factor: int) -> int:
-    """Returns the largest integer less than or equal to 'number' that is divisible by 'factor'."""
-    return math.floor(number / factor) * factor
-
-
 class ColQwen2_5_Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):  # noqa: N801
     """
-    Processor for ColQwen2.
+    Processor for ColQwen2.5.
+
+    Args:
+        *args: Variable length argument list to be passed to the parent `Qwen2VLProcessor` class.
+        max_num_visual_tokens: The maximum number of visual tokens that can be processed by the model.
+        **kwargs: Arbitrary keyword arguments to be passed to the parent `Qwen2VLProcessor` class.
     """
 
     visual_prompt_prefix: ClassVar[str] = (
@@ -40,64 +30,19 @@ class ColQwen2_5_Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):  # n
     def image_token_id(self) -> int:
         return self.tokenizer.convert_tokens_to_ids(self.image_token)
 
-    def __init__(self, *args, **kwargs):
-        num_image_tokens = kwargs.pop("num_image_tokens", 768)
+    def __init__(
+        self,
+        *args,
+        max_num_visual_tokens: int = 768,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
         self.tokenizer.padding_side = "left"
-        self.min_pixels = 4 * 28 * 28
-        self.max_pixels = num_image_tokens * 28 * 28
+
+        self.max_num_visual_tokens = max_num_visual_tokens
         self.factor = 28
-        self.max_ratio = 200
-
-    @staticmethod
-    def smart_resize_helper(
-        width: int,
-        height: int,
-        factor: int,
-        max_ratio: int,
-        min_pixels: int,
-        max_pixels: int,
-    ) -> Tuple[int, int]:
-        """
-        Returns the image size so that the following conditions are met:
-        1. Both dimensions (height and width) are divisible by 'factor'.
-        2. The total number of pixels is within the range ['min_pixels', 'max_pixels'].
-        3. The aspect ratio of the image is maintained as closely as possible.
-        """
-
-        if max(height, width) / min(height, width) > max_ratio:
-            raise ValueError(
-                f"absolute aspect ratio must be smaller than {max_ratio}, got {max(height, width) / min(height, width)}"
-            )
-
-        h_bar = max(factor, round_by_factor(height, factor))
-        w_bar = max(factor, round_by_factor(width, factor))
-
-        if h_bar * w_bar > max_pixels:
-            beta = math.sqrt((height * width) / max_pixels)
-            h_bar = floor_by_factor(height / beta, factor)
-            w_bar = floor_by_factor(width / beta, factor)
-        elif h_bar * w_bar < min_pixels:
-            beta = math.sqrt(min_pixels / (height * width))
-            h_bar = ceil_by_factor(height * beta, factor)
-            w_bar = ceil_by_factor(width * beta, factor)
-
-        return h_bar, w_bar
-
-    def smart_resize(self, image: Image.Image) -> Image.Image:
-        """
-        Resize and convert the image to the required format.
-        """
-        image_size = image.size
-        resized_height, resized_width = self.smart_resize_helper(
-            width=image_size[0],
-            height=image_size[1],
-            factor=self.factor,
-            max_ratio=self.max_ratio,
-            min_pixels=self.min_pixels,
-            max_pixels=self.max_pixels,
-        )
-        return image.convert("RGB").resize((resized_width, resized_height))
+        self.min_pixels = 4 * 28 * 28
+        self.max_pixels = self.max_num_visual_tokens * 28 * 28
 
     def process_images(
         self,
@@ -107,12 +52,11 @@ class ColQwen2_5_Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):  # n
         Process images for ColQwen2.5.
         """
         texts_doc = [self.visual_prompt_prefix] * len(images)
-
-        resized_images: List[Image.Image] = [self.smart_resize(image) for image in images]
+        images = [image.convert("RGB") for image in images]
 
         batch_doc = self(
             text=texts_doc,
-            images=resized_images,
+            images=images,
             padding="longest",
             return_tensors="pt",
         )
@@ -125,7 +69,7 @@ class ColQwen2_5_Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):  # n
         pixel_values = torch.split(batch_doc["pixel_values"], offsets.tolist())
 
         # pad pixel_values to the same length to be able to make it into a tensor
-        max_length = max([len(pv) for pv in pixel_values])
+        max_length = max(len(pixel_value) for pixel_value in pixel_values)
 
         pixel_values = [
             torch.cat([pv, torch.zeros((max_length - len(pv), pv.shape[1]), dtype=pv.dtype, device=pv.device)])
@@ -185,11 +129,10 @@ class ColQwen2_5_Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):  # n
         The `spatial_merge_size` is the number of patches that will be merged spatially. It is stored in
         as a `Qwen2VLForConditionalGeneration` attribute under `model.spatial_merge_size`.
         """
-        height_new, width_new = self.smart_resize_helper(
+        height_new, width_new = smart_resize(
             width=image_size[0],
             height=image_size[1],
             factor=self.factor,
-            max_ratio=self.max_ratio,
             min_pixels=self.min_pixels,
             max_pixels=self.max_pixels,
         )
