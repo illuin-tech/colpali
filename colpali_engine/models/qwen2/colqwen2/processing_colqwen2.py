@@ -12,6 +12,11 @@ from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
     """
     Processor for ColQwen2.
+
+    Args:
+        *args: Variable length argument list to be passed to the parent `Qwen2VLProcessor` class.
+        max_num_visual_tokens: The maximum number of visual tokens that can be processed by the model.
+        **kwargs: Arbitrary keyword arguments to be passed to the parent `Qwen2VLProcessor` class.
     """
 
     visual_prompt_prefix: ClassVar[str] = (
@@ -25,13 +30,19 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
     def image_token_id(self) -> int:
         return self.tokenizer.convert_tokens_to_ids(self.image_token)
 
-    def __init__(self, *args, **kwargs):
-        num_image_tokens = kwargs.pop("num_image_tokens", 768)
+    def __init__(
+        self,
+        *args,
+        max_num_visual_tokens: int = 768,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
-
         self.tokenizer.padding_side = "left"
+
+        self.max_num_visual_tokens = max_num_visual_tokens
+        self.factor = 28
         self.min_pixels = 4 * 28 * 28
-        self.max_pixels = num_image_tokens * 28 * 28
+        self.max_pixels = self.max_num_visual_tokens * 28 * 28
 
     def process_images(
         self,
@@ -121,6 +132,7 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
         height_new, width_new = smart_resize(
             width=image_size[0],
             height=image_size[1],
+            factor=self.factor,
             min_pixels=self.min_pixels,
             max_pixels=self.max_pixels,
         )
