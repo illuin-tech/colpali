@@ -26,18 +26,17 @@ class ColQwen2_5(Qwen2_5_VLForConditionalGeneration):  # noqa: N801
         cls,
         *args,
         device_map: Optional[str] = None,
-        attn_implementation: Optional[str] = None,
         **kwargs,
     ):
-        # NOTE: Qwen2VL uses SDPA attention by default, even when device is not set to "cuda".
-        # We need to change the attention implementation to "eager" in this case.
-        if device_map in ["cpu", torch.device("cpu"), "mps", torch.device("mps")]:
-            warnings.warn("Using 'eager' attention implementation for CPU/MPS inference.")
-            attn_implementation = "eager"
+        if device_map in ["mps", torch.device("mps"), {0: "mps"}]:
+            warnings.warn(
+                "There is a known issue with Qwen2-VL models with `transformers>=4.49.0` on MPS devices: "
+                "https://github.com/huggingface/transformers/issues/36413.\n"
+                "As a temporary workaround, force downgrade to `transformers==4.48.3`."
+            )
         return super().from_pretrained(
             *args,
             device_map=device_map,
-            attn_implementation=attn_implementation,
             **kwargs,
         )
 

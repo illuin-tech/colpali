@@ -25,18 +25,17 @@ class ColQwen2(Qwen2VLForConditionalGeneration):
         cls,
         *args,
         device_map: Optional[str] = None,
-        attn_implementation: Optional[str] = None,
         **kwargs,
     ):
-        # NOTE: Qwen2VL uses SDPA attention by default, even when device is not set to "cuda".
-        # We need to change the attention implementation to "eager" in this case.
-        if device_map in ["cpu", torch.device("cpu"), "mps", torch.device("mps")]:
-            warnings.warn("Forcing 'eager' attention implementation for CPU/MPS inference.")
-            attn_implementation = "eager"
+        if device_map in ["mps", torch.device("mps"), {0: "mps"}]:
+            warnings.warn(
+                "There is a known issue with Qwen2-VL models with `transformers>=4.49.0` on MPS devices: "
+                "https://github.com/huggingface/transformers/issues/36413.\n"
+                "As a temporary workaround, force downgrade to `transformers==4.48.3`."
+            )
         return super().from_pretrained(
             *args,
             device_map=device_map,
-            attn_implementation=attn_implementation,
             **kwargs,
         )
 
@@ -91,15 +90,13 @@ class ColQwen2(Qwen2VLForConditionalGeneration):
         return hidden_states
 
     def forward(self, *args, **kwargs) -> torch.Tensor:
-        # Delete output_hidden_states from kwargs
         kwargs.pop("output_hidden_states", None)
 
-        # The following code is a hack to make sure the scatter in DDP is done correctly when training on multiple GPUs
+        # Handle the custom "pixel_values" input obtained with `ColQwen2Processor` through unpadding
         if "pixel_values" in kwargs:
-            # compute pixel_values offsets
-            offsets = kwargs["image_grid_thw"][:, 1] * kwargs["image_grid_thw"][:, 2]
+            offsets = kwargs["image_grid_thw"][:, 1] * kwargs["image_grid_thw"][:, 2]  # (batch_size,)
             kwargs["pixel_values"] = torch.cat(
-                [pv[:o] for pv, o in zip(kwargs["pixel_values"], offsets)],
+                [pixel_sequence[:offset] for pixel_sequence, offset in zip(kwargs["pixel_values"], offsets)],
                 dim=0,
             )
 
