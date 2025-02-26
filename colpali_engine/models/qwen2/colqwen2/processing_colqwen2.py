@@ -44,10 +44,7 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
         self.min_pixels = 4 * 28 * 28
         self.max_pixels = self.max_num_visual_tokens * 28 * 28
 
-    def process_images(
-        self,
-        images: List[Image.Image],
-    ) -> BatchFeature:
+    def process_images(self, images: List[Image.Image]) -> BatchFeature:
         """
         Process images for ColQwen2.
         """
@@ -61,21 +58,18 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
             return_tensors="pt",
         )
 
-        # NOTE: The following code is a hack to make sure the scatter in DDP is done correctly when training
-        # on multiple GPUs.
-        offsets = batch_doc["image_grid_thw"][:, 1] * batch_doc["image_grid_thw"][:, 2]
+        # NOTE: The following adjustment ensures correct behavior with DDP on multiple GPUs.
+        offsets = batch_doc["image_grid_thw"][:, 1] * batch_doc["image_grid_thw"][:, 2]  # (batch_size,)
 
-        # separate pixel_values for each image
-        pixel_values = torch.split(batch_doc["pixel_values"], offsets.tolist())
+        # Split the pixel_values tensor into a list of tensors, one per image
+        pixel_values = list(
+            torch.split(batch_doc["pixel_values"], offsets.tolist())
+        )  # [(num_patches_image_0, pixel_values), ..., (num_patches_image_n, pixel_values)]
 
-        # pad pixel_values to the same length to be able to make it into a tensor
-        max_length = max(len(pixel_value) for pixel_value in pixel_values)
-
-        pixel_values = [
-            torch.cat([pv, torch.zeros((max_length - len(pv), pv.shape[1]), dtype=pv.dtype, device=pv.device)])
-            for pv in pixel_values
-        ]
-        batch_doc["pixel_values"] = torch.stack(pixel_values)
+        # Pad the list of pixel_value tensors to the same length along the sequence dimension
+        batch_doc["pixel_values"] = torch.nn.utils.rnn.pad_sequence(
+            pixel_values, batch_first=True
+        )  # (batch_size, max_num_patches, pixel_values)
 
         return batch_doc
 
@@ -87,6 +81,8 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
     ) -> BatchFeature:
         """
         Process queries for ColQwen2.
+
+        NOTE: `max_length` is not used and kept only for trainer compatibility.
         """
         if suffix is None:
             suffix = self.query_augmentation_token * 10
