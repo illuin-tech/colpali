@@ -91,15 +91,13 @@ class ColQwen2(Qwen2VLForConditionalGeneration):
         return hidden_states
 
     def forward(self, *args, **kwargs) -> torch.Tensor:
-        # Delete output_hidden_states from kwargs
         kwargs.pop("output_hidden_states", None)
 
-        # The following code is a hack to make sure the scatter in DDP is done correctly when training on multiple GPUs
+        # Handle the custom "pixel_values" input obtained with `ColQwen2Processor` through unpadding
         if "pixel_values" in kwargs:
-            # compute pixel_values offsets
-            offsets = kwargs["image_grid_thw"][:, 1] * kwargs["image_grid_thw"][:, 2]
+            offsets = kwargs["image_grid_thw"][:, 1] * kwargs["image_grid_thw"][:, 2]  # (batch_size,)
             kwargs["pixel_values"] = torch.cat(
-                [pv[:o] for pv, o in zip(kwargs["pixel_values"], offsets)],
+                [pixel_sequence[:offset] for pixel_sequence, offset in zip(kwargs["pixel_values"], offsets)],
                 dim=0,
             )
 
