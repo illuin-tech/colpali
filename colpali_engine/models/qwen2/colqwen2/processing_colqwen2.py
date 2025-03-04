@@ -51,6 +51,7 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
         texts_doc = [self.visual_prompt_prefix] * len(images)
         images = [image.convert("RGB") for image in images]
 
+        self.image_processor.max_pixels = self.max_pixels
         batch_doc = self(
             text=texts_doc,
             images=images,
