@@ -15,7 +15,7 @@ from mteb.evaluation.evaluators.utils import (
     recall_cap,
     top_k_accuracy,
 )
-from transformers import TrainerCallback, TrainerControl, TrainerState, TrainingArguments
+from transformers import TrainerControl, TrainerState, TrainingArguments, WandbCallback
 from vidore_benchmark.evaluation.vidore_evaluators import ViDoReEvaluatorBEIR, ViDoReEvaluatorQA
 from vidore_benchmark.retrievers import VisionRetriever
 
@@ -180,7 +180,7 @@ class CustomRetrievalEvaluator:
         return naucs
 
 
-class BenchmarkEvalCallback(TrainerCallback):
+class BenchmarkEvalCallback(WandbCallback):
     def __init__(
         self,
         processor,
@@ -212,7 +212,7 @@ class BenchmarkEvalCallback(TrainerCallback):
         self.eval_dataset_format = dataset_format
 
     def on_evaluate(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
-        if self.counter_eval % self.eval_steps_frequency != 0:
+        if state.global_step % self.eval_steps_frequency != 0:
             self.counter_eval += 1
             return
         else:
@@ -256,6 +256,8 @@ class BenchmarkEvalCallback(TrainerCallback):
                     metrics_collection[test_name] = metrics
                 print(f"Benchmark metrics for tests datasets at step {state.global_step}:")
                 print(metrics_collection)
+                print("logging metrics to wandb")
+                self._wandb.log(metrics_collection)
             except Exception as e:
                 print(f"Error during benchmark evaluation on collection '{self.eval_collection}': {e}")
 
