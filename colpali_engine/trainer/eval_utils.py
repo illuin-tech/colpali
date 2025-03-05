@@ -22,6 +22,28 @@ from vidore_benchmark.retrievers import VisionRetriever
 logger = logging.getLogger(__name__)
 
 
+METRICS_TO_TRACK = [
+    "ndcg_at_1",
+    "ndcg_at_3",
+    "ndcg_at_5",
+    "ndcg_at_10",
+    "ndcg_at_50",
+    "ndcg_at_100",
+    "recall_at_1",
+    "recall_at_3",
+    "recall_at_5",
+    "recall_at_10",
+    "recall_at_50",
+    "recall_at_100",
+    "map_at_1",
+    "map_at_3",
+    "map_at_5",
+    "map_at_10",
+    "map_at_50",
+    "map_at_100",
+]
+
+
 class CustomRetrievalEvaluator:
     """
     Wrapper class for the MTEB retrieval evaluator.
@@ -253,7 +275,7 @@ class BenchmarkEvalCallback(WandbCallback):
                         batch_passage=self.batch_passage,
                         batch_score=self.batch_score,
                     )
-                    metrics_collection[test_name] = metrics
+                    metrics_collection[test_name] = {k: v for k, v in metrics.items() if k in METRICS_TO_TRACK}
                 print(f"Benchmark metrics for tests datasets at step {state.global_step}:")
                 print(metrics_collection)
                 print("logging metrics to wandb")
