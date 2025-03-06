@@ -10,6 +10,11 @@ from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 class CorpusQueryCollator(VisualRetrieverCollator):
     """
     Collator for BEIR-style dataset training or hard negative training.
+
+    This collator supports multiple corpus formats. The supported formats are:
+    - "wikiss" (queries and qrels: Tevatron/wiki-ss-nq, corpus: Tevatron/wiki-ss-corpus)
+    - "docmatix" (HuggingFaceM4/Docmatix)
+    - "vidore" (vidore/colpali_train_set).
     """
 
     def __init__(
