@@ -16,7 +16,6 @@ from colpali_engine.loss.late_interaction_losses import (
     ColbertLoss,
 )
 from colpali_engine.trainer.contrastive_trainer import ContrastiveTrainer
-from colpali_engine.trainer.eval_utils import CustomRetrievalEvaluator
 from colpali_engine.utils.gpu_stats import print_gpu_utilization, print_summary
 from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 
@@ -90,7 +89,6 @@ class ColModelTraining:
         self.config = config
         self.model = self.config.model
         self.current_git_hash = os.popen("git rev-parse HEAD").read().strip()
-        self.retrieval_evaluator = CustomRetrievalEvaluator()
         self.dataset = self.config.dataset_loading_func()
 
         if isinstance(self.dataset, Tuple):
