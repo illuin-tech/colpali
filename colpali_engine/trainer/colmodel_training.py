@@ -119,18 +119,7 @@ class ColModelTraining:
 
         trainer.args.remove_unused_columns = False
 
-        if self.config.processor is not None: #  and getattr(self.config.tr_args, "run_vidore_evaluator", False):
-            # vidore_eval_dataset_name = getattr(self.config.tr_args, "vidore_eval_dataset_name", None)
-            # vidore_eval_collection_name = getattr(self.config.tr_args, "vidore_eval_collection_name", None)
-
-            # if vidore_eval_dataset_name is not None and vidore_eval_collection_name is not None:
-            #     raise ValueError(
-            #         "Both vidore_eval_dataset_name and vidore_eval_collection_name are provided. "
-            #         "You should only provide one of the two"
-            #     )
-            # elif vidore_eval_dataset_name is None and vidore_eval_collection_name is None:
-            #     print("WARNING : No dataset provided for ViDoRe evaluation. Skipping evaluation.")
-            # else:
+        if self.config.processor is not None:
             trainer.add_callback(
                 BenchmarkEvalCallback(
                     processor=self.config.processor,
@@ -139,8 +128,8 @@ class ColModelTraining:
                     batch_query=self.config.tr_args.per_device_eval_batch_size,
                     batch_passage=4,
                     batch_score=4,
-                    run_frequency=getattr(self.config.tr_args, "eval_steps_frequency", 5),
-                    dataset_format=getattr(self.config.tr_args, "eval_dataset_format", "qa"),
+                    run_frequency=getattr(self.config.tr_args, "eval_steps_frequency", 500),
+                    dataset_format=getattr(self.config.tr_args, "eval_dataset_format", "beir"),
                 )
             )
 
