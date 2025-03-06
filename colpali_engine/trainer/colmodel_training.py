@@ -5,7 +5,6 @@ from typing import Callable, Dict, Optional, Tuple, Union
 from peft import LoraConfig, PeftModel, get_peft_model
 from transformers import (
     PreTrainedModel,
-    PreTrainedTokenizer,
     TrainingArguments,
 )
 
@@ -28,7 +27,6 @@ class ColModelTrainingConfig:
     run_eval: bool = True
     run_train: bool = True
     peft_config: Optional[LoraConfig] = None
-    tokenizer: Optional[PreTrainedTokenizer] = None
     loss_func: Optional[Callable] = ColbertLoss()
     dataset_loading_func: Optional[Callable] = None
     eval_dataset_loader: Optional[Dict[str, Callable]] = None
@@ -124,8 +122,6 @@ class ColModelTraining:
         Save the model with its training config, as well as the tokenizer and processor if provided.
         """
         self.model.save_pretrained(self.config.output_dir)
-        if self.config.tokenizer is not None:
-            self.config.tokenizer.save_pretrained(self.config.output_dir)
         self.config.processor.save_pretrained(self.config.output_dir)
 
         # Copy-paste the training config
