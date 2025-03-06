@@ -15,7 +15,8 @@ from mteb.evaluation.evaluators.utils import (
     recall_cap,
     top_k_accuracy,
 )
-from transformers import TrainerControl, TrainerState, TrainingArguments, WandbCallback
+from transformers import TrainerControl, TrainerState, TrainingArguments
+from transformers.integrations import WandbCallback
 from vidore_benchmark.evaluation.vidore_evaluators import ViDoReEvaluatorBEIR, ViDoReEvaluatorQA
 from vidore_benchmark.retrievers import VisionRetriever
 
@@ -232,6 +233,7 @@ class BenchmarkEvalCallback(WandbCallback):
         self.eval_steps_frequency = run_frequency
         self.counter_eval = 0
         self.eval_dataset_format = dataset_format
+        super().__init__()
 
     def on_evaluate(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
         if state.global_step % self.eval_steps_frequency != 0:
