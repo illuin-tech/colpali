@@ -1,11 +1,9 @@
 import os
-import warnings
 from dataclasses import dataclass
-from typing import Callable, Dict, Optional, Tuple, cast
+from typing import Callable, Dict, Optional, Tuple
 
-from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
+from peft import LoraConfig, get_peft_model
 from transformers import (
-    AutoTokenizer,
     PreTrainedModel,
     PreTrainedTokenizer,
     TrainingArguments,
@@ -23,13 +21,13 @@ from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 @dataclass
 class ColModelTrainingConfig:
     model: PreTrainedModel
+    processor: BaseVisualRetrieverProcessor
     tr_args: TrainingArguments = None
     output_dir: str = None
     max_length: int = 256
     run_eval: bool = True
     run_train: bool = True
     peft_config: Optional[LoraConfig] = None
-    processor: BaseVisualRetrieverProcessor = None
     tokenizer: PreTrainedTokenizer = None
     loss_func: Optional[Callable] = ColbertLoss()
     dataset_loading_func: Optional[Callable] = None
@@ -56,30 +54,17 @@ class ColModelTrainingConfig:
 
         self.tr_args.remove_unused_columns = False
 
-        if self.processor is None and self.tokenizer is None:
-            print("No processor or tokenizer provided. Using default for textual model tokenization.")
-            self.tokenizer = cast(
-                PreTrainedTokenizer,
-                AutoTokenizer.from_pretrained(self.model.name_or_path),
-            )
-
         if self.pretrained_peft_model_name_or_path is not None:
             print("Loading pretrained PEFT model")
             self.model.load_adapter(self.pretrained_peft_model_name_or_path)
 
         if self.peft_config is not None:
             print("Configurating PEFT model")
-            if self.processor is None:
-                warnings.warn("Processor not provided. Using deprecated logic.")
-                self.model = prepare_model_for_kbit_training(self.model)
+            if self.pretrained_peft_model_name_or_path is None:
                 self.model = get_peft_model(self.model, self.peft_config)
                 self.model.print_trainable_parameters()
             else:
-                if self.pretrained_peft_model_name_or_path is None:
-                    self.model = get_peft_model(self.model, self.peft_config)
-                    self.model.print_trainable_parameters()
-                else:
-                    print(f"Adapter already loaded from {self.pretrained_peft_model_name_or_path}. Not overwriting.")
+                print(f"Adapter already loaded from {self.pretrained_peft_model_name_or_path}. Not overwriting.")
 
     print_gpu_utilization()
 
@@ -141,8 +126,7 @@ class ColModelTraining:
         self.model.save_pretrained(self.config.output_dir)
         if self.config.tokenizer is not None:
             self.config.tokenizer.save_pretrained(self.config.output_dir)
-        if self.config.processor is not None:
-            self.config.processor.save_pretrained(self.config.output_dir)
+        self.config.processor.save_pretrained(self.config.output_dir)
 
         # Copy-paste the training config
         os.system(f"cp {config_file} {self.config.output_dir}/training_config.yml")
