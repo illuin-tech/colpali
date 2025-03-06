@@ -1,8 +1,8 @@
 import os
 from dataclasses import dataclass
-from typing import Callable, Dict, Optional, Tuple
+from typing import Callable, Dict, Optional, Tuple, Union
 
-from peft import LoraConfig, get_peft_model
+from peft import LoraConfig, PeftModel, get_peft_model
 from transformers import (
     PreTrainedModel,
     PreTrainedTokenizer,
@@ -20,15 +20,15 @@ from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 
 @dataclass
 class ColModelTrainingConfig:
-    model: PreTrainedModel
+    model: Union[PreTrainedModel, PeftModel]
     processor: BaseVisualRetrieverProcessor
-    tr_args: TrainingArguments = None
-    output_dir: str = None
+    tr_args: Optional[TrainingArguments] = None
+    output_dir: Optional[str] = None
     max_length: int = 256
     run_eval: bool = True
     run_train: bool = True
     peft_config: Optional[LoraConfig] = None
-    tokenizer: PreTrainedTokenizer = None
+    tokenizer: Optional[PreTrainedTokenizer] = None
     loss_func: Optional[Callable] = ColbertLoss()
     dataset_loading_func: Optional[Callable] = None
     eval_dataset_loader: Optional[Dict[str, Callable]] = None
