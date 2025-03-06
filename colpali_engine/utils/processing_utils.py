@@ -3,12 +3,12 @@ from typing import List, Optional, Tuple, Union
 
 import torch
 from PIL import Image
-from transformers import BatchEncoding, BatchFeature
+from transformers import BatchEncoding, BatchFeature, ProcessorMixin
 
 from colpali_engine.utils.torch_utils import get_torch_device
 
 
-class BaseVisualRetrieverProcessor(ABC):
+class BaseVisualRetrieverProcessor(ABC, ProcessorMixin):
     """
     Base class for visual retriever processors.
     """
