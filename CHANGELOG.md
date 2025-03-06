@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Warn about evaluation being different from Vidore, and do not store results to prevent confusion.
 - Remove duplicate resize code in `ColQwen2Processor` and `ColQwen2_5_Processor`.
 - Simplify sequence padding for pixel values in `ColQwen2Processor` and `ColQwen2_5_Processor`.
+- Remove deprecated eval from trainer
+- Refactor the collator classes
 
 ## [0.3.8] - 2025-01-29
 
