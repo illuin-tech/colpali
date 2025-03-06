@@ -31,6 +31,9 @@ class ColModelTrainingConfig:
     dataset_loading_func: Optional[Callable] = None
     eval_dataset_loader: Optional[Dict[str, Callable]] = None
     pretrained_peft_model_name_or_path: Optional[str] = None
+    """
+    Config class used for training a ColVision model.
+    """
 
     def __post_init__(self):
         """
@@ -68,6 +71,10 @@ class ColModelTrainingConfig:
 
 
 class ColModelTraining:
+    """
+    Class that contains the training and evaluation logic for a ColVision model.
+    """
+
     def __init__(self, config: ColModelTrainingConfig) -> None:
         self.config = config
         self.model = self.config.model
