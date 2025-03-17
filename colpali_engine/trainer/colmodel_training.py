@@ -57,7 +57,7 @@ class ColModelTrainingConfig:
 
         if self.pretrained_peft_model_name_or_path is not None:
             print("Loading pretrained PEFT model")
-            self.model.load_adapter(self.pretrained_peft_model_name_or_path)
+            self.model.load_adapter(self.pretrained_peft_model_name_or_path, is_trainable=True)
 
         if self.peft_config is not None:
             print("Configurating PEFT model")
