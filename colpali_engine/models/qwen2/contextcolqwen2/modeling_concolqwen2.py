@@ -91,7 +91,7 @@ class ContextColQwen2(Qwen2VLForConditionalGeneration):
         hidden_states = outputs[0]
         return hidden_states
 
-    def forward(self, *args, **kwargs) -> torch.Tensor:
+    def forward(self, passage_mode: Optional[bool] = False, *args, **kwargs) -> torch.Tensor:
         kwargs.pop("output_hidden_states", None)
 
         # Handle the custom "pixel_values" input obtained with `ColQwen2Processor` through unpadding
@@ -118,9 +118,9 @@ class ContextColQwen2(Qwen2VLForConditionalGeneration):
         proj = proj / proj.norm(dim=-1, keepdim=True)  # (batch_size, sequence_length, dim)
         proj = proj * kwargs["attention_mask"].unsqueeze(-1)  # (batch_size, sequence_length, dim)
 
-        if self.embedd_passage_only:
+        if passage_mode and self.embedd_passage_only:
             # Filter out only the image embeddings
-            image_mask = (kwargs["input_ids"] == self.config.image_token_id).unsqueeze(-1).expand_as(proj)
+            image_mask = (kwargs["input_ids"] == self.config.image_token_id).unsqueeze(-1)
             proj = proj.masked_select(image_mask).view(proj.size(0), -1, proj.size(-1))
 
         return proj
