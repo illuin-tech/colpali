@@ -60,6 +60,10 @@ interpretability = [
     "seaborn>=0.13.2,<1.0.0",
 ]
 
+mps = [
+    "torch>=2.5.0,<2.6.0"
+]
+
 dev = ["datasets>=2.19.1", "pytest>=8.0.0", "ruff>=0.4.0"]
 
 all = [
