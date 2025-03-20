@@ -19,7 +19,7 @@ class ContextColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
         **kwargs: Arbitrary keyword arguments to be passed to the parent `Qwen2VLProcessor` class.
     """
 
-    visual_prompt_prefix_with_summary: ClassVar[str] = (
+    visual_prompt_prefix_no_summary: ClassVar[str] = (
         "<|im_start|>user\n<|vision_start|><|image_pad|><|vision_end|>Describe the image.<|im_end|><|endoftext|>"
     )
     visual_prompt_prefix_with_summary: ClassVar[str] = (
