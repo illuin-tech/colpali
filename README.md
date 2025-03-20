@@ -48,8 +48,11 @@ Using ColPali removes the need for potentially complex and brittle layout recogn
 We used Python 3.11.6 and PyTorch 2.4 to train and test our models, but the codebase is compatible with Python >=3.9 and recent PyTorch versions. To install the package, run:
 
 ```bash
-pip install colpali-engine
+pip install colpali-engine # from PyPi
+pip install git+https://github.com/illuin-tech/colpali # from source
 ```
+
+Mac users using MPS with the ColQwen models have reported errors with torch 2.6.0. These errors are fixed by downgrading to torch 2.5.1.
 
 > [!WARNING]
 > For ColPali versions above v1.0, make sure to install the `colpali-engine` package from source or with a version above v0.2.0.

@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Make `processor` input compulsory in `ColModelTrainingConfig`
 - Make `BaseVisualRetrieverProcessor` inherit from `ProcessorMixin`
 - Remove unused `tokenizer` field from `ColModelTrainingConfig`
+- Bump transformers to `4.49` and torch to `2.6.0` to keep up with the latest versions. Note that this leads to errors on mps.
 
 ## [0.3.8] - 2025-01-29
 

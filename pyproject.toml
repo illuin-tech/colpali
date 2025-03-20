@@ -39,7 +39,7 @@ dependencies = [
     "pillow>=10.0.0",
     "requests",
     "scipy",
-    "torch>=2.2.0,<2.6.0",
+    "torch>=2.2.0,<2.7.0", # mps users need to install torch < 2.6.0
     "transformers>=4.49.0,<4.50.0",
 ]
 
@@ -58,6 +58,10 @@ interpretability = [
     "einops>=0.8.0,<1.0.0",
     "matplotlib>=3.9.0,<4.0.0",
     "seaborn>=0.13.2,<1.0.0",
+]
+
+mps = [
+    "torch>=2.5.0,<2.6.0"
 ]
 
 dev = ["datasets>=2.19.1", "pytest>=8.0.0", "ruff>=0.4.0"]
