@@ -23,7 +23,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Make `processor` input compulsory in `ColModelTrainingConfig`
 - Make `BaseVisualRetrieverProcessor` inherit from `ProcessorMixin`
 - Remove unused `tokenizer` field from `ColModelTrainingConfig`
-- Bump transformers to `4.49` and torch to `2.6.0` to keep up with the latest versions. Note that this leads to errors on mps.
+- Bump transformers to `4.50` and torch to `2.6.0` to keep up with the latest versions. Note that this leads to errors on mps.
+- Remove `ColQwen2Processor`'s `num_image_tokens` kwarg. This is due to `transformers`'s `4.50` update which does not support passing kwargs to the `from_pretrained` method anymore. This does not affect the model's performance.
+- Remove `ColQwen2_5_Processor`'s `num_image_tokens` kwarg. This is due to `transformers`'s `4.50` update which does not support passing kwargs to the `from_pretrained` method anymore. This does not affect the model's performance.
 
 ## [0.3.8] - 2025-01-29
 

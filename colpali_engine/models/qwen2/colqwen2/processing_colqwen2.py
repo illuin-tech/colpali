@@ -33,19 +33,10 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
     def __init__(
         self,
         *args,
-        max_num_visual_tokens: int = 768,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.tokenizer.padding_side = "left"
-
-        self.max_num_visual_tokens = max_num_visual_tokens
-        self.factor = 28
-        self.min_pixels = 4 * 28 * 28
-        self.max_pixels = self.max_num_visual_tokens * 28 * 28
-
-        self.image_processor.min_pixels = self.min_pixels
-        self.image_processor.max_pixels = self.max_pixels
 
     def process_images(self, images: List[Image.Image]) -> BatchFeature:
         """
