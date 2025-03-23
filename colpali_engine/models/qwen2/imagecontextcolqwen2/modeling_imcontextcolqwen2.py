@@ -102,7 +102,7 @@ class ImageContextColQwen2(Qwen2VLForConditionalGeneration):
 
         second_image_mask = second_start_token_mask & before_second_end_token_mask & ~start_token_mask
 
-        processed["attention_mask"] = processed["attention_mask"] * second_image_mask
+        # processed["attention_mask"] = processed["attention_mask"] * second_image_mask
         return processed, second_image_mask
 
     def forward(self, passage_mode: Optional[bool] = False, *args, **kwargs) -> torch.Tensor:
@@ -118,11 +118,6 @@ class ImageContextColQwen2(Qwen2VLForConditionalGeneration):
 
         kwargs, second_image_mask = self.get_index_images(kwargs)
         second_image_mask = second_image_mask.unsqueeze(-1).expand(second_image_mask.shape[0], -1, self.dim)
-
-        print(second_image_mask)
-        print(second_image_mask.shape)
-        print(torch.all(second_image_mask == 0))
-        print(torch.all(second_image_mask == 1))
 
         position_ids, rope_deltas = self.get_rope_index(
             input_ids=kwargs["input_ids"],
@@ -140,7 +135,6 @@ class ImageContextColQwen2(Qwen2VLForConditionalGeneration):
         proj = proj / proj.norm(dim=-1, keepdim=True)  # (batch_size, sequence_length, dim)
         proj = proj * kwargs["attention_mask"].unsqueeze(-1)  # (batch_size, sequence_length, dim)
 
-        print(proj.shape)
         if passage_mode and self.embedd_passage_only:
             # Filter out only the middle image embeddings
             proj = proj[second_image_mask].view(proj.size(0), -1, proj.size(-1))
