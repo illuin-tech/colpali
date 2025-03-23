@@ -16,4 +16,6 @@ from .models import (
     ColQwen2Processor,
     ContextColQwen2,
     ContextColQwen2Processor,
+    ImageContextColQwen2,
+    ImageContextColQwen2Processor,
 )
