@@ -73,8 +73,10 @@ class ImageContextColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcess
         assert len(images) == len(next_images)
 
         images = [image.convert("RGB") for image in images]
-        prev_images = [image.convert("RGB") for image in prev_images]
-        next_images = [image.convert("RGB") for image in next_images]
+
+        # Watch out for None values in prev_images and next_images
+        prev_images = [image.convert("RGB") if image else images[i] for i, image in enumerate(prev_images)]
+        next_images = [image.convert("RGB") if image else images[i] for i, image in enumerate(next_images)]
 
         # alternating list of prev_images, images, next_images elements
         images_list = [img for imgs in zip(prev_images, images, next_images) for img in imgs]
