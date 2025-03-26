@@ -13,11 +13,11 @@ class ContextColQwen2(Qwen2VLForConditionalGeneration):
 
     main_input_name: ClassVar[str] = "doc_input_ids"  # transformers-related
 
-    def __init__(self, config: Qwen2VLConfig):
+    def __init__(self, config: Qwen2VLConfig, embedd_passage_only: Optional[bool] = True):
         super().__init__(config=config)
         self.dim = 128
         self.custom_text_proj = nn.Linear(self.model.config.hidden_size, self.dim)
-        self.embedd_passage_only = True
+        self.embedd_passage_only = embedd_passage_only
         self.padding_side = "left"
         self.post_init()
 
