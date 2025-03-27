@@ -16,7 +16,6 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
     query_augmentation_token: ClassVar[str] = "<end_of_utterance>"
     image_token: ClassVar[str] = "<image>"
 
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -27,6 +26,7 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
     def process_images(
         self,
         images: List[Image.Image],
+        contexts_prompts: Optional[List[str]] = None,
     ) -> BatchEncoding:
         """
         Process images for ColIdefics3.
@@ -34,16 +34,27 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
         texts_doc: List[str] = []
         images = [[image.convert("RGB")] for image in images]
 
-        for _ in images:
-            messages_doc = [
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": "Describe the image."},
-                        {"type": "image"},
-                    ],
-                },
-            ]
+        for i, _ in enumerate(images):
+            if contexts_prompts is not None:
+                messages_doc = [
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": contexts_prompts[i]},
+                            {"type": "image"},
+                        ],
+                    },
+                ]
+            else:
+                messages_doc = [
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": "Describe the image."},
+                            {"type": "image"},
+                        ],
+                    },
+                ]
 
             text_doc = self.apply_chat_template(messages_doc, add_generation_prompt=False)
             texts_doc.append(text_doc.strip())

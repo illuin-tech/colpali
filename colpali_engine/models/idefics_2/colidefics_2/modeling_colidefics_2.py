@@ -1,13 +1,16 @@
+from typing import Optional
+
 from torch import nn
 from transformers import Idefics2Model, Idefics2PreTrainedModel
 
 
 class ColIdefics2(Idefics2PreTrainedModel):
-    def __init__(self, config):
+    def __init__(self, config, remove_context_embeddings: Optional[bool] = False):
         super(ColIdefics2, self).__init__(config=config)
         self.model: Idefics2Model = Idefics2Model(config)
         self.dim = 128
         self.linear = nn.Linear(self.model.config.text_config.hidden_size, self.dim)
+        self.remove_context_embeddings = remove_context_embeddings
         self.main_input_name = "doc_input_ids"
 
     def forward(self, *args, **kwargs):
@@ -27,4 +30,9 @@ class ColIdefics2(Idefics2PreTrainedModel):
         # normalize l2 norm
         proj = proj / proj.norm(dim=-1, keepdim=True)
         proj = proj * kwargs["attention_mask"].unsqueeze(-1)
+
+        if "pixel_values" in kwargs and self.remove_context_embeddings:
+            # Pools only the image embeddings
+            image_mask = (kwargs["input_ids"] == self.config.image_token_id).unsqueeze(-1)
+            proj = proj * image_mask
         return proj

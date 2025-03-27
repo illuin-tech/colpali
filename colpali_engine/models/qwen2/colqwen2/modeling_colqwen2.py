@@ -1,4 +1,3 @@
-import warnings
 from typing import ClassVar, List, Optional
 
 import torch
@@ -13,31 +12,13 @@ class ColQwen2(Qwen2VLForConditionalGeneration):
 
     main_input_name: ClassVar[str] = "doc_input_ids"  # transformers-related
 
-    def __init__(self, config: Qwen2VLConfig):
+    def __init__(self, config: Qwen2VLConfig, remove_context_embeddings: Optional[bool] = False):
         super().__init__(config=config)
         self.dim = 128
         self.custom_text_proj = nn.Linear(self.model.config.hidden_size, self.dim)
         self.padding_side = "left"
+        self.remove_context_embeddings = remove_context_embeddings
         self.post_init()
-
-    @classmethod
-    def from_pretrained(
-        cls,
-        *args,
-        device_map: Optional[str] = None,
-        **kwargs,
-    ):
-        if device_map in ["mps", torch.device("mps"), {0: "mps"}]:
-            warnings.warn(
-                "There is a known issue with Qwen2-VL models with `transformers>=4.49.0` on MPS devices: "
-                "https://github.com/huggingface/transformers/issues/36413.\n"
-                "As a temporary workaround, force downgrade to `transformers==4.48.3`."
-            )
-        return super().from_pretrained(
-            *args,
-            device_map=device_map,
-            **kwargs,
-        )
 
     def inner_forward(
         self,
@@ -115,6 +96,11 @@ class ColQwen2(Qwen2VLForConditionalGeneration):
         # L2 normalization
         proj = proj / proj.norm(dim=-1, keepdim=True)  # (batch_size, sequence_length, dim)
         proj = proj * kwargs["attention_mask"].unsqueeze(-1)  # (batch_size, sequence_length, dim)
+
+        if "pixel_values" in kwargs and self.remove_context_embeddings:
+            # Pools only the image embeddings
+            image_mask = (kwargs["input_ids"] == self.config.image_token_id).unsqueeze(-1)
+            proj = proj * image_mask
         return proj
 
     @property

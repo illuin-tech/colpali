@@ -61,6 +61,39 @@ class TestColPaliModelIntegration:
         batch_images = processor.process_images(images).to(model.device)
 
         # Forward pass
+        model.remove_context_embeddings = False
+        with torch.no_grad():
+            outputs = model(**batch_images)
+
+        # Assertions
+        assert isinstance(outputs, torch.Tensor)
+        assert outputs.dim() == 3
+        batch_size, n_visual_tokens, emb_dim = outputs.shape
+        assert batch_size == len(images)
+        assert emb_dim == model.dim
+
+    @pytest.mark.slow
+    def test_forward_images_with_context_integration(
+        self,
+        model: ColPali,
+        processor: ColPaliProcessor,
+    ):
+        # Create a batch of dummy images
+        images = [
+            Image.new("RGB", (32, 32), color="white"),
+            Image.new("RGB", (16, 16), color="black"),
+        ]
+
+        contexts = [
+            "Open source is the best!",
+            "I love open source!",
+        ]
+
+        # Process the image
+        batch_images = processor.process_images(images, context_prompts=contexts).to(model.device)
+
+        # Forward pass
+        model.remove_context_embeddings = True
         with torch.no_grad():
             outputs = model(**batch_images)
 
