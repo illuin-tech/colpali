@@ -17,6 +17,14 @@ class ColPali(PaliGemmaPreTrainedModel):
     main_input_name: ClassVar[str] = "doc_input_ids"  # transformers-related
 
     def __init__(self, config: PaliGemmaConfig, remove_context_embeddings: Optional[bool] = False):
+        """
+        Initializes the ColPali model.
+
+        Args:
+        - config (PaliGemmaConfig): The model configuration.
+        - remove_context_embeddings (Optional[bool]): Whether to ignore all tokens embeddings
+            except those of the image at inference
+        """
         super().__init__(config=config)
 
         model = PaliGemmaForConditionalGeneration(config=config)

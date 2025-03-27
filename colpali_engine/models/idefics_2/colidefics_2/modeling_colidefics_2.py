@@ -6,6 +6,14 @@ from transformers import Idefics2Model, Idefics2PreTrainedModel
 
 class ColIdefics2(Idefics2PreTrainedModel):
     def __init__(self, config, remove_context_embeddings: Optional[bool] = False):
+        """
+        Initializes the ColIdefics2 model.
+
+        Args:
+        - config : The model configuration.
+        - remove_context_embeddings (Optional[bool]): Whether to ignore all tokens embeddings
+            except those of the image at inference
+        """
         super(ColIdefics2, self).__init__(config=config)
         self.model: Idefics2Model = Idefics2Model(config)
         self.dim = 128

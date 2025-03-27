@@ -14,6 +14,14 @@ class ColQwen2_5(Qwen2_5_VLForConditionalGeneration):  # noqa: N801
     main_input_name: ClassVar[str] = "doc_input_ids"  # transformers-related
 
     def __init__(self, config: Qwen2_5_VLConfig, remove_context_embeddings: Optional[bool] = False):
+        """
+        Initializes the ColQwen2.5 model.
+
+        Args:
+        - config (Qwen2.5VLConfig): The model configuration.
+        - remove_context_embeddings (Optional[bool]): Whether to ignore all tokens embeddings
+            except those of the image at inference
+        """
         super().__init__(config=config)
         self.dim = 128
         self.custom_text_proj = nn.Linear(self.model.config.hidden_size, self.dim)
