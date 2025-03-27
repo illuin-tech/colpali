@@ -16,7 +16,15 @@ class ColPali(PaliGemmaPreTrainedModel):
 
     main_input_name: ClassVar[str] = "doc_input_ids"  # transformers-related
 
-    def __init__(self, config: PaliGemmaConfig):
+    def __init__(self, config: PaliGemmaConfig, remove_context_embeddings: Optional[bool] = False):
+        """
+        Initializes the ColPali model.
+
+        Args:
+        - config (PaliGemmaConfig): The model configuration.
+        - remove_context_embeddings (Optional[bool]): Whether to ignore all tokens embeddings
+            except those of the image at inference
+        """
         super().__init__(config=config)
 
         model = PaliGemmaForConditionalGeneration(config=config)
@@ -28,6 +36,8 @@ class ColPali(PaliGemmaPreTrainedModel):
         # We could do it now but it would break all the models trying to load the model from the checkpoint.
         self.dim = 128
         self.custom_text_proj = nn.Linear(self.model.config.text_config.hidden_size, self.dim)
+
+        self.remove_context_embeddings = remove_context_embeddings
 
         self.post_init()
 
@@ -46,6 +56,10 @@ class ColPali(PaliGemmaPreTrainedModel):
 
         proj = proj * kwargs["attention_mask"].unsqueeze(-1)  # (batch_size, sequence_length, dim)
 
+        if "pixel_values" in kwargs and self.remove_context_embeddings:
+            # Pools only the image embeddings
+            image_mask = (kwargs["input_ids"] == self.config.image_token_index).unsqueeze(-1)
+            proj = proj * image_mask
         return proj
 
     def get_input_embeddings(self):

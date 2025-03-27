@@ -61,6 +61,39 @@ class TestColIdefics3ModelIntegration:
         batch_images = processor.process_images(images).to(model.device)
 
         # Forward pass
+        model.remove_context_embeddings = False
+        with torch.no_grad():
+            outputs = model(**batch_images)
+
+        # Assertions
+        assert isinstance(outputs, torch.Tensor)
+        assert outputs.dim() == 3
+        batch_size, n_visual_tokens, emb_dim = outputs.shape
+        assert batch_size == len(images)
+        assert emb_dim == model.dim
+
+    @pytest.mark.slow
+    def test_forward_images_with_context_integration(
+        self,
+        model: ColIdefics3,
+        processor: ColIdefics3Processor,
+    ):
+        # Create a batch of dummy images
+        images = [
+            Image.new("RGB", (32, 32), color="white"),
+            Image.new("RGB", (16, 16), color="black"),
+        ]
+
+        contexts = [
+            "Is this a white image?",
+            "Is this a black image?",
+        ]
+
+        # Process the image
+        batch_images = processor.process_images(images, contexts_prompts=contexts).to(model.device)
+
+        # Forward pass
+        model.remove_context_embeddings = True
         with torch.no_grad():
             outputs = model(**batch_images)
 

@@ -18,6 +18,7 @@ class ColIdefics2Processor(BaseVisualRetrieverProcessor, Idefics2Processor):
     def process_images(
         self,
         images: List[Image.Image],
+        contexts_prompts: Optional[List[str]] = None,
     ) -> BatchEncoding:
         """
         Process images for ColIdefics2.
@@ -25,16 +26,27 @@ class ColIdefics2Processor(BaseVisualRetrieverProcessor, Idefics2Processor):
         texts_doc: List[str] = []
         images = [image.convert("RGB") for image in images]
 
-        for _ in images:
-            messages_doc = [
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": "Describe the image."},
-                        {"type": "image"},
-                    ],
-                },
-            ]
+        for i, _ in enumerate(images):
+            if contexts_prompts is not None:
+                messages_doc = [
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": contexts_prompts[i]},
+                            {"type": "image"},
+                        ],
+                    },
+                ]
+            else:
+                messages_doc = [
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": "Describe the image."},
+                            {"type": "image"},
+                        ],
+                    },
+                ]
 
             text_doc = self.apply_chat_template(messages_doc, add_generation_prompt=False)
             texts_doc.append(text_doc.strip())
