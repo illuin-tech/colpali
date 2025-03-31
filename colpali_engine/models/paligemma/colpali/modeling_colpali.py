@@ -12,19 +12,17 @@ from transformers.models.paligemma.modeling_paligemma import (
 class ColPali(PaliGemmaPreTrainedModel):
     """
     ColPali model implementation from the "ColPali: Efficient Document Retrieval with Vision Language Models" paper.
+
+    Args:
+        config (PaliGemmaConfig): The model configuration.
+        mask_non_image_embeddings (Optional[bool]): Whether to ignore all tokens embeddings
+            except those of the image at inference.
+            Defaults to False --> Do not mask any embeddings during forward pass.
     """
 
     main_input_name: ClassVar[str] = "doc_input_ids"  # transformers-related
 
-    def __init__(self, config: PaliGemmaConfig, remove_context_embeddings: Optional[bool] = False):
-        """
-        Initializes the ColPali model.
-
-        Args:
-        - config (PaliGemmaConfig): The model configuration.
-        - remove_context_embeddings (Optional[bool]): Whether to ignore all tokens embeddings
-            except those of the image at inference
-        """
+    def __init__(self, config: PaliGemmaConfig, mask_non_image_embeddings: bool = False):
         super().__init__(config=config)
 
         model = PaliGemmaForConditionalGeneration(config=config)
@@ -37,7 +35,7 @@ class ColPali(PaliGemmaPreTrainedModel):
         self.dim = 128
         self.custom_text_proj = nn.Linear(self.model.config.text_config.hidden_size, self.dim)
 
-        self.remove_context_embeddings = remove_context_embeddings
+        self.mask_non_image_embeddings = mask_non_image_embeddings
 
         self.post_init()
 
@@ -56,7 +54,7 @@ class ColPali(PaliGemmaPreTrainedModel):
 
         proj = proj * kwargs["attention_mask"].unsqueeze(-1)  # (batch_size, sequence_length, dim)
 
-        if "pixel_values" in kwargs and self.remove_context_embeddings:
+        if "pixel_values" in kwargs and self.mask_non_image_embeddings:
             # Pools only the image embeddings
             image_mask = (kwargs["input_ids"] == self.config.image_token_index).unsqueeze(-1)
             proj = proj * image_mask

@@ -43,7 +43,7 @@ class ColQwen2_5_Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):  # n
         Process images for ColQwen2.5.
         """
 
-        if context_prompts is not None:
+        if context_prompts:
             texts_doc = context_prompts
         else:
             texts_doc = [self.visual_prompt_prefix] * len(images)

@@ -39,11 +39,11 @@ def test_process_images_with_context(processor_from_pretrained: ColIdefics3Proce
     # Create a dummy image
     image_size = (16, 32)
     image = Image.new("RGB", image_size, color="black")
-    contexts = ["Open source is the best!"]
+    contexts = ["Open source is the best!<image>"]
     images = [image]
 
     # Process the image
-    batch_feature = processor_from_pretrained.process_images(images, contexts_prompts=contexts)
+    batch_feature = processor_from_pretrained.process_images(images, context_prompts=contexts)
 
     # Assertions
     assert "pixel_values" in batch_feature

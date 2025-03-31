@@ -34,7 +34,7 @@ class ColPaliProcessor(BaseVisualRetrieverProcessor, PaliGemmaProcessor):
         """
         Process images for ColPali.
         """
-        if context_prompts is not None:
+        if context_prompts:
             texts_doc = context_prompts
         else:
             texts_doc = [self.visual_prompt_prefix] * len(images)

@@ -38,13 +38,13 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
         super().__init__(*args, **kwargs)
         self.tokenizer.padding_side = "left"
 
-    def process_images(self, images: List[Image.Image], contexts_prompts: Optional[List[str]] = None) -> BatchFeature:
+    def process_images(self, images: List[Image.Image], context_prompts: Optional[List[str]] = None) -> BatchFeature:
         """
         Process images for ColQwen2.
         """
 
-        if contexts_prompts is not None:
-            texts_doc = contexts_prompts
+        if context_prompts:
+            texts_doc = context_prompts
         else:
             texts_doc = [self.visual_prompt_prefix] * len(images)
         images = [image.convert("RGB") for image in images]

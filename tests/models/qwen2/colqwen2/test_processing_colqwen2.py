@@ -45,7 +45,7 @@ def test_process_images_with_context(processor_from_pretrained: ColQwen2Processo
     contexts = ["Open source is the best!"]
 
     # Process the image
-    batch_feature = processor_from_pretrained.process_images(images, contexts_prompts=contexts)
+    batch_feature = processor_from_pretrained.process_images(images, context_prompts=contexts)
 
     # Assertions
     assert "pixel_values" in batch_feature

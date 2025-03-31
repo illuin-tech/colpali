@@ -63,7 +63,7 @@ class TestColQwen2_5_ModelIntegration:  # noqa N801
         batch_images = processor.process_images(images).to(model.device)
 
         # Forward pass
-        model.remove_context_embeddings = False
+        model.mask_non_image_embeddings = False
         with torch.no_grad():
             outputs = model(**batch_images)
 
@@ -95,7 +95,7 @@ class TestColQwen2_5_ModelIntegration:  # noqa N801
         batch_images = processor.process_images(images, context_prompts=contexts).to(model.device)
 
         # Forward pass
-        model.remove_context_embeddings = True
+        model.mask_non_image_embeddings = True
         with torch.no_grad():
             outputs = model(**batch_images)
 

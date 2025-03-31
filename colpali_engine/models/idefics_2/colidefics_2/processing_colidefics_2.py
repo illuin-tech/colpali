@@ -1,3 +1,4 @@
+import warnings
 from typing import List, Optional, Tuple, Union
 
 import torch
@@ -13,12 +14,16 @@ class ColIdefics2Processor(BaseVisualRetrieverProcessor, Idefics2Processor):
     """
 
     def __init__(self, *args, **kwargs):
+        warnings.warn(
+            "ColIdefics2 is deprecated and may be incompatible with future versions. Please use ColIdefics3 instead.",
+            DeprecationWarning,
+        )
         super().__init__(*args, **kwargs)
 
     def process_images(
         self,
         images: List[Image.Image],
-        contexts_prompts: Optional[List[str]] = None,
+        context_prompts: Optional[List[str]] = None,
     ) -> BatchEncoding:
         """
         Process images for ColIdefics2.
@@ -26,13 +31,13 @@ class ColIdefics2Processor(BaseVisualRetrieverProcessor, Idefics2Processor):
         texts_doc: List[str] = []
         images = [image.convert("RGB") for image in images]
 
-        for i, _ in enumerate(images):
-            if contexts_prompts is not None:
+        for i, _ in range(len(images)):
+            if context_prompts:
                 messages_doc = [
                     {
                         "role": "user",
                         "content": [
-                            {"type": "text", "text": contexts_prompts[i]},
+                            {"type": "text", "text": context_prompts[i]},
                             {"type": "image"},
                         ],
                     },
