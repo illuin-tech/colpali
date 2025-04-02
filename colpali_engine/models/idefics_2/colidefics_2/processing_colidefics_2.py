@@ -1,3 +1,4 @@
+import warnings
 from typing import List, Optional, Tuple, Union
 
 import torch
@@ -13,11 +14,16 @@ class ColIdefics2Processor(BaseVisualRetrieverProcessor, Idefics2Processor):
     """
 
     def __init__(self, *args, **kwargs):
+        warnings.warn(
+            "ColIdefics2 is deprecated and may be incompatible with future versions. Please use ColIdefics3 instead.",
+            DeprecationWarning,
+        )
         super().__init__(*args, **kwargs)
 
     def process_images(
         self,
         images: List[Image.Image],
+        context_prompts: Optional[List[str]] = None,
     ) -> BatchEncoding:
         """
         Process images for ColIdefics2.
@@ -25,16 +31,27 @@ class ColIdefics2Processor(BaseVisualRetrieverProcessor, Idefics2Processor):
         texts_doc: List[str] = []
         images = [image.convert("RGB") for image in images]
 
-        for _ in images:
-            messages_doc = [
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": "Describe the image."},
-                        {"type": "image"},
-                    ],
-                },
-            ]
+        for i, _ in range(len(images)):
+            if context_prompts:
+                messages_doc = [
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": context_prompts[i]},
+                            {"type": "image"},
+                        ],
+                    },
+                ]
+            else:
+                messages_doc = [
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": "Describe the image."},
+                            {"type": "image"},
+                        ],
+                    },
+                ]
 
             text_doc = self.apply_chat_template(messages_doc, add_generation_prompt=False)
             texts_doc.append(text_doc.strip())

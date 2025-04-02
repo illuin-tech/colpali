@@ -19,7 +19,7 @@ def model_name() -> str:
 
 
 @pytest.fixture(scope="module")
-def model(model_name: str) -> Generator[ColQwen2_5, None, None]:
+def model_without_mask(model_name: str) -> Generator[ColQwen2_5, None, None]:
     device = get_torch_device("auto")
     logger.info(f"Device used: {device}")
 
@@ -30,6 +30,25 @@ def model(model_name: str) -> Generator[ColQwen2_5, None, None]:
             torch_dtype=torch.bfloat16,
             device_map=device,
             attn_implementation="flash_attention_2" if is_flash_attn_2_available() else None,
+            mask_non_image_embeddings=False,
+        ).eval(),
+    )
+    tear_down_torch()
+
+
+@pytest.fixture(scope="module")
+def model_with_mask(model_name: str) -> Generator[ColQwen2_5, None, None]:
+    device = get_torch_device("auto")
+    logger.info(f"Device used: {device}")
+
+    yield cast(
+        ColQwen2_5,
+        ColQwen2_5.from_pretrained(
+            model_name,
+            torch_dtype=torch.bfloat16,
+            device_map=device,
+            attn_implementation="flash_attention_2" if is_flash_attn_2_available() else None,
+            mask_non_image_embeddings=True,
         ).eval(),
     )
     tear_down_torch()
@@ -42,15 +61,15 @@ def processor(model_name: str) -> Generator[ColQwen2_5_Processor, None, None]:
 
 class TestColQwen2_5_Model:  # noqa N801
     @pytest.mark.slow
-    def test_load_model_from_pretrained(self, model: ColQwen2_5):
-        assert isinstance(model, ColQwen2_5)
+    def test_load_model_from_pretrained(self, model_without_mask: ColQwen2_5):
+        assert isinstance(model_without_mask, ColQwen2_5)
 
 
 class TestColQwen2_5_ModelIntegration:  # noqa N801
     @pytest.mark.slow
     def test_forward_images_integration(
         self,
-        model: ColQwen2_5,
+        model_without_mask: ColQwen2_5,
         processor: ColQwen2_5_Processor,
     ):
         # Create a batch of dummy images
@@ -60,23 +79,54 @@ class TestColQwen2_5_ModelIntegration:  # noqa N801
         ]
 
         # Process the image
-        batch_images = processor.process_images(images).to(model.device)
+        batch_images = processor.process_images(images).to(model_without_mask.device)
 
         # Forward pass
         with torch.no_grad():
-            outputs = model(**batch_images)
+            outputs = model_without_mask(**batch_images)
 
         # Assertions
         assert isinstance(outputs, torch.Tensor)
         assert outputs.dim() == 3
         batch_size, n_visual_tokens, emb_dim = outputs.shape
         assert batch_size == len(images)
-        assert emb_dim == model.dim
+        assert emb_dim == model_without_mask.dim
+
+    @pytest.mark.slow
+    def test_forward_images_with_context_integration(
+        self,
+        model_with_mask: ColQwen2_5,
+        processor: ColQwen2_5_Processor,
+    ):
+        # Create a batch of dummy images
+        images = [
+            Image.new("RGB", (64, 64), color="white"),
+            Image.new("RGB", (32, 32), color="black"),
+        ]
+
+        contexts = [
+            "Open source is the best!",
+            "Open source is the best!",
+        ]
+
+        # Process the image
+        batch_images = processor.process_images(images, context_prompts=contexts).to(model_with_mask.device)
+
+        # Forward pass
+        with torch.no_grad():
+            outputs = model_with_mask(**batch_images)
+
+        # Assertions
+        assert isinstance(outputs, torch.Tensor)
+        assert outputs.dim() == 3
+        batch_size, n_visual_tokens, emb_dim = outputs.shape
+        assert batch_size == len(images)
+        assert emb_dim == model_with_mask.dim
 
     @pytest.mark.slow
     def test_forward_queries_integration(
         self,
-        model: ColQwen2_5,
+        model_without_mask: ColQwen2_5,
         processor: ColQwen2_5_Processor,
     ):
         queries = [
@@ -85,36 +135,36 @@ class TestColQwen2_5_ModelIntegration:  # noqa N801
         ]
 
         # Process the queries
-        batch_queries = processor.process_queries(queries).to(model.device)
+        batch_queries = processor.process_queries(queries).to(model_without_mask.device)
 
         # Forward pass
         with torch.no_grad():
-            outputs = model(**batch_queries)
+            outputs = model_without_mask(**batch_queries)
 
         # Assertions
         assert isinstance(outputs, torch.Tensor)
         assert outputs.dim() == 3
         batch_size, n_query_tokens, emb_dim = outputs.shape
         assert batch_size == len(queries)
-        assert emb_dim == model.dim
+        assert emb_dim == model_without_mask.dim
 
     @pytest.mark.slow
     def test_retrieval_integration(
         self,
-        model: ColQwen2_5,
+        model_without_mask: ColQwen2_5,
         processor: ColQwen2_5_Processor,
     ):
         # Load the test dataset
         ds = load_dataset("hf-internal-testing/document-visual-retrieval-test", split="test")
 
         # Preprocess the examples
-        batch_images = processor.process_images(images=ds["image"]).to(model.device)
-        batch_queries = processor.process_queries(queries=ds["query"]).to(model.device)
+        batch_images = processor.process_images(images=ds["image"]).to(model_without_mask.device)
+        batch_queries = processor.process_queries(queries=ds["query"]).to(model_without_mask.device)
 
         # Run inference
         with torch.inference_mode():
-            image_embeddings = model(**batch_images)
-            query_embeddings = model(**batch_queries)
+            image_embeddings = model_without_mask(**batch_images)
+            query_embeddings = model_without_mask(**batch_queries)
 
         # Compute retrieval scores
         scores = processor.score_multi_vector(

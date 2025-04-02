@@ -15,7 +15,7 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
     query_prefix: ClassVar[str] = "Query: "
     query_augmentation_token: ClassVar[str] = "<end_of_utterance>"
     image_token: ClassVar[str] = "<image>"
-
+    visual_prompt_prefix: ClassVar[str] = "<|im_start|>user\n<image>Describe the image.<end_of_utterance>"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -27,6 +27,7 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
     def process_images(
         self,
         images: List[Image.Image],
+        context_prompts: Optional[List[str]] = None,
     ) -> BatchEncoding:
         """
         Process images for ColIdefics3.
@@ -34,19 +35,11 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
         texts_doc: List[str] = []
         images = [[image.convert("RGB")] for image in images]
 
-        for _ in images:
-            messages_doc = [
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": "Describe the image."},
-                        {"type": "image"},
-                    ],
-                },
-            ]
-
-            text_doc = self.apply_chat_template(messages_doc, add_generation_prompt=False)
-            texts_doc.append(text_doc.strip())
+        if context_prompts:
+            assert len(images) == len(context_prompts), "Length of images and context prompts must match."
+            texts_doc = context_prompts
+        else:
+            texts_doc = [self.visual_prompt_prefix] * len(images)
 
         batch_doc = self(
             text=texts_doc,

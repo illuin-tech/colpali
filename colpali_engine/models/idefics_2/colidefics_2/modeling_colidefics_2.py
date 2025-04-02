@@ -1,13 +1,30 @@
+import warnings
+
 from torch import nn
 from transformers import Idefics2Model, Idefics2PreTrainedModel
 
 
 class ColIdefics2(Idefics2PreTrainedModel):
-    def __init__(self, config):
+    """
+    Initializes the ColIdefics2 model.
+
+    Args:
+        config : The model configuration.
+        mask_non_image_embeddings (Optional[bool]): Whether to ignore all tokens embeddings
+        except those of the image at inference.
+        Defaults to False --> Do not mask any embeddings during forward pass.
+    """
+
+    def __init__(self, config, mask_non_image_embeddings: bool = False):
+        warnings.warn(
+            "ColIdefics2 is deprecated and may be incompatible with future versions. Please use ColIdefics3 instead.",
+            DeprecationWarning,
+        )
         super(ColIdefics2, self).__init__(config=config)
         self.model: Idefics2Model = Idefics2Model(config)
         self.dim = 128
         self.linear = nn.Linear(self.model.config.text_config.hidden_size, self.dim)
+        self.mask_non_image_embeddings = mask_non_image_embeddings
         self.main_input_name = "doc_input_ids"
 
     def forward(self, *args, **kwargs):
@@ -27,4 +44,9 @@ class ColIdefics2(Idefics2PreTrainedModel):
         # normalize l2 norm
         proj = proj / proj.norm(dim=-1, keepdim=True)
         proj = proj * kwargs["attention_mask"].unsqueeze(-1)
+
+        if "pixel_values" in kwargs and self.mask_non_image_embeddings:
+            # Pools only the image embeddings
+            image_mask = (kwargs["input_ids"] == self.config.image_token_id).unsqueeze(-1)
+            proj = proj * image_mask
         return proj

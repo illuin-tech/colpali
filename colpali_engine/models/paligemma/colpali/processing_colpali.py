@@ -29,11 +29,16 @@ class ColPaliProcessor(BaseVisualRetrieverProcessor, PaliGemmaProcessor):
     def process_images(
         self,
         images: List[Image.Image],
+        context_prompts: Optional[List[str]] = None,
     ) -> BatchFeature:
         """
         Process images for ColPali.
         """
-        texts_doc = [self.visual_prompt_prefix] * len(images)
+        if context_prompts:
+            texts_doc = context_prompts
+        else:
+            texts_doc = [self.visual_prompt_prefix] * len(images)
+
         images = [image.convert("RGB") for image in images]
 
         batch_doc = self(
