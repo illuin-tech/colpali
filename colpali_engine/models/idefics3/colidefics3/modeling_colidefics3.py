@@ -37,9 +37,7 @@ class ColIdefics3(Idefics3PreTrainedModel):
         proj = self.linear(last_hidden_states)
         # normalize l2 norm
         proj = proj / proj.norm(dim=-1, keepdim=True)
-        print(proj.shape)
         proj = proj * kwargs["attention_mask"].unsqueeze(-1)
-        print(proj.shape)
 
         if "pixel_values" in kwargs and self.mask_non_image_embeddings:
             # Pools only the image embeddings
