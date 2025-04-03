@@ -5,9 +5,17 @@ from torch.nn import CrossEntropyLoss
 
 class BiEncoderLoss(torch.nn.Module):
     def __init__(self, temperature: float = 0.02):
+        """
+        Bi-encoder loss.
+
+        Args:
+            temperature: The temperature to use for the loss (`new_scores = scores / temperature`).
+        """
         super().__init__()
         self.ce_loss = CrossEntropyLoss()
         self.temperature = temperature
+        if not temperature > 0:
+            raise ValueError("Temperature must be strictly positive")
 
     def forward(self, query_embeddings, doc_embeddings):
         """
