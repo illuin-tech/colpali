@@ -1,20 +1,20 @@
 config:
   (): colpali_engine.trainer.colmodel_training.ColModelTrainingConfig
-  output_dir: !path ../../../models/biqwen2-5e-256-newpad-nobuffer-2
+  output_dir: !path ../../../models/biqwen2-3e-0304
   processor:
     (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
     class_to_instanciate: !ext colpali_engine.models.BiQwen2Processor
-    pretrained_model_name_or_path:  "./models/colqwen2_base" # "./models/paligemma-3b-mix-448"
+    pretrained_model_name_or_path:  "./models/base_models/colqwen2-base"
     # max_length: 50
 
   model:
     (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
     class_to_instanciate: !ext colpali_engine.models.BiQwen2
-    pretrained_model_name_or_path: "./models/colqwen2_base"
+    pretrained_model_name_or_path: "./models/base_models/colqwen2-base"
     torch_dtype:  !ext torch.bfloat16
     use_cache: false
     attn_implementation: "flash_attention_2"
-  #    device_map: "auto"
+#    device_map: "auto"
 #    quantization_config:
 #      (): transformers.BitsAndBytesConfig
 #      load_in_4bit: true
@@ -29,7 +29,7 @@ config:
   run_eval: true
   
   loss_func:
-    (): colpali_engine.loss.bi_encoder_losses.BiPairwiseCELoss
+    (): colpali_engine.loss.bi_encoder_losses.BiEncoderLoss
   tr_args:
     (): transformers.training_args.TrainingArguments
     output_dir: null
@@ -40,7 +40,7 @@ config:
     gradient_checkpointing_kwargs: { "use_reentrant": false }
     # 6 x 8 gpus = 48 batch size
     # gradient_accumulation_steps: 4
-    per_device_eval_batch_size: 64
+    per_device_eval_batch_size: 16
     eval_strategy: "steps"
     dataloader_num_workers: 8
     # bf16: true
