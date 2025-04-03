@@ -6,8 +6,8 @@ from transformers.models.qwen2_5_vl import Qwen2_5_VLConfig, Qwen2_5_VLForCondit
 
 class BiQwen2_5(Qwen2_5_VLForConditionalGeneration):  # noqa: N801
     """
-    ColQwen2.5 model implementation, following the architecture from the article "ColPali: Efficient Document Retrieval
-    with Vision Language Models" paper. Based on the Qwen2.5-VL backbone.
+    BiQwen2.5 is an implementation from the "ColPali: Efficient Document Retrieval with Vision Language Models" paper.
+    Representations are pooled to obtain a single vector representation. Based on the Qwen2.5-VL backbone.
     """
 
     main_input_name: ClassVar[str] = "doc_input_ids"  # transformers-related
