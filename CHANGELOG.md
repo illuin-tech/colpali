@@ -7,12 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [0.3.9] - 2025-04-03
 ### Added
 
 - Allow user to pass custom textual context for passage inference
 - Add ColQwen2.5 support and BiQwen2.5 support
 - Add support for token pooling with `HierarchicalTokenPooler`.
 - Allow user to specify the maximum number of image tokens in the resized images in `ColQwen2Processor` and `ColQwen2_5_Processor`.
+
 
 ### Changed
 
