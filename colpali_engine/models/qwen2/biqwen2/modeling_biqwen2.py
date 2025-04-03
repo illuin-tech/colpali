@@ -1,4 +1,4 @@
-from typing import ClassVar, List, Optional
+from typing import ClassVar, List, Literal, Optional
 
 import torch
 from transformers.models.qwen2_vl import Qwen2VLConfig, Qwen2VLForConditionalGeneration
@@ -6,7 +6,8 @@ from transformers.models.qwen2_vl import Qwen2VLConfig, Qwen2VLForConditionalGen
 
 class BiQwen2(Qwen2VLForConditionalGeneration):
     """
-    ColQwen2 model implementation from the "ColPali: Efficient Document Retrieval with Vision Language Models" paper.
+    BiQwen2 is an implementation from the "ColPali: Efficient Document Retrieval with Vision Language Models" paper.
+    Representations are pooled to obtain a single vector representation. Based on the Qwen2.5-VL backbone.
     """
 
     main_input_name: ClassVar[str] = "doc_input_ids"  # transformers-related
@@ -18,22 +19,21 @@ class BiQwen2(Qwen2VLForConditionalGeneration):
 
 
     def inner_forward(
-            self,
-            input_ids: torch.LongTensor = None,
-            attention_mask: Optional[torch.Tensor] = None,
-            position_ids: Optional[torch.LongTensor] = None,
-            past_key_values: Optional[List[torch.FloatTensor]] = None,
-            inputs_embeds: Optional[torch.FloatTensor] = None,
-            use_cache: Optional[bool] = None,
-            output_attentions: Optional[bool] = None,
-            output_hidden_states: Optional[bool] = None,
-            return_dict: Optional[bool] = None,
-            pixel_values: Optional[torch.Tensor] = None,
-            pixel_values_videos: Optional[torch.FloatTensor] = None,
-            image_grid_thw: Optional[torch.LongTensor] = None,
-            video_grid_thw: Optional[torch.LongTensor] = None,
+        self,
+        input_ids: torch.LongTensor = None,
+        attention_mask: Optional[torch.Tensor] = None,
+        position_ids: Optional[torch.LongTensor] = None,
+        past_key_values: Optional[List[torch.FloatTensor]] = None,
+        inputs_embeds: Optional[torch.FloatTensor] = None,
+        use_cache: Optional[bool] = None,
+        output_attentions: Optional[bool] = None,
+        output_hidden_states: Optional[bool] = None,
+        return_dict: Optional[bool] = None,
+        pixel_values: Optional[torch.Tensor] = None,
+        pixel_values_videos: Optional[torch.FloatTensor] = None,
+        image_grid_thw: Optional[torch.LongTensor] = None,
+        video_grid_thw: Optional[torch.LongTensor] = None,
     ) -> torch.Tensor:
-
         if inputs_embeds is None:
             inputs_embeds = self.model.embed_tokens(input_ids)
             if pixel_values is not None:
@@ -68,18 +68,32 @@ class BiQwen2(Qwen2VLForConditionalGeneration):
         hidden_states = outputs[0]
         return hidden_states
 
+    def forward(
+        self,
+        pooling_strategy: Literal["cls", "last", "mean"] = "last",
+        *args,
+        **kwargs,
+    ) -> torch.Tensor:
+        """
+        Forward pass for BiQwen2.5 model.
 
+        Args:
+            pooling_strategy: The strategy to use for pooling the hidden states.
+            *args: Variable length argument list.
+            **kwargs: Additional keyword arguments.
 
-    def forward(self, *args, **kwargs) -> torch.Tensor:
-        # Delete output_hidden_states from kwargs
+        Returns:
+            torch.Tensor: Dense embeddings (batch_size, hidden_size).
+        """
         kwargs.pop("output_hidden_states", None)
 
-
-        # The following code is a hack to make sure the scatter in DDP is done correctly when training on multiple GPUs
+        # Handle the custom "pixel_values" input obtained with `ColQwen2Processor` through unpadding
         if "pixel_values" in kwargs:
-            # compute pixel_values offsets
-            offsets = kwargs["image_grid_thw"][:, 1] * kwargs["image_grid_thw"][:, 2]
-            kwargs["pixel_values"] = torch.cat([pv[:o] for pv, o in zip(kwargs["pixel_values"], offsets)], dim=0)
+            offsets = kwargs["image_grid_thw"][:, 1] * kwargs["image_grid_thw"][:, 2]  # (batch_size,)
+            kwargs["pixel_values"] = torch.cat(
+                [pixel_sequence[:offset] for pixel_sequence, offset in zip(kwargs["pixel_values"], offsets)],
+                dim=0,
+            )
 
         position_ids, rope_deltas = self.get_rope_index(
             input_ids=kwargs["input_ids"],
@@ -87,16 +101,28 @@ class BiQwen2(Qwen2VLForConditionalGeneration):
             video_grid_thw=None,
             attention_mask=kwargs.get("attention_mask", None),
         )
-        last_hidden_states = self.inner_forward(*args,
-                                  **kwargs,
-                                  position_ids=position_ids,
-                                  use_cache=False,
-                                  output_hidden_states=True)  # (batch_size, sequence_length, hidden_size)
+        last_hidden_states = self.inner_forward(
+            *args,
+            **kwargs,
+            position_ids=position_ids,
+            use_cache=False,
+            output_hidden_states=True,
+        )  # (batch_size, sequence_length, hidden_size)
 
-        # proj = torch.sum(last_hidden_states * kwargs["attention_mask"].unsqueeze(-1), dim=1) / torch.sum(
-        #     kwargs["attention_mask"], dim=1, keepdim=True
-        # )
-        # take the last hidden state
-        proj = last_hidden_states[:, -1, :]
-        proj = proj / proj.norm(dim=-1, keepdim=True)
-        return proj
+        # Get CLS token embedding, last token, or mean pool over sequence
+        if pooling_strategy == "cls":
+            # Use CLS token (first token) embedding
+            pooled_output = last_hidden_states[:, 0]  # (batch_size, hidden_size)
+        elif pooling_strategy == "last":
+            # use last token since we are left padding
+            pooled_output = last_hidden_states[:, -1]  # (batch_size, hidden_size)
+        elif pooling_strategy == "mean":
+            # Mean pooling over sequence length
+            mask = kwargs["attention_mask"].unsqueeze(-1)  # (batch_size, sequence_length, 1)
+            pooled_output = (last_hidden_states * mask).sum(dim=1) / mask.sum(dim=1)  # (batch_size, hidden_size)
+        else:
+            raise ValueError(f"Invalid pooling strategy: {pooling_strategy}")
+
+        # L2 normalization
+        pooled_output = pooled_output / pooled_output.norm(dim=-1, keepdim=True)
+        return pooled_output
