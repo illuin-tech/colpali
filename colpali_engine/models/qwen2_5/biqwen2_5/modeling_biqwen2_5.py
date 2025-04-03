@@ -126,13 +126,9 @@ class BiQwen2_5(Qwen2_5_VLForConditionalGeneration):  # noqa: N801
         else:
             raise ValueError(f"Invalid pooling strategy: {pooling_strategy}")
 
-        # Project to lower dimension
-        # proj = self.custom_text_proj(pooled_output)  # (batch_size, dim)
-        proj = pooled_output
-
-        # # L2 normalization
-        proj = proj / proj.norm(dim=-1, keepdim=True)
-        return proj
+        # L2 normalization
+        pooled_output = pooled_output / pooled_output.norm(dim=-1, keepdim=True)
+        return pooled_output
 
     @property
     def patch_size(self) -> int:
