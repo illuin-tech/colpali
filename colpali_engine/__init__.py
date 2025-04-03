@@ -3,6 +3,8 @@ from .models import (
     BiPali,
     BiPaliProj,
     BiQwen2,
+    BiQwen2_5,
+    BiQwen2_5_Processor,
     BiQwen2Processor,
     ColIdefics2,
     ColIdefics2Processor,
