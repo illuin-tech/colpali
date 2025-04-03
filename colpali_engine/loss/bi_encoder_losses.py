@@ -4,9 +4,18 @@ from torch.nn import CrossEntropyLoss
 
 
 class BiEncoderLoss(torch.nn.Module):
-    def __init__(self):
+    def __init__(self, temperature: float = 0.02):
+        """
+        Bi-encoder loss.
+
+        Args:
+            temperature: The temperature to use for the loss (`new_scores = scores / temperature`).
+        """
         super().__init__()
         self.ce_loss = CrossEntropyLoss()
+        self.temperature = temperature
+        if not temperature > 0:
+            raise ValueError("Temperature must be strictly positive")
 
     def forward(self, query_embeddings, doc_embeddings):
         """
@@ -15,7 +24,7 @@ class BiEncoderLoss(torch.nn.Module):
         """
 
         scores = torch.einsum("bd,cd->bc", query_embeddings, doc_embeddings)
-        loss_rowwise = self.ce_loss(scores, torch.arange(scores.shape[0], device=scores.device))
+        loss_rowwise = self.ce_loss(scores/self.temperature, torch.arange(scores.shape[0], device=scores.device))
 
         return loss_rowwise
 

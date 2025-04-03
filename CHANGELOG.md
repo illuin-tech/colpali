@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 - Allow user to pass custom textual context for passage inference
-- Add ColQwen2.5 support
+- Add ColQwen2.5 support and BiQwen2.5 support
 - Add support for token pooling with `HierarchicalTokenPooler`.
 - Allow user to specify the maximum number of image tokens in the resized images in `ColQwen2Processor` and `ColQwen2_5_Processor`.
 
@@ -24,9 +24,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Make `processor` input compulsory in `ColModelTrainingConfig`
 - Make `BaseVisualRetrieverProcessor` inherit from `ProcessorMixin`
 - Remove unused `tokenizer` field from `ColModelTrainingConfig`
-- Bump transformers to `4.50` and torch to `2.6.0` to keep up with the latest versions. Note that this leads to errors on mps.
-- Remove `ColQwen2Processor`'s `num_image_tokens` kwarg. This is due to `transformers`'s `4.50` update which does not support passing kwargs to the `from_pretrained` method anymore. This does not affect the model's performance.
-- Remove `ColQwen2_5_Processor`'s `num_image_tokens` kwarg. This is due to `transformers`'s `4.50` update which does not support passing kwargs to the `from_pretrained` method anymore. This does not affect the model's performance.
+- Bump transformers to `4.50.0` and torch to `2.6.0` to keep up with the latest versions. Note that this leads to errors on mps until transformers 4.50.4 is released.
 
 ## [0.3.8] - 2025-01-29
 

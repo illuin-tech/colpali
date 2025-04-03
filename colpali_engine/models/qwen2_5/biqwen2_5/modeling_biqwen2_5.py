@@ -1,21 +1,24 @@
 from typing import ClassVar, List, Literal, Optional
 
 import torch
-from transformers.models.qwen2_vl import Qwen2VLConfig, Qwen2VLForConditionalGeneration
+from transformers.models.qwen2_5_vl import Qwen2_5_VLConfig, Qwen2_5_VLForConditionalGeneration
 
 
-class BiQwen2(Qwen2VLForConditionalGeneration):
+class BiQwen2_5(Qwen2_5_VLForConditionalGeneration):  # noqa: N801
     """
-    BiQwen2 is an implementation from the "ColPali: Efficient Document Retrieval with Vision Language Models" paper.
+    BiQwen2.5 is an implementation from the "ColPali: Efficient Document Retrieval with Vision Language Models" paper.
     Representations are pooled to obtain a single vector representation. Based on the Qwen2.5-VL backbone.
     """
 
     main_input_name: ClassVar[str] = "doc_input_ids"  # transformers-related
 
-    def __init__(self, config: Qwen2VLConfig):
+    def __init__(self, config: Qwen2_5_VLConfig):
         super().__init__(config=config)
+        # self.dim = 128
+        # self.custom_text_proj = nn.Linear(self.model.config.hidden_size, self.dim)
         self.padding_side = "left"
         self.post_init()
+
 
 
     def inner_forward(
@@ -37,14 +40,14 @@ class BiQwen2(Qwen2VLForConditionalGeneration):
         if inputs_embeds is None:
             inputs_embeds = self.model.embed_tokens(input_ids)
             if pixel_values is not None:
-                pixel_values = pixel_values.type(self.visual.get_dtype())
+                pixel_values = pixel_values.type(self.visual.dtype)
                 image_embeds = self.visual(pixel_values, grid_thw=image_grid_thw)
                 image_mask = (input_ids == self.config.image_token_id).unsqueeze(-1).expand_as(inputs_embeds)
                 image_embeds = image_embeds.to(inputs_embeds.device, inputs_embeds.dtype)
                 inputs_embeds = inputs_embeds.masked_scatter(image_mask, image_embeds)
 
             if pixel_values_videos is not None:
-                pixel_values_videos = pixel_values_videos.type(self.visual.get_dtype())
+                pixel_values_videos = pixel_values_videos.type(self.visual.dtype)
                 video_embeds = self.visual(pixel_values_videos, grid_thw=video_grid_thw)
                 video_mask = (input_ids == self.config.video_token_id).unsqueeze(-1).expand_as(inputs_embeds)
                 video_embeds = video_embeds.to(inputs_embeds.device, inputs_embeds.dtype)
@@ -126,3 +129,11 @@ class BiQwen2(Qwen2VLForConditionalGeneration):
         # L2 normalization
         pooled_output = pooled_output / pooled_output.norm(dim=-1, keepdim=True)
         return pooled_output
+
+    @property
+    def patch_size(self) -> int:
+        return self.visual.config.patch_size
+
+    @property
+    def spatial_merge_size(self) -> int:
+        return self.visual.config.spatial_merge_size
