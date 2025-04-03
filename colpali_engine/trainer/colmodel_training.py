@@ -46,7 +46,7 @@ class ColModelTrainingConfig:
         if self.tr_args is None:
             print("No training arguments provided. Using default.")
             self.tr_args = TrainingArguments(output_dir=self.output_dir)
-        elif self.tr_args.output_dir is None:
+        elif self.tr_args.output_dir is None or self.tr_args.output_dir == "trainer_output":
             self.tr_args.output_dir = self.output_dir
 
         if isinstance(self.tr_args.learning_rate, str):
