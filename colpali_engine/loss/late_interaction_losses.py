@@ -34,11 +34,12 @@ class ColbertLoss(torch.nn.Module):
         if self.normalize_scores:
             # find lengths of non-zero query embeddings
             query_lengths = (query_embeddings != 0).sum(dim=1)  # (batch_size,)
+
             # divide scores by the lengths of the query embeddings
             scores = scores / query_lengths.unsqueeze(1)  # (batch_size, batch_size)
-            # assert all scors are between 0 and 1
-            assert (scores >= 0).all().item()
-            assert (scores <= 1).all().item()
+
+            if not (scores >= 0).all().item() or not (scores <= 1).all().item():
+                raise ValueError("Scores must be between 0 and 1 after normalization")
 
         loss_rowwise = self.ce_loss(scores/self.temperature, torch.arange(scores.shape[0], device=scores.device))
 
