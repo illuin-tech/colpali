@@ -38,6 +38,26 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
         super().__init__(*args, **kwargs)
         self.tokenizer.padding_side = "left"
 
+    @classmethod
+    def from_pretrained(
+        cls,
+        *args,
+        device_map: Optional[str] = None,
+        **kwargs,
+    ):
+
+        instance = super().from_pretrained(
+            *args,
+            device_map=device_map,
+            **kwargs,
+        )
+
+        if "max_num_visual_tokens" in kwargs:
+            instance.image_processor.max_pixels = kwargs["max_num_visual_tokens"] * 28 * 28
+            instance.image_processor.size["longest_edge"] = instance.image_processor.max_pixels
+
+        return instance
+
     def process_images(self, images: List[Image.Image], context_prompts: Optional[List[str]] = None) -> BatchFeature:
         """
         Process images for ColQwen2.
