@@ -33,8 +33,15 @@ class ColPaliProcessor(BaseVisualRetrieverProcessor, PaliGemmaProcessor):
     ) -> BatchFeature:
         """
         Process images for ColPali.
+
+        Args:
+            images: List of PIL images.
+            context_prompts: List of optional context prompts, i.e. some text description of the context of the image.
         """
+
         if context_prompts:
+            if len(images) != len(context_prompts):
+                raise ValueError("Length of images and context prompts must match.")
             texts_doc = context_prompts
         else:
             texts_doc = [self.visual_prompt_prefix] * len(images)
