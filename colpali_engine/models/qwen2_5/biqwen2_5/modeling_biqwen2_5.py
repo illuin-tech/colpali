@@ -71,7 +71,23 @@ class BiQwen2_5(Qwen2_5_VLForConditionalGeneration):  # noqa: N801
         hidden_states = outputs[0]
         return hidden_states
 
-    def forward(self, *args, **kwargs) -> torch.Tensor:
+    def forward(
+        self,
+        pooling_strategy: Literal["cls", "last", "mean"] = "last",
+        *args,
+        **kwargs,
+    ) -> torch.Tensor:
+        """
+        Forward pass for BiQwen2.5 model.
+
+        Args:
+            pooling_strategy: The strategy to use for pooling the hidden states.
+            *args: Variable length argument list.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            torch.Tensor: Dense embeddings (batch_size, hidden_size).
+        """
         kwargs.pop("output_hidden_states", None)
 
         # Handle the custom "pixel_values" input obtained with `ColQwen2Processor` through unpadding
@@ -97,20 +113,18 @@ class BiQwen2_5(Qwen2_5_VLForConditionalGeneration):  # noqa: N801
         )  # (batch_size, sequence_length, hidden_size)
 
         # Get CLS token embedding, last token, or mean pool over sequence
-        if kwargs.get("pooling_strategy", "last") == "cls":
+        if pooling_strategy == "cls":
             # Use CLS token (first token) embedding
             pooled_output = last_hidden_states[:, 0]  # (batch_size, hidden_size)
-        elif kwargs.get("pooling_strategy", "last") == "last":
-            # # Get last token based on attention mask
-            # last_token_indices = kwargs["attention_mask"].sum(dim=1) - 1  # (batch_size,)
-            # batch_indices = torch.arange(last_hidden_states.size(0), device=last_hidden_states.device)
-            # pooled_output = last_hidden_states[batch_indices, last_token_indices]  # (batch_size, hidden_size)
+        elif pooling_strategy == "last":
             # use last token since we are left padding
-            pooled_output = last_hidden_states[:, -1]
-        else:
+            pooled_output = last_hidden_states[:, -1]  # (batch_size, hidden_size)
+        elif pooling_strategy == "mean":
             # Mean pooling over sequence length
             mask = kwargs["attention_mask"].unsqueeze(-1)  # (batch_size, sequence_length, 1)
             pooled_output = (last_hidden_states * mask).sum(dim=1) / mask.sum(dim=1)  # (batch_size, hidden_size)
+        else:
+            raise ValueError(f"Invalid pooling strategy: {pooling_strategy}")
 
         # Project to lower dimension
         # proj = self.custom_text_proj(pooled_output)  # (batch_size, dim)
