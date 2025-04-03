@@ -31,12 +31,18 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
     ) -> BatchEncoding:
         """
         Process images for ColIdefics3.
+
+        Args:
+            images: List of PIL images.
+            context_prompts: List of optional context prompts, i.e. some text description of the context of the image.
         """
+
         texts_doc: List[str] = []
         images = [[image.convert("RGB")] for image in images]
 
         if context_prompts:
-            assert len(images) == len(context_prompts), "Length of images and context prompts must match."
+            if len(images) != len(context_prompts):
+                raise ValueError("Length of images and context prompts must match.")
             texts_doc = context_prompts
         else:
             texts_doc = [self.visual_prompt_prefix] * len(images)

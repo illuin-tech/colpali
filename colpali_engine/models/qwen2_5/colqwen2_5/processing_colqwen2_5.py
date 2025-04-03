@@ -41,9 +41,15 @@ class ColQwen2_5_Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):  # n
     def process_images(self, images: List[Image.Image], context_prompts: Optional[List[str]] = None) -> BatchFeature:
         """
         Process images for ColQwen2.5.
+
+        Args:
+            images: List of PIL images.
+            context_prompts: List of optional context prompts, i.e. some text description of the context of the image.
         """
 
         if context_prompts:
+            if len(images) != len(context_prompts):
+                raise ValueError("Length of images and context prompts must match.")
             texts_doc = context_prompts
         else:
             texts_doc = [self.visual_prompt_prefix] * len(images)

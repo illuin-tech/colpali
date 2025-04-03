@@ -27,32 +27,31 @@ class ColIdefics2Processor(BaseVisualRetrieverProcessor, Idefics2Processor):
     ) -> BatchEncoding:
         """
         Process images for ColIdefics2.
+
+        Args:
+            images: List of PIL images.
+            context_prompts: List of optional context prompts, i.e. some text description of the context of the image.
         """
+
         texts_doc: List[str] = []
         images = [image.convert("RGB") for image in images]
 
-        for i, _ in range(len(images)):
-            if context_prompts:
-                messages_doc = [
-                    {
-                        "role": "user",
-                        "content": [
-                            {"type": "text", "text": context_prompts[i]},
-                            {"type": "image"},
-                        ],
-                    },
-                ]
-            else:
-                messages_doc = [
-                    {
-                        "role": "user",
-                        "content": [
-                            {"type": "text", "text": "Describe the image."},
-                            {"type": "image"},
-                        ],
-                    },
-                ]
+        if not context_prompts:
+            context_prompts = ["Describe the image."] * len(images)
 
+        if len(images) != len(context_prompts):
+            raise ValueError("Length of images and context prompts must match.")
+
+        for context_prompt in context_prompts:
+            messages_doc = [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": context_prompt},
+                        {"type": "image"},
+                    ],
+                },
+            ]
             text_doc = self.apply_chat_template(messages_doc, add_generation_prompt=False)
             texts_doc.append(text_doc.strip())
 
