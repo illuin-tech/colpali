@@ -1,7 +1,7 @@
 from pathlib import Path
 
-import configue
 import click
+import configue
 
 from colpali_engine.trainer.colmodel_training import ColModelTraining, ColModelTrainingConfig
 from colpali_engine.utils.gpu_stats import print_gpu_utilization

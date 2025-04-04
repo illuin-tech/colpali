@@ -5,6 +5,7 @@ import torch
 from torch import nn
 from transformers.models.qwen2_vl import Qwen2VLConfig, Qwen2VLForConditionalGeneration
 
+
 class ColQwen2(Qwen2VLForConditionalGeneration):
     """
     ColQwen2 model implementation from the "ColPali: Efficient Document Retrieval with Vision Language Models" paper.

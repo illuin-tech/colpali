@@ -33,6 +33,7 @@ def load_mixed_dataset() -> DatasetDict:
 
     return new_queries, corpus, "beir"
 
+
 def load_vdsid_train_set(ds_name: str) -> DatasetDict:
     base_path = "./data_dir/" if USE_LOCAL_DATASET else "vidore/"
     ds_path = base_path + ds_name

@@ -24,7 +24,7 @@ class ColbertLoss(torch.nn.Module):
         else:
             self.ce_loss = CrossEntropyLoss(reduction="mean")
 
-    def forward(self, query_embeddings, doc_embeddings, labels = None):
+    def forward(self, query_embeddings, doc_embeddings, labels=None):
         """
         query_embeddings: (batch_size, num_query_tokens, dim)
         doc_embeddings: (batch_size, num_doc_tokens, dim)
