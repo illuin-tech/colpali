@@ -14,10 +14,11 @@ class BEIRCollator(VisualRetrieverCollator):
         self,
         processor: BaseVisualRetrieverProcessor,
         max_length: int = 2048,
+        deduplicate_images: bool = False,
         use_translations: bool = False,
         corpus: Optional["Dataset"] = None,  # noqa: F821
     ):
-        super().__init__(processor=processor, max_length=max_length)
+        super().__init__(processor=processor, max_length=max_length, deduplicate_images=deduplicate_images)
         if corpus is None:
             raise ValueError("Corpus is required for BEIRCollator")
         self.use_translations = use_translations

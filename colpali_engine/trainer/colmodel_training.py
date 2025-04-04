@@ -92,6 +92,16 @@ class ColModelTraining:
                     max_length=self.config.max_length,
                     corpus=corpus,
                 )
+            elif corpus_format == "beir-dedup":
+                print("Dataset has BEIR-Dedup. Using BEIRCollator.")
+                corpus = self.dataset[1]
+                self.dataset = self.dataset[0]
+                self.collator = BEIRCollator(
+                    processor=self.config.processor,
+                    max_length=self.config.max_length,
+                    deduplicate_images=True,
+                    corpus=corpus,
+                )
             else:
                 print("Dataset is wiki, docmatix or has hard negatives. Using CorpusQueryCollator.")
                 neg_dataset = self.dataset[1]
