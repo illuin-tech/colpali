@@ -4,7 +4,6 @@ from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss
 
 
 class ColbertLoss(torch.nn.Module):
-<<<<<<< HEAD
     def __init__(self, temperature: float = 0.02, normalize_scores: bool = True):
         """
         InfoNCE loss generalized for late interaction models.
@@ -12,17 +11,41 @@ class ColbertLoss(torch.nn.Module):
             temperature: The temperature to use for the loss (`new_scores = scores / temperature`).
             normalize_scores: Whether to normalize the scores by the lengths of the query embeddings.
         """
-=======
-    def __init__(self, temperature: float = 0.02, normalize_scores: bool = True, multi_label=False):
->>>>>>> f8e2fff (feat: create specific losses to handle in batch double positives)
         super().__init__()
-        self.ce_loss = CrossEntropyLoss()
+        self.ce_loss = CrossEntropyLoss(reduction="mean")
         self.temperature = temperature
         self.normalize_scores = normalize_scores
-        if multi_label:
-            self.ce_loss = BCEWithLogitsLoss(reduction="mean")
-        else:
-            self.ce_loss = CrossEntropyLoss(reduction="mean")
+
+    def forward(self, query_embeddings, doc_embeddings, labels=None):
+        """
+        query_embeddings: (batch_size, num_query_tokens, dim)
+        doc_embeddings: (batch_size, num_doc_tokens, dim)
+        """
+
+        scores = torch.einsum("bnd,csd->bcns", query_embeddings, doc_embeddings).max(dim=3)[0].sum(dim=2)
+
+        if self.normalize_scores:
+            # find lengths of non-zero query embeddings
+            # divide scores by the lengths of the query embeddings
+            scores = scores / ((query_embeddings[:, :, 0] != 0).sum(dim=1).unsqueeze(-1))
+
+            if not (scores >= 0).all().item() or not (scores <= 1).all().item():
+                raise ValueError("Scores must be between 0 and 1 after normalization")
+
+        loss_rowwise = self.ce_loss(scores / self.temperature, torch.arange(scores.shape[0], device=scores.device))
+
+        # TODO: comparing between queries might not make sense since it's a sum over the length of the query
+        # loss_columnwise = self.ce_loss(scores.T, torch.arange(scores.shape[1], device=scores.device))
+        # loss = (loss_rowwise + loss_columnwise) / 2
+        return loss_rowwise
+
+
+class MultiLabelLoss(torch.nn.Module):
+    def __init__(self, temperature: float = 0.02, normalize_scores: bool = True):
+        super().__init__()
+        self.temperature = temperature
+        self.normalize_scores = normalize_scores
+        self.loss = BCEWithLogitsLoss(reduction="mean")
 
     def forward(self, query_embeddings, doc_embeddings, labels=None):
         """
@@ -41,9 +64,9 @@ class ColbertLoss(torch.nn.Module):
                 raise ValueError("Scores must be between 0 and 1 after normalization")
 
         if labels is None:
-            loss_rowwise = self.ce_loss(scores / self.temperature, torch.arange(scores.shape[0], device=scores.device))
+            raise ValueError("Labels are required for MultiLabelLoss")
         else:
-            loss_rowwise = self.ce_loss(scores / self.temperature, labels)
+            loss_rowwise = self.loss(scores / self.temperature, labels)
 
         return loss_rowwise
 

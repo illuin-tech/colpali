@@ -33,6 +33,7 @@ def load_clean_colpali_dataset() -> DatasetDict:
 
     return new_queries, corpus, "beir"
 
+
 def load_clean_colpali_dataset_dedup() -> DatasetDict:
     ds_name = "clean-colpali-dataset"
     base_path = "./data_dir/" if USE_LOCAL_DATASET else "antonioloison/"
@@ -44,6 +45,7 @@ def load_clean_colpali_dataset_dedup() -> DatasetDict:
 
     return new_queries, corpus, "beir-dedup"
 
+
 def load_mixed_dataset() -> DatasetDict:
     ds_name = "colpali-mixed-dataset"
     base_path = "./data_dir/" if USE_LOCAL_DATASET else "antonioloison/"
@@ -54,6 +56,7 @@ def load_mixed_dataset() -> DatasetDict:
     new_queries = DatasetDict({"train": queries["train"], "test": queries["test"]})
 
     return new_queries, corpus, "beir"
+
 
 def load_mixed_fr_en_dataset() -> DatasetDict:
     ds_name = "colpali-mixed-fr-en-dataset"
