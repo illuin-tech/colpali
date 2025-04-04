@@ -17,7 +17,10 @@ class ContrastiveTrainer(Trainer):
             loss = self.loss_func(query_outputs, doc_outputs, neg_doc_outputs)
             return (loss, (query_outputs, doc_outputs, neg_doc_outputs)) if return_outputs else loss
 
-        loss = self.loss_func(query_outputs, doc_outputs)
+        if "labels" in inputs:
+            loss = self.loss_func(query_outputs, doc_outputs, inputs["labels"])
+        else:
+            loss = self.loss_func(query_outputs, doc_outputs)
         return (loss, (query_outputs, doc_outputs)) if return_outputs else loss
 
     def prediction_step(self, model, inputs, prediction_loss_only, ignore_keys=True):
@@ -34,5 +37,8 @@ class ContrastiveTrainer(Trainer):
                 loss = self.loss_func(query_outputs, doc_outputs, neg_doc_outputs)
                 return loss, None, None
 
-            loss = self.loss_func(query_outputs, doc_outputs)
+            if "labels" in inputs:
+                loss = self.loss_func(query_outputs, doc_outputs, inputs["labels"])
+            else:
+                loss = self.loss_func(query_outputs, doc_outputs)
             return loss, None, None

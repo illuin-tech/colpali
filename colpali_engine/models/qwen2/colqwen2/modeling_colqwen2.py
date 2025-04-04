@@ -1,9 +1,9 @@
+import warnings
 from typing import ClassVar, List, Optional
 
 import torch
 from torch import nn
 from transformers.models.qwen2_vl import Qwen2VLConfig, Qwen2VLForConditionalGeneration
-
 
 class ColQwen2(Qwen2VLForConditionalGeneration):
     """
@@ -25,6 +25,29 @@ class ColQwen2(Qwen2VLForConditionalGeneration):
         self.padding_side = "left"
         self.mask_non_image_embeddings = mask_non_image_embeddings
         self.post_init()
+
+    @classmethod
+    def from_pretrained(
+        cls,
+        *args,
+        freeze_visual: bool = False,
+        device_map: Optional[str] = None,
+        **kwargs,
+    ):
+        if device_map in ["mps", torch.device("mps"), {0: "mps"}]:
+            warnings.warn(
+                "There is a known issue with Qwen2-VL models with `transformers>=4.49.0` on MPS devices: "
+                "https://github.com/huggingface/transformers/issues/36413.\n"
+                "As a temporary workaround, force downgrade to `transformers==4.48.3`."
+            )
+        model = super().from_pretrained(
+            *args,
+            device_map=device_map,
+            **kwargs,
+        )
+        if freeze_visual:
+            model.visual.requires_grad_(False)
+        return model
 
     def inner_forward(
         self,

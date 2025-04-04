@@ -1,12 +1,14 @@
 from pathlib import Path
 
 import configue
-import typer
+import click
 
 from colpali_engine.trainer.colmodel_training import ColModelTraining, ColModelTrainingConfig
 from colpali_engine.utils.gpu_stats import print_gpu_utilization
 
 
+@click.command()
+@click.argument("config_file", type=click.Path(exists=True))
 def main(config_file: Path) -> None:
     print_gpu_utilization()
     print("Loading config")
@@ -25,4 +27,4 @@ def main(config_file: Path) -> None:
 
 
 if __name__ == "__main__":
-    typer.run(main)
+    main()

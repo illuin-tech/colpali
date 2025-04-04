@@ -1,4 +1,4 @@
-from typing import ClassVar, List, Optional, Tuple, Union
+from typing import ClassVar, Dict, List, Optional, Tuple, Union
 
 import torch
 from PIL import Image
@@ -23,6 +23,16 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
     @property
     def image_token_id(self) -> int:
         return self.tokenizer.convert_tokens_to_ids(self.image_token)
+
+    @staticmethod
+    def reduce_tensor_type(tensor_dict: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
+        for key, value in tensor_dict.items():
+            if isinstance(value, torch.Tensor):
+                if value.dtype == torch.int64:
+                    tensor_dict[key] = value.to(torch.int32)
+                elif value.dtype == torch.float64:
+                    tensor_dict[key] = value.to(torch.float32)
+        return tensor_dict
 
     def process_images(
         self,
@@ -53,6 +63,7 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
             return_tensors="pt",
             padding="longest",
         )
+        batch_doc = self.reduce_tensor_type(batch_doc)
         return batch_doc
 
     def process_queries(
@@ -77,7 +88,7 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
             return_tensors="pt",
             padding="longest",
         )
-
+        batch_query = self.reduce_tensor_type(batch_query)
         return batch_query
 
     def score(

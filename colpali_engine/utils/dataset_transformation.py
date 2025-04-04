@@ -2,6 +2,7 @@ import os
 from typing import List, Tuple, cast
 
 from datasets import Dataset, DatasetDict, concatenate_datasets, load_dataset
+from datasets.utils.logging import disable_progress_bar, enable_progress_bar
 
 USE_LOCAL_DATASET = os.environ.get("USE_LOCAL_DATASET", "1") == "1"
 
@@ -19,6 +20,70 @@ def load_train_set() -> DatasetDict:
     base_path = "./data_dir/" if USE_LOCAL_DATASET else "vidore/"
     ds_dict = cast(DatasetDict, load_dataset(base_path + ds_path))
     return ds_dict
+
+
+def load_mixed_dataset() -> DatasetDict:
+    ds_name = "clean-colpali-dataset"
+    base_path = "./data_dir/" if USE_LOCAL_DATASET else "antonioloison/"
+    ds_path = base_path + ds_name
+    corpus = cast(DatasetDict, load_dataset(ds_path, "corpus"))
+    queries = cast(DatasetDict, load_dataset(ds_path, "queries"))
+
+    new_queries = DatasetDict({"train": queries["train"], "test": queries["test"]})
+
+    return new_queries, corpus, "beir"
+
+def load_vdsid_train_set(ds_name: str) -> DatasetDict:
+    base_path = "./data_dir/" if USE_LOCAL_DATASET else "vidore/"
+    ds_path = base_path + ds_name
+    corpus = cast(DatasetDict, load_dataset(ds_path, "corpus"))
+    queries = cast(DatasetDict, load_dataset(ds_path, "queries"))
+    qrels = cast(DatasetDict, load_dataset(ds_path, "qrels"))
+
+    corpus_train_length = len(corpus["train"])
+
+    def add_corpus_id(example):
+        example["corpus_id"] = example["corpus_id"] + corpus_train_length
+        return example
+
+    corpus["test"] = corpus["test"].map(add_corpus_id)
+    new_corpus = concatenate_datasets([corpus["train"], corpus["test"]])
+
+    train_qrels_df = qrels["train"].to_pandas()
+    test_qrels_df = qrels["test"].to_pandas()
+
+    def add_corpus_indexes_train(example):
+        disable_progress_bar()
+        sub_qrels = train_qrels_df[train_qrels_df["query_id"] == example["query_id"]]
+        enable_progress_bar()
+        positive_docs = [(x.corpus_id, x.score) for x in sub_qrels.itertuples()]
+        example["positive_docs"] = positive_docs
+        return example
+
+    def add_corpus_indexes_test(example):
+        disable_progress_bar()
+        sub_qrels = test_qrels_df[test_qrels_df["query_id"] == example["query_id"]]
+        enable_progress_bar()
+        positive_docs = [(x.corpus_id + corpus_train_length, x.score) for x in sub_qrels.itertuples()]
+        example["positive_docs"] = positive_docs
+        return example
+
+    queries["train"] = queries["train"].map(add_corpus_indexes_train)
+    queries["test"] = queries["test"].map(add_corpus_indexes_test)
+
+    new_queries = DatasetDict({"train": queries["train"], "test": queries["test"]})
+
+    return new_queries, new_corpus, "beir"
+
+
+def load_vdsid_train_set_big() -> DatasetDict:
+    ds_name = "vdsid_beir_full_positive"
+    return load_vdsid_train_set(ds_name)
+
+
+def load_vdsid_train_set_small() -> DatasetDict:
+    ds_name = "vdsid_beir_full_positive_small"
+    return load_vdsid_train_set(ds_name)
 
 
 def load_train_set_detailed() -> DatasetDict:

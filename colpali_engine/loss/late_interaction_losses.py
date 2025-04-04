@@ -1,9 +1,10 @@
 import torch
 import torch.nn.functional as F  # noqa: N812
-from torch.nn import CrossEntropyLoss
+from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss
 
 
 class ColbertLoss(torch.nn.Module):
+<<<<<<< HEAD
     def __init__(self, temperature: float = 0.02, normalize_scores: bool = True):
         """
         InfoNCE loss generalized for late interaction models.
@@ -11,12 +12,19 @@ class ColbertLoss(torch.nn.Module):
             temperature: The temperature to use for the loss (`new_scores = scores / temperature`).
             normalize_scores: Whether to normalize the scores by the lengths of the query embeddings.
         """
+=======
+    def __init__(self, temperature: float = 0.02, normalize_scores: bool = True, multi_label=False):
+>>>>>>> f8e2fff (feat: create specific losses to handle in batch double positives)
         super().__init__()
         self.ce_loss = CrossEntropyLoss()
         self.temperature = temperature
         self.normalize_scores = normalize_scores
+        if multi_label:
+            self.ce_loss = BCEWithLogitsLoss(reduction="mean")
+        else:
+            self.ce_loss = CrossEntropyLoss(reduction="mean")
 
-    def forward(self, query_embeddings, doc_embeddings):
+    def forward(self, query_embeddings, doc_embeddings, labels = None):
         """
         query_embeddings: (batch_size, num_query_tokens, dim)
         doc_embeddings: (batch_size, num_doc_tokens, dim)
@@ -32,7 +40,10 @@ class ColbertLoss(torch.nn.Module):
             if not (scores >= 0).all().item() or not (scores <= 1).all().item():
                 raise ValueError("Scores must be between 0 and 1 after normalization")
 
-        loss_rowwise = self.ce_loss(scores / self.temperature, torch.arange(scores.shape[0], device=scores.device))
+        if labels is None:
+            loss_rowwise = self.ce_loss(scores / self.temperature, torch.arange(scores.shape[0], device=scores.device))
+        else:
+            loss_rowwise = self.ce_loss(scores / self.temperature, labels)
 
         return loss_rowwise
 

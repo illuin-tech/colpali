@@ -8,7 +8,7 @@ from transformers import (
     TrainingArguments,
 )
 
-from colpali_engine.collators import CorpusQueryCollator, VisualRetrieverCollator
+from colpali_engine.collators import BEIRCollator, CorpusQueryCollator, VisualRetrieverCollator
 from colpali_engine.loss.late_interaction_losses import (
     ColbertLoss,
 )
@@ -82,17 +82,27 @@ class ColModelTraining:
         self.dataset = self.config.dataset_loading_func()
 
         if isinstance(self.dataset, Tuple):
-            print("Dataset has BEIR/hard negatives format. Using CorpusQueryCollator.")
             corpus_format = self.dataset[2]
-            neg_dataset = self.dataset[1]
-            self.dataset = self.dataset[0]
-            self.collator = CorpusQueryCollator(
-                processor=self.config.processor,
-                max_length=self.config.max_length,
-                image_dataset=neg_dataset,
-                mined_negatives=True,
-                corpus_format=corpus_format,
-            )
+            if corpus_format == "beir":
+                print("Dataset has BEIR. Using BEIRCollator.")
+                corpus = self.dataset[1]
+                self.dataset = self.dataset[0]
+                self.collator = BEIRCollator(
+                    processor=self.config.processor,
+                    max_length=self.config.max_length,
+                    corpus=corpus,
+                )
+            else:
+                print("Dataset is wiki, docmatix or has hard negatives. Using CorpusQueryCollator.")
+                neg_dataset = self.dataset[1]
+                self.dataset = self.dataset[0]
+                self.collator = CorpusQueryCollator(
+                    processor=self.config.processor,
+                    max_length=self.config.max_length,
+                    image_dataset=neg_dataset,
+                    mined_negatives=True,
+                    corpus_format=corpus_format,
+                )
         else:
             print("Dataset has QA format. Using VisualRetrieverCollator.")
             self.collator = VisualRetrieverCollator(
