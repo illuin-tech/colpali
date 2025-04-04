@@ -166,7 +166,7 @@ class ColModelTraining:
                 )
                 print(f"Metrics for {test_name}: {all_metrics[test_name]}")
 
-    def save(self, config_file):
+    def save(self, config_file: str):
         # save model
         self.model.save_pretrained(self.config.output_dir)
         self.config.processor.save_pretrained(self.config.output_dir)
