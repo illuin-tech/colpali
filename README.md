@@ -282,6 +282,24 @@ sbatch --nodes=1 --cpus-per-task=16 --mem-per-cpu=32GB --time=20:00:00 --gres=gp
 sbatch --nodes=1  --time=5:00:00 -A cad15443 --gres=gpu:8  --constraint=MI250 --job-name=colpali --wrap="python scripts/train/train_colbert.py scripts/configs/pali/train_colpali_docmatix_hardneg_model.yaml"
 ```
 
+## Contributing
+
+We welcome contributions to ColPali! 🤗
+
+To contribute to ColPali, first install the development dependencies for proper testing/linting:
+
+```bash
+pip install "colpali-engine[dev]"
+```
+
+To run all the tests, you will have to install all optional dependencies (or you'll get an error in test discovery):
+
+```bash
+pip install "colpali-engine[all]"
+```
+
+When your PR is ready, ping one of the repository maintainers. We will do our best to review it as soon as possible!
+
 ## Community Projects
 
 Several community projects and ressources have been developed around ColPali to facilitate its usage. Feel free to reach out if you want to add your project to this list!
@@ -301,7 +319,6 @@ Several community projects and ressources have been developed around ColPali to 
 | BentoML       | Deploy ColPali easily with BentoML using [this example repository](https://github.com/bentoml/BentoColPali). BentoML features adaptive batching and zero-copy I/O to minimize overhead.                                                              |
 | NoOCR       | NoOCR is end-to-end, [open source](https://github.com/kyryl-opens-ml/no-ocr) solution for complex PDFs, powered by ColPali embeddings. |
 | Astra Multi-vector     | [`Astra-multivector`](https://github.com/brian-ogrady/astradb-multivector) provides enterprise-grade integration with AstraDB for late-interaction models like ColPali, ColQwen2, and ColBERT. It implements efficient token pooling and embedding caching strategies to dramatically reduce latency and index size while maintaining retrieval quality. The library leverages Cassandra's distributed architecture for high-throughput vector search at scale. |
-
 
 ### Notebooks 📙
 
