@@ -95,6 +95,20 @@ class TestHierarchicalTokenPooler:
             assert outputs.pooled_embeddings[0].shape[0] == expected_num_clusters
             assert outputs.pooled_embeddings[0].shape[0] <= len(outputs.cluster_id_to_indices[0][0][0])
 
+    def test_hierarchical_embedding_pooler_with_override_pool_factor(self, sample_embedding: torch.Tensor):
+        """Test that pool_factor parameter in pool_embeddings method overrides the constructor value."""
+        # Initialize with pool_factor=3 but override with pool_factor=2 in pool_embeddings
+        pooler = HierarchicalTokenPooler(pool_factor=3)
+        outputs_with_override = pooler.pool_embeddings([sample_embedding], return_dict=True, pool_factor=2)
+
+        # Create a reference pooler with pool_factor=2
+        reference_pooler = HierarchicalTokenPooler(pool_factor=2)
+        expected_outputs = reference_pooler.pool_embeddings([sample_embedding], return_dict=True)
+
+        # The results should match the pooler with pool_factor=2
+        assert outputs_with_override.pooled_embeddings[0].shape[0] == expected_outputs.pooled_embeddings[0].shape[0]
+        assert torch.allclose(outputs_with_override.pooled_embeddings[0], expected_outputs.pooled_embeddings[0])
+
     def test_hierarchical_embedding_pooler_should_raise_error_with_single_token(self):
         single_token_embeddings = torch.rand(1, 768)
         pooler = HierarchicalTokenPooler(pool_factor=2)
