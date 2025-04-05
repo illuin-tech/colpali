@@ -19,7 +19,7 @@ class TokenPoolingOutput:
     """
 
     pooled_embeddings: Union[List[torch.Tensor], torch.Tensor]
-    cluster_id_to_indices: Optional[List[Dict[int, Tuple[torch.Tensor]]]] = None
+    cluster_id_to_indices: Optional[Dict[int, Tuple[torch.Tensor]]] = None
 
 
 class BaseTokenPooler(ABC):
