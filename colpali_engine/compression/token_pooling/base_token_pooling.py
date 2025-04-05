@@ -108,6 +108,7 @@ class BaseTokenPooler(ABC):
         padding: bool = False,
         padding_side: str = "left",
         num_workers: Optional[int] = None,
+        **pool_kwargs,
     ) -> Union[Union[torch.Tensor, List[torch.Tensor]], TokenPoolingOutput]:
         """
         Return the pooled multi-vector embeddings and the mapping from cluster id to token indices.
@@ -141,6 +142,7 @@ class BaseTokenPooler(ABC):
         pooled_embeddings, cluster_id_to_indices = self._pool_embeddings_impl(
             prepared_embeddings,
             num_workers=num_workers,
+            **pool_kwargs,
         )
 
         # If the input was a 3D tensor, we need to repad the pooled embeddings for the output to be a 3D
