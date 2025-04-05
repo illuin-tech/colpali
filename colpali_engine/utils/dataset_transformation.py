@@ -97,6 +97,7 @@ def load_docmatix_ir_negs() -> Tuple[DatasetDict, Dataset, str]:
 
     return ds_dict, anchor_ds, "docmatix"
 
+
 def load_wikiss() -> Tuple[DatasetDict, Dataset, str]:
     """Returns the query dataset, then the anchor dataset with the documents, then the dataset type"""
     base_path = "./data_dir/" if USE_LOCAL_DATASET else "Tevatron/"
@@ -206,6 +207,21 @@ class TestSetFactory:
 
     def __call__(self, *args, **kwargs):
         dataset = load_dataset(self.dataset_path, split="test")
+        return dataset
+
+
+class TestSetFactoryBEIR:
+    def __init__(self, dataset_path):
+        self.dataset_path = dataset_path
+
+    def __call__(self, *args, **kwargs):
+        split = "test"
+        dataset = {
+            "corpus": cast(Dataset, load_dataset(self.dataset_path, name="corpus", split=split)),
+            "queries": cast(Dataset, load_dataset(self.dataset_path, name="queries", split=split)),
+            "qrels": cast(Dataset, load_dataset(self.dataset_path, name="qrels", split=split)),
+        }
+
         return dataset
 
 

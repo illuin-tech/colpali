@@ -7,14 +7,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+### Changed
+
+- Warn about evaluation being different from Vidore, and do not store results to prevent confusion.
+
 ## [0.3.9] - 2025-04-03
+
 ### Added
 
 - Allow user to pass custom textual context for passage inference
 - Add ColQwen2.5 support and BiQwen2.5 support
 - Add support for token pooling with `HierarchicalTokenPooler`.
 - Allow user to specify the maximum number of image tokens in the resized images in `ColQwen2Processor` and `ColQwen2_5_Processor`.
-
 
 ### Changed
 
