@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+### Added
+
+- Add `LambdaTokenPooler` to allow for custom token pooling functions.
+
+### Changed
+
+- Refactor token pooling as a python subpackage.
+
 ## [0.3.9] - 2025-04-03
 ### Added
 

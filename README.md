@@ -252,6 +252,54 @@ image_embeddings = token_pooler.pool_embeddings(
 )
 ```
 
+
+Alternatively, you can use the `LambdaTokenPooler` to define your own custom pooling function:
+
+```python
+import torch
+from typing import Dict, Tuple
+
+from colpali_engine.compression.token_pooling import LambdaTokenPooler
+
+# Define a custom pooling function that reduces sequence length by half
+def custom_pooling(embedding: torch.Tensor) -> Tuple[torch.Tensor, Dict[int, Tuple[torch.Tensor]]]:
+    token_length = embedding.size(0)
+    # Resize to half the original length by averaging pairs of tokens
+    half_length = token_length // 2 + (token_length % 2)
+    pooled_embeddings = torch.zeros((half_length, embedding.size(1)), dtype=embedding.dtype, device=embedding.device)
+    
+    cluster_id_to_indices = {}
+    for i in range(half_length):
+        start_idx = i * 2
+        end_idx = min(start_idx + 2, token_length)
+        cluster_indices = torch.arange(start_idx, end_idx)
+        
+        # Average the embeddings in the cluster
+        pooled_embeddings[i] = embedding[cluster_indices].mean(dim=0)
+        pooled_embeddings[i] = torch.nn.functional.normalize(pooled_embeddings[i], p=2, dim=-1)
+        
+        # Store mapping from cluster ID to token indices
+        cluster_id_to_indices[i] = (cluster_indices,)
+        
+    return pooled_embeddings, cluster_id_to_indices
+
+# Create a LambdaTokenPooler with the custom function
+pooler = LambdaTokenPooler(pool_func=custom_pooling)
+
+# Dummy multivector embeddings
+list_embeddings = [
+    torch.rand(10, 768),
+    torch.rand(20, 768),
+]
+
+# Pool the embeddings
+outputs = pooler.pool_embeddings(list_embeddings)
+```
+
+The custom pooling function should take a 2D tensor (token_length, embedding_dim) as input and return a tuple containing:
+1. A tensor of shape (num_clusters, embedding_dim) representing the pooled embeddings
+2. A dictionary mapping cluster IDs to token indices showing which original tokens were pooled into each cluster
+
 ### Training
 
 To keep a lightweight repository, only the essential packages were installed. In particular, you must specify the dependencies to use the training script for ColPali. You can do this using the following command:
