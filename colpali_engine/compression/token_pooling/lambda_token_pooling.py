@@ -20,7 +20,11 @@ class LambdaTokenPooler(BaseTokenPooler):
         token_length = embedding.size(0)
         # Resize to half the original length by averaging pairs of tokens
         half_length = token_length // 2 + (token_length % 2)
-        pooled_embeddings = torch.zeros((half_length, embedding.size(1)), dtype=embedding.dtype, device=embedding.device)
+        pooled_embeddings = torch.zeros(
+            (half_length, embedding.size(1)),
+            dtype=embedding.dtype,
+            device=embedding.device,
+        )
 
         cluster_id_to_indices = {}
         for i in range(half_length):
@@ -36,6 +40,7 @@ class LambdaTokenPooler(BaseTokenPooler):
             cluster_id_to_indices[i] = (cluster_indices,)
 
         return pooled_embeddings, cluster_id_to_indices
+
 
     # Create a LambdaTokenPooler with the custom function
     pooler = LambdaTokenPooler(pool_func=custom_pooling)
