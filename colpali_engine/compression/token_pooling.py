@@ -84,6 +84,7 @@ class HierarchicalTokenPooler(BaseTokenPooler):
         padding: bool = False,
         padding_side: str = "left",
         num_workers: Optional[int] = None,
+        pool_factor: Optional[int] = None,
     ) -> Union[Union[torch.Tensor, List[torch.Tensor]], TokenPoolingOutput]:
         """
         Return the pooled embeddings.
@@ -96,6 +97,10 @@ class HierarchicalTokenPooler(BaseTokenPooler):
             padding: Whether or not to unbind the padded 3D tensor into a list of 2D tensors. Does nothing if the input
                      is a list of 2D tensors.
             padding_side: The side where the padding was applied in the 3D tensor.
+            num_workers: The number of workers to use for parallel processing. If not provided, the pooler will use
+                         the number of available CPU cores.
+            pool_factor: The maximum number of clusters. If not provided, the pooler will use the pool_factor
+                         specified in the constructor.
 
         Returns:
             If the `embeddings` input is:
@@ -106,6 +111,9 @@ class HierarchicalTokenPooler(BaseTokenPooler):
             If `return_dict` is True, the pooled embeddings are returned within a `TokenPoolingOutput` object, along
             with the cluster id to token indices mapping.
         """
+
+        pool_factor = pool_factor if pool_factor is not None else self.pool_factor
+
         if isinstance(embeddings, list) and not embeddings:
             return TokenPoolingOutput(pooled_embeddings=[], cluster_id_to_indices=[])
 
@@ -128,7 +136,12 @@ class HierarchicalTokenPooler(BaseTokenPooler):
         with ThreadPoolExecutor(num_workers) as executor:
             # NOTE: We opted for a thread-based pool because most of the heavy lifting is done in C-level libraries
             # (NumPy, Torch, and SciPy) which usually release the GIL.
-            results = list(executor.map(self._pool_single_embedding, embeddings))
+            results = list(
+                executor.map(
+                    lambda x: self._pool_single_embedding(x, pool_factor=pool_factor),
+                    embeddings,
+                )
+            )
 
         # Unpack the results
         pooled_embeddings = [result[0] for result in results]
@@ -151,7 +164,11 @@ class HierarchicalTokenPooler(BaseTokenPooler):
             cluster_id_to_indices=cluster_id_to_indices,
         )
 
-    def _pool_single_embedding(self, embedding: torch.Tensor) -> Tuple[torch.Tensor, Dict[int, Tuple[torch.Tensor]]]:
+    def _pool_single_embedding(
+        self,
+        embedding: torch.Tensor,
+        pool_factor: Optional[int] = None,
+    ) -> Tuple[torch.Tensor, Dict[int, Tuple[torch.Tensor]]]:
         """
         Return the pooled embedding and the mapping from cluster id to token indices.
 
@@ -169,7 +186,7 @@ class HierarchicalTokenPooler(BaseTokenPooler):
         if token_length == 1:
             raise ValueError("The input tensor must have more than one token.")
 
-        if self.pool_factor == 1:
+        if pool_factor == 1:
             cluster_id_to_indices = {0: (torch.arange(token_length),)}
             return embedding, cluster_id_to_indices
 
@@ -184,7 +201,7 @@ class HierarchicalTokenPooler(BaseTokenPooler):
         distances = 1 - similarities.numpy()
 
         Z = linkage(distances, metric="euclidean", method="ward")  # noqa: N806
-        max_clusters = max(token_length // self.pool_factor, 1)
+        max_clusters = max(token_length // pool_factor, 1)
         cluster_labels: NDArray[np.int32] = fcluster(Z, t=max_clusters, criterion="maxclust") - 1
         # NOTE: The scipy cluster labels start from 1, so we subtract 1 to start from 0.
 
