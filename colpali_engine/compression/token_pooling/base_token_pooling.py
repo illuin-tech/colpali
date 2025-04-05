@@ -19,7 +19,7 @@ class TokenPoolingOutput:
     """
 
     pooled_embeddings: Union[List[torch.Tensor], torch.Tensor]
-    cluster_id_to_indices: Optional[List[Dict[int, Tuple[torch.Tensor]]]] = None
+    cluster_id_to_indices: List[Optional[Dict[int, Tuple[torch.Tensor]]]]
 
 
 class BaseTokenPooler(ABC):
@@ -32,7 +32,7 @@ class BaseTokenPooler(ABC):
         self,
         embeddings: List[torch.Tensor],
         num_workers: Optional[int] = None,
-    ) -> Tuple[List[torch.Tensor], List[Dict[int, Tuple[torch.Tensor]]]]:
+    ) -> Tuple[List[torch.Tensor], List[Optional[Dict[int, Tuple[torch.Tensor]]]]]:
         """
         Implementation of pooling logic for a list of 2D embeddings.
 
@@ -43,7 +43,7 @@ class BaseTokenPooler(ABC):
         Returns:
             Tuple containing:
             - List of pooled embeddings
-            - List of dictionaries mapping cluster IDs to token indices
+            - List of optional dictionaries mapping cluster IDs to token indices
         """
         pass
 

@@ -77,7 +77,7 @@ class LambdaTokenPooler(BaseTokenPooler):
         Returns:
             Tuple containing:
             - List of pooled embeddings
-            - List of dictionaries mapping cluster IDs to token indices
+            - List of otpional dictionaries mapping cluster IDs to token indices
         """
         if num_workers and num_workers > 1:
             with ThreadPoolExecutor(num_workers) as executor:
