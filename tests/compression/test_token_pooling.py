@@ -20,13 +20,13 @@ def sample_embedding() -> torch.Tensor:
 
 
 class TestHierarchicalTokenPooler:
-    def test_hierarchical_embedding_pooler_initialization(self):
-        pooler = HierarchicalTokenPooler(pool_factor=2)
-        assert pooler.pool_factor == 2
-
     def selftest_hierarchical_embedding_pooler_output_shape(self, sample_embedding: torch.Tensor):
-        pooler = HierarchicalTokenPooler(pool_factor=2)
-        outputs = pooler.pool_embeddings([sample_embedding], return_dict=True)
+        pooler = HierarchicalTokenPooler()
+        outputs = pooler.pool_embeddings(
+            [sample_embedding],
+            pool_factor=2,
+            return_dict=True,
+        )
 
         assert isinstance(outputs, list)
         assert len(outputs) == 1
@@ -35,8 +35,12 @@ class TestHierarchicalTokenPooler:
         assert outputs[0].pooled_embeddings.shape[0] <= len(outputs[0].cluster_id_to_indices)
 
     def test_hierarchical_embedding_pooler_without_dict_output(self, sample_embedding: torch.Tensor):
-        pooler = HierarchicalTokenPooler(pool_factor=2)
-        outputs = pooler.pool_embeddings([sample_embedding], return_dict=False)
+        pooler = HierarchicalTokenPooler()
+        outputs = pooler.pool_embeddings(
+            [sample_embedding],
+            pool_factor=2,
+            return_dict=False,
+        )
 
         assert isinstance(outputs, list)
         assert len(outputs) == 1
@@ -53,8 +57,12 @@ class TestHierarchicalTokenPooler:
         assert torch.allclose(outputs[0], expected_pooled_embeddings)
 
     def test_hierarchical_embedding_pooler_with_dict_outputs(self, sample_embedding: torch.Tensor):
-        pooler = HierarchicalTokenPooler(pool_factor=2)
-        outputs = pooler.pool_embeddings([sample_embedding], return_dict=True)
+        pooler = HierarchicalTokenPooler()
+        outputs = pooler.pool_embeddings(
+            [sample_embedding],
+            pool_factor=2,
+            return_dict=True,
+        )
 
         expected_pooled_embeddings = torch.tensor(
             [
@@ -79,48 +87,51 @@ class TestHierarchicalTokenPooler:
         )
 
     def test_hierarchical_embedding_pooler_with_pool_factor_1(self, sample_embedding: torch.Tensor):
-        pooler = HierarchicalTokenPooler(pool_factor=1)
-        outputs = pooler.pool_embeddings([sample_embedding], return_dict=True)
+        pooler = HierarchicalTokenPooler()
+        outputs = pooler.pool_embeddings(
+            [sample_embedding],
+            pool_factor=1,
+            return_dict=True,
+        )
 
         assert outputs.pooled_embeddings[0].shape == sample_embedding.shape
         assert torch.allclose(outputs.pooled_embeddings[0], sample_embedding)
 
     def test_hierarchical_embedding_pooler_with_different_pool_factors(self, sample_embedding: torch.Tensor):
+        pooler = HierarchicalTokenPooler()
+
         for pool_factor in range(1, 6):
-            pooler = HierarchicalTokenPooler(pool_factor=pool_factor)
-            outputs = pooler.pool_embeddings([sample_embedding], return_dict=True)
+            outputs = pooler.pool_embeddings(
+                [sample_embedding],
+                pool_factor=pool_factor,
+                return_dict=True,
+            )
 
             expected_num_clusters = max(sample_embedding.shape[0] // pool_factor, 1)
 
             assert outputs.pooled_embeddings[0].shape[0] == expected_num_clusters
             assert outputs.pooled_embeddings[0].shape[0] <= len(outputs.cluster_id_to_indices[0][0][0])
 
-    def test_hierarchical_embedding_pooler_with_override_pool_factor(self, sample_embedding: torch.Tensor):
-        """Test that pool_factor parameter in pool_embeddings method overrides the constructor value."""
-        # Initialize with pool_factor=3 but override with pool_factor=2 in pool_embeddings
-        pooler = HierarchicalTokenPooler(pool_factor=3)
-        outputs_with_override = pooler.pool_embeddings([sample_embedding], return_dict=True, pool_factor=2)
-
-        # Create a reference pooler with pool_factor=2
-        reference_pooler = HierarchicalTokenPooler(pool_factor=2)
-        expected_outputs = reference_pooler.pool_embeddings([sample_embedding], return_dict=True)
-
-        # The results should match the pooler with pool_factor=2
-        assert outputs_with_override.pooled_embeddings[0].shape[0] == expected_outputs.pooled_embeddings[0].shape[0]
-        assert torch.allclose(outputs_with_override.pooled_embeddings[0], expected_outputs.pooled_embeddings[0])
-
     def test_hierarchical_embedding_pooler_should_raise_error_with_single_token(self):
         single_token_embeddings = torch.rand(1, 768)
-        pooler = HierarchicalTokenPooler(pool_factor=2)
+        pooler = HierarchicalTokenPooler()
 
         with pytest.raises(ValueError):
-            pooler.pool_embeddings(single_token_embeddings, return_dict=True)
+            pooler.pool_embeddings(
+                single_token_embeddings,
+                pool_factor=2,
+                return_dict=True,
+            )
 
     def test_hierarchical_embedding_pooler_batched_input(self):
         batch_embeddings = torch.rand(3, 10, 768)
 
-        pooler = HierarchicalTokenPooler(pool_factor=2)
-        outputs = pooler.pool_embeddings(batch_embeddings, return_dict=True)
+        pooler = HierarchicalTokenPooler()
+        outputs = pooler.pool_embeddings(
+            batch_embeddings,
+            pool_factor=2,
+            return_dict=True,
+        )
 
         assert isinstance(outputs, TokenPoolingOutput)
         for pooled_embedding in outputs.pooled_embeddings:
@@ -133,8 +144,12 @@ class TestHierarchicalTokenPooler:
             torch.rand(15, 768),
         ]
 
-        pooler = HierarchicalTokenPooler(pool_factor=2)
-        outputs = pooler.pool_embeddings(list_embeddings, return_dict=True)
+        pooler = HierarchicalTokenPooler()
+        outputs = pooler.pool_embeddings(
+            list_embeddings,
+            pool_factor=2,
+            return_dict=True,
+        )
 
         assert len(outputs.pooled_embeddings) == len(list_embeddings)
         for input_embedding, pooled_embedding in zip(list_embeddings, outputs.pooled_embeddings):
@@ -142,7 +157,7 @@ class TestHierarchicalTokenPooler:
             assert pooled_embedding.shape[0] <= input_embedding.shape[0] // 2
 
     def test_pool_embeddings_padded_vs_list(self):
-        pooler = HierarchicalTokenPooler(pool_factor=1)
+        pooler = HierarchicalTokenPooler()
 
         # Reference.
         seq1 = torch.tensor(
@@ -164,7 +179,11 @@ class TestHierarchicalTokenPooler:
         )
         list_embeddings = [seq1, seq2]
 
-        list_pooled_embeddings = pooler.pool_embeddings(list_embeddings, return_dict=False)
+        list_pooled_embeddings = pooler.pool_embeddings(
+            list_embeddings,
+            pool_factor=1,
+            return_dict=False,
+        )
         expected_pooled_embeddings = torch.nn.utils.rnn.pad_sequence(
             list_pooled_embeddings,
             batch_first=True,
@@ -183,6 +202,7 @@ class TestHierarchicalTokenPooler:
         # Call pool_embeddings with the padded tensor. Note that we must pass padding=True.
         pooled_embeddings = pooler.pool_embeddings(
             padded_embeddings,
+            pool_factor=1,
             return_dict=False,
             padding=True,
             padding_side="left",
