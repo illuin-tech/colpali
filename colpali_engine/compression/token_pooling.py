@@ -35,6 +35,8 @@ class BaseTokenPooler(ABC):
     def pool_embeddings(
         self,
         embeddings: Union[torch.Tensor, List[torch.Tensor]],
+        *args,
+        **kwargs,
     ) -> Union[Union[torch.Tensor, List[torch.Tensor]], TokenPoolingOutput]:
         """
         Return the pooled multi-vector embeddings and the mapping from cluster id to token indices.
@@ -50,8 +52,8 @@ class HierarchicalTokenPooler(BaseTokenPooler):
 
     ```python
     list_embeddings = [torch.rand(10, 768), torch.rand(20, 768)]
-    pooler = HierarchicalTokenPooler(pool_factor=2)
-    outputs = pooler.pool_embeddings(list_embeddings)
+    pooler = HierarchicalTokenPooler()
+    outputs = pooler.pool_embeddings(list_embeddings, pool_factor=2)
     ```
 
     Example with a 0-padded 3D tensor:
@@ -64,27 +66,19 @@ class HierarchicalTokenPooler(BaseTokenPooler):
             padding_value=0.0,
             padding_side="left",
         )
-    pooler = HierarchicalTokenPooler(pool_factor=2)
-    outputs = pooler.pool_embeddings(list_embeddings, padding=True, padding_side="left")
+    pooler = HierarchicalTokenPooler()
+    outputs = pooler.pool_embeddings(list_embeddings, pool_factor=2, padding=True, padding_side="left")
     ```
     """
-
-    def __init__(self, pool_factor: int):
-        """
-        Args:
-            pool_factor: An integer factor that determines the maximum number of clusters as
-                         `max_clusters = max(token_length // pool_factor, 1)`.
-        """
-        self.pool_factor = pool_factor
 
     def pool_embeddings(
         self,
         embeddings: Union[List[torch.Tensor], torch.Tensor],
+        pool_factor: int,
         return_dict: bool = False,
         padding: bool = False,
         padding_side: str = "left",
         num_workers: Optional[int] = None,
-        pool_factor: Optional[int] = None,
     ) -> Union[Union[torch.Tensor, List[torch.Tensor]], TokenPoolingOutput]:
         """
         Return the pooled embeddings.
@@ -92,6 +86,8 @@ class HierarchicalTokenPooler(BaseTokenPooler):
         Args:
             embeddings: A list of 2D tensors (token_length, embedding_dim) where each tensor can have its own token
                         length, or a 3D tensor of shape (batch_size, token_length, embedding_dim) with 0-padding.
+            pool_factor: An integer factor that determines the maximum number of clusters defined as
+                         `max_clusters = max(token_length // pool_factor, 1)`.
             return_dict: Whether or not to return a `TokenPoolingOutput` object (with the cluster id to token indices
                          mapping) instead of just the pooled embeddings.
             padding: Whether or not to unbind the padded 3D tensor into a list of 2D tensors. Does nothing if the input
@@ -99,8 +95,6 @@ class HierarchicalTokenPooler(BaseTokenPooler):
             padding_side: The side where the padding was applied in the 3D tensor.
             num_workers: The number of workers to use for parallel processing. If not provided, the pooler will use
                          the number of available CPU cores.
-            pool_factor: The maximum number of clusters. If not provided, the pooler will use the pool_factor
-                         specified in the constructor.
 
         Returns:
             If the `embeddings` input is:
@@ -111,8 +105,6 @@ class HierarchicalTokenPooler(BaseTokenPooler):
             If `return_dict` is True, the pooled embeddings are returned within a `TokenPoolingOutput` object, along
             with the cluster id to token indices mapping.
         """
-
-        pool_factor = pool_factor if pool_factor is not None else self.pool_factor
 
         if isinstance(embeddings, list) and not embeddings:
             return TokenPoolingOutput(pooled_embeddings=[], cluster_id_to_indices=[])
