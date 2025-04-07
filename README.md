@@ -204,10 +204,10 @@ list_embeddings = [
 ]
 
 # Define the pooler with the desired level of compression
-pooler = HierarchicalTokenPooler(pool_factor=2)
+pooler = HierarchicalTokenPooler()
 
 # Pool the embeddings
-outputs = pooler.pool_embeddings(list_embeddings)
+outputs = pooler.pool_embeddings(list_embeddings, pool_factor=2)
 ```
 
 If your inputs are padded 3D tensor embeddings instead of lists of 2D tensors, use `padding=True` and specify the padding used by your tokenizer to make sure the `HierarchicalTokenPooler` correctly removes the padding values before pooling:
@@ -229,7 +229,7 @@ model = ColQwen2.from_pretrained(
 ).eval()
 processor = ColQwen2Processor.from_pretrained(model_name)
 
-token_pooler = HierarchicalTokenPooler(pool_factor=2)
+token_pooler = HierarchicalTokenPooler()
 
 # Your page images
 images = [
@@ -247,6 +247,7 @@ with torch.no_grad():
 # Apply token pooling (reduces the sequence length of the multi-vector embeddings)
 image_embeddings = token_pooler.pool_embeddings(
     image_embeddings,
+    pool_factor=2,
     padding=True,
     padding_side=processor.tokenizer.padding_side,
 )
