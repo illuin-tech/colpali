@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
-- Allow user to override the `pool_factor` used in `HierarchicalTokenPooler` constructor
+- [Breaking] Make `pool_factor` an argument of `pool_embeddings` instead of a `HierarchicalTokenPooler` class attribute
 
 ## [0.3.9] - 2025-04-03
 
