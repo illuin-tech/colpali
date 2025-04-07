@@ -29,6 +29,41 @@ class BiEncoderLoss(torch.nn.Module):
         return loss_rowwise
 
 
+class BiNegativeCELoss(torch.nn.Module):
+    def __init__(self, temperature: float = 0.02, in_batch_term=False):
+        """
+        Bi-encoder loss.
+
+        Args:
+            temperature: The temperature to use for the loss (`new_scores = scores / temperature`).
+        """
+        super().__init__()
+        self.ce_loss = CrossEntropyLoss()
+        self.temperature = temperature
+        if not temperature > 0:
+            raise ValueError("Temperature must be strictly positive")
+        self.in_batch_term = in_batch_term
+
+    def forward(self, query_embeddings, doc_embeddings, neg_doc_embeddings):
+        """
+        query_embeddings: (batch_size, dim)
+        doc_embeddings: (batch_size, dim)
+        neg_doc_embeddings: (batch_size, dim)
+        """
+
+        # Compute the ColBERT scores
+        pos_scores = torch.einsum("bd,cd->bc", query_embeddings, doc_embeddings).diagonal()/self.temperature
+        neg_scores = torch.einsum("bd,cd->bc", query_embeddings, neg_doc_embeddings).diagonal()/self.temperature
+
+        loss = F.softplus(neg_scores - pos_scores).mean()
+
+        if self.in_batch_term:
+            scores = torch.einsum("bd,cd->bc", query_embeddings, doc_embeddings)
+            loss += self.ce_loss(scores / self.temperature, torch.arange(scores.shape[0], device=scores.device))
+
+        return loss / 2
+
+
 class BiPairwiseCELoss(torch.nn.Module):
     def __init__(self):
         super().__init__()
