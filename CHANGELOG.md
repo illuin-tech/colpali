@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+### Added
+
+- Add `LambdaTokenPooler` to allow for custom token pooling functions.
+
 ### Changed
 
 - [Breaking] Make `pool_factor` an argument of `pool_embeddings` instead of a `HierarchicalTokenPooler` class attribute
