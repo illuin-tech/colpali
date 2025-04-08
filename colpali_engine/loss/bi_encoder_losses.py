@@ -24,7 +24,7 @@ class BiEncoderLoss(torch.nn.Module):
         """
 
         scores = torch.einsum("bd,cd->bc", query_embeddings, doc_embeddings)
-        loss_rowwise = self.ce_loss(scores/self.temperature, torch.arange(scores.shape[0], device=scores.device))
+        loss_rowwise = self.ce_loss(scores / self.temperature, torch.arange(scores.shape[0], device=scores.device))
 
         return loss_rowwise
 

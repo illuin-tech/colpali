@@ -45,7 +45,6 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
         device_map: Optional[str] = None,
         **kwargs,
     ):
-
         instance = super().from_pretrained(
             *args,
             device_map=device_map,

@@ -97,6 +97,7 @@ def load_docmatix_ir_negs() -> Tuple[DatasetDict, Dataset, str]:
 
     return ds_dict, anchor_ds, "docmatix"
 
+
 def load_wikiss() -> Tuple[DatasetDict, Dataset, str]:
     """Returns the query dataset, then the anchor dataset with the documents, then the dataset type"""
     base_path = "./data_dir/" if USE_LOCAL_DATASET else "Tevatron/"

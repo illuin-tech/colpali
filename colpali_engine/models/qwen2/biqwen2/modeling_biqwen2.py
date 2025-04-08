@@ -17,7 +17,6 @@ class BiQwen2(Qwen2VLForConditionalGeneration):
         self.padding_side = "left"
         self.post_init()
 
-
     def inner_forward(
         self,
         input_ids: torch.LongTensor = None,
