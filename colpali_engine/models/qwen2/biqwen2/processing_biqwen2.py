@@ -21,7 +21,7 @@ class BiQwen2Processor(ColQwen2Processor):
         Process queries for ColQwen2.
         """
         if suffix is None:
-            suffix = self.query_augmentation_token # we remove buffer tokens
+            suffix = self.query_augmentation_token  # we remove buffer tokens
         texts_query: List[str] = []
 
         for query in queries:
