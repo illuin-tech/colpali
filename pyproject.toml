@@ -40,7 +40,7 @@ dependencies = [
     "requests",
     "scipy",
     "torch>=2.2.0,<2.7.0",
-    "transformers>=4.50.0,<4.51.0",
+    "transformers>=4.51.1,<4.52.0",
 ]
 
 [project.optional-dependencies]
