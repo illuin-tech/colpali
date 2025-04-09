@@ -1,6 +1,6 @@
 import os
 from dataclasses import dataclass
-from typing import Callable, Dict, Optional, Tuple, Union
+from typing import Callable, Optional, Union
 
 from peft import LoraConfig, PeftModel, get_peft_model
 from transformers import (
@@ -8,7 +8,8 @@ from transformers import (
     TrainingArguments,
 )
 
-from colpali_engine.collators import CorpusQueryCollator, VisualRetrieverCollator
+from colpali_engine.collators import VisualRetrieverCollator
+from colpali_engine.data.dataset import IRDataset
 from colpali_engine.loss.late_interaction_losses import (
     ColbertLoss,
 )
@@ -21,6 +22,8 @@ from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 class ColModelTrainingConfig:
     model: Union[PreTrainedModel, PeftModel]
     processor: BaseVisualRetrieverProcessor
+    train_dataset: IRDataset
+    eval_dataset: Optional[IRDataset] = None
     tr_args: Optional[TrainingArguments] = None
     output_dir: Optional[str] = None
     max_length: int = 256
@@ -28,8 +31,6 @@ class ColModelTrainingConfig:
     run_train: bool = True
     peft_config: Optional[LoraConfig] = None
     loss_func: Optional[Callable] = ColbertLoss()
-    dataset_loading_func: Optional[Callable] = None
-    eval_dataset_loader: Optional[Dict[str, Callable]] = None
     pretrained_peft_model_name_or_path: Optional[str] = None
     """
     Config class used for training a ColVision model.
@@ -79,37 +80,18 @@ class ColModelTraining:
         self.config = config
         self.model = self.config.model
         self.current_git_hash = os.popen("git rev-parse HEAD").read().strip()
-        self.dataset = self.config.dataset_loading_func()
-
-        if isinstance(self.dataset, Tuple):
-            print("Dataset has BEIR/hard negatives format. Using CorpusQueryCollator.")
-            corpus_format = self.dataset[2]
-            neg_dataset = self.dataset[1]
-            self.dataset = self.dataset[0]
-            self.collator = CorpusQueryCollator(
-                processor=self.config.processor,
-                max_length=self.config.max_length,
-                image_dataset=neg_dataset,
-                mined_negatives=True,
-                corpus_format=corpus_format,
-            )
-        else:
-            print("Dataset has QA format. Using VisualRetrieverCollator.")
-            self.collator = VisualRetrieverCollator(
-                processor=self.config.processor,
-                max_length=self.config.max_length,
-            )
+        self.train_dataset = self.config.train_dataset
+        self.eval_dataset = self.config.eval_dataset
+        self.collator = VisualRetrieverCollator(
+            processor=self.config.processor,
+            max_length=self.config.max_length,
+        )
 
     def train(self) -> None:
-        if isinstance(self.collator, CorpusQueryCollator) and self.collator.mined_negatives:
-            print("Training with hard negatives")
-        else:
-            print("Training with in-batch negatives")
-
         trainer = ContrastiveTrainer(
             model=self.model,
-            train_dataset=self.dataset["train"],
-            eval_dataset=self.dataset["test"],
+            train_dataset=self.train_dataset,
+            eval_dataset=self.eval_dataset,
             args=self.config.tr_args,
             data_collator=self.collator,
             loss_func=self.config.loss_func,
@@ -124,15 +106,12 @@ class ColModelTraining:
     def eval(self) -> None:
         raise NotImplementedError("Evaluation is not implemented yet.")
 
-    def save(self, config_file: str):
+    def save(self):
         """
         Save the model with its training config, as well as the tokenizer and processor if provided.
         """
         self.model.save_pretrained(self.config.output_dir)
         self.config.processor.save_pretrained(self.config.output_dir)
-
-        # Copy-paste the training config
-        os.system(f"cp {config_file} {self.config.output_dir}/training_config.yml")
 
         # Save git hash of the commit at beginning of training
         with open(f"{self.config.output_dir}/git_hash.txt", "w") as f:

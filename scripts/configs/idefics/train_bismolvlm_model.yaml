@@ -29,7 +29,7 @@ config:
   # max_length: 50
   run_eval: false
   loss_func:
-    (): colpali_engine.loss.late_interaction_losses.ColbertPairwiseNegativeCELoss
+    (): colpali_engine.loss.bi_encoder_losses.BiEncoderLoss
   tr_args:
     (): transformers.training_args.TrainingArguments
     output_dir: ./checkpoints/test

@@ -1,13 +1,10 @@
 from .models import (
-    BiIdefics2,
     BiPali,
     BiPaliProj,
     BiQwen2,
     BiQwen2_5,
     BiQwen2_5_Processor,
     BiQwen2Processor,
-    ColIdefics2,
-    ColIdefics2Processor,
     ColIdefics3,
     ColIdefics3Processor,
     ColPali,

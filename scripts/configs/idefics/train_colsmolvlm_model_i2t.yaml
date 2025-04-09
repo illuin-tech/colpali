@@ -1,18 +1,19 @@
 config:
   (): colpali_engine.trainer.colmodel_training.ColModelTrainingConfig
-  output_dir: !path ../../../models/biqwen2-hardneg-5e-0304
+  output_dir: !path models/colsmolvlm
   processor:
     (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
-    class_to_instanciate: !ext colpali_engine.models.BiQwen2Processor
-    pretrained_model_name_or_path:  "./models/base_models/colqwen2-base"
+    class_to_instanciate: !ext colpali_engine.models.ColIdefics3Processor
+    pretrained_model_name_or_path:  "HuggingFaceTB/SmolVLM2-256M-Video-Instruct"
+    # num_image_tokens: 2048
     # max_length: 50
 
   model:
     (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
-    class_to_instanciate: !ext colpali_engine.models.BiQwen2
-    pretrained_model_name_or_path: "./models/base_models/colqwen2-base"
+    class_to_instanciate: !ext colpali_engine.models.ColIdefics3
+    pretrained_model_name_or_path: "HuggingFaceTB/SmolVLM2-256M-Video-Instruct"
     torch_dtype:  !ext torch.bfloat16
-    use_cache: false
+    # use_cache: false
     attn_implementation: "flash_attention_2"
 #    device_map: "auto"
 #    quantization_config:
@@ -22,36 +23,45 @@ config:
 #      bnb_4bit_compute_dtype:  "bfloat16"
 #      bnb_4bit_use_double_quant: true
 
-  dataset_loading_func: !ext colpali_engine.utils.dataset_transformation.load_train_set_ir_negs
-  eval_dataset_loader: !import ../data/test_data.yaml
-
-  # max_length: 50
-  run_eval: true
+  train_dataset:
+    (): colpali_engine.utils.dataset_transformation.load_mmeb
+    subset: "DocVQA"
+    corpus_path: !path "/lustre/fsn1/projects/rech/nwd/uyn61im/hf_home/hub/datasets--TIGER-Lab--MMEB-train/snapshots/76dd0a440b6d4c02776830a804443fffbb2d0bfa/images/DocVQA/Train"
+    type: "i2t"
   
+  # max_length: 50
+  run_eval: false
   loss_func:
-    (): colpali_engine.loss.bi_encoder_losses.BiNegativeCELoss
-    in_batch_term: true
+    (): colpali_engine.loss.late_interaction_losses.ColbertPairwiseCELoss
   tr_args:
     (): transformers.training_args.TrainingArguments
-    output_dir: null
+    output_dir: ./checkpoints/test
     overwrite_output_dir: true
-    num_train_epochs: 5
-    per_device_train_batch_size: 64
+    num_train_epochs: 1
+    per_device_train_batch_size: 32
     gradient_checkpointing: true
     gradient_checkpointing_kwargs: { "use_reentrant": false }
+    # gradient_checkpointing: true
     # 6 x 8 gpus = 48 batch size
     # gradient_accumulation_steps: 4
-    per_device_eval_batch_size: 64
-    eval_strategy: "steps"
-    dataloader_num_workers: 8
+    per_device_eval_batch_size: 32
+    eval_strategy: "no"
+    dataloader_num_workers: 4
     # bf16: true
     save_steps: 500
     logging_steps: 10
     eval_steps: 100
     warmup_steps: 100
-    learning_rate: 2e-4
+    learning_rate: 5e-4
     save_total_limit: 1
+    # resume_from_checkpoint: true
     # optim: "paged_adamw_8bit"
+    # wandb logging
+    # wandb_project: "debug"
+    run_name: "smolembedder"
+    report_to: "wandb"
+
+
   peft_config:
     (): peft.LoraConfig
     r: 32
@@ -60,6 +70,6 @@ config:
     init_lora_weights: "gaussian"
     bias: "none"
     task_type: "FEATURE_EXTRACTION"
-    target_modules: '(.*(model).*(down_proj|gate_proj|up_proj|k_proj|q_proj|v_proj|o_proj).*$)'
+    target_modules: '(.*(model.text_model).*(down_proj|gate_proj|up_proj|k_proj|q_proj|v_proj|o_proj).*$|.*(custom_text_proj).*$)'
     # target_modules: '(.*(language_model).*(down_proj|gate_proj|up_proj|k_proj|q_proj|v_proj|o_proj).*$|.*(custom_text_proj).*$)'
 

@@ -253,6 +253,48 @@ image_embeddings = token_pooler.pool_embeddings(
 )
 ```
 
+
+Alternatively, you can use the `LambdaTokenPooler` to define your own custom pooling function:
+
+```python
+import torch
+from typing import Dict, Tuple
+
+from colpali_engine.compression.token_pooling import LambdaTokenPooler
+
+def custom_pooling(embedding: torch.Tensor) -> torch.Tensor:
+    """
+    Custom pooling function that reduces sequence length by half.
+    """
+
+    token_length = embedding.size(0)
+    # Resize to half the original length by averaging pairs of tokens
+    half_length = token_length // 2 + (token_length % 2)
+    pooled_embeddings = torch.zeros((half_length, embedding.size(1)), dtype=embedding.dtype, device=embedding.device)
+    
+    for i in range(half_length):
+        start_idx = i * 2
+        end_idx = min(start_idx + 2, token_length)
+        cluster_indices = torch.arange(start_idx, end_idx)
+        pooled_embeddings[i] = embedding[cluster_indices].mean(dim=0)
+        pooled_embeddings[i] = torch.nn.functional.normalize(pooled_embeddings[i], p=2, dim=-1)
+        
+    return pooled_embeddings
+
+pooler = LambdaTokenPooler(pool_func=custom_pooling)
+
+# Dummy multivector embeddings
+list_embeddings = [
+    torch.rand(10, 768),
+    torch.rand(20, 768),
+]
+
+# Pool the embeddings
+outputs = pooler.pool_embeddings(list_embeddings)
+```
+
+The custom pooling function should take a 2D tensor (token_length, embedding_dim) as input and return a tensor of shape (num_clusters, embedding_dim) representing the pooled embeddings.
+
 ### Training
 
 To keep a lightweight repository, only the essential packages were installed. In particular, you must specify the dependencies to use the training script for ColPali. You can do this using the following command:
@@ -311,6 +353,8 @@ Several community projects and ressources have been developed around ColPali to 
 |---------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------  |
 | Byaldi        | [`Byaldi`](https://github.com/AnswerDotAI/byaldi) is [RAGatouille](https://github.com/AnswerDotAI/RAGatouille)'s equivalent for ColPali, leveraging the `colpali-engine` package to facilitate indexing and storing embeddings.                      |
 | PyVespa       | [`PyVespa`](https://pyvespa.readthedocs.io/en/latest/examples/colpali-document-retrieval-vision-language-models-cloud.html) allows interaction with [Vespa](https://vespa.ai/), a production-grade vector database, with detailed ColPali support.   |
+| Qdrant | Tutorial about using ColQwen2 with the [Qdrant](https://qdrant.tech/documentation/advanced-tutorials/pdf-retrieval-at-scale/) vector database. |
+| Elastic Search     | Tutorial about using ColPali with the [Elastic Search](https://www.elastic.co/search-labs/blog/elastiacsearch-colpali-document-search) vector database. |
 | Candle        | [Candle](https://github.com/huggingface/candle/tree/main/candle-examples/examples/colpali) enables ColPali inference with an efficient ML framework for Rust.                                                                                        |
 | EmbedAnything | [`EmbedAnything`](https://github.com/StarlightSearch/EmbedAnything) Allows end-to-end ColPali inference with both Candle and ONNX backend.                                                                                                           |
 | DocAI         | [DocAI](https://github.com/PragmaticMachineLearning/docai) uses ColPali with GPT-4o and Langchain to extract structured information from documents.                                                                                                  |

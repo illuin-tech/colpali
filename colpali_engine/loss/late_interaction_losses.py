@@ -5,6 +5,12 @@ from torch.nn import CrossEntropyLoss
 
 class ColbertLoss(torch.nn.Module):
     def __init__(self, temperature: float = 0.02, normalize_scores: bool = True):
+        """
+        InfoNCE loss generalized for late interaction models.
+        Args:
+            temperature: The temperature to use for the loss (`new_scores = scores / temperature`).
+            normalize_scores: Whether to normalize the scores by the lengths of the query embeddings.
+        """
         super().__init__()
         self.ce_loss = CrossEntropyLoss()
         self.temperature = temperature
@@ -17,19 +23,6 @@ class ColbertLoss(torch.nn.Module):
         """
 
         scores = torch.einsum("bnd,csd->bcns", query_embeddings, doc_embeddings).max(dim=3)[0].sum(dim=2)
-
-        # scores = torch.zeros((query_embeddings.shape[0], doc_embeddings.shape[0]), device=query_embeddings.device)
-        # for i in range(query_embeddings.shape[0]):
-        #     for j in range(doc_embeddings.shape[0]):
-        #         # step 1 - dot product --> (s1,s2)
-        #         q2d_scores = torch.matmul(query_embeddings[i], doc_embeddings[j].T)
-        #         # step 2 -> max on doc  --> (s1)
-        #         q_scores = torch.max(q2d_scores, dim=1)[0]
-        #         # step 3 --> sum the max score --> (1)
-        #         sum_q_score = torch.sum(q_scores)
-        #         # step 4 --> assert is scalar
-        #         scores[i, j] = sum_q_score
-        # assert (scores_einsum - scores < 0.0001).all().item()
 
         if self.normalize_scores:
             # find lengths of non-zero query embeddings
@@ -44,8 +37,53 @@ class ColbertLoss(torch.nn.Module):
         return loss_rowwise
 
 
+class ColbertNegativeCELoss(torch.nn.Module):
+    def __init__(self, temperature: float = 0.02, normalize_scores: bool = True, in_batch_term=False):
+        """
+        InfoNCE loss generalized for late interaction models with negatives.
+        Args:
+            temperature: The temperature to use for the loss (`new_scores = scores / temperature`).
+            normalize_scores: Whether to normalize the scores by the lengths of the query embeddings.
+            in_batch_term: Whether to include the in-batch term in the loss.
+        """
+        super().__init__()
+        self.ce_loss = CrossEntropyLoss()
+        self.temperature = temperature
+        self.normalize_scores = normalize_scores
+        self.in_batch_term = in_batch_term
+
+    def forward(self, query_embeddings, doc_embeddings, neg_doc_embeddings):
+        """
+        query_embeddings: (batch_size, num_query_tokens, dim)
+        doc_embeddings: (batch_size, num_doc_tokens, dim)
+        neg_doc_embeddings: (batch_size, num_neg_doc_tokens, dim)
+        """
+
+        # Compute the ColBERT scores
+        pos_scores = torch.einsum("bnd,bsd->bns", query_embeddings, doc_embeddings).max(dim=2)[0].sum(dim=1)
+        neg_scores = torch.einsum("bnd,bsd->bns", query_embeddings, neg_doc_embeddings).max(dim=2)[0].sum(dim=1)
+
+        loss = F.softplus(neg_scores / self.temperature - pos_scores / self.temperature).mean()
+
+        if self.in_batch_term:
+            scores = torch.einsum("bnd,csd->bcns", query_embeddings, doc_embeddings).max(dim=3)[0].sum(dim=2)
+            if self.normalize_scores:
+                # find lengths of non-zero query embeddings
+                # divide scores by the lengths of the query embeddings
+                scores = scores / ((query_embeddings[:, :, 0] != 0).sum(dim=1).unsqueeze(-1))
+
+                if not (scores >= 0).all().item() or not (scores <= 1).all().item():
+                    raise ValueError("Scores must be between 0 and 1 after normalization")
+            loss += self.ce_loss(scores / self.temperature, torch.arange(scores.shape[0], device=scores.device))
+
+        return loss / 2
+
+
 class ColbertPairwiseCELoss(torch.nn.Module):
     def __init__(self):
+        """
+        Pairwise loss for ColBERT.
+        """
         super().__init__()
         self.ce_loss = CrossEntropyLoss()
 
@@ -84,6 +122,11 @@ class ColbertPairwiseCELoss(torch.nn.Module):
 
 class ColbertPairwiseNegativeCELoss(torch.nn.Module):
     def __init__(self, in_batch_term=False):
+        """
+        Pairwise loss for ColBERT with negatives.
+        Args:
+            in_batch_term: Whether to include the in-batch term in the loss.
+        """
         super().__init__()
         self.ce_loss = CrossEntropyLoss()
         self.in_batch_term = in_batch_term
