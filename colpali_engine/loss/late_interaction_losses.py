@@ -5,6 +5,12 @@ from torch.nn import CrossEntropyLoss
 
 class ColbertLoss(torch.nn.Module):
     def __init__(self, temperature: float = 0.02, normalize_scores: bool = True):
+        """
+        InfoNCE loss generalized for late interaction models.
+        Args:
+            temperature: The temperature to use for the loss (`new_scores = scores / temperature`).
+            normalize_scores: Whether to normalize the scores by the lengths of the query embeddings.
+        """
         super().__init__()
         self.ce_loss = CrossEntropyLoss()
         self.temperature = temperature
@@ -33,6 +39,13 @@ class ColbertLoss(torch.nn.Module):
 
 class ColbertNegativeCELoss(torch.nn.Module):
     def __init__(self, temperature: float = 0.02, normalize_scores: bool = True, in_batch_term=False):
+        """
+        InfoNCE loss generalized for late interaction models with negatives.
+        Args:
+            temperature: The temperature to use for the loss (`new_scores = scores / temperature`).
+            normalize_scores: Whether to normalize the scores by the lengths of the query embeddings.
+            in_batch_term: Whether to include the in-batch term in the loss.
+        """
         super().__init__()
         self.ce_loss = CrossEntropyLoss()
         self.temperature = temperature
@@ -50,7 +63,7 @@ class ColbertNegativeCELoss(torch.nn.Module):
         pos_scores = torch.einsum("bnd,bsd->bns", query_embeddings, doc_embeddings).max(dim=2)[0].sum(dim=1)
         neg_scores = torch.einsum("bnd,bsd->bns", query_embeddings, neg_doc_embeddings).max(dim=2)[0].sum(dim=1)
 
-        loss = F.softplus(neg_scores/self.temperature - pos_scores/self.temperature).mean()
+        loss = F.softplus(neg_scores / self.temperature - pos_scores / self.temperature).mean()
 
         if self.in_batch_term:
             scores = torch.einsum("bnd,csd->bcns", query_embeddings, doc_embeddings).max(dim=3)[0].sum(dim=2)
@@ -66,9 +79,11 @@ class ColbertNegativeCELoss(torch.nn.Module):
         return loss / 2
 
 
-
 class ColbertPairwiseCELoss(torch.nn.Module):
     def __init__(self):
+        """
+        Pairwise loss for ColBERT.
+        """
         super().__init__()
         self.ce_loss = CrossEntropyLoss()
 
@@ -107,6 +122,11 @@ class ColbertPairwiseCELoss(torch.nn.Module):
 
 class ColbertPairwiseNegativeCELoss(torch.nn.Module):
     def __init__(self, in_batch_term=False):
+        """
+        Pairwise loss for ColBERT with negatives.
+        Args:
+            in_batch_term: Whether to include the in-batch term in the loss.
+        """
         super().__init__()
         self.ce_loss = CrossEntropyLoss()
         self.in_batch_term = in_batch_term

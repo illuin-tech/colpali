@@ -6,7 +6,7 @@ from torch.nn import CrossEntropyLoss
 class BiEncoderLoss(torch.nn.Module):
     def __init__(self, temperature: float = 0.02):
         """
-        Bi-encoder loss.
+        InfoNCE loss.
 
         Args:
             temperature: The temperature to use for the loss (`new_scores = scores / temperature`).
@@ -32,10 +32,12 @@ class BiEncoderLoss(torch.nn.Module):
 class BiNegativeCELoss(torch.nn.Module):
     def __init__(self, temperature: float = 0.02, in_batch_term=False):
         """
-        Bi-encoder loss.
+        InfoNCE loss with negatives.
 
         Args:
             temperature: The temperature to use for the loss (`new_scores = scores / temperature`).
+            in_batch_term: Whether to include the in-batch term in the loss.
+
         """
         super().__init__()
         self.ce_loss = CrossEntropyLoss()
@@ -52,8 +54,8 @@ class BiNegativeCELoss(torch.nn.Module):
         """
 
         # Compute the ColBERT scores
-        pos_scores = torch.einsum("bd,cd->bc", query_embeddings, doc_embeddings).diagonal()/self.temperature
-        neg_scores = torch.einsum("bd,cd->bc", query_embeddings, neg_doc_embeddings).diagonal()/self.temperature
+        pos_scores = torch.einsum("bd,cd->bc", query_embeddings, doc_embeddings).diagonal() / self.temperature
+        neg_scores = torch.einsum("bd,cd->bc", query_embeddings, neg_doc_embeddings).diagonal() / self.temperature
 
         loss = F.softplus(neg_scores - pos_scores).mean()
 
@@ -66,6 +68,9 @@ class BiNegativeCELoss(torch.nn.Module):
 
 class BiPairwiseCELoss(torch.nn.Module):
     def __init__(self):
+        """
+        Pairwise loss.
+        """
         super().__init__()
         self.ce_loss = CrossEntropyLoss()
 
@@ -88,6 +93,11 @@ class BiPairwiseCELoss(torch.nn.Module):
 
 class BiPairwiseNegativeCELoss(torch.nn.Module):
     def __init__(self, in_batch_term=False):
+        """
+        Pairwise loss with negatives.
+        Args:
+            in_batch_term: Whether to include the in-batch term in the loss.
+        """
         super().__init__()
         self.ce_loss = CrossEntropyLoss()
         self.in_batch_term = in_batch_term
