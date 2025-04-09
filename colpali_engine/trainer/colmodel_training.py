@@ -102,6 +102,16 @@ class ColModelTraining:
                     deduplicate_images=True,
                     corpus=corpus,
                 )
+            elif corpus_format == "beir-with-translations":
+                print("Dataset has BEIR-With-Translations. Using BEIRCollator.")
+                corpus = self.dataset[1]
+                self.dataset = self.dataset[0]
+                self.collator = BEIRCollator(
+                    processor=self.config.processor,
+                    max_length=self.config.max_length,
+                    use_translations=True,
+                    corpus=corpus,
+                )
             else:
                 print("Dataset is wiki, docmatix or has hard negatives. Using CorpusQueryCollator.")
                 neg_dataset = self.dataset[1]

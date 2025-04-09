@@ -26,7 +26,7 @@ def load_clean_colpali_dataset() -> DatasetDict:
     ds_name = "clean-colpali-dataset"
     base_path = "./data_dir/" if USE_LOCAL_DATASET else "antonioloison/"
     ds_path = base_path + ds_name
-    corpus = cast(DatasetDict, load_dataset(ds_path, "corpus"))
+    corpus = cast(DatasetDict, load_dataset(ds_path, "corpus"))["train"]
     queries = cast(DatasetDict, load_dataset(ds_path, "queries"))
 
     new_queries = DatasetDict({"train": queries["train"], "test": queries["test"]})
@@ -38,7 +38,7 @@ def load_clean_colpali_dataset_dedup() -> DatasetDict:
     ds_name = "clean-colpali-dataset"
     base_path = "./data_dir/" if USE_LOCAL_DATASET else "antonioloison/"
     ds_path = base_path + ds_name
-    corpus = cast(DatasetDict, load_dataset(ds_path, "corpus"))
+    corpus = cast(DatasetDict, load_dataset(ds_path, "corpus"))["train"]
     queries = cast(DatasetDict, load_dataset(ds_path, "queries"))
 
     new_queries = DatasetDict({"train": queries["train"], "test": queries["test"]})
@@ -50,7 +50,7 @@ def load_mixed_dataset() -> DatasetDict:
     ds_name = "colpali-mixed-dataset"
     base_path = "./data_dir/" if USE_LOCAL_DATASET else "antonioloison/"
     ds_path = base_path + ds_name
-    corpus = cast(DatasetDict, load_dataset(ds_path, "corpus"))
+    corpus = cast(DatasetDict, load_dataset(ds_path, "corpus"))["train"]
     queries = cast(DatasetDict, load_dataset(ds_path, "queries"))
 
     new_queries = DatasetDict({"train": queries["train"], "test": queries["test"]})
@@ -62,12 +62,24 @@ def load_mixed_fr_en_dataset() -> DatasetDict:
     ds_name = "colpali-mixed-fr-en-dataset"
     base_path = "./data_dir/" if USE_LOCAL_DATASET else "antonioloison/"
     ds_path = base_path + ds_name
-    corpus = cast(DatasetDict, load_dataset(ds_path, "corpus"))
+    corpus = cast(DatasetDict, load_dataset(ds_path, "corpus"))["train"]
     queries = cast(DatasetDict, load_dataset(ds_path, "queries"))
 
     new_queries = DatasetDict({"train": queries["train"], "test": queries["test"]})
 
     return new_queries, corpus, "beir"
+
+
+def load_mixed_fr_en_dataset_with_translations() -> DatasetDict:
+    ds_name = "colpali-mixed-fr-en-dataset"
+    base_path = "./data_dir/" if USE_LOCAL_DATASET else "antonioloison/"
+    ds_path = base_path + ds_name
+    corpus = cast(DatasetDict, load_dataset(ds_path, "corpus"))["train"]
+    queries = cast(DatasetDict, load_dataset(ds_path, "queries"))
+
+    new_queries = DatasetDict({"train": queries["train"], "test": queries["test"]})
+
+    return new_queries, corpus, "beir-with-translations"
 
 
 def load_vdsid_train_set(ds_name: str) -> DatasetDict:

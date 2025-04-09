@@ -56,7 +56,6 @@ class VisualRetrieverCollator:
         if self.deduplicate_images:
             id2position = {}
             counter = 0
-            print("examples", examples)
             for example in examples:
                 query = example.get("query")
                 texts_query.append(query)
@@ -74,11 +73,11 @@ class VisualRetrieverCollator:
                 if neg_image is not None:
                     neg_images.append(cast(Image, neg_image))
 
-            labels: List[int] = [[0] * len(id2position)] * len(texts_query)
+            labels = torch.zeros(len(texts_query), len(ids_in_position))
             for i, example in enumerate(examples):
                 for id_ in ids_in_position:
                     if id_ in example["positive_ids"]:
-                        labels[i][id2position[id_]] = 1
+                        labels[i, id2position[id_]] = 1
         else:
             for example in examples:
                 query = example.get("query")
@@ -93,16 +92,15 @@ class VisualRetrieverCollator:
                 if neg_image is not None:
                     neg_images.append(cast(Image, neg_image))
 
-            labels: List[int] = [[0] * len(images)] * len(texts_query)
+            labels = torch.zeros(len(texts_query), len(ids_in_position))
             for i, example in enumerate(examples):
                 for j, id_ in enumerate(ids_in_position):
                     if id_ in example["positive_ids"]:
-                        labels[i][j] = 1
+                        labels[i, j] = 1
         # Process images.
         batch_doc = self.processor.process_images(images=images)
         batch_neg_doc = self.processor.process_images(images=neg_images) if neg_images else None
         batch_neg_doc = self.processor.process_images(images=neg_images) if neg_images else None
-
         # Process queries.
         if all(q is None for q in texts_query):
             batch_query = None
@@ -121,5 +119,4 @@ class VisualRetrieverCollator:
         if batch_neg_doc:
             batch_all.update(prefix_keys(batch_neg_doc, "neg_doc_"))
         batch_all["labels"] = torch.Tensor(labels)
-
         return batch_all
