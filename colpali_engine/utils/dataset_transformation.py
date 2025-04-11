@@ -59,7 +59,7 @@ def load_mixed_dataset() -> DatasetDict:
 
 
 def load_mixed_fr_en_dataset() -> DatasetDict:
-    ds_name = "colpali-mixed-fr-en-dataset"
+    ds_name = "colpali-mixed-dataset-fr-en"
     base_path = "./data_dir/" if USE_LOCAL_DATASET else "antonioloison/"
     ds_path = base_path + ds_name
     corpus = cast(DatasetDict, load_dataset(ds_path, "corpus"))["train"]
@@ -71,7 +71,7 @@ def load_mixed_fr_en_dataset() -> DatasetDict:
 
 
 def load_mixed_fr_en_dataset_with_translations() -> DatasetDict:
-    ds_name = "colpali-mixed-fr-en-dataset"
+    ds_name = "colpali-mixed-dataset-fr-en"
     base_path = "./data_dir/" if USE_LOCAL_DATASET else "antonioloison/"
     ds_path = base_path + ds_name
     corpus = cast(DatasetDict, load_dataset(ds_path, "corpus"))["train"]
