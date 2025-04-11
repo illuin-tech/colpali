@@ -85,7 +85,7 @@ class TestGetSimilarityMapsFromEmbeddings:
         for idx, similarity_map in enumerate(similarity_maps):
             expected_shape = (query_tokens, n_patches[0], n_patches[1])
             assert similarity_map.shape == expected_shape, (
-                f"Similarity map at index {idx} has shape {similarity_map.shape}, " f"expected {expected_shape}."
+                f"Similarity map at index {idx} has shape {similarity_map.shape}, expected {expected_shape}."
             )
 
     def test_get_similarity_maps_with_varied_n_patches(self):
@@ -123,7 +123,7 @@ class TestGetSimilarityMapsFromEmbeddings:
         for idx, similarity_map in enumerate(similarity_maps):
             expected_shape = (query_tokens, n_patches[idx][0], n_patches[idx][1])
             assert similarity_map.shape == expected_shape, (
-                f"Similarity map at index {idx} has shape {similarity_map.shape}, " f"expected {expected_shape}."
+                f"Similarity map at index {idx} has shape {similarity_map.shape}, expected {expected_shape}."
             )
 
     def test_get_similarity_maps_with_incorrect_n_patches(self):
@@ -183,6 +183,6 @@ class TestGetSimilarityMapsFromEmbeddings:
 
         similarity_map = similarity_maps[0]
         expected_shape = (query_tokens, n_patches[0], n_patches[1])
-        assert (
-            similarity_map.shape == expected_shape
-        ), f"Similarity map has shape {similarity_map.shape}, expected {expected_shape}."
+        assert similarity_map.shape == expected_shape, (
+            f"Similarity map has shape {similarity_map.shape}, expected {expected_shape}."
+        )

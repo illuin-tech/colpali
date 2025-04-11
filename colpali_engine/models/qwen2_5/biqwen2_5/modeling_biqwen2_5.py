@@ -19,8 +19,6 @@ class BiQwen2_5(Qwen2_5_VLForConditionalGeneration):  # noqa: N801
         self.padding_side = "left"
         self.post_init()
 
-
-
     def inner_forward(
         self,
         input_ids: torch.LongTensor = None,

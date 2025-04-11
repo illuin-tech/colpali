@@ -204,10 +204,10 @@ list_embeddings = [
 ]
 
 # Define the pooler with the desired level of compression
-pooler = HierarchicalTokenPooler(pool_factor=2)
+pooler = HierarchicalTokenPooler()
 
 # Pool the embeddings
-outputs = pooler.pool_embeddings(list_embeddings)
+outputs = pooler.pool_embeddings(list_embeddings, pool_factor=2)
 ```
 
 If your inputs are padded 3D tensor embeddings instead of lists of 2D tensors, use `padding=True` and specify the padding used by your tokenizer to make sure the `HierarchicalTokenPooler` correctly removes the padding values before pooling:
@@ -229,7 +229,7 @@ model = ColQwen2.from_pretrained(
 ).eval()
 processor = ColQwen2Processor.from_pretrained(model_name)
 
-token_pooler = HierarchicalTokenPooler(pool_factor=2)
+token_pooler = HierarchicalTokenPooler()
 
 # Your page images
 images = [
@@ -247,6 +247,7 @@ with torch.no_grad():
 # Apply token pooling (reduces the sequence length of the multi-vector embeddings)
 image_embeddings = token_pooler.pool_embeddings(
     image_embeddings,
+    pool_factor=2,
     padding=True,
     padding_side=processor.tokenizer.padding_side,
 )
@@ -282,6 +283,24 @@ sbatch --nodes=1 --cpus-per-task=16 --mem-per-cpu=32GB --time=20:00:00 --gres=gp
 sbatch --nodes=1  --time=5:00:00 -A cad15443 --gres=gpu:8  --constraint=MI250 --job-name=colpali --wrap="python scripts/train/train_colbert.py scripts/configs/pali/train_colpali_docmatix_hardneg_model.yaml"
 ```
 
+## Contributing
+
+We welcome contributions to ColPali! 🤗
+
+To contribute to ColPali, first install the development dependencies for proper testing/linting:
+
+```bash
+pip install "colpali-engine[dev]"
+```
+
+To run all the tests, you will have to install all optional dependencies (or you'll get an error in test discovery):
+
+```bash
+pip install "colpali-engine[all]"
+```
+
+When your PR is ready, ping one of the repository maintainers. We will do our best to review it as soon as possible!
+
 ## Community Projects
 
 Several community projects and ressources have been developed around ColPali to facilitate its usage. Feel free to reach out if you want to add your project to this list!
@@ -301,7 +320,6 @@ Several community projects and ressources have been developed around ColPali to 
 | BentoML       | Deploy ColPali easily with BentoML using [this example repository](https://github.com/bentoml/BentoColPali). BentoML features adaptive batching and zero-copy I/O to minimize overhead.                                                              |
 | NoOCR       | NoOCR is end-to-end, [open source](https://github.com/kyryl-opens-ml/no-ocr) solution for complex PDFs, powered by ColPali embeddings. |
 | Astra Multi-vector     | [`Astra-multivector`](https://github.com/brian-ogrady/astradb-multivector) provides enterprise-grade integration with AstraDB for late-interaction models like ColPali, ColQwen2, and ColBERT. It implements efficient token pooling and embedding caching strategies to dramatically reduce latency and index size while maintaining retrieval quality. The library leverages Cassandra's distributed architecture for high-throughput vector search at scale. |
-
 
 ### Notebooks 📙
 

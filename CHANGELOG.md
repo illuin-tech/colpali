@@ -7,9 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+### Added
+
+- Added the possibility for a user to monitor training using ViDoRe benchmark
+- Added training losses with negatives to InfoNCE type losses
+
 ### Changed
 
-- Warn about evaluation being different from Vidore, and do not store results to prevent confusion.
+- [Breaking] Make `pool_factor` an argument of `pool_embeddings` instead of a `HierarchicalTokenPooler` class attribute
 
 ## [0.3.9] - 2025-04-03
 

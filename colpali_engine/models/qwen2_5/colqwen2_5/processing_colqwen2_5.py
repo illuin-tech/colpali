@@ -38,7 +38,6 @@ class ColQwen2_5_Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):  # n
         super().__init__(*args, **kwargs)
         self.tokenizer.padding_side = "left"
 
-
     @classmethod
     def from_pretrained(
         cls,
@@ -46,7 +45,6 @@ class ColQwen2_5_Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):  # n
         device_map: Optional[str] = None,
         **kwargs,
     ):
-
         instance = super().from_pretrained(
             *args,
             device_map=device_map,

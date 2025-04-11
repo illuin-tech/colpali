@@ -1,6 +1,6 @@
 config:
   (): colpali_engine.trainer.colmodel_training.ColModelTrainingConfig
-  output_dir: !path ../../../models/biqwen2-hardneg-3e-0304
+  output_dir: !path ../../../models/biqwen2-hardneg-5e-0304
   processor:
     (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
     class_to_instanciate: !ext colpali_engine.models.BiQwen2Processor
@@ -29,13 +29,13 @@ config:
   run_eval: true
   
   loss_func:
-    (): colpali_engine.loss.bi_encoder_losses.BiPairwiseNegativeCELoss
+    (): colpali_engine.loss.bi_encoder_losses.BiNegativeCELoss
     in_batch_term: true
   tr_args:
     (): transformers.training_args.TrainingArguments
     output_dir: null
     overwrite_output_dir: true
-    num_train_epochs: 3
+    num_train_epochs: 5
     per_device_train_batch_size: 64
     gradient_checkpointing: true
     gradient_checkpointing_kwargs: { "use_reentrant": false }
