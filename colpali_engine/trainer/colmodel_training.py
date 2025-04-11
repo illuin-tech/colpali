@@ -13,6 +13,7 @@ from colpali_engine.loss.late_interaction_losses import (
     ColbertLoss,
 )
 from colpali_engine.trainer.contrastive_trainer import ContrastiveTrainer
+from colpali_engine.trainer.eval_utils import BenchmarkEvalCallback, evaluate_dataset
 from colpali_engine.utils.gpu_stats import print_gpu_utilization, print_summary
 from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 
@@ -118,16 +119,55 @@ class ColModelTraining:
 
         trainer.args.remove_unused_columns = False
 
+        if self.config.processor is not None:
+            trainer.add_callback(
+                BenchmarkEvalCallback(
+                    processor=self.config.processor,
+                    model=self.model,
+                    eval_dataset_loader=self.config.eval_dataset_loader,
+                    batch_query=self.config.tr_args.per_device_eval_batch_size,
+                    batch_passage=4,
+                    batch_score=4,
+                    run_frequency=getattr(self.config.tr_args, "eval_steps_frequency", 500),
+                    dataset_format=getattr(self.config.tr_args, "eval_dataset_format", "beir"),
+                )
+            )
+
         result = trainer.train(resume_from_checkpoint=self.config.tr_args.resume_from_checkpoint)
         print_summary(result)
 
     def eval(self) -> None:
-        raise NotImplementedError("Evaluation is not implemented yet.")
+        all_metrics = {}
+
+        all_metrics["validation_set"] = evaluate_dataset(
+            model=self.model,
+            processor=self.config.processor,
+            dataset=self.dataset["test"],
+            format="qa",
+            batch_passage=self.config.tr_args.per_device_eval_batch_size,
+            batch_query=self.config.tr_args.per_device_eval_batch_size,
+            batch_score=self.config.tr_args.per_device_eval_batch_size,
+        )
+
+        if self.config.eval_dataset_loader is not None:
+            # Create a vision retriever with the current model checkpoint.
+            eval_dataset_format = getattr(self.config.tr_args, "eval_dataset_format", "beir")
+
+            for test_name, test_dataset_loading_func in self.config.eval_dataset_loader.items():
+                print(f"Evaluating {test_name}")
+                all_metrics[test_name] = evaluate_dataset(
+                    model=self.model,
+                    processor=self.config.processor,
+                    dataset=test_dataset_loading_func(),
+                    format=eval_dataset_format,
+                    batch_passage=self.config.tr_args.per_device_eval_batch_size,
+                    batch_query=self.config.tr_args.per_device_eval_batch_size,
+                    batch_score=self.config.tr_args.per_device_eval_batch_size,
+                )
+                print(f"Metrics for {test_name}: {all_metrics[test_name]}")
 
     def save(self, config_file: str):
-        """
-        Save the model with its training config, as well as the tokenizer and processor if provided.
-        """
+        # save model
         self.model.save_pretrained(self.config.output_dir)
         self.config.processor.save_pretrained(self.config.output_dir)
 

@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## Unreleased
 
 ### Added
+
+- Added the possibility for a user to monitor training using ViDoRe benchmark
 - Added training losses with negatives to InfoNCE type losses
 
 ### Changed
