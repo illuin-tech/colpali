@@ -1,6 +1,6 @@
 import os
 from dataclasses import dataclass
-from typing import Callable, Dict, Optional, Tuple, Union
+from typing import Callable, Dict, Optional, Union
 
 from peft import LoraConfig, PeftModel, get_peft_model
 from transformers import (
@@ -9,6 +9,7 @@ from transformers import (
 )
 
 from colpali_engine.collators import CorpusQueryCollator, VisualRetrieverCollator
+from colpali_engine.data.dataset import IRDataset
 from colpali_engine.loss.late_interaction_losses import (
     ColbertLoss,
 )
@@ -21,6 +22,7 @@ from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 class ColModelTrainingConfig:
     model: Union[PreTrainedModel, PeftModel]
     processor: BaseVisualRetrieverProcessor
+    dataset: Dict[str, IRDataset]
     tr_args: Optional[TrainingArguments] = None
     output_dir: Optional[str] = None
     max_length: int = 256
@@ -67,6 +69,9 @@ class ColModelTrainingConfig:
             else:
                 print(f"Adapter already loaded from {self.pretrained_peft_model_name_or_path}. Not overwriting.")
 
+        if isinstance(self.dataset, IRDataset):
+            self.dataset = {"train": self.dataset}
+
     print_gpu_utilization()
 
 
@@ -79,26 +84,11 @@ class ColModelTraining:
         self.config = config
         self.model = self.config.model
         self.current_git_hash = os.popen("git rev-parse HEAD").read().strip()
-        self.dataset = self.config.dataset_loading_func()
-
-        if isinstance(self.dataset, Tuple):
-            print("Dataset has BEIR/hard negatives format. Using CorpusQueryCollator.")
-            corpus_format = self.dataset[2]
-            neg_dataset = self.dataset[1]
-            self.dataset = self.dataset[0]
-            self.collator = CorpusQueryCollator(
-                processor=self.config.processor,
-                max_length=self.config.max_length,
-                image_dataset=neg_dataset,
-                mined_negatives=True,
-                corpus_format=corpus_format,
-            )
-        else:
-            print("Dataset has QA format. Using VisualRetrieverCollator.")
-            self.collator = VisualRetrieverCollator(
-                processor=self.config.processor,
-                max_length=self.config.max_length,
-            )
+        self.dataset = self.config.dataset
+        self.collator = VisualRetrieverCollator(
+            processor=self.config.processor,
+            max_length=self.config.max_length,
+        )
 
     def train(self) -> None:
         if isinstance(self.collator, CorpusQueryCollator) and self.collator.mined_negatives:
@@ -109,7 +99,7 @@ class ColModelTraining:
         trainer = ContrastiveTrainer(
             model=self.model,
             train_dataset=self.dataset["train"],
-            eval_dataset=self.dataset["test"],
+            eval_dataset=self.dataset.get("test", None),
             args=self.config.tr_args,
             data_collator=self.collator,
             loss_func=self.config.loss_func,
