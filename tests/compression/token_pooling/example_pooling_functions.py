@@ -16,7 +16,8 @@ def identity_pool_func(embedding: torch.Tensor) -> torch.Tensor:
 
 def halve_pool_func(embedding: torch.Tensor) -> torch.Tensor:
     """
-    Pools the embeddings by averaging the embeddings in the cluster.
+    Pools the embeddings by averaging all pairs of consecutive vectors.
+    Resulting embedding dimension is half the original dimension.
 
     Args:
         embedding (torch.Tensor): The embeddings to pool (token_length, embedding_dim).
