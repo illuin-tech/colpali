@@ -80,8 +80,10 @@ class LambdaTokenPooler(BaseTokenPooler):
                 # NOTE: We opted for a thread-based pool because most of the heavy lifting is done in C-level libraries
                 # (NumPy, Torch, and SciPy) which usually release the GIL.
                 pooled_embeddings = list(executor.map(self.pool_func, embeddings))
-        else:
-            # Process sequentially
+        elif num_workers is None or num_workers == 1:
+            # Process embeddings sequentially
             pooled_embeddings = [self.pool_func(emb) for emb in embeddings]
+        else:
+            raise ValueError(f"Invalid number of workers: {num_workers}")
 
         return pooled_embeddings, None

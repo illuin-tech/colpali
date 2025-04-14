@@ -61,15 +61,18 @@ class HierarchicalTokenPooler(BaseTokenPooler):
             - List of pooled embeddings
             - List of dictionaries mapping cluster IDs to token indices
         """
-        with ThreadPoolExecutor(num_workers) as executor:
-            # NOTE: We opted for a thread-based pool because most of the heavy lifting is done in C-level libraries
-            # (NumPy, Torch, and SciPy) which usually release the GIL.
-            results = list(
-                executor.map(
-                    lambda x: self._pool_single_embedding(x, pool_factor=pool_factor),
-                    embeddings,
+        if num_workers and num_workers > 1:
+            with ThreadPoolExecutor(num_workers) as executor:
+                # NOTE: We opted for a thread-based pool because most of the heavy lifting is done in C-level libraries
+                # (NumPy, Torch, and SciPy) which usually release the GIL.
+                results = list(
+                    executor.map(lambda x: self._pool_single_embedding(x, pool_factor=pool_factor), embeddings)
                 )
-            )
+        elif num_workers is None or num_workers == 1:
+            # Process embeddings sequentially
+            results = [self._pool_single_embedding(embedding, pool_factor=pool_factor) for embedding in embeddings]
+        else:
+            raise ValueError(f"Invalid number of workers: {num_workers}")
 
         # Unpack the results
         pooled_embeddings = [result[0] for result in results]
