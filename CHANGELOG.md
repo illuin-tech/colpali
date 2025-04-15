@@ -8,10 +8,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## Unreleased
 
 ### Added
+
+- Add `LambdaTokenPooler` to allow for custom token pooling functions.
 - Added training losses with negatives to InfoNCE type losses
 
 ### Changed
 
+- Disable multithreading in `HierarchicalTokenPooler` if `num_workers` is not provided or is 1.
 - [Breaking] Make `pool_factor` an argument of `pool_embeddings` instead of a `HierarchicalTokenPooler` class attribute
 
 ## [0.3.9] - 2025-04-03
