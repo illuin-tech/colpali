@@ -8,7 +8,7 @@ from transformers import (
     TrainingArguments,
 )
 
-from colpali_engine.collators import CorpusQueryCollator, VisualRetrieverCollator
+from colpali_engine.collators import VisualRetrieverCollator
 from colpali_engine.data.dataset import IRDataset
 from colpali_engine.loss.late_interaction_losses import (
     ColbertLoss,
@@ -91,11 +91,6 @@ class ColModelTraining:
         )
 
     def train(self) -> None:
-        if isinstance(self.collator, CorpusQueryCollator) and self.collator.mined_negatives:
-            print("Training with hard negatives")
-        else:
-            print("Training with in-batch negatives")
-
         trainer = ContrastiveTrainer(
             model=self.model,
             train_dataset=self.dataset["train"],
