@@ -149,7 +149,7 @@ class ColModelTraining:
                     model=self.model,
                     eval_dataset_loader=self.config.eval_dataset_loader,
                     batch_query=self.config.tr_args.per_device_eval_batch_size,
-                    batch_passage=4,
+                    batch_passage=self.config.tr_args.per_device_eval_batch_size,
                     batch_score=4,
                     run_frequency=self.config.vidore_eval_frequency,
                     dataset_format=self.config.eval_dataset_format,
