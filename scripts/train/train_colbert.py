@@ -6,11 +6,22 @@ import typer
 from colpali_engine.trainer.colmodel_training import ColModelTraining, ColModelTrainingConfig
 from colpali_engine.utils.gpu_stats import print_gpu_utilization
 
+app = typer.Typer(pretty_exceptions_enable=False)
 
+
+@app.command()
 def main(config_file: Path) -> None:
+    """
+    Training script for ColVision models.
+
+    Args:
+        config_file (Path): Path to the configuration file.
+    """
     print_gpu_utilization()
+
     print("Loading config")
     config = configue.load(config_file, sub_path="config")
+
     print("Creating Setup")
     if isinstance(config, ColModelTrainingConfig):
         app = ColModelTraining(config)
@@ -21,8 +32,9 @@ def main(config_file: Path) -> None:
         print("Training model")
         app.train()
         app.save(config_file=config_file)
+
     print("Done!")
 
 
 if __name__ == "__main__":
-    typer.run(main)
+    app()
