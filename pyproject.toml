@@ -39,7 +39,7 @@ dependencies = [
     "pillow>=10.0.0",
     "requests",
     "scipy",
-    "torch>=2.2.0,<2.7.0",
+    "torch>=2.5.0,<2.7.0",
     "transformers>=4.51.1,<4.52.0",
 ]
 
