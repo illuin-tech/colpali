@@ -20,6 +20,27 @@ from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 
 @dataclass
 class ColModelTrainingConfig:
+    """Configuration for training a ColVision model.
+
+    Args:
+        model (Union[PreTrainedModel, PeftModel]): Base model to train.
+        processor (BaseVisualRetrieverProcessor): Processor for visual data processing.
+        tr_args (Optional[TrainingArguments]): Transformers training arguments. If not provided, uses default values.
+        output_dir (Optional[str]): Output directory to save the model.
+            If not provided, creates a path based on model name.
+        max_length (int): Maximum sequence length for inputs. Default: 256.
+        run_eval (bool): If True, runs evaluation. Default: True.
+        run_train (bool): If True, runs training. Default: True.
+        vidore_eval_frequency (int): Vidore evaluation frequency, must be a multiple of tr_args.eval_steps.
+            Pass -1 to disable. Default: -1.
+        eval_dataset_format (str): Evaluation dataset format ("qa" or "beir"). Default: "qa".
+        peft_config (Optional[LoraConfig]): PEFT configuration if used. Default: None.
+        loss_func (Optional[Callable]): Custom loss function. Default: ColbertLoss().
+        dataset_loading_func (Optional[Callable]): Dataset loading function. Default: None.
+        eval_dataset_loader (Optional[Dict[str, Callable]]): Evaluation dataset loaders. Default: None.
+        pretrained_peft_model_name_or_path (Optional[str]): Path to a pretrained PEFT model. Default: None.
+    """
+
     model: Union[PreTrainedModel, PeftModel]
     processor: BaseVisualRetrieverProcessor
     tr_args: Optional[TrainingArguments] = None
@@ -27,6 +48,8 @@ class ColModelTrainingConfig:
     max_length: int = 256
     run_eval: bool = True
     run_train: bool = True
+    vidore_eval_frequency: int = -1
+    eval_dataset_format: str = "qa"
     peft_config: Optional[LoraConfig] = None
     loss_func: Optional[Callable] = ColbertLoss()
     dataset_loading_func: Optional[Callable] = None
@@ -119,7 +142,7 @@ class ColModelTraining:
 
         trainer.args.remove_unused_columns = False
 
-        if self.config.processor is not None:
+        if self.config.processor is not None and self.config.vidore_eval_frequency > 0:
             trainer.add_callback(
                 BenchmarkEvalCallback(
                     processor=self.config.processor,
@@ -128,8 +151,8 @@ class ColModelTraining:
                     batch_query=self.config.tr_args.per_device_eval_batch_size,
                     batch_passage=4,
                     batch_score=4,
-                    run_frequency=getattr(self.config.tr_args, "eval_steps_frequency", 500),
-                    dataset_format=getattr(self.config.tr_args, "eval_dataset_format", "beir"),
+                    run_frequency=self.config.vidore_eval_frequency,
+                    dataset_format=self.config.eval_dataset_format,
                 )
             )
 
