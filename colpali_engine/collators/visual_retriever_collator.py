@@ -2,7 +2,6 @@ from typing import Any, Dict, List, Union, cast
 
 from PIL.Image import Image
 
-from colpali_engine.models.idefics_2 import ColIdefics2Processor
 from colpali_engine.models.paligemma import ColPaliProcessor
 from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 
@@ -29,7 +28,7 @@ class VisualRetrieverCollator:
         self.image_token_id = None
 
         # If processor is one of the supported types, extract the <image> token id.
-        if isinstance(self.processor, (ColPaliProcessor, ColIdefics2Processor)):
+        if isinstance(self.processor, (ColPaliProcessor,)):
             image_token = "<image>"
             try:
                 idx = self.processor.tokenizer.additional_special_tokens.index(image_token)
