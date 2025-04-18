@@ -33,7 +33,7 @@ def main(config_file: Path) -> None:
         print("Training model")
         training_app.train()
         training_app.save()
-        os.system(f"cp {config_file} {app.config.output_dir}/training_config.yml")
+        os.system(f"cp {config_file} {training_app.config.output_dir}/training_config.yml")
 
     print("Done!")
 
