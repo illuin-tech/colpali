@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 
+- Add the possibility for a user to evaluate a model on retrieval datasets (e.g ViDoRe benchmark) during its training.
 - Add `LambdaTokenPooler` to allow for custom token pooling functions.
 - Added training losses with negatives to InfoNCE type losses
 
