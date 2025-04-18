@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import configue
@@ -32,6 +33,8 @@ def main(config_file: Path) -> None:
         print("Training model")
         app.train()
         app.save(config_file=config_file)
+        # Copy-paste the training config
+        os.system(f"cp {config_file} {app.config.output_dir}/training_config.yml")
 
     print("Done!")
 
