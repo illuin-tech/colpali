@@ -34,7 +34,7 @@ classifiers = [
 
 dependencies = [
     "numpy",
-    "peft>=0.14.0,<0.15.0",
+    "peft>=0.14.0,<0.16.0",
     "pillow>=10.0.0",
     "requests",
     "scipy",
@@ -44,12 +44,12 @@ dependencies = [
 
 [project.optional-dependencies]
 train = [
-    "accelerate>=0.34.0,<1.4.0",
+    "accelerate>=0.34.0,<1.7.0",
     "bitsandbytes",
     "configue>=5.0.0",
     "datasets>=2.19.1",
-    "mteb>=1.16.3,<1.17.0",
-    "pillow>=10.0.0,<11.1.0",
+    "mteb>=1.16.3,<2",
+    "pillow>=10.0.0,<11.3.0",
     "typer>=0.15.1",
 ]
 
