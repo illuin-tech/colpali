@@ -162,4 +162,7 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
         return n_patches_x, n_patches_y
 
     def get_image_mask(self, batch_images: BatchFeature) -> torch.Tensor:
+        """
+        Get a tensor mask that identifies the image tokens in the batch.
+        """
         return batch_images.input_ids == self.image_token_id
