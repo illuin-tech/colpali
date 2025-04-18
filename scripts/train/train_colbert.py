@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import configue
@@ -24,14 +25,15 @@ def main(config_file: Path) -> None:
 
     print("Creating Setup")
     if isinstance(config, ColModelTrainingConfig):
-        app = ColModelTraining(config)
+        training_app = ColModelTraining(config)
     else:
         raise ValueError("Config must be of type ColModelTrainingConfig")
 
     if config.run_train:
         print("Training model")
-        app.train()
-        app.save(config_file=config_file)
+        training_app.train()
+        training_app.save()
+        os.system(f"cp {config_file} {training_app.config.output_dir}/training_config.yml")
 
     print("Done!")
 
