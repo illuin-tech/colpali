@@ -38,7 +38,7 @@ dependencies = [
     "pillow>=10.0.0",
     "requests",
     "scipy",
-    "torch>=2.2.0,<2.7.0",
+    "torch>=2.5.0,<2.7.0",
     "transformers>=4.51.1,<4.52.0",
 ]
 
@@ -58,8 +58,6 @@ interpretability = [
     "matplotlib>=3.9.0,<4.0.0",
     "seaborn>=0.13.2,<1.0.0",
 ]
-
-mps = ["torch>=2.5.0,<2.6.0"]
 
 dev = ["pytest>=8.0.0", "ruff>=0.4.0"]
 
