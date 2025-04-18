@@ -138,7 +138,6 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
     def get_n_patches(
         self,
         image_size: Tuple[int, int],
-        patch_size: int,
         spatial_merge_size: int,
     ) -> Tuple[int, int]:
         """
@@ -151,7 +150,7 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
         height_new, width_new = smart_resize(
             width=image_size[0],
             height=image_size[1],
-            factor=patch_size * self.image_processor.merge_size,
+            factor=self.image_processor.patch_size * self.image_processor.merge_size,
             min_pixels=self.image_processor.size["shortest_edge"],
             max_pixels=self.image_processor.size["longest_edge"],
         )

@@ -125,7 +125,6 @@ class BaseVisualRetrieverProcessor(ABC, ProcessorMixin):
     def get_n_patches(
         self,
         image_size: Tuple[int, int],
-        patch_size: int = 14,
         *args,
         **kwargs,
     ) -> Tuple[int, int]:
