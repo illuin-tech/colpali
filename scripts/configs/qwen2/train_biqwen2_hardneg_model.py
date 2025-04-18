@@ -12,7 +12,7 @@ from colpali_engine.trainer.colmodel_training import ColModelTrainingConfig
 from colpali_engine.utils.dataset_transformation import load_train_set_ir_negs
 
 config = ColModelTrainingConfig(
-    output_dir=Path("../../../models/biqwen2-hardneg-5e-0304"),
+    output_dir=Path("./models/biqwen2-hardneg-5e-0304"),
     processor=BiQwen2Processor(
         pretrained_model_name_or_path="./models/base_models/colqwen2-base",
     ),
