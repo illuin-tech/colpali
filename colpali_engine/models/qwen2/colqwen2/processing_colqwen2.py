@@ -151,9 +151,9 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
         height_new, width_new = smart_resize(
             width=image_size[0],
             height=image_size[1],
-            factor=self.factor,
-            min_pixels=self.min_pixels,
-            max_pixels=self.max_pixels,
+            factor=patch_size * self.image_processor.merge_size,
+            min_pixels=self.image_processor.size["shortest_edge"],
+            max_pixels=self.image_processor.size["longest_edge"],
         )
 
         n_patches_x = width_new // patch_size // spatial_merge_size
