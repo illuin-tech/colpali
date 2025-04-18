@@ -60,7 +60,7 @@ if __name__ == "__main__":
     os.makedirs(config.output_dir, exist_ok=True)
     # version this script by copying it into the output dir
     current_script = Path(__file__)
-    shutil.copy(current_script, config.output_dir / current_script.name)
+    shutil.copy(current_script, Path(config.output_dir) / current_script.name)
 
     training_app = ColModelTraining(config)
 
