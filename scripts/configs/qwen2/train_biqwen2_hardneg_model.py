@@ -13,10 +13,10 @@ from colpali_engine.utils.dataset_transformation import load_train_set_ir_negs
 
 config = ColModelTrainingConfig(
     output_dir=Path("./models/biqwen2-hardneg-5e-0304"),
-    processor=BiQwen2Processor(
+    processor=BiQwen2Processor.from_pretrained(
         pretrained_model_name_or_path="./models/base_models/colqwen2-base",
     ),
-    model=BiQwen2(
+    model=BiQwen2.from_pretrained(
         pretrained_model_name_or_path="./models/base_models/colqwen2-base",
         torch_dtype=torch.bfloat16,
         use_cache=False,
