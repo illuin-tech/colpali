@@ -147,10 +147,12 @@ class ColQwen2_5_Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):  # n
         The `spatial_merge_size` is the number of patches that will be merged spatially. It is stored in
         as a `Qwen2VLForConditionalGeneration` attribute under `model.spatial_merge_size`.
         """
+        patch_size = self.image_processor.patch_size
+
         height_new, width_new = smart_resize(
             width=image_size[0],
             height=image_size[1],
-            factor=self.image_processor.patch_size * self.image_processor.merge_size,
+            factor=patch_size * self.image_processor.merge_size,
             min_pixels=self.image_processor.size["shortest_edge"],
             max_pixels=self.image_processor.size["longest_edge"],
         )
