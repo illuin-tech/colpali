@@ -124,15 +124,12 @@ class ColModelTraining:
     def eval(self) -> None:
         raise NotImplementedError("Evaluation is not implemented yet.")
 
-    def save(self, config_file: str):
+    def save(self):
         """
         Save the model with its training config, as well as the tokenizer and processor if provided.
         """
         self.model.save_pretrained(self.config.output_dir)
         self.config.processor.save_pretrained(self.config.output_dir)
-
-        # Copy-paste the training config
-        os.system(f"cp {config_file} {self.config.output_dir}/training_config.yml")
 
         # Save git hash of the commit at beginning of training
         with open(f"{self.config.output_dir}/git_hash.txt", "w") as f:
