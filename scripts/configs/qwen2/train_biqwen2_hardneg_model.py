@@ -8,7 +8,7 @@ from transformers import TrainingArguments
 
 from colpali_engine.loss.bi_encoder_losses import BiNegativeCELoss
 from colpali_engine.models import BiQwen2, BiQwen2Processor
-from colpali_engine.trainer.colmodel_training import ColModelTrainingConfig
+from colpali_engine.trainer.colmodel_training import ColModelTraining, ColModelTrainingConfig
 from colpali_engine.utils.dataset_transformation import load_train_set_ir_negs
 
 config = ColModelTrainingConfig(
@@ -62,5 +62,7 @@ if __name__ == "__main__":
     current_script = Path(__file__)
     shutil.copy(current_script, config.output_dir / current_script.name)
 
-    config.train()
-    config.save()
+    training_app = ColModelTraining(config)
+
+    training_app.train()
+    training_app.save()
