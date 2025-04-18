@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
-- Fix similarity map helpers for ColQwen2.
+- Fix similarity map helpers for ColQwen2 and ColQwen2.5.
 - Disable multithreading in `HierarchicalTokenPooler` if `num_workers` is not provided or is 1.
 - [Breaking] Make `pool_factor` an argument of `pool_embeddings` instead of a `HierarchicalTokenPooler` class attribute
 
