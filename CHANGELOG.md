@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [0.3.10] - 2025-04-18
+
 ### Added
 
 - Add `LambdaTokenPooler` to allow for custom token pooling functions.
@@ -15,9 +17,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 - Fix similarity map helpers for ColQwen2 and ColQwen2.5.
-- [Breaking] Remove support for Idefics2-based models.
+- [Breaking] (minor) Remove support for Idefics2-based models.
 - Disable multithreading in `HierarchicalTokenPooler` if `num_workers` is not provided or is 1.
-- [Breaking] Make `pool_factor` an argument of `pool_embeddings` instead of a `HierarchicalTokenPooler` class attribute
+- [Breaking] (minor) Make `pool_factor` an argument of `pool_embeddings` instead of a `HierarchicalTokenPooler` class attribute
+- Bump dependencies for transformers, torch, peft, pillow, accelerate, etc...
 
 ## [0.3.9] - 2025-04-03
 
