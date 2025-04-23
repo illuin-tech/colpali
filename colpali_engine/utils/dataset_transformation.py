@@ -3,7 +3,7 @@ from typing import List, Literal, Tuple, cast
 
 from datasets import Dataset, DatasetDict, concatenate_datasets, load_dataset
 
-from colpali_engine.data.corpus import LocalCorpus, SimpleCorpus
+from colpali_engine.data.corpus import LocalCorpus, MapCorpus
 from colpali_engine.data.dataset import IRColumn, IRDataset
 
 USE_LOCAL_DATASET = os.environ.get("USE_LOCAL_DATASET", "1") == "1"
@@ -26,9 +26,9 @@ def load_train_set() -> DatasetDict:
 
 def load_train_set_ir() -> IRDataset:
     """Returns the query dataset, then the anchor dataset with the documents, then the dataset type"""
-    corpus = SimpleCorpus(
+    corpus = MapCorpus.from_dataset(
         corpus_data=load_dataset("manu/colpali-corpus", split="train"),
-        id_column=None,
+        docid_column=None,
     )
 
     dataset = load_dataset("manu/colpali-queries", split="train")
@@ -51,9 +51,9 @@ def load_train_set_ir() -> IRDataset:
 
 def load_train_set_ir_negs() -> IRDataset:
     """Returns the query dataset, then the anchor dataset with the documents, then the dataset type"""
-    corpus = SimpleCorpus(
+    corpus = MapCorpus.from_dataset(
         corpus_data=load_dataset("manu/colpali-corpus", split="train"),
-        id_column=None,
+        docid_column=None,
     )
 
     dataset = load_dataset("manu/colpali-queries", split="train")
