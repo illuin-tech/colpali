@@ -111,8 +111,10 @@ class ColModelTraining:
         # Initialize distributed if needed
         if dist.is_available() and not dist.is_initialized():
             dist.init_process_group(backend="nccl", init_method="env://")
+            print("Distributed process group initialized.")
         self.local_rank = int(os.environ.get("LOCAL_RANK", 0))
         self.world_size = dist.get_world_size() if dist.is_initialized() else 1
+        print(f"Local rank: {self.local_rank}, World size: {self.world_size}")
 
         device = torch.device(f"cuda:{self.local_rank}" if torch.cuda.is_available() else "cpu")
         torch.cuda.set_device(device)
@@ -134,7 +136,7 @@ class ColModelTraining:
     def train(self) -> None:
         # Mixed precision setup
         use_amp = getattr(self.config, "use_amp", False)
-        scaler = torch.cuda.amp.GradScaler() if use_amp else None
+        scaler = torch.amp.GradScaler("cuda") if use_amp else None
         max_grad_norm = getattr(self.config.tr_args, "max_grad_norm", None)
 
         sampler = DistributedSampler(self.dataset["train"]) if dist.is_initialized() else None
