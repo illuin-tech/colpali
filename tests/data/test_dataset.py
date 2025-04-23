@@ -1,6 +1,7 @@
 from typing import Generator
 
 import pytest
+from datasets import Dataset as HFDataset
 from PIL import Image
 
 from colpali_engine.data.dataset import ColPaliEngineDataset, ExternalDocumentCorpus
@@ -10,10 +11,12 @@ class TestColPaliEngineDataset:
     @pytest.fixture(scope="class")
     def corpus(self) -> Generator[ExternalDocumentCorpus, None, None]:
         # Mock data for the corpus
-        corpus_data = [
-            {"doc": Image.new("RGB", (16, 16), color="red")},
-            {"doc": Image.new("RGB", (16, 16), color="blue")},
-        ]
+        corpus_data = HFDataset.from_list(
+            [
+                {"doc": Image.new("RGB", (16, 16), color="red")},
+                {"doc": Image.new("RGB", (16, 16), color="blue")},
+            ]
+        )
         yield ExternalDocumentCorpus(corpus_data=corpus_data)
 
     @pytest.fixture(scope="class")
@@ -32,13 +35,15 @@ class TestColPaliEngineDataset:
     @pytest.fixture(scope="class")
     def ir_dataset_with_negs(self) -> Generator[ColPaliEngineDataset, None, None]:
         # Mock data for the dataset
-        data = [
-            {
-                "query": "What is this?",
-                "pos_target": Image.new("RGB", (16, 16), color="red"),
-                "neg_target": Image.new("RGB", (16, 16), color="blue"),
-            },
-        ]
+        data = HFDataset.from_list(
+            [
+                {
+                    "query": "What is this?",
+                    "pos_target": Image.new("RGB", (16, 16), color="red"),
+                    "neg_target": Image.new("RGB", (16, 16), color="blue"),
+                },
+            ]
+        )
         yield ColPaliEngineDataset(
             data=data,
         )
