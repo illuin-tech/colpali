@@ -17,7 +17,7 @@ class ExternalDocumentCorpus:
         docid_to_idx_mapping (Optional[Dict[str, int]]): Optional mapping from doc IDs to indices.
     """
 
-    def __init__(self, corpus_data: HFDataset, docid_to_idx_mapping: Optional[Dict[str, int]] = None):
+    def __init__(self, corpus_data: List[Dict[str, Any]], docid_to_idx_mapping: Optional[Dict[str, int]] = None):
         """
         Initialize the corpus with the provided data.
         """
@@ -26,11 +26,11 @@ class ExternalDocumentCorpus:
 
         assert isinstance(
             self.corpus_data,
-            (HFDataset),
-        ), "Corpus data must be a Hugging Face Dataset"
+            (list, Dataset, HFDataset),
+        ), "Corpus data must be a map-style dataset"
 
-        assert "doc" in self.corpus_data.column_names, (
-            f"Corpus data must contain a 'doc' column. Got: {self.corpus_data.column_names}"
+        assert "doc" in self.corpus_data[0], (
+            f"Corpus data must contain a 'doc' column. Got: {self.corpus_data[0].keys()}"
         )
 
     def __len__(self) -> int:
@@ -65,7 +65,7 @@ class ColPaliEngineDataset(Dataset):
 
     def __init__(
         self,
-        data: HFDataset,
+        data: List[Dict[str, Any]],
         external_document_corpus: Optional[ExternalDocumentCorpus] = None,
         retrieve_query: bool = False,
         retrieve_pos_target: bool = False,
@@ -87,11 +87,11 @@ class ColPaliEngineDataset(Dataset):
 
         assert isinstance(
             self.data,
-            (HFDataset),
-        ), "Data must be a Hugging Face Dataset"
+            (list, Dataset, HFDataset),
+        ), "Data must be a map-style dataset"
 
-        assert self.QUERY_KEY in self.data.column_names, f"Data must contain a {self.QUERY_KEY} column"
-        assert self.POS_TARGET_KEY in self.data.column_names, f"Data must contain a {self.POS_TARGET_KEY} column"
+        assert self.QUERY_KEY in self.data[0], f"Data must contain a {self.QUERY_KEY} column"
+        assert self.POS_TARGET_KEY in self.data[0], f"Data must contain a {self.POS_TARGET_KEY} column"
 
     def __len__(self) -> int:
         """Return the number of samples in the dataset."""
