@@ -128,9 +128,10 @@ class ColModelTraining:
                 self.model.gradient_checkpointing_enable()
                 if self._is_rank0():
                     print("Gradient checkpointing enabled.")
-            except Exception:
+            except Exception as e:
                 if self._is_rank0():
                     print("Warning: gradient_checkpointing_enable() not supported by model.")
+                    print(e)
 
     def _is_rank0(self) -> bool:
         return not dist.is_initialized() or dist.get_rank() == 0
