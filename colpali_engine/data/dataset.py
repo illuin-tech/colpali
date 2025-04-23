@@ -11,7 +11,7 @@ class ExternalDocumentCorpus:
     This class is meant to be overridden by the user to handle their own corpus.
 
     Args:
-        corpus_data (List[Dict[str, Any]]): List of dictionaries containing doc data.
+        corpus_data (HFDataset): A Hugging Face Dataset containing the corpus data.
         docid_to_idx_mapping (Optional[Dict[str, int]]): Optional mapping from doc IDs to indices.
     """
 
@@ -24,7 +24,7 @@ class ExternalDocumentCorpus:
 
         assert isinstance(
             self.corpus_data,
-            (HFDataset),
+            HFDataset,
         ), "Corpus data must be a Hugging Face Dataset"
 
     def __len__(self) -> int:
@@ -75,7 +75,7 @@ class ColPaliEngineDataset(Dataset):
 
         assert isinstance(
             self.data,
-            (HFDataset),
+            HFDataset,
         ), "Data must be a Hugging Face Dataset"
 
     def __len__(self) -> int:

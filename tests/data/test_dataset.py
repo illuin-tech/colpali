@@ -22,12 +22,14 @@ class TestColPaliEngineDataset:
     @pytest.fixture(scope="class")
     def ir_dataset(self) -> Generator[ColPaliEngineDataset, None, None]:
         # Mock data for the dataset
-        data = [
-            {
-                ColPaliEngineDataset.QUERY_KEY: "What is this?",
-                ColPaliEngineDataset.POS_TARGET_KEY: Image.new("RGB", (16, 16), color="red"),
-            },
-        ]
+        data = HFDataset.from_list(
+            [
+                {
+                    ColPaliEngineDataset.QUERY_KEY: "What is this?",
+                    ColPaliEngineDataset.POS_TARGET_KEY: Image.new("RGB", (16, 16), color="red"),
+                },
+            ]
+        )
         yield ColPaliEngineDataset(
             data=data,
         )
