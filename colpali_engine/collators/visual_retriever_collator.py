@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Union
 
 from PIL.Image import Image
 
-from colpali_engine.data.dataset import ColPaliEngineDataset, Document
+from colpali_engine.data.dataset import ColPaliEngineDataset
 from colpali_engine.models.paligemma import ColPaliProcessor
 from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 
@@ -93,10 +93,9 @@ class VisualRetrieverCollator:
             **batch_neg_target,
         }
 
-    def auto_collate(self, batch: List[Document], prefix: str = "") -> Dict[str, Any]:
+    def auto_collate(self, batch: List[Union[str, Image]], prefix: str = "") -> Dict[str, Any]:
         """Automatically collate a batch of documents."""
         # Convert Document objects to their underlying data.
-        batch = [b.item if isinstance(b, Document) else b for b in batch]
         if isinstance(batch[0], str):
             return self.collate_texts(batch, prefix=prefix)
         elif isinstance(batch[0], Image):
