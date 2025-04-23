@@ -6,6 +6,7 @@ from torch.utils.data import Dataset
 
 Document = Union[str, Image]
 
+
 class ExternalDocumentCorpus:
     """
     Corpus class for handling retrieving with simple mapping.
@@ -28,8 +29,9 @@ class ExternalDocumentCorpus:
             (HFDataset),
         ), "Corpus data must be a Hugging Face Dataset"
 
-        assert "doc" in self.corpus_data.column_names, \
-                f"Corpus data must contain a 'doc' column. Got: {self.corpus_data.column_names}"
+        assert "doc" in self.corpus_data.column_names, (
+            f"Corpus data must contain a 'doc' column. Got: {self.corpus_data.column_names}"
+        )
 
     def __len__(self) -> int:
         """
@@ -104,10 +106,10 @@ class ColPaliEngineDataset(Dataset):
         return {
             self.QUERY_KEY: collate(sample[self.QUERY_KEY], self.retrieve_query),
             self.POS_TARGET_KEY: collate(sample[self.POS_TARGET_KEY], self.retrieve_pos_target),
-            self.NEG_TARGET_KEY: collate(sample[self.NEG_TARGET_KEY], self.retrieve_neg_target)\
-                                 if self.NEG_TARGET_KEY in sample else None,
+            self.NEG_TARGET_KEY: collate(sample[self.NEG_TARGET_KEY], self.retrieve_neg_target)
+            if self.NEG_TARGET_KEY in sample
+            else None,
         }
-
 
     def get_external_documents_from_docid(self, doc_ids) -> List[Document]:
         """
