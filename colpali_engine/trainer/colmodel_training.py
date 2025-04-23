@@ -126,7 +126,7 @@ class ColModelTraining:
         if getattr(self.config.tr_args, "gradient_checkpointing", False):
             # huggingface models expose this
             try:
-                self.model.gradient_checkpointing_enable(**self.config.tr_args.gradient_checkpointing_kwargs)
+                self.model.gradient_checkpointing_enable(gradient_checkpointing_kwargs=self.config.tr_args.gradient_checkpointing_kwargs)
                 if self._is_rank0():
                     print("Gradient checkpointing enabled.")
             except Exception as e:
