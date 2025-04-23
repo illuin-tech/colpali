@@ -122,10 +122,10 @@ class ColModelTraining:
         self.model = DistributedDataParallel(self.model, device_ids=[self.local_rank], output_device=self.local_rank)
 
         # Gradient checkpointing if supported
-        if getattr(self.config, "enable_gradient_checkpointing", False):
+        if getattr(self.config, "gradient_checkpointing", False):
             # huggingface models expose this
             try:
-                self.model.module.gradient_checkpointing_enable()
+                self.model.gradient_checkpointing_enable()
                 if self._is_rank0():
                     print("Gradient checkpointing enabled.")
             except Exception:
