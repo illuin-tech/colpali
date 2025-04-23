@@ -7,12 +7,16 @@ from transformers import (
     PreTrainedModel,
     TrainingArguments,
 )
+import torch.distributed as dist
+import torch
+from torch.utils.data import DataLoader
+from torch.utils.data.distributed import DistributedSampler
 
 from colpali_engine.collators import CorpusQueryCollator, VisualRetrieverCollator
 from colpali_engine.loss.late_interaction_losses import (
     ColbertLoss,
 )
-from colpali_engine.trainer.contrastive_trainer import ContrastiveTrainer
+
 from colpali_engine.utils.gpu_stats import print_gpu_utilization, print_summary
 from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 
@@ -99,6 +103,30 @@ class ColModelTraining:
                 processor=self.config.processor,
                 max_length=self.config.max_length,
             )
+        
+        def init_distributed():
+            dist.init_process_group(
+                backend="nccl",
+                init_method="env://",    # set MASTER_ADDR, MASTER_PORT externally
+            )
+            local_rank = int(os.environ["LOCAL_RANK"])
+            torch.cuda.set_device(local_rank)
+            device = torch.device(f"cuda:{local_rank}")
+            return device, local_rank
+        
+        if dist.is_available() and dist.is_initialized():
+            print("Distributed training is enabled.")
+            device, local_rank = init_distributed()
+        else:
+            print("Distributed training is not enabled.")
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            local_rank = 0
+        
+        self.model.to(device)
+        self.local_rank = local_rank
+        self.model = torch.nn.parallel.DistributedDataParallel(
+            self.model, device_ids=[local_rank], output_device=local_rank
+        )
 
     def train(self) -> None:
         if isinstance(self.collator, CorpusQueryCollator) and self.collator.mined_negatives:
@@ -106,20 +134,76 @@ class ColModelTraining:
         else:
             print("Training with in-batch negatives")
 
-        trainer = ContrastiveTrainer(
-            model=self.model,
-            train_dataset=self.dataset["train"],
-            eval_dataset=self.dataset["test"],
-            args=self.config.tr_args,
-            data_collator=self.collator,
-            loss_func=self.config.loss_func,
-            is_vision_model=self.config.processor is not None,
+        
+        def gather_embeddings(tensor: torch.Tensor) -> torch.Tensor:
+            world_size = dist.get_world_size()
+            tensor_list = [torch.zeros_like(tensor) for _ in range(world_size)]
+            dist.all_gather(tensor_list, tensor)
+            return torch.cat(tensor_list, dim=0)
+        
+
+        sampler = DistributedSampler(self.dataset["train"])
+        train_loader = DataLoader(
+            self.dataset["train"],
+            batch_size=self.config.tr_args.per_device_train_batch_size,
+            sampler=sampler,
+            collate_fn=self.collator,  # from colpali_engine.collators
         )
 
-        trainer.args.remove_unused_columns = False
+        if self.config.eval_dataset_loader is not None:
+            eval_loader = DataLoader(
+                self.dataset["validation"],
+                batch_size=self.config.tr_args.per_device_eval_batch_size,
+                collate_fn=self.collator,
+            )
+        else:   
+            eval_loader = None
+            print("No eval dataset provided. Skipping evaluation.")
+        if self.config.tr_args.gradient_checkpointing:
+            print("Enabling gradient checkpointing")
+            self.model.gradient_checkpointing_enable()
+        # opimizer adam
+        optimizer = torch.optim.AdamW(
+            self.model.parameters(),
+            lr=self.config.tr_args.learning_rate,
+            weight_decay=self.config.tr_args.weight_decay,
+        )
+        # scheduler
+        scheduler = torch.optim.lr_scheduler.StepLR(
+            optimizer,
+            step_size=self.config.tr_args.warmup_steps,
+            gamma=0.1,
+        )
+        loss_fn = self.config.loss_func
 
-        result = trainer.train(resume_from_checkpoint=self.config.tr_args.resume_from_checkpoint)
-        print_summary(result)
+        ## start training
+        print("Starting training")
+        for epoch in range(self.config.tr_args.num_train_epochs):
+            print(f"Epoch {epoch + 1}/{self.config.tr_args.num_train_epochs}")
+            sampler.set_epoch(epoch)
+            self.model.train()
+            for step, batch in enumerate(train_loader):
+                # Move batch to device
+                batch = {k: v.to(self.model.device) for k, v in batch.items()}
+                # Forward & get embeddings
+                q_embed = self.model(**{"input_ids": batch["query_input_ids"],
+                                "attention_mask": batch["query_attention_mask"]}).embeddings
+                d_embed = self.model(**{k[4:]: v for k, v in batch.items() if k.startswith("doc_")}).embeddings
+                # Optionally negative
+                neg_embed = None
+                if "neg_doc_input_ids" in batch:
+                    neg_embed = self.model(**{k[8:]: v for k, v in batch.items() if k.startswith("neg_doc")}).embeddings
+                # Gather
+                q_global = gather_embeddings(q_embed)
+                d_global = gather_embeddings(d_embed)
+                n_global = gather_embeddings(neg_embed) if neg_embed is not None else None
+                # Compute loss & backward
+                loss = loss_fn(q_global, d_global, n_global)
+                loss.backward()
+                optimizer.step()
+                optimizer.zero_grad()
+            scheduler.step()
+        
 
     def eval(self) -> None:
         raise NotImplementedError("Evaluation is not implemented yet.")
