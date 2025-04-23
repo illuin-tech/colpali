@@ -239,15 +239,12 @@ class ColModelTraining:
                     print(f"Document embedding shape: {d_embed.shape}")
                     print(f"Negative document embedding shape: {batch['neg_doc_input_ids'].shape}")
                     print_gpu_utilization()
-                
-                    # print(q_embed)
-                    breakpoint()
-                else:
-                    # wait forever
-                    dist.barrier()
 
                 # Compute loss & backward
                 loss = loss_fn(q_global, d_global) if n_global is None else loss_fn(q_global, d_global, n_global)
+                if self.local_rank == 0:
+                    print(f"Loss: {loss.item()}")
+                    
                 loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()
