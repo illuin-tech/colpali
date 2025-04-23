@@ -16,10 +16,11 @@ class ColbertLoss(torch.nn.Module):
         self.temperature = temperature
         self.normalize_scores = normalize_scores
 
-    def forward(self, query_embeddings, doc_embeddings):
+    def forward(self, query_embeddings, doc_embeddings, offset: int = 0):
         """
         query_embeddings: (batch_size, num_query_tokens, dim)
         doc_embeddings: (batch_size, num_doc_tokens, dim)
+        offset: The offset to use for the loss. This is useful in cross-gpu tasks when there are more docs than queries.
         """
 
         scores = torch.einsum("bnd,csd->bcns", query_embeddings, doc_embeddings).max(dim=3)[0].sum(dim=2)
@@ -32,7 +33,7 @@ class ColbertLoss(torch.nn.Module):
             if not (scores >= 0).all().item() or not (scores <= 1).all().item():
                 raise ValueError("Scores must be between 0 and 1 after normalization")
 
-        loss_rowwise = self.ce_loss(scores / self.temperature, torch.arange(scores.shape[0], device=scores.device))
+        loss_rowwise = self.ce_loss(scores / self.temperature, torch.arange(scores.shape[0], device=scores.device) + offset)
 
         return loss_rowwise
 
@@ -52,11 +53,12 @@ class ColbertNegativeCELoss(torch.nn.Module):
         self.normalize_scores = normalize_scores
         self.in_batch_term = in_batch_term
 
-    def forward(self, query_embeddings, doc_embeddings, neg_doc_embeddings):
+    def forward(self, query_embeddings, doc_embeddings, neg_doc_embeddings, offset: int = 0):
         """
         query_embeddings: (batch_size, num_query_tokens, dim)
         doc_embeddings: (batch_size, num_doc_tokens, dim)
         neg_doc_embeddings: (batch_size, num_neg_doc_tokens, dim)
+        offset: The offset to use for the loss. This is useful in cross-gpu tasks when there are more docs than queries.
         """
 
         # Compute the ColBERT scores
@@ -74,7 +76,7 @@ class ColbertNegativeCELoss(torch.nn.Module):
 
                 if not (scores >= 0).all().item() or not (scores <= 1).all().item():
                     raise ValueError("Scores must be between 0 and 1 after normalization")
-            loss += self.ce_loss(scores / self.temperature, torch.arange(scores.shape[0], device=scores.device))
+            loss += self.ce_loss(scores / self.temperature, torch.arange(scores.shape[0], device=scores.device) + offset)
 
         return loss / 2
 
