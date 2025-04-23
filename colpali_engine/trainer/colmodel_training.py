@@ -74,6 +74,13 @@ class ColModelTrainingConfig:
     print_gpu_utilization()
 
 
+import os
+import torch
+import torch.distributed as dist
+from torch.nn.parallel import DistributedDataParallel as DDP
+from torch.utils.data import DataLoader, DistributedSampler
+from tqdm.auto import tqdm
+
 class ColModelTraining:
     """
     Class that contains the training and evaluation logic for a ColVision model.
@@ -85,8 +92,9 @@ class ColModelTraining:
         self.current_git_hash = os.popen("git rev-parse HEAD").read().strip()
         self.dataset = self.config.dataset_loading_func()
 
+        # Choose collator based on dataset format
         if isinstance(self.dataset, Tuple):
-            print("Dataset has BEIR/hard negatives format. Using CorpusQueryCollator.")
+            if self._is_rank0(): print("Dataset has BEIR/hard negatives format. Using CorpusQueryCollator.")
             corpus_format = self.dataset[2]
             neg_dataset = self.dataset[1]
             self.dataset = self.dataset[0]
@@ -98,45 +106,75 @@ class ColModelTraining:
                 corpus_format=corpus_format,
             )
         else:
-            print("Dataset has QA format. Using VisualRetrieverCollator.")
+            if self._is_rank0(): print("Dataset has QA format. Using VisualRetrieverCollator.")
             self.collator = VisualRetrieverCollator(
                 processor=self.config.processor,
                 max_length=self.config.max_length,
             )
-        
-        def init_distributed():
-            if not dist.is_initialized():
-                dist.init_process_group(
-                    backend="nccl",
-                    init_method="env://",    # set MASTER_ADDR, MASTER_PORT externally
-                )
-            local_rank = int(os.environ["LOCAL_RANK"])
-            torch.cuda.set_device(local_rank)
-            device = torch.device(f"cuda:{local_rank}")
-            return device, local_rank
-        
-        if dist.is_available() and dist.is_initialized():
-            print("Distributed training is enabled.")
-            device, local_rank = init_distributed()
-        else:
-            print("Distributed training is not enabled.")
-            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-            local_rank = 0
-        
+
+        # Initialize distributed if needed
+        if dist.is_available() and not dist.is_initialized():
+            dist.init_process_group(
+                backend="nccl",
+                init_method="env://"
+            )
+        self.local_rank = int(os.environ.get("LOCAL_RANK", 0))
+        self.world_size = dist.get_world_size() if dist.is_initialized() else 1
+
+        device = torch.device(f"cuda:{self.local_rank}" if torch.cuda.is_available() else "cpu")
+        torch.cuda.set_device(device)
         self.model.to(device)
-        self.local_rank = local_rank
-        self.model = torch.nn.parallel.DistributedDataParallel(
-            self.model, device_ids=[local_rank], output_device=local_rank
-        )
+        self.model = DDP(self.model, device_ids=[self.local_rank], output_device=self.local_rank)
+
+        # Gradient checkpointing if supported
+        if getattr(self.config, 'enable_gradient_checkpointing', False):
+            # huggingface models expose this
+            try:
+                self.model.module.gradient_checkpointing_enable()
+            except Exception:
+                if self._is_rank0(): print("Warning: gradient_checkpointing_enable() not supported by model.")
+
+    def _is_rank0(self) -> bool:
+        return not dist.is_initialized() or dist.get_rank() == 0
 
     def train(self) -> None:
-        if isinstance(self.collator, CorpusQueryCollator) and self.collator.mined_negatives:
-            print("Training with hard negatives")
-        else:
-            print("Training with in-batch negatives")
+        # Mixed precision setup
+        use_amp = getattr(self.config, 'use_amp', False)
+        scaler = torch.cuda.amp.GradScaler() if use_amp else None
+        max_grad_norm = getattr(self.config.tr_args, 'max_grad_norm', None)
 
-        
-        import torch
+        sampler = DistributedSampler(self.dataset['train']) if dist.is_initialized() else None
+        train_loader = DataLoader(
+            self.dataset['train'],
+            batch_size=self.config.tr_args.per_device_train_batch_size,
+            sampler=sampler,
+            collate_fn=self.collator,
+        )
+
+        # Evaluation loader
+        eval_loader = None
+        if self.config.eval_dataset_loader is not None:
+            eval_loader = DataLoader(
+                self.dataset['validation'],
+                batch_size=self.config.tr_args.per_device_eval_batch_size,
+                collate_fn=self.collator,
+            )
+        elif self._is_rank0():
+            print("No eval dataset provided. Skipping evaluation.")
+
+        optimizer = torch.optim.AdamW(
+            self.model.parameters(),
+            lr=self.config.tr_args.learning_rate,
+            weight_decay=self.config.tr_args.weight_decay,
+        )
+        scheduler = torch.optim.lr_scheduler.StepLR(
+            optimizer,
+            step_size=self.config.tr_args.warmup_steps,
+            gamma=0.1,
+        )
+        loss_fn = self.config.loss_func
+
+                import torch
         import torch.distributed as dist
         from torch.autograd import Function
 
@@ -175,89 +213,72 @@ class ColModelTraining:
             """Convenience wrapper to call the custom autograd gather."""
             return AllGatherWithGrad.apply(x)
 
-        
 
-        sampler = DistributedSampler(self.dataset["train"])
-        train_loader = DataLoader(
-            self.dataset["train"],
-            batch_size=self.config.tr_args.per_device_train_batch_size,
-            sampler=sampler,
-            collate_fn=self.collator,  # from colpali_engine.collators
-        )
-
-        if self.config.eval_dataset_loader is not None:
-            eval_loader = DataLoader(
-                self.dataset["validation"],
-                batch_size=self.config.tr_args.per_device_eval_batch_size,
-                collate_fn=self.collator,
-            )
-        else:   
-            eval_loader = None
-            print("No eval dataset provided. Skipping evaluation.")
-
-        # opimizer adam
-        optimizer = torch.optim.AdamW(
-            self.model.parameters(),
-            lr=self.config.tr_args.learning_rate,
-            weight_decay=self.config.tr_args.weight_decay,
-        )
-        # scheduler
-        scheduler = torch.optim.lr_scheduler.StepLR(
-            optimizer,
-            step_size=self.config.tr_args.warmup_steps,
-            gamma=0.1,
-        )
-        loss_fn = self.config.loss_func
-
-        ## start training
-        print("Starting training")
+        # Training loop
         for epoch in range(self.config.tr_args.num_train_epochs):
-            print(f"Epoch {epoch + 1}/{self.config.tr_args.num_train_epochs}")
-            sampler.set_epoch(epoch)
+            if self._is_rank0(): print(f"Epoch {epoch+1}/{self.config.tr_args.num_train_epochs}")
+            if sampler: sampler.set_epoch(epoch)
             self.model.train()
-            for step, batch in enumerate(train_loader):
+
+            loader = train_loader
+            if self._is_rank0():
+                loader = tqdm(train_loader, desc=f"Epoch {epoch+1}", disable=not self._is_rank0())
+
+            for step, batch in enumerate(loader):
                 # Move batch to device
                 batch = {k: v.to(self.model.device) for k, v in batch.items()}
-                # Forward & get embeddings
-                q_embed = self.model(**{"input_ids": batch["query_input_ids"],
-                                "attention_mask": batch["query_attention_mask"]})
-                d_embed = self.model(**{k[4:]: v for k, v in batch.items() if k.startswith("doc_")})
-            
-                # Optionally negative
-                neg_embed = None
-                if "neg_doc_input_ids" in batch:
-                    neg_embed = self.model(**{k[8:]: v for k, v in batch.items() if k.startswith("neg_doc")})
-                # Gather
-                q_global = gather_with_grad(q_embed)
-                d_global = gather_with_grad(d_embed)
-                n_global = gather_with_grad(neg_embed) if neg_embed is not None else None
 
-                                # just at rank 0
-                if self.local_rank == 0:
-                    print(f"Step {step}/{len(train_loader)}")
-                    print(f"Query embedding shape: {q_embed.shape}")
-                    print(f"Document embedding shape: {d_embed.shape}")
-                    if neg_embed is not None:
-                        print(f"Negative document embedding shape: {neg_embed.shape}")
-                    print(f"Negative document embedding shape: {batch['neg_doc_input_ids'].shape}")
-                    print(f"Gathered query embedding shape: {q_global.shape}")
-                    print(f"Gathered document embedding shape: {d_global.shape}")
-                    if neg_embed is not None:
-                        print(f"Gathered negative document embedding shape: {n_global.shape}")
-                    
-                    print(f"Batch size: {batch['query_input_ids'].shape[0]}")
+                # Forward with optional AMP
+                with torch.cuda.amp.autocast(enabled=use_amp):
+                    q_embed = self.model(
+                        input_ids=batch['query_input_ids'],
+                        attention_mask=batch['query_attention_mask']
+                    )
+                    d_embed = self.model(**{k[4:]: v for k, v in batch.items() if k.startswith('doc_')})
+                    neg_embed = None
+                    if 'neg_doc_input_ids' in batch:
+                        neg_embed = self.model(**{k[8:]: v for k, v in batch.items() if k.startswith('neg_doc')})
 
-                    print_gpu_utilization()
+                    # Gather embeddings with autograd
+                    q_global = gather_with_grad(q_embed)
+                    d_global = gather_with_grad(d_embed)
+                    n_global = gather_with_grad(neg_embed) if neg_embed is not None else None
 
-                # Compute loss & backward
-                loss = loss_fn(q_global, d_global) if n_global is None else loss_fn(q_global, d_global, n_global)
-                if self.local_rank == 0:
-                    print(f"Loss: {loss.item()}")
+                    loss = loss_fn(q_global, d_global) if n_global is None else loss_fn(q_global, d_global, n_global)
 
-                loss.backward()
-                optimizer.step()
+                # Backward
+                if use_amp:
+                    scaler.scale(loss).backward()
+                    if max_grad_norm:
+                        scaler.unscale_(optimizer)
+                        torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_grad_norm)
+                    scaler.step(optimizer)
+                    scaler.update()
+                else:
+                    loss.backward()
+                    if max_grad_norm:
+                        torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_grad_norm)
+                    optimizer.step()
                 optimizer.zero_grad()
+
+                if self._is_rank0() and not isinstance(loader, DataLoader):
+                    loader.set_postfix({'loss': loss.item()})
+
             scheduler.step()
+
+            # Optional evaluation
+            if eval_loader and self._is_rank0():
+                self.evaluate(eval_loader)
+
+        # Final actions
+        if self._is_rank0():
+            print("Training complete. Saving model.")
+            self.save()
+            print("Model saved.")
+        if dist.is_initialized():
+            dist.destroy_process_group()
+
+
         
 
     def eval(self) -> None:
