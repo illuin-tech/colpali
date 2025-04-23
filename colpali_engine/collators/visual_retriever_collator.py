@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Union
 
 from PIL.Image import Image
 
-from colpali_engine.data.dataset import Document, IRDataset
+from colpali_engine.data.dataset import ColpaliEngineDataset, Document
 from colpali_engine.models.idefics_2 import ColIdefics2Processor
 from colpali_engine.models.paligemma import ColPaliProcessor
 from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
@@ -22,9 +22,9 @@ class VisualRetrieverCollator:
     """
 
     # Input keys
-    query_key = IRDataset.QUERY_KEY
-    pos_target_key = IRDataset.POS_TARGET_KEY
-    neg_target_key = IRDataset.NEG_TARGET_KEY
+    query_key = ColpaliEngineDataset.QUERY_KEY
+    pos_target_key = ColpaliEngineDataset.POS_TARGET_KEY
+    neg_target_key = ColpaliEngineDataset.NEG_TARGET_KEY
     # Prefixes
     query_prefix = "query_"
     pos_doc_prefix = "doc_"
@@ -127,7 +127,7 @@ if __name__ == "__main__":
     from torch.utils.data import DataLoader
 
     from colpali_engine.data.corpus.local import LocalCorpus
-    from colpali_engine.data.dataset import IRColumn, IRDataset
+    from colpali_engine.data.dataset import ColpaliEngineDataset, IRColumn
     from colpali_engine.models.idefics3 import ColIdefics3Processor
 
     # corpus = LocalCorpus("/home/paulteiletche/VLM2Vec/data/MMEB/MMEB-train/images/VisDial/Train")
@@ -142,7 +142,7 @@ if __name__ == "__main__":
     # )
 
     corpus = LocalCorpus("/home/paulteiletche/VLM2Vec/data/MMEB/MMEB-train/images/MSCOCO_i2t/Train")
-    ds = IRDataset.from_hf(
+    ds = ColpaliEngineDataset.from_hf(
         dataset_name="TIGER-Lab/MMEB-train",
         corpus=corpus,
         query_column=IRColumn("qry_image_path", corpus_column="doc"),

@@ -1,1 +1,1 @@
-from .dataset import IRDataset
+from .dataset import ColpaliEngineDataset

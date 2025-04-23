@@ -9,7 +9,7 @@ from transformers import (
 )
 
 from colpali_engine.collators import VisualRetrieverCollator
-from colpali_engine.data.dataset import IRDataset
+from colpali_engine.data.dataset import ColpaliEngineDataset
 from colpali_engine.loss.late_interaction_losses import (
     ColbertLoss,
 )
@@ -22,7 +22,7 @@ from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 class ColModelTrainingConfig:
     model: Union[PreTrainedModel, PeftModel]
     processor: BaseVisualRetrieverProcessor
-    dataset: Dict[str, IRDataset]
+    dataset: Dict[str, ColpaliEngineDataset]
     tr_args: Optional[TrainingArguments] = None
     output_dir: Optional[str] = None
     max_length: int = 256
@@ -69,7 +69,7 @@ class ColModelTrainingConfig:
             else:
                 print(f"Adapter already loaded from {self.pretrained_peft_model_name_or_path}. Not overwriting.")
 
-        if isinstance(self.dataset, IRDataset):
+        if isinstance(self.dataset, ColpaliEngineDataset):
             self.dataset = {"train": self.dataset}
 
     print_gpu_utilization()
