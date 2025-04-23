@@ -188,6 +188,7 @@ class ColModelTraining:
                 q_embed = self.model(**{"input_ids": batch["query_input_ids"],
                                 "attention_mask": batch["query_attention_mask"]})
                 d_embed = self.model(**{k[4:]: v for k, v in batch.items() if k.startswith("doc_")})
+                breakpoint()
                 # Optionally negative
                 neg_embed = None
                 if "neg_doc_input_ids" in batch:
