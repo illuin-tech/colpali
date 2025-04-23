@@ -2,22 +2,23 @@ import os
 from dataclasses import dataclass
 from typing import Callable, Dict, Optional, Tuple, Union
 
+import torch
+import torch.distributed as dist
 from peft import LoraConfig, PeftModel, get_peft_model
+from torch.autograd import Function
+from torch.nn.parallel import DistributedDataParallel
+from torch.utils.data import DataLoader, DistributedSampler
+from tqdm.auto import tqdm
 from transformers import (
     PreTrainedModel,
     TrainingArguments,
 )
-import torch.distributed as dist
-import torch
-from torch.utils.data import DataLoader
-from torch.utils.data.distributed import DistributedSampler
 
 from colpali_engine.collators import CorpusQueryCollator, VisualRetrieverCollator
 from colpali_engine.loss.late_interaction_losses import (
     ColbertLoss,
 )
-
-from colpali_engine.utils.gpu_stats import print_gpu_utilization, print_summary
+from colpali_engine.utils.gpu_stats import print_gpu_utilization
 from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 
 
@@ -74,13 +75,6 @@ class ColModelTrainingConfig:
     print_gpu_utilization()
 
 
-import os
-import torch
-import torch.distributed as dist
-from torch.nn.parallel import DistributedDataParallel as DDP
-from torch.utils.data import DataLoader, DistributedSampler
-from tqdm.auto import tqdm
-
 class ColModelTraining:
     """
     Class that contains the training and evaluation logic for a ColVision model.
@@ -94,7 +88,8 @@ class ColModelTraining:
 
         # Choose collator based on dataset format
         if isinstance(self.dataset, Tuple):
-            if self._is_rank0(): print("Dataset has BEIR/hard negatives format. Using CorpusQueryCollator.")
+            if self._is_rank0():
+                print("Dataset has BEIR/hard negatives format. Using CorpusQueryCollator.")
             corpus_format = self.dataset[2]
             neg_dataset = self.dataset[1]
             self.dataset = self.dataset[0]
@@ -106,7 +101,8 @@ class ColModelTraining:
                 corpus_format=corpus_format,
             )
         else:
-            if self._is_rank0(): print("Dataset has QA format. Using VisualRetrieverCollator.")
+            if self._is_rank0():
+                print("Dataset has QA format. Using VisualRetrieverCollator.")
             self.collator = VisualRetrieverCollator(
                 processor=self.config.processor,
                 max_length=self.config.max_length,
@@ -114,38 +110,36 @@ class ColModelTraining:
 
         # Initialize distributed if needed
         if dist.is_available() and not dist.is_initialized():
-            dist.init_process_group(
-                backend="nccl",
-                init_method="env://"
-            )
+            dist.init_process_group(backend="nccl", init_method="env://")
         self.local_rank = int(os.environ.get("LOCAL_RANK", 0))
         self.world_size = dist.get_world_size() if dist.is_initialized() else 1
 
         device = torch.device(f"cuda:{self.local_rank}" if torch.cuda.is_available() else "cpu")
         torch.cuda.set_device(device)
         self.model.to(device)
-        self.model = DDP(self.model, device_ids=[self.local_rank], output_device=self.local_rank)
+        self.model = DistributedDataParallel(self.model, device_ids=[self.local_rank], output_device=self.local_rank)
 
         # Gradient checkpointing if supported
-        if getattr(self.config, 'enable_gradient_checkpointing', False):
+        if getattr(self.config, "enable_gradient_checkpointing", False):
             # huggingface models expose this
             try:
                 self.model.module.gradient_checkpointing_enable()
             except Exception:
-                if self._is_rank0(): print("Warning: gradient_checkpointing_enable() not supported by model.")
+                if self._is_rank0():
+                    print("Warning: gradient_checkpointing_enable() not supported by model.")
 
     def _is_rank0(self) -> bool:
         return not dist.is_initialized() or dist.get_rank() == 0
 
     def train(self) -> None:
         # Mixed precision setup
-        use_amp = getattr(self.config, 'use_amp', False)
+        use_amp = getattr(self.config, "use_amp", False)
         scaler = torch.cuda.amp.GradScaler() if use_amp else None
-        max_grad_norm = getattr(self.config.tr_args, 'max_grad_norm', None)
+        max_grad_norm = getattr(self.config.tr_args, "max_grad_norm", None)
 
-        sampler = DistributedSampler(self.dataset['train']) if dist.is_initialized() else None
+        sampler = DistributedSampler(self.dataset["train"]) if dist.is_initialized() else None
         train_loader = DataLoader(
-            self.dataset['train'],
+            self.dataset["train"],
             batch_size=self.config.tr_args.per_device_train_batch_size,
             sampler=sampler,
             collate_fn=self.collator,
@@ -155,7 +149,7 @@ class ColModelTraining:
         eval_loader = None
         if self.config.eval_dataset_loader is not None:
             eval_loader = DataLoader(
-                self.dataset['validation'],
+                self.dataset["validation"],
                 batch_size=self.config.tr_args.per_device_eval_batch_size,
                 collate_fn=self.collator,
             )
@@ -173,10 +167,6 @@ class ColModelTraining:
             gamma=0.1,
         )
         loss_fn = self.config.loss_func
-
-                import torch
-        import torch.distributed as dist
-        from torch.autograd import Function
 
         class AllGatherWithGrad(Function):
             @staticmethod
@@ -213,16 +203,17 @@ class ColModelTraining:
             """Convenience wrapper to call the custom autograd gather."""
             return AllGatherWithGrad.apply(x)
 
-
         # Training loop
         for epoch in range(self.config.tr_args.num_train_epochs):
-            if self._is_rank0(): print(f"Epoch {epoch+1}/{self.config.tr_args.num_train_epochs}")
-            if sampler: sampler.set_epoch(epoch)
+            if self._is_rank0():
+                print(f"Epoch {epoch + 1}/{self.config.tr_args.num_train_epochs}")
+            if sampler:
+                sampler.set_epoch(epoch)
             self.model.train()
 
             loader = train_loader
             if self._is_rank0():
-                loader = tqdm(train_loader, desc=f"Epoch {epoch+1}", disable=not self._is_rank0())
+                loader = tqdm(train_loader, desc=f"Epoch {epoch + 1}", disable=not self._is_rank0())
 
             for step, batch in enumerate(loader):
                 # Move batch to device
@@ -231,13 +222,12 @@ class ColModelTraining:
                 # Forward with optional AMP
                 with torch.cuda.amp.autocast(enabled=use_amp):
                     q_embed = self.model(
-                        input_ids=batch['query_input_ids'],
-                        attention_mask=batch['query_attention_mask']
+                        input_ids=batch["query_input_ids"], attention_mask=batch["query_attention_mask"]
                     )
-                    d_embed = self.model(**{k[4:]: v for k, v in batch.items() if k.startswith('doc_')})
+                    d_embed = self.model(**{k[4:]: v for k, v in batch.items() if k.startswith("doc_")})
                     neg_embed = None
-                    if 'neg_doc_input_ids' in batch:
-                        neg_embed = self.model(**{k[8:]: v for k, v in batch.items() if k.startswith('neg_doc')})
+                    if "neg_doc_input_ids" in batch:
+                        neg_embed = self.model(**{k[8:]: v for k, v in batch.items() if k.startswith("neg_doc")})
 
                     # Gather embeddings with autograd
                     q_global = gather_with_grad(q_embed)
@@ -262,7 +252,7 @@ class ColModelTraining:
                 optimizer.zero_grad()
 
                 if self._is_rank0() and not isinstance(loader, DataLoader):
-                    loader.set_postfix({'loss': loss.item()})
+                    loader.set_postfix({"loss": loss.item()})
 
             scheduler.step()
 
@@ -277,9 +267,6 @@ class ColModelTraining:
             print("Model saved.")
         if dist.is_initialized():
             dist.destroy_process_group()
-
-
-        
 
     def eval(self) -> None:
         raise NotImplementedError("Evaluation is not implemented yet.")
