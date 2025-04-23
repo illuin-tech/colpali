@@ -9,7 +9,7 @@ from transformers import (
 )
 
 from colpali_engine.collators import VisualRetrieverCollator
-from colpali_engine.data.dataset import IRDataset
+from colpali_engine.data.dataset import ColPaliEngineDataset
 from colpali_engine.loss.late_interaction_losses import (
     ColbertLoss,
 )
@@ -22,8 +22,8 @@ from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 class ColModelTrainingConfig:
     model: Union[PreTrainedModel, PeftModel]
     processor: BaseVisualRetrieverProcessor
-    train_dataset: IRDataset
-    eval_dataset: Optional[IRDataset] = None
+    train_dataset: ColPaliEngineDataset
+    eval_dataset: Optional[ColPaliEngineDataset] = None
     tr_args: Optional[TrainingArguments] = None
     output_dir: Optional[str] = None
     max_length: int = 256
