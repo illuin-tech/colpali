@@ -247,10 +247,6 @@ class ColModelTraining:
                     d_global = gather_with_grad(d_embed)
                     n_global = gather_with_grad(neg_embed) if neg_embed is not None else None
 
-                    if self._is_rank0():
-                        breakpoint()
-                    else:
-                        dist.barrier()
                     # loss = loss_fn(q_global, d_global) if n_global is None else loss_fn(q_global, d_global, n_global)
                     loss = loss_fn(q_embed, d_global, offset=(dist.get_rank() * batch["query_input_ids"].shape[0])) if n_global is None else loss_fn(q_embed, d_global, n_global, offset=(dist.get_rank() * batch["query_input_ids"].shape[0]))
 
@@ -260,8 +256,8 @@ class ColModelTraining:
                         print(f"Document embedding shape: {d_embed.shape}")
                         if neg_embed is not None:
                             print(f"Negative document embedding shape: {neg_embed.shape}")
-                        print(f"Negative document embedding shape: {batch['neg_doc_input_ids'].shape}")
-                        print(f"Gathered query embedding shape: {q_global.shape}")
+
+                        # print(f"Gathered query embedding shape: {q_global.shape}")
                         print(f"Gathered document embedding shape: {d_global.shape}")
                         if neg_embed is not None:
                             print(f"Gathered negative document embedding shape: {n_global.shape}")
