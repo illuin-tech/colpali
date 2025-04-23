@@ -186,18 +186,18 @@ class ColModelTraining:
                 batch = {k: v.to(self.model.device) for k, v in batch.items()}
                 # Forward & get embeddings
                 q_embed = self.model(**{"input_ids": batch["query_input_ids"],
-                                "attention_mask": batch["query_attention_mask"]}).embeddings
-                d_embed = self.model(**{k[4:]: v for k, v in batch.items() if k.startswith("doc_")}).embeddings
+                                "attention_mask": batch["query_attention_mask"]})
+                d_embed = self.model(**{k[4:]: v for k, v in batch.items() if k.startswith("doc_")})
                 # Optionally negative
                 neg_embed = None
                 if "neg_doc_input_ids" in batch:
-                    neg_embed = self.model(**{k[8:]: v for k, v in batch.items() if k.startswith("neg_doc")}).embeddings
+                    neg_embed = self.model(**{k[8:]: v for k, v in batch.items() if k.startswith("neg_doc")})
                 # Gather
                 q_global = gather_embeddings(q_embed)
                 d_global = gather_embeddings(d_embed)
                 n_global = gather_embeddings(neg_embed) if neg_embed is not None else None
                 # Compute loss & backward
-                loss = loss_fn(q_global, d_global, n_global)
+                loss = loss_fn(q_global, d_global) if n_global is None else loss_fn(q_global, d_global, n_global)
                 loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()
