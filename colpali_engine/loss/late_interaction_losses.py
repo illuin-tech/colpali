@@ -33,7 +33,9 @@ class ColbertLoss(torch.nn.Module):
             if not (scores >= 0).all().item() or not (scores <= 1).all().item():
                 raise ValueError("Scores must be between 0 and 1 after normalization")
 
-        loss_rowwise = self.ce_loss(scores / self.temperature, torch.arange(scores.shape[0], device=scores.device) + offset)
+        loss_rowwise = self.ce_loss(
+            scores / self.temperature, torch.arange(scores.shape[0], device=scores.device) + offset
+        )
 
         return loss_rowwise
 
@@ -76,7 +78,9 @@ class ColbertNegativeCELoss(torch.nn.Module):
 
                 if not (scores >= 0).all().item() or not (scores <= 1).all().item():
                     raise ValueError("Scores must be between 0 and 1 after normalization")
-            loss += self.ce_loss(scores / self.temperature, torch.arange(scores.shape[0], device=scores.device) + offset)
+            loss += self.ce_loss(
+                scores / self.temperature, torch.arange(scores.shape[0], device=scores.device) + offset
+            )
 
         return loss / 2
 
