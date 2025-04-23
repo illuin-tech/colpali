@@ -20,7 +20,7 @@ class TestColPaliEngineDataset:
         yield ExternalDocumentCorpus(corpus_data=corpus_data)
 
     @pytest.fixture(scope="class")
-    def ir_dataset(self) -> Generator[ColPaliEngineDataset, None, None]:
+    def colpali_engine_dataset(self) -> Generator[ColPaliEngineDataset, None, None]:
         # Mock data for the dataset
         data = [
             {
@@ -33,7 +33,7 @@ class TestColPaliEngineDataset:
         )
 
     @pytest.fixture(scope="class")
-    def ir_dataset_with_negs(self) -> Generator[ColPaliEngineDataset, None, None]:
+    def colpali_engine_with_negs(self) -> Generator[ColPaliEngineDataset, None, None]:
         # Mock data for the dataset
         data = HFDataset.from_list(
             [
@@ -49,7 +49,7 @@ class TestColPaliEngineDataset:
         )
 
     @pytest.fixture(scope="class")
-    def ir_dataset_with_corpus(self, corpus: ColPaliEngineDataset) -> Generator[ColPaliEngineDataset, None, None]:
+    def colpali_engine_with_corpus(self, corpus: ColPaliEngineDataset) -> Generator[ColPaliEngineDataset, None, None]:
         data = [
             {"query": "What is this?", "pos_target": Image.new("RGB", (16, 16), color="red")},
         ]
@@ -58,22 +58,22 @@ class TestColPaliEngineDataset:
             external_document_corpus=corpus,
         )
 
-    def test_ir_dataset_call(self, ir_dataset: ColPaliEngineDataset):
-        result = ir_dataset[0]
+    def test_colpali_engine_call(self, colpali_engine_dataset: ColPaliEngineDataset):
+        result = colpali_engine_dataset[0]
         assert isinstance(result, dict)
         assert ColPaliEngineDataset.QUERY_KEY in result
         assert ColPaliEngineDataset.POS_TARGET_KEY in result
         assert ColPaliEngineDataset.NEG_TARGET_KEY in result and result[ColPaliEngineDataset.NEG_TARGET_KEY] is None
 
-    def test_ir_dataset_call_with_corpus(self, ir_dataset_with_corpus: ColPaliEngineDataset):
-        result = ir_dataset_with_corpus[0]
+    def test_colpali_engine_call_with_corpus(self, colpali_engine_with_corpus: ColPaliEngineDataset):
+        result = colpali_engine_with_corpus[0]
         assert isinstance(result, dict)
         assert ColPaliEngineDataset.QUERY_KEY in result
         assert ColPaliEngineDataset.POS_TARGET_KEY in result
         assert ColPaliEngineDataset.NEG_TARGET_KEY in result and result[ColPaliEngineDataset.NEG_TARGET_KEY] is None
 
-    def test_ir_dataset_call_with_neg_images(self, ir_dataset_with_negs: ColPaliEngineDataset):
-        result = ir_dataset_with_negs[0]
+    def test_colpali_engine_call_with_neg_images(self, colpali_engine_with_negs: ColPaliEngineDataset):
+        result = colpali_engine_with_negs[0]
         assert isinstance(result, dict)
         assert ColPaliEngineDataset.QUERY_KEY in result
         assert ColPaliEngineDataset.POS_TARGET_KEY in result
