@@ -36,8 +36,7 @@ def load_train_set_ir() -> IRDataset:
     print("Dataset size:", len(dataset))
     # filter out queries with "gold_in_top_100" == False
     dataset = dataset.filter(lambda x: x["gold_in_top_100"], num_proc=16)
-    # keep only top 50 negative passages
-    dataset = dataset.map(lambda x: {"negative_passages": x["negative_passages"][:50]})
+    # keep only top 5 negative passages
     print("Dataset size after filtering:", len(dataset))
 
     train_dataset = IRDataset(
@@ -63,11 +62,11 @@ def load_train_set_ir_negs() -> IRDataset:
     # filter out queries with "gold_in_top_100" == False
     dataset = dataset.filter(lambda x: x["gold_in_top_100"], num_proc=16)
     # keep only top 50 negative passages
-    dataset = dataset.map(lambda x: {"negative_passages": x["negative_passages"][:50]})
+    dataset = dataset.map(lambda x: {"negative_passages": x["negative_passages"][:5]})
     print("Dataset size after filtering:", len(dataset))
 
     train_dataset = IRDataset(
-        data=dataset.select(range(500, len(dataset))),
+        data=dataset,
         query_column="query",
         pos_target_column=IRColumn("positive_passages", corpus_column="image"),
         neg_target_column=IRColumn("negative_passages", corpus_column="image"),
