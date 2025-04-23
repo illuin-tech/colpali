@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Union
 
 from PIL.Image import Image
 
-from colpali_engine.data.dataset import Document, IRDataset
+from colpali_engine.data.dataset import ColPaliEngineDataset, Document
 from colpali_engine.models.paligemma import ColPaliProcessor
 from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 
@@ -21,9 +21,9 @@ class VisualRetrieverCollator:
     """
 
     # Input keys
-    query_key = IRDataset.QUERY_KEY
-    pos_target_key = IRDataset.POS_TARGET_KEY
-    neg_target_key = IRDataset.NEG_TARGET_KEY
+    query_key = ColPaliEngineDataset.QUERY_KEY
+    pos_target_key = ColPaliEngineDataset.POS_TARGET_KEY
+    neg_target_key = ColPaliEngineDataset.NEG_TARGET_KEY
     # Prefixes
     query_prefix = "query_"
     pos_doc_prefix = "doc_"

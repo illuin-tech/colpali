@@ -3,8 +3,7 @@ from typing import List, Literal, Tuple, cast
 
 from datasets import Dataset, DatasetDict, concatenate_datasets, load_dataset
 
-from colpali_engine.data.corpus import LocalCorpus, SimpleCorpus
-from colpali_engine.data.dataset import IRColumn, IRDataset
+from colpali_engine.data.dataset import ColPaliEngineDataset, ExternalDocumentCorpus
 
 USE_LOCAL_DATASET = os.environ.get("USE_LOCAL_DATASET", "1") == "1"
 
@@ -24,11 +23,10 @@ def load_train_set() -> DatasetDict:
     return ds_dict
 
 
-def load_train_set_ir() -> IRDataset:
+def load_train_set_ir() -> ColPaliEngineDataset:
     """Returns the query dataset, then the anchor dataset with the documents, then the dataset type"""
-    corpus = SimpleCorpus(
+    corpus = ExternalDocumentCorpus(
         corpus_data=load_dataset("manu/colpali-corpus", split="train"),
-        id_column=None,
     )
 
     dataset = load_dataset("manu/colpali-queries", split="train")
@@ -39,21 +37,18 @@ def load_train_set_ir() -> IRDataset:
     # keep only top 5 negative passages
     print("Dataset size after filtering:", len(dataset))
 
-    train_dataset = IRDataset(
+    train_dataset = ColPaliEngineDataset(
         data=dataset,
-        query_column="query",
-        pos_target_column=IRColumn("positive_passages", corpus_column="image"),
-        corpus=corpus,
+        external_document_corpus=corpus,
     )
 
     return train_dataset
 
 
-def load_train_set_ir_negs() -> IRDataset:
+def load_train_set_ir_negs() -> ColPaliEngineDataset:
     """Returns the query dataset, then the anchor dataset with the documents, then the dataset type"""
-    corpus = SimpleCorpus(
+    corpus = ExternalDocumentCorpus(
         corpus_data=load_dataset("manu/colpali-corpus", split="train"),
-        id_column=None,
     )
 
     dataset = load_dataset("manu/colpali-queries", split="train")
@@ -65,39 +60,20 @@ def load_train_set_ir_negs() -> IRDataset:
     dataset = dataset.map(lambda x: {"negative_passages": x["negative_passages"][:5]})
     print("Dataset size after filtering:", len(dataset))
 
-    train_dataset = IRDataset(
+    train_dataset = ColPaliEngineDataset(
         data=dataset,
         query_column="query",
-        pos_target_column=IRColumn("positive_passages", corpus_column="image"),
-        neg_target_column=IRColumn("negative_passages", corpus_column="image"),
-        corpus=corpus,
+        external_document_corpus=corpus,
     )
 
     return train_dataset
 
 
-def load_mmeb(subset: str, corpus_path: str, type: Literal["t2i", "i2t"], use_negatives: bool = False) -> IRDataset:
-    corpus = LocalCorpus(corpus_path=corpus_path)
-    dataset = load_dataset("TIGER-Lab/MMEB-train", subset, split="original")
-
-    if type == "t2i":
-        query_col = "qry"
-        pos_col = IRColumn("pos_image_path", corpus_column="doc")
-        neg_col = IRColumn("neg_image_path", corpus_column="doc") if use_negatives else None
-    elif type == "i2t":
-        query_col = IRColumn("qry_image_path", corpus_column="doc")
-        pos_col = "pos_text"
-        neg_col = "neg_text" if use_negatives else None
-    else:
-        raise ValueError("type must be either 't2i' or 'i2t'")
-
-    return IRDataset(
-        data=dataset,
-        query_column=query_col,
-        pos_target_column=pos_col,
-        neg_target_column=neg_col,
-        corpus=corpus,
-    )
+def load_mmeb(
+    subset: str, corpus_path: str, type: Literal["t2i", "i2t"], use_negatives: bool = False
+) -> ColPaliEngineDataset:
+    # to be redefined but in the scripts
+    raise NotImplementedError("This function is not implemented yet.")
 
 
 def load_train_set_detailed() -> DatasetDict:
