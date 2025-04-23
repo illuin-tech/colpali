@@ -188,7 +188,19 @@ class ColModelTraining:
                 q_embed = self.model(**{"input_ids": batch["query_input_ids"],
                                 "attention_mask": batch["query_attention_mask"]})
                 d_embed = self.model(**{k[4:]: v for k, v in batch.items() if k.startswith("doc_")})
-                breakpoint()
+                
+                # just at rank 0
+                if self.local_rank == 0:
+                    print(f"Step {step}/{len(train_loader)}")
+                    print(f"Query embedding shape: {q_embed.shape}")
+                    print(f"Document embedding shape: {d_embed.shape}")
+                    print(f"Negative document embedding shape: {batch['neg_doc_input_ids'].shape}")
+                    print_gpu_utilization()
+                
+                    # print(q_embed)
+                    breakpoint()
+                    # Uncomment to debug
+                    #
                 # Optionally negative
                 neg_embed = None
                 if "neg_doc_input_ids" in batch:
