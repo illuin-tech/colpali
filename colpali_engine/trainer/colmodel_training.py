@@ -151,6 +151,10 @@ class ColModelTraining:
             batch_size=self.config.tr_args.per_device_train_batch_size,
             sampler=sampler,
             collate_fn=self.collator,
+            num_workers=self.config.tr_args.dataloader_num_workers,
+            prefetch_factor=2,
+            pin_memory=True,
+            drop_last=True,
         )
 
         # Evaluation loader
@@ -231,7 +235,7 @@ class ColModelTraining:
 
             for step, batch in enumerate(loader):
                 # Move batch to device
-                batch = {k: v.to(self.model.device) for k, v in batch.items()}
+                batch = {k: v.to(self.model.device, non_blocking=True) for k, v in batch.items()}
 
                 # Forward with optional AMP
                 with torch.amp.autocast("cuda", enabled=use_amp):
