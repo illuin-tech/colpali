@@ -136,11 +136,45 @@ class ColModelTraining:
             print("Training with in-batch negatives")
 
         
-        def gather_embeddings(tensor: torch.Tensor) -> torch.Tensor:
-            world_size = dist.get_world_size()
-            tensor_list = [torch.zeros_like(tensor) for _ in range(world_size)]
-            dist.all_gather(tensor_list, tensor)
-            return torch.cat(tensor_list, dim=0)
+        import torch
+        import torch.distributed as dist
+        from torch.autograd import Function
+
+        class AllGatherWithGrad(Function):
+            @staticmethod
+            def forward(ctx, x):
+                """
+                Gathers x from all ranks into one big tensor.
+                """
+                world_size = dist.get_world_size()
+                ctx.batch_size = x.size(0)
+                ctx.world_size = world_size
+                ctx.rank = dist.get_rank()
+
+                # Gather into list
+                x_list = [torch.zeros_like(x) for _ in range(world_size)]
+                dist.all_gather(x_list, x)
+                # Save for backward
+                ctx.save_for_backward()
+                return torch.cat(x_list, dim=0)  # [B * W, D]
+
+            @staticmethod
+            def backward(ctx, grad_output):
+                """
+                Receives gradient of the big gathered tensor,
+                extracts this rank’s slice, and returns it.
+                """
+                b = ctx.batch_size
+                r = ctx.rank
+                start = r * b
+                end = start + b
+                # Only this slice flows back
+                return grad_output[start:end]
+
+        def gather_with_grad(x: torch.Tensor) -> torch.Tensor:
+            """Convenience wrapper to call the custom autograd gather."""
+            return AllGatherWithGrad.apply(x)
+
         
 
         sampler = DistributedSampler(self.dataset["train"])
@@ -194,9 +228,9 @@ class ColModelTraining:
                 if "neg_doc_input_ids" in batch:
                     neg_embed = self.model(**{k[8:]: v for k, v in batch.items() if k.startswith("neg_doc")})
                 # Gather
-                q_global = gather_embeddings(q_embed)
-                d_global = gather_embeddings(d_embed)
-                n_global = gather_embeddings(neg_embed) if neg_embed is not None else None
+                q_global = gather_with_grad(q_embed)
+                d_global = gather_with_grad(d_embed)
+                n_global = gather_with_grad(neg_embed) if neg_embed is not None else None
 
                                 # just at rank 0
                 if self.local_rank == 0:
