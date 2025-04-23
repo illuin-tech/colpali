@@ -96,9 +96,9 @@ class ColPaliEngineDataset(Dataset):
         if self.external_document_corpus is not None:
             return {
                 self.QUERY_KEY: sample["query"],
-                self.POS_TARGET_KEY: self.get_external_documents_from_docid(sample[self.pos_target_column]),
-                self.NEG_TARGET_KEY: self.get_external_documents_from_docid(sample[self.neg_target_column])
-                if self.neg_target_column
+                self.POS_TARGET_KEY: self.get_external_documents_from_docid(sample["pos_target"]),
+                self.NEG_TARGET_KEY: self.get_external_documents_from_docid(sample["neg_target"])
+                if "neg_target" in sample
                 else None,
             }
         return {

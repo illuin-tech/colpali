@@ -52,9 +52,9 @@ class TestColPaliEngineDataset:
 
     @pytest.fixture(scope="class")
     def ir_dataset_with_corpus(self, corpus: ColPaliEngineDataset) -> Generator[ColPaliEngineDataset, None, None]:
-        data = [
+        data = HFDataset.from_list([
             {"query": "What is this?", "pos_target": Image.new("RGB", (16, 16), color="red")},
-        ]
+        ])
         yield ColPaliEngineDataset(
             data=data,
             external_document_corpus=corpus,
