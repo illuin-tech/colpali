@@ -160,9 +160,7 @@ class ColModelTraining:
         else:   
             eval_loader = None
             print("No eval dataset provided. Skipping evaluation.")
-        if self.config.tr_args.gradient_checkpointing:
-            print("Enabling gradient checkpointing")
-            self.model.gradient_checkpointing_enable()
+
         # opimizer adam
         optimizer = torch.optim.AdamW(
             self.model.parameters(),
