@@ -237,14 +237,23 @@ class ColModelTraining:
                     print(f"Step {step}/{len(train_loader)}")
                     print(f"Query embedding shape: {q_embed.shape}")
                     print(f"Document embedding shape: {d_embed.shape}")
+                    if neg_embed is not None:
+                        print(f"Negative document embedding shape: {neg_embed.shape}")
                     print(f"Negative document embedding shape: {batch['neg_doc_input_ids'].shape}")
+                    print(f"Gathered query embedding shape: {q_global.shape}")
+                    print(f"Gathered document embedding shape: {d_global.shape}")
+                    if neg_embed is not None:
+                        print(f"Gathered negative document embedding shape: {n_global.shape}")
+                    
+                    print(f"Batch size: {batch['query_input_ids'].shape[0]}")
+
                     print_gpu_utilization()
 
                 # Compute loss & backward
                 loss = loss_fn(q_global, d_global) if n_global is None else loss_fn(q_global, d_global, n_global)
                 if self.local_rank == 0:
                     print(f"Loss: {loss.item()}")
-                    
+
                 loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()
