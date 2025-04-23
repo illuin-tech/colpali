@@ -107,6 +107,8 @@ class ColModelTraining:
                 processor=self.config.processor,
                 max_length=self.config.max_length,
             )
+        
+        
 
         # Initialize distributed if needed
         if dist.is_available() and not dist.is_initialized():
@@ -119,7 +121,6 @@ class ColModelTraining:
         device = torch.device(f"cuda:{self.local_rank}" if torch.cuda.is_available() else "cpu")
         torch.cuda.set_device(device)
         self.model.to(device)
-        self.model = DistributedDataParallel(self.model, device_ids=[self.local_rank], output_device=self.local_rank)
 
         # Gradient checkpointing if supported
         if getattr(self.config.tr_args, "gradient_checkpointing", False):
@@ -132,6 +133,9 @@ class ColModelTraining:
                 if self._is_rank0():
                     print("Warning: gradient_checkpointing_enable() not supported by model.")
                     print(e)
+                    
+        self.model = DistributedDataParallel(self.model, device_ids=[self.local_rank], output_device=self.local_rank)
+
 
     def _is_rank0(self) -> bool:
         return not dist.is_initialized() or dist.get_rank() == 0
