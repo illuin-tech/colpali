@@ -3,30 +3,30 @@ from typing import Generator
 import pytest
 from PIL import Image
 
-from colpali_engine.data.corpus import SimpleCorpus
-from colpali_engine.data.dataset import IRColumn, ColPaliEngineDataset
+from colpali_engine.data.dataset import ColPaliEngineDataset, ExternalDocumentCorpus
 
 
 class TestColPaliEngineDataset:
     @pytest.fixture(scope="class")
-    def corpus(self) -> Generator[SimpleCorpus, None, None]:
+    def corpus(self) -> Generator[ExternalDocumentCorpus, None, None]:
         # Mock data for the corpus
         corpus_data = [
             {"doc": Image.new("RGB", (16, 16), color="red")},
             {"doc": Image.new("RGB", (16, 16), color="blue")},
         ]
-        yield SimpleCorpus(corpus_data=corpus_data, id_column=None)
+        yield ExternalDocumentCorpus(corpus_data=corpus_data)
 
     @pytest.fixture(scope="class")
     def ir_dataset(self) -> Generator[ColPaliEngineDataset, None, None]:
         # Mock data for the dataset
         data = [
-            {"query": "What is this?", "image": Image.new("RGB", (16, 16), color="red")},
+            {
+                ColPaliEngineDataset.QUERY_KEY: "What is this?",
+                ColPaliEngineDataset.POS_TARGET_KEY: Image.new("RGB", (16, 16), color="red"),
+            },
         ]
         yield ColPaliEngineDataset(
             data=data,
-            query_column="query",
-            pos_target_column="image",
         )
 
     @pytest.fixture(scope="class")
@@ -35,27 +35,22 @@ class TestColPaliEngineDataset:
         data = [
             {
                 "query": "What is this?",
-                "image": Image.new("RGB", (16, 16), color="red"),
-                "neg_image": Image.new("RGB", (16, 16), color="blue"),
+                "pos_target": Image.new("RGB", (16, 16), color="red"),
+                "neg_target": Image.new("RGB", (16, 16), color="blue"),
             },
         ]
         yield ColPaliEngineDataset(
             data=data,
-            query_column="query",
-            pos_target_column="image",
-            neg_target_column="neg_image",
         )
 
     @pytest.fixture(scope="class")
     def ir_dataset_with_corpus(self, corpus: ColPaliEngineDataset) -> Generator[ColPaliEngineDataset, None, None]:
         data = [
-            {"query": "What is this?", "image": Image.new("RGB", (16, 16), color="red")},
+            {"query": "What is this?", "pos_target": Image.new("RGB", (16, 16), color="red")},
         ]
         yield ColPaliEngineDataset(
             data=data,
-            query_column="query",
-            pos_target_column=IRColumn("image", corpus_column="doc"),
-            corpus=corpus,
+            external_document_corpus=corpus,
         )
 
     def test_ir_dataset_call(self, ir_dataset: ColPaliEngineDataset):
