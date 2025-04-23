@@ -67,9 +67,6 @@ class ColPaliEngineDataset(Dataset):
         self,
         data: List[Dict[str, Any]],
         external_document_corpus: Optional[ExternalDocumentCorpus] = None,
-        retrieve_query: bool = False,
-        retrieve_pos_target: bool = False,
-        retrieve_neg_target: bool = False,
     ):
         """
         Initialize the dataset with the provided data and external document corpus.
@@ -81,9 +78,6 @@ class ColPaliEngineDataset(Dataset):
         """
         self.data = data
         self.external_document_corpus = external_document_corpus
-        self.retrieve_query = retrieve_query
-        self.retrieve_pos_target = retrieve_pos_target
-        self.retrieve_neg_target = retrieve_neg_target
 
         assert isinstance(
             self.data,
@@ -100,15 +94,21 @@ class ColPaliEngineDataset(Dataset):
     def __getitem__(self, idx: int) -> Dict[str, Any]:
         sample = self.data[idx]
 
-        def collate(value, should_retrieve):
-            return self.get_external_documents_from_docid(value) if should_retrieve else value
+        if self.external_document_corpus is not None:
+            return {
+                self.QUERY_KEY: sample[self.QUERY_KEY],
+                self.POS_TARGET_KEY: self.get_external_documents_from_docid(sample[self.POS_TARGET_KEY]),
+                self.NEG_TARGET_KEY: (
+                    self.get_external_documents_from_docid(sample[self.NEG_TARGET_KEY])
+                    if self.NEG_TARGET_KEY in sample
+                    else None
+                ),
+            }
 
         return {
-            self.QUERY_KEY: collate(sample[self.QUERY_KEY], self.retrieve_query),
-            self.POS_TARGET_KEY: collate(sample[self.POS_TARGET_KEY], self.retrieve_pos_target),
-            self.NEG_TARGET_KEY: collate(sample[self.NEG_TARGET_KEY], self.retrieve_neg_target)
-            if self.NEG_TARGET_KEY in sample
-            else None,
+            self.QUERY_KEY: sample[self.QUERY_KEY],
+            self.POS_TARGET_KEY: sample[self.POS_TARGET_KEY],
+            self.NEG_TARGET_KEY: sample[self.NEG_TARGET_KEY] if self.NEG_TARGET_KEY in sample else None,
         }
 
     def get_external_documents_from_docid(self, doc_ids) -> List[Document]:
