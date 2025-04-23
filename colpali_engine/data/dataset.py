@@ -22,6 +22,11 @@ class ExternalDocumentCorpus:
         self.corpus_data = corpus_data
         self.docid_to_idx_mapping = docid_to_idx_mapping
 
+        assert isinstance(
+            self.corpus_data,
+            (HFDataset),
+        ), "Corpus data must be a Hugging Face Dataset"
+
     def __len__(self) -> int:
         """
         Return the number of docs in the corpus.
@@ -72,13 +77,6 @@ class ColPaliEngineDataset(Dataset):
             self.data,
             (HFDataset),
         ), "Data must be a Hugging Face Dataset"
-        assert (
-            isinstance(
-                self.external_document_corpus,
-                (HFDataset),
-            )
-            or self.external_document_corpus is None
-        ), "Corpus must be a Hugging Face Dataset"
 
     def __len__(self) -> int:
         """Return the number of samples in the dataset."""
