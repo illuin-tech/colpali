@@ -122,7 +122,7 @@ class ColModelTraining:
         self.model = DistributedDataParallel(self.model, device_ids=[self.local_rank], output_device=self.local_rank)
 
         # Gradient checkpointing if supported
-        if getattr(self.config, "gradient_checkpointing", False):
+        if getattr(self.config.tr_args, "gradient_checkpointing", False):
             # huggingface models expose this
             try:
                 self.model.gradient_checkpointing_enable()
@@ -165,11 +165,15 @@ class ColModelTraining:
             lr=self.config.tr_args.learning_rate,
             weight_decay=self.config.tr_args.weight_decay,
         )
-        scheduler = torch.optim.lr_scheduler.StepLR(
-            optimizer,
-            step_size=self.config.tr_args.warmup_steps,
-            gamma=0.1,
-        )
+        num_training_steps = self.config.tr_args.num_train_epochs * len(train_loader)
+        warmup_steps = self.config.tr_args.warmup_steps
+        def lr_lambda(current_step):
+            if current_step < warmup_steps:
+                return float(current_step) / float(max(1, warmup_steps))
+            progress = float(current_step - warmup_steps) / float(max(1, num_training_steps - warmup_steps))
+            return max(0.1, 1.0 - (1.0 - 0.1) * progress)
+        scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
+
         loss_fn = self.config.loss_func
 
         class AllGatherWithGrad(Function):
@@ -275,12 +279,14 @@ class ColModelTraining:
                     if max_grad_norm:
                         torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_grad_norm)
                     optimizer.step()
+
+                scheduler.step()
                 optimizer.zero_grad()
 
                 if self._is_rank0() and not isinstance(loader, DataLoader):
                     loader.set_postfix({"loss": loss.item()})
 
-            scheduler.step()
+            
 
             # Optional evaluation
             if eval_loader and self._is_rank0():
