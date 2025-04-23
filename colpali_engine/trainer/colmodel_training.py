@@ -107,8 +107,6 @@ class ColModelTraining:
                 processor=self.config.processor,
                 max_length=self.config.max_length,
             )
-        
-        
 
         # Initialize distributed if needed
         if dist.is_available() and not dist.is_initialized():
@@ -126,7 +124,9 @@ class ColModelTraining:
         if getattr(self.config.tr_args, "gradient_checkpointing", False):
             # huggingface models expose this
             try:
-                self.model.gradient_checkpointing_enable(gradient_checkpointing_kwargs=self.config.tr_args.gradient_checkpointing_kwargs)
+                self.model.gradient_checkpointing_enable(
+                    gradient_checkpointing_kwargs=self.config.tr_args.gradient_checkpointing_kwargs
+                )
                 if self._is_rank0():
                     print("Gradient checkpointing enabled.")
             except Exception as e:
@@ -135,7 +135,6 @@ class ColModelTraining:
                     print(e)
 
         self.model = DistributedDataParallel(self.model, device_ids=[self.local_rank], output_device=self.local_rank)
-
 
     def _is_rank0(self) -> bool:
         return not dist.is_initialized() or dist.get_rank() == 0
@@ -172,11 +171,13 @@ class ColModelTraining:
         )
         num_training_steps = self.config.tr_args.num_train_epochs * len(train_loader)
         warmup_steps = self.config.tr_args.warmup_steps
+
         def lr_lambda(current_step):
             if current_step < warmup_steps:
                 return float(current_step) / float(max(1, warmup_steps))
             progress = float(current_step - warmup_steps) / float(max(1, num_training_steps - warmup_steps))
             return max(0.1, 1.0 - (1.0 - 0.1) * progress)
+
         scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
 
         loss_fn = self.config.loss_func
@@ -248,7 +249,13 @@ class ColModelTraining:
                     n_global = gather_with_grad(neg_embed) if neg_embed is not None else None
 
                     # loss = loss_fn(q_global, d_global) if n_global is None else loss_fn(q_global, d_global, n_global)
-                    loss = loss_fn(q_embed, d_global, offset=(dist.get_rank() * batch["query_input_ids"].shape[0])) if n_global is None else loss_fn(q_embed, d_global, n_global, offset=(dist.get_rank() * batch["query_input_ids"].shape[0]))
+                    loss = (
+                        loss_fn(q_embed, d_global, offset=(dist.get_rank() * batch["query_input_ids"].shape[0]))
+                        if n_global is None
+                        else loss_fn(
+                            q_embed, d_global, n_global, offset=(dist.get_rank() * batch["query_input_ids"].shape[0])
+                        )
+                    )
 
                     if self._is_rank0() and step % 10 == 0:
                         print(f"Step {step}/{len(train_loader)}")
@@ -261,7 +268,7 @@ class ColModelTraining:
                         print(f"Gathered document embedding shape: {d_global.shape}")
                         if neg_embed is not None:
                             print(f"Gathered negative document embedding shape: {n_global.shape}")
-                        
+
                         print(f"Batch size: {batch['query_input_ids'].shape[0]}")
 
                         print_gpu_utilization()
@@ -270,7 +277,6 @@ class ColModelTraining:
                         print(f"Epoch: {epoch + 1}/{self.config.tr_args.num_train_epochs}")
                         print(f"Step: {step}/{len(train_loader)}")
                         print(f"World size: {dist.get_world_size()}")
-                     
 
                 # Backward
                 if use_amp:
@@ -291,8 +297,6 @@ class ColModelTraining:
 
                 if self._is_rank0() and not isinstance(loader, DataLoader):
                     loader.set_postfix({"loss": loss.item()})
-
-            
 
             # Optional evaluation
             if eval_loader and self._is_rank0():
