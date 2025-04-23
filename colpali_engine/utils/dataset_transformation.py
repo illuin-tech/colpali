@@ -16,30 +16,36 @@ def add_metadata_column(dataset, column_name, value):
     return dataset.map(add_source)
 
 
-def load_train_set() -> DatasetDict:
-    ds_path = "colpali_train_set"
-    base_path = "./data_dir/" if USE_LOCAL_DATASET else "vidore/"
-    ds_dict = cast(DatasetDict, load_dataset(base_path + ds_path))
-    return ds_dict
+def load_train_set() -> ColPaliEngineDataset:
+    dataset = load_dataset("vidore/colpali_train_set", split="train")
+    dataset = dataset.rename_column("image", "pos_target")
+
+    train_dataset = ColPaliEngineDataset(
+        data=dataset,
+    )
+
+    return train_dataset
 
 
 def load_train_set_ir() -> ColPaliEngineDataset:
     """Returns the query dataset, then the anchor dataset with the documents, then the dataset type"""
-    corpus = ExternalDocumentCorpus(
-        corpus_data=load_dataset("manu/colpali-corpus", split="train"),
-    )
+    corpus_data = load_dataset("manu/colpali-corpus", split="train")
+    corpus_data = corpus_data.rename_column("image", "doc")
+    corpus = ExternalDocumentCorpus(corpus_data=corpus_data)
 
     dataset = load_dataset("manu/colpali-queries", split="train")
+    dataset = dataset.rename_column("positive_passages", "pos_target")
+    dataset = dataset.rename_column("negative_passages", "neg_target")
 
     print("Dataset size:", len(dataset))
     # filter out queries with "gold_in_top_100" == False
     dataset = dataset.filter(lambda x: x["gold_in_top_100"], num_proc=16)
-    # keep only top 5 negative passages
     print("Dataset size after filtering:", len(dataset))
 
     train_dataset = ColPaliEngineDataset(
         data=dataset,
         external_document_corpus=corpus,
+        retrieve_pos_target=True,
     )
 
     return train_dataset
@@ -47,23 +53,25 @@ def load_train_set_ir() -> ColPaliEngineDataset:
 
 def load_train_set_ir_negs() -> ColPaliEngineDataset:
     """Returns the query dataset, then the anchor dataset with the documents, then the dataset type"""
-    corpus = ExternalDocumentCorpus(
-        corpus_data=load_dataset("manu/colpali-corpus", split="train"),
-    )
+    corpus_data = load_dataset("manu/colpali-corpus", split="train")
+    corpus_data = corpus_data.rename_column("image", "doc")
+    corpus = ExternalDocumentCorpus(corpus_data=corpus_data)
 
     dataset = load_dataset("manu/colpali-queries", split="train")
-
     print("Dataset size:", len(dataset))
     # filter out queries with "gold_in_top_100" == False
     dataset = dataset.filter(lambda x: x["gold_in_top_100"], num_proc=16)
-    # keep only top 50 negative passages
+    # keep only top 5 negative passages
     dataset = dataset.map(lambda x: {"negative_passages": x["negative_passages"][:5]})
     print("Dataset size after filtering:", len(dataset))
+    dataset = dataset.rename_column("positive_passages", "pos_target")
+    dataset = dataset.rename_column("negative_passages", "neg_target")
 
     train_dataset = ColPaliEngineDataset(
         data=dataset,
-        query_column="query",
         external_document_corpus=corpus,
+        retrieve_pos_target=True,
+        retrieve_neg_target=True,
     )
 
     return train_dataset

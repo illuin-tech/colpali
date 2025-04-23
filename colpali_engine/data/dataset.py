@@ -4,6 +4,7 @@ from datasets import Dataset as HFDataset
 from PIL.Image import Image
 from torch.utils.data import Dataset
 
+Document = Union[str, Image]
 
 class ExternalDocumentCorpus:
     """
@@ -27,6 +28,9 @@ class ExternalDocumentCorpus:
             (HFDataset),
         ), "Corpus data must be a Hugging Face Dataset"
 
+        assert "doc" in self.corpus_data.column_names, \
+                f"Corpus data must contain a 'doc' column. Got: {self.corpus_data.column_names}"
+
     def __len__(self) -> int:
         """
         Return the number of docs in the corpus.
@@ -36,7 +40,7 @@ class ExternalDocumentCorpus:
         """
         return len(self.corpus_data)
 
-    def retrieve(self, docid: Any) -> Dict[str, Any]:
+    def retrieve(self, docid: Any) -> Document:
         """
         Get the corpus row from the given Doc ID.
 
@@ -44,11 +48,11 @@ class ExternalDocumentCorpus:
             docid (str): The id of the document.
 
         Returns:
-            Dict[str, Any]: The row corresponding to the Doc ID.
+            Document: The document retrieved from the corpus.
         """
         if self.docid_to_idx_mapping is not None:
-            return self.corpus_data[self.docid_to_idx.get(docid)]
-        return self.corpus_data[docid]
+            return self.corpus_data[self.docid_to_idx_mapping.get(docid)]["doc"]
+        return self.corpus_data[docid]["doc"]
 
 
 class ColPaliEngineDataset(Dataset):
@@ -61,9 +65,12 @@ class ColPaliEngineDataset(Dataset):
         self,
         data: HFDataset,
         external_document_corpus: Optional[ExternalDocumentCorpus] = None,
+        retrieve_query: bool = False,
+        retrieve_pos_target: bool = False,
+        retrieve_neg_target: bool = False,
     ):
         """
-        This class is meant to be overridden by the user to handle their own dataset.
+        Initialize the dataset with the provided data and external document corpus.
 
         Args:
             data (Dict[str, List[Any]]): A dictionary containing the dataset samples.
@@ -72,48 +79,43 @@ class ColPaliEngineDataset(Dataset):
         """
         self.data = data
         self.external_document_corpus = external_document_corpus
+        self.retrieve_query = retrieve_query
+        self.retrieve_pos_target = retrieve_pos_target
+        self.retrieve_neg_target = retrieve_neg_target
 
         assert isinstance(
             self.data,
             (HFDataset),
         ), "Data must be a Hugging Face Dataset"
 
+        assert self.QUERY_KEY in self.data.column_names, f"Data must contain a {self.QUERY_KEY} column"
+        assert self.POS_TARGET_KEY in self.data.column_names, f"Data must contain a {self.POS_TARGET_KEY} column"
+
     def __len__(self) -> int:
         """Return the number of samples in the dataset."""
         return len(self.data)
 
     def __getitem__(self, idx: int) -> Dict[str, Any]:
-        """Return a single sample from the dataset.
-
-        Args:
-            idx (int): The index of the sample to retrieve.
-
-        Returns:
-            Dict[str, Any]: The sample at the specified index.
-        """
         sample = self.data[idx]
 
-        if self.external_document_corpus is not None:
-            return {
-                self.QUERY_KEY: sample["query"],
-                self.POS_TARGET_KEY: self.get_external_documents_from_docid(sample[self.pos_target_column]),
-                self.NEG_TARGET_KEY: self.get_external_documents_from_docid(sample[self.neg_target_column])
-                if self.neg_target_column
-                else None,
-            }
+        def collate(value, should_retrieve):
+            return self.get_external_documents_from_docid(value) if should_retrieve else value
+
         return {
-            self.QUERY_KEY: sample["query"],
-            self.POS_TARGET_KEY: sample["pos_target"],
-            self.NEG_TARGET_KEY: sample["neg_target"] if "neg_target" in sample else None,
+            self.QUERY_KEY: collate(sample[self.QUERY_KEY], self.retrieve_query),
+            self.POS_TARGET_KEY: collate(sample[self.POS_TARGET_KEY], self.retrieve_pos_target),
+            self.NEG_TARGET_KEY: collate(sample[self.NEG_TARGET_KEY], self.retrieve_neg_target)\
+                                 if self.NEG_TARGET_KEY in sample else None,
         }
 
-    def get_external_documents_from_docid(self, doc_ids) -> List[Union[str, Image]]:
+
+    def get_external_documents_from_docid(self, doc_ids) -> List[Document]:
         """
         Get the documents from the external corpus using the document ID.
         Args:
             doc_id (str): The document ID to retrieve.
         Returns:
-            List[Union[str, Image]]: The documents retrieved from the external corpus.
+            List[Document]: The documents retrieved from the external corpus.
         """
 
         if not isinstance(doc_ids, list):

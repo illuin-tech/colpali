@@ -1,1 +1,1 @@
-from .dataset import ColPaliEngineDataset
+from .dataset import ColPaliEngineDataset, ExternalDocumentCorpus
