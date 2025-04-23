@@ -105,10 +105,11 @@ class ColModelTraining:
             )
         
         def init_distributed():
-            dist.init_process_group(
-                backend="nccl",
-                init_method="env://",    # set MASTER_ADDR, MASTER_PORT externally
-            )
+            if not dist.is_initialized():
+                dist.init_process_group(
+                    backend="nccl",
+                    init_method="env://",    # set MASTER_ADDR, MASTER_PORT externally
+                )
             local_rank = int(os.environ["LOCAL_RANK"])
             torch.cuda.set_device(local_rank)
             device = torch.device(f"cuda:{local_rank}")
