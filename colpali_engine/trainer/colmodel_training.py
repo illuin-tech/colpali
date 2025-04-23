@@ -233,7 +233,7 @@ class ColModelTraining:
                 batch = {k: v.to(self.model.device) for k, v in batch.items()}
 
                 # Forward with optional AMP
-                with torch.cuda.amp.autocast(enabled=use_amp):
+                with torch.amp.autocast("cuda", enabled=use_amp):
                     q_embed = self.model(
                         input_ids=batch["query_input_ids"], attention_mask=batch["query_attention_mask"]
                     )

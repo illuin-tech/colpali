@@ -6,7 +6,7 @@ import torch
 from peft import LoraConfig
 from transformers import TrainingArguments
 
-from colpali_engine.loss.bi_encoder_losses import BiNegativeCELoss
+from colpali_engine.loss.bi_encoder_losses import BiNegativeCELoss, BiEncoderLoss
 from colpali_engine.models import BiQwen2, BiQwen2Processor
 from colpali_engine.trainer.colmodel_training import ColModelTraining, ColModelTrainingConfig
 from colpali_engine.utils.dataset_transformation import load_train_set_ir_negs
@@ -25,15 +25,15 @@ config = ColModelTrainingConfig(
     dataset_loading_func=load_train_set_ir_negs,
     eval_dataset_loader=None,
     run_eval=True,
-    loss_func=BiNegativeCELoss(in_batch_term=True),
+    loss_func=BiEncoderLoss(), # BiNegativeCELoss(in_batch_term=True),
     tr_args=TrainingArguments(
         output_dir=None,
         overwrite_output_dir=True,
         num_train_epochs=5,
-        per_device_train_batch_size=64,
+        per_device_train_batch_size=128,
         gradient_checkpointing=True,
         gradient_checkpointing_kwargs={"use_reentrant": False},
-        per_device_eval_batch_size=64,
+        per_device_eval_batch_size=16,
         eval_strategy="steps",
         dataloader_num_workers=8,
         save_steps=500,

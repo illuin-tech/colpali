@@ -17,14 +17,15 @@ class BiEncoderLoss(torch.nn.Module):
         if not temperature > 0:
             raise ValueError("Temperature must be strictly positive")
 
-    def forward(self, query_embeddings, doc_embeddings):
+    def forward(self, query_embeddings, doc_embeddings, offset: int=0):
         """
         query_embeddings: (batch_size, dim)
         doc_embeddings: (batch_size, dim)
+        offset: The offset to use for the loss. This is useful in cross-gpu tasks when there are more docs than queries.
         """
 
         scores = torch.einsum("bd,cd->bc", query_embeddings, doc_embeddings)
-        loss_rowwise = self.ce_loss(scores / self.temperature, torch.arange(scores.shape[0], device=scores.device))
+        loss_rowwise = self.ce_loss(scores / self.temperature, torch.arange(scores.shape[0], device=scores.device) + offset)
 
         return loss_rowwise
 
@@ -46,11 +47,12 @@ class BiNegativeCELoss(torch.nn.Module):
             raise ValueError("Temperature must be strictly positive")
         self.in_batch_term = in_batch_term
 
-    def forward(self, query_embeddings, doc_embeddings, neg_doc_embeddings):
+    def forward(self, query_embeddings, doc_embeddings, neg_doc_embeddings, offset: int=0):
         """
         query_embeddings: (batch_size, dim)
         doc_embeddings: (batch_size, dim)
         neg_doc_embeddings: (batch_size, dim)
+        offset: The offset to use for the loss. This is useful in cross-gpu tasks when there are more docs than queries.
         """
 
         # Compute the ColBERT scores
@@ -61,7 +63,7 @@ class BiNegativeCELoss(torch.nn.Module):
 
         if self.in_batch_term:
             scores = torch.einsum("bd,cd->bc", query_embeddings, doc_embeddings)
-            loss += self.ce_loss(scores / self.temperature, torch.arange(scores.shape[0], device=scores.device))
+            loss += self.ce_loss(scores / self.temperature, torch.arange(scores.shape[0], device=scores.device) + offset)
 
         return loss / 2
 
