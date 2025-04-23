@@ -208,6 +208,9 @@ class ColModelTraining:
                 
                     # print(q_embed)
                     breakpoint()
+                else:
+                    # wait forever
+                    dist.barrier()
 
                 # Compute loss & backward
                 loss = loss_fn(q_global, d_global) if n_global is None else loss_fn(q_global, d_global, n_global)
