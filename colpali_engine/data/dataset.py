@@ -8,11 +8,11 @@ from torch.utils.data import Dataset
 class ExternalDocumentCorpus:
     """
     Corpus class for handling retrieving with simple mapping.
+    This class is meant to be overridden by the user to handle their own corpus.
 
     Args:
         corpus_data (List[Dict[str, Any]]): List of dictionaries containing doc data.
-        doc_column (str): The key in the dictionary that contains the doc data.
-        id_column (Optional[str]): Doc ID's entry key. Defaults to None for corpus index as the ID.
+        docid_to_idx_mapping (Optional[Dict[str, int]]): Optional mapping from doc IDs to indices.
     """
 
     def __init__(self, corpus_data: HFDataset, docid_to_idx_mapping: Optional[Dict[str, int]] = None):
@@ -58,7 +58,7 @@ class ColPaliEngineDataset(Dataset):
         external_document_corpus: Optional[ExternalDocumentCorpus] = None,
     ):
         """
-        Override the dataset class to handle your datasets.
+        This class is meant to be overridden by the user to handle their own dataset.
 
         Args:
             data (Dict[str, List[Any]]): A dictionary containing the dataset samples.
@@ -70,15 +70,15 @@ class ColPaliEngineDataset(Dataset):
 
         assert isinstance(
             self.data,
-            (HFDataset, Dataset),
-        ), "Data must be a Hugging Face Dataset or PyTorch Dataset"
+            (HFDataset),
+        ), "Data must be a Hugging Face Dataset"
         assert (
             isinstance(
                 self.external_document_corpus,
-                (HFDataset, Dataset),
+                (HFDataset),
             )
             or self.external_document_corpus is None
-        ), "Corpus must be a Hugging Face Dataset or PyTorch Dataset"
+        ), "Corpus must be a Hugging Face Dataset"
 
     def __len__(self) -> int:
         """Return the number of samples in the dataset."""
