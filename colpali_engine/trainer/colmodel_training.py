@@ -262,6 +262,7 @@ class ColModelTraining:
                     )
 
                     if self._is_rank0() and step % 10 == 0:
+                        breakpoint()
                         print(f"Step {step}/{len(train_loader)}")
                         print(f"Query embedding shape: {q_embed.shape}")
                         print(f"Document embedding shape: {d_embed.shape}")
