@@ -252,6 +252,9 @@ class ColModelTraining:
                     d_global = gather_with_grad(d_embed)
                     n_global = gather_with_grad(neg_embed) if neg_embed is not None else None
 
+                    if self._is_rank0():
+                        breakpoint()
+
                     # loss = loss_fn(q_global, d_global) if n_global is None else loss_fn(q_global, d_global, n_global)
                     loss = (
                         loss_fn(q_embed, d_global, offset=(dist.get_rank() * batch["query_input_ids"].shape[0]))
@@ -262,7 +265,6 @@ class ColModelTraining:
                     )
 
                     if self._is_rank0() and step % 10 == 0:
-                        breakpoint()
                         print(f"Step {step}/{len(train_loader)}")
                         print(f"Query embedding shape: {q_embed.shape}")
                         print(f"Document embedding shape: {d_embed.shape}")
