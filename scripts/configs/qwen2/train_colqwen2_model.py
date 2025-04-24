@@ -22,7 +22,7 @@ config = ColModelTrainingConfig(
         use_cache=False,
         attn_implementation="flash_attention_2",
     ),
-    dataset_loading_func=load_train_set_ir_negs,
+    dataset_loading_func=load_train_set,
     eval_dataset_loader=None,
     run_eval=True,
     loss_func=ColbertLoss(normalize_scores=True),
