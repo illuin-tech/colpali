@@ -254,6 +254,8 @@ class ColModelTraining:
 
                     if self._is_rank0():
                         breakpoint()
+                    else:
+                        dist.barrier()
 
                     # loss = loss_fn(q_global, d_global) if n_global is None else loss_fn(q_global, d_global, n_global)
                     loss = (
