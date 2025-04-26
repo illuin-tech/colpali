@@ -282,13 +282,6 @@ class ColModelTraining:
                     n_global = gather_with_grad(neg_embed) if neg_embed is not None else None
 
 
-
-                    if step % 10 == 1:
-                        if self._is_rank0():
-                            breakpoint()
-                        else:
-                            dist.barrier()
-
                     # loss = loss_fn(q_global, d_global) if n_global is None else loss_fn(q_global, d_global, n_global)
                     loss = (
                         loss_fn(q_embed, d_global, offset=(dist.get_rank() * batch["query_input_ids"].shape[0]))
