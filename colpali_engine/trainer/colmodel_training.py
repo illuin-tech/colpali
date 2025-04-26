@@ -297,27 +297,6 @@ class ColModelTraining:
                         )
                     )
 
-                    if self._is_rank0() and step % 10 == 0:
-                        print(f"Step {step}/{len(train_loader)}")
-                        print(f"Query embedding shape: {q_embed.shape}")
-                        print(f"Document embedding shape: {d_embed.shape}")
-                        if neg_embed is not None:
-                            print(f"Negative document embedding shape: {neg_embed.shape}")
-
-                        # print(f"Gathered query embedding shape: {q_global.shape}")
-                        print(f"Gathered document embedding shape: {d_global.shape}")
-                        if neg_embed is not None:
-                            print(f"Gathered negative document embedding shape: {n_global.shape}")
-
-                        print(f"Batch size: {batch['query_input_ids'].shape[0]}")
-
-                        print_gpu_utilization()
-                        print(f"Loss: {loss.item()}")
-                        print(f"Learning rate: {optimizer.param_groups[0]['lr']}")
-                        print(f"Epoch: {epoch + 1}/{self.config.tr_args.num_train_epochs}")
-                        print(f"Step: {step}/{len(train_loader)}")
-                        print(f"World size: {dist.get_world_size()}")
-
                 # Backward
                 if use_amp:
                     scaler.scale(loss).backward()
@@ -337,6 +316,32 @@ class ColModelTraining:
 
                 if self._is_rank0() and not isinstance(loader, DataLoader):
                     loader.set_postfix({"loss": loss.item()})
+                
+                if self._is_rank0() and step % 10 == 0:
+                    print(f"Step {step}/{len(train_loader)}")
+                    print(f"Query embedding shape: {q_embed.shape}")
+                    print(f"Document embedding shape: {d_embed.shape}")
+                    if neg_embed is not None:
+                        print(f"Negative document embedding shape: {neg_embed.shape}")
+
+                    # print(f"Gathered query embedding shape: {q_global.shape}")
+                    print(f"Gathered document embedding shape: {d_global.shape}")
+                    if neg_embed is not None:
+                        print(f"Gathered negative document embedding shape: {n_global.shape}")
+
+                    print(f"Batch size: {batch['query_input_ids'].shape[0]}")
+
+                    print_gpu_utilization()
+                    print(f"Local loss: {loss.item()}")
+                    print(f"Learning rate: {optimizer.param_groups[0]['lr']}")
+                    print(f"Epoch: {epoch + 1}/{self.config.tr_args.num_train_epochs}")
+                    print(f"Step: {step}/{len(train_loader)}")
+                    print(f"World size: {dist.get_world_size()}")
+                    with torch.no_grad():
+                        avg_loss = loss.detach()
+                        dist.all_reduce(avg_loss, op=dist.ReduceOp.SUM)
+                        avg_loss /= dist.get_world_size()
+                        print(f"Local loss: {avg_loss.item()}")
 
             # Optional evaluation
             if eval_loader and self._is_rank0():

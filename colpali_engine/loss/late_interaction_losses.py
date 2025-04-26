@@ -38,8 +38,7 @@ class ColbertLoss(torch.nn.Module):
             scores / self.temperature, torch.arange(scores.shape[0], device=scores.device) + offset
         )
 
-                # print max index per row
-        print(f"Rank: {dist.get_rank()}, Offset: {offset}, scores: {scores.argmax(dim=1)}, loss: {loss_rowwise.item()}")
+        print(f"Rank: {dist.get_rank()}, Offset: {offset}, acc: {(loss_rowwise.item() == torch.arange(scores.shape[0], device=scores.device) + offset).sum().item() / scores.shape[0]},  scores: {scores.argmax(dim=1)}")
 
         return loss_rowwise
 
