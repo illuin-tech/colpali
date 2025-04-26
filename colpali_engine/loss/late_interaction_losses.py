@@ -133,10 +133,14 @@ class ColbertPairwiseCELoss(torch.nn.Module):
         # Positive scores are the diagonal of the scores matrix but shifted by the offset.
         pos_scores = scores.diagonal(offset=offset)  # (batch_size,)
 
-        # Negative score for a given query is the maximum of the scores against all all other pages.
-        # NOTE: We exclude the diagonal by setting it to a very low value: since we know the maximum score is 1,
-        # we can subtract 1 from the diagonal to exclude it from the maximum operation.
-        neg_scores = scores - torch.eye(scores.shape[0], device=scores.device) * 1e6  # (batch_size, batch_size)
+
+        # 1) clone so you don’t overwrite your original scores
+        neg_scores = scores.clone()
+        # 2) get a *view* on that offset‐diagonal…
+        d = neg_scores.diagonal(offset=offset)
+        # 3) fill it with a very large negative (or -inf) so it never wins the max
+        d.fill_(-1e6)
+
 
         if self.use_smooth_max:
             # τ is a temperature hyperparameter (smaller τ → closer to hard max)
