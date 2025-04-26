@@ -4,10 +4,13 @@ from torch.nn import CrossEntropyLoss
 
 
 class ColbertLoss(torch.nn.Module):
-    def __init__(self, temperature: float = 0.02, 
-                 normalize_scores: bool = True, 
-                 use_smooth_max=False,
-                 pos_aware_negative_filtering: bool = False):
+    def __init__(
+        self,
+        temperature: float = 0.02,
+        normalize_scores: bool = True,
+        use_smooth_max=False,
+        pos_aware_negative_filtering: bool = False,
+    ):
         """
         InfoNCE loss generalized for late interaction models.
         Args:
@@ -28,17 +31,16 @@ class ColbertLoss(torch.nn.Module):
         offset: The offset to use for the loss. This is useful in cross-gpu tasks when there are more docs than queries.
         """
 
-
         scores = torch.einsum("bnd,csd->bcns", query_embeddings, doc_embeddings)
 
         if self.use_smooth_max:
             # τ is a temperature hyperparameter (smaller τ → closer to hard max)
             tau = 0.1
             # logsumexp gives a smooth approximation of max
-            soft_max = tau * torch.logsumexp(scores / tau, dim=3)    # shape [b, c, n]
-            scores   = soft_max.sum(dim=2)
+            soft_max = tau * torch.logsumexp(scores / tau, dim=3)  # shape [b, c, n]
+            scores = soft_max.sum(dim=2)
         else:
-            scores = scores.max(dim=3)[0].sum(dim=2)
+            scores = scores.amax(dim=3).sum(dim=2)
 
         if self.normalize_scores:
             # find lengths of non-zero query embeddings
@@ -47,38 +49,23 @@ class ColbertLoss(torch.nn.Module):
 
             if not self.use_smooth_max and (not (scores >= 0).all().item() or not (scores <= 1).all().item()):
                 raise ValueError("Scores must be between 0 and 1 after normalization")
-        
-        acc = (scores.argmax(dim=1) == torch.arange(scores.shape[0], device=scores.device) + offset).sum().item() / scores.shape[0]
+
+        batch_size = scores.size(0)
+        idx = torch.arange(batch_size, device=scores.device)
+        pos_idx = idx + offset
+
+        # acc = (scores.argmax(dim=1) == pos_idx).sum().item() / batch_size
+
         if self.pos_aware_negative_filtering:
-            # assume `scores` is [B, B] with scores[i,j] = sim(qᵢ, dⱼ)
-            batch_size = scores.size(0)
-            idx = torch.arange(batch_size, device=scores.device)
-            pos_idx = idx + offset                            # shifted diag position
-
-            # 1) gather the positive scores
-            pos_scores = scores[idx, pos_idx]                  # shape [B]
-
-            # 2) build a mask of “too-high” negatives
-            thresholds = 0.95 * pos_scores.unsqueeze(1)        # shape [B,1]
-            high_neg_mask = scores > thresholds               # shape [B,B]
+            pos_scores = scores[idx, pos_idx]  # shape [B]
+            # 1) build a mask of “too-high” negatives
+            thresholds = 0.95 * pos_scores.unsqueeze(1)  # shape [B,1]
+            high_neg_mask = scores > thresholds  # shape [B,B]
             high_neg_mask[idx, pos_idx] = False
+            scores[high_neg_mask] *= 0.5
+            # print(f"Acc: {acc}, num_high_neg per row: {high_neg_mask.sum().item() / high_neg_mask.shape[0]}")
 
-            # 3) scale those logits down by α
-            alpha = 0.5                                        # tune me!
-            scores = torch.where(high_neg_mask, scores * alpha, scores)
-
-            # now run the CE as before
-            loss_rowwise = self.ce_loss(
-                scores / self.temperature,
-                pos_idx
-            )
-            print(f"Acc: {acc}, num_high_neg per row: {high_neg_mask.sum().item()/high_neg_mask.shape[0]}")
-        else:
-
-            loss_rowwise = self.ce_loss(
-                scores / self.temperature, torch.arange(scores.shape[0], device=scores.device) + offset
-            )
-
+        loss_rowwise = self.ce_loss(scores / self.temperature, pos_idx)
         return loss_rowwise
 
 
@@ -145,9 +132,7 @@ class ColbertPairwiseCELoss(torch.nn.Module):
         """
 
         # Compute the ColBERT scores
-        scores = (
-            torch.einsum("bnd,csd->bcns", query_embeddings, doc_embeddings)
-        )  # (batch_size, batch_size)
+        scores = torch.einsum("bnd,csd->bcns", query_embeddings, doc_embeddings)  # (batch_size, batch_size)
 
         if self.use_smooth_max:
             # τ is a temperature hyperparameter (smaller τ → closer to hard max)
@@ -161,14 +146,12 @@ class ColbertPairwiseCELoss(torch.nn.Module):
         # Positive scores are the diagonal of the scores matrix but shifted by the offset.
         pos_scores = scores.diagonal(offset=offset)  # (batch_size,)
 
-
         # 1) clone so you don’t overwrite your original scores
         neg_scores = scores.clone()
         # 2) get a *view* on that offset‐diagonal…
         d = neg_scores.diagonal(offset=offset)
         # 3) fill it with a very large negative (or -inf) so it never wins the max
         d.fill_(-1e6)
-
 
         if self.use_smooth_max:
             # τ is a temperature hyperparameter (smaller τ → closer to hard max)
@@ -186,10 +169,14 @@ class ColbertPairwiseCELoss(torch.nn.Module):
         # torch.vstack((pos_scores, neg_scores)).T.softmax(1)[:, 0].log()*(-1)
         loss = F.softplus(neg_scores - pos_scores).mean()
 
-
         import torch.distributed as dist
-        print(f"Scores (0): {pos_scores[0].item(), neg_scores[0].item()}, shapes: {scores.shape}, {pos_scores.shape}, {neg_scores.shape}")
-        print(f"Rank: {dist.get_rank()}, Offset: {offset}, acc: {(scores.argmax(dim=1) == torch.arange(scores.shape[0], device=scores.device) + offset).sum().item() / scores.shape[0]},  scores: {scores.argmax(dim=1)}")
+
+        print(
+            f"Scores (0): {pos_scores[0].item(), neg_scores[0].item()}, shapes: {scores.shape}, {pos_scores.shape}, {neg_scores.shape}"
+        )
+        print(
+            f"Rank: {dist.get_rank()}, Offset: {offset}, acc: {(scores.argmax(dim=1) == torch.arange(scores.shape[0], device=scores.device) + offset).sum().item() / scores.shape[0]},  scores: {scores.argmax(dim=1)}"
+        )
 
         return loss
 

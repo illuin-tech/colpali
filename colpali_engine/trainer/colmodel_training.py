@@ -139,7 +139,7 @@ class ColModelTraining:
         self.model = torch.compile(
             self.model,
             backend="inductor",
-            dynamic=True,     # or True if you know shapes will vary a lot
+            dynamic=True,  # or True if you know shapes will vary a lot
         )
 
     def _is_rank0(self) -> bool:
@@ -232,7 +232,6 @@ class ColModelTraining:
 
         # from torch.distributed.nn.functional import all_gather as gather_with_grad
 
-
         # Training loop
         for epoch in range(self.config.tr_args.num_train_epochs):
             if self._is_rank0():
@@ -292,7 +291,6 @@ class ColModelTraining:
                     # Now safe to all_gather:
                     d_global = gather_with_grad(d_embed)
                     n_global = gather_with_grad(neg_embed) if neg_embed is not None else None
-
 
                     # loss = loss_fn(q_global, d_global) if n_global is None else loss_fn(q_global, d_global, n_global)
                     loss = (

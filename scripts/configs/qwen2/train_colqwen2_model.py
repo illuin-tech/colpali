@@ -12,7 +12,7 @@ from colpali_engine.trainer.colmodel_training import ColModelTraining, ColModelT
 from colpali_engine.utils.dataset_transformation import load_train_set
 
 config = ColModelTrainingConfig(
-    output_dir="./models/colqwen2-cepos-5e-2604",
+    output_dir="./models/colqwen2-cepos-1e-2604",
     processor=ColQwen2Processor.from_pretrained(
         pretrained_model_name_or_path="./models/base_models/colqwen2-base",
         max_num_visual_tokens=1024,
