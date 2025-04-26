@@ -22,6 +22,9 @@ class ColbertLoss(torch.nn.Module):
         doc_embeddings: (batch_size, num_doc_tokens, dim)
         offset: The offset to use for the loss. This is useful in cross-gpu tasks when there are more docs than queries.
         """
+        import torch.distributed as dist
+
+        
 
         scores = torch.einsum("bnd,csd->bcns", query_embeddings, doc_embeddings).max(dim=3)[0].sum(dim=2)
 
@@ -32,6 +35,9 @@ class ColbertLoss(torch.nn.Module):
 
             if not (scores >= 0).all().item() or not (scores <= 1).all().item():
                 raise ValueError("Scores must be between 0 and 1 after normalization")
+            
+        # print max index per row
+        print(dist.get_rank(), query_embeddings.shape, doc_embeddings.shape, offset, scores.shape, scores.argmax(dim=1))
 
         loss_rowwise = self.ce_loss(
             scores / self.temperature, torch.arange(scores.shape[0], device=scores.device) + offset
