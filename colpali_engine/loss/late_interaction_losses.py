@@ -160,6 +160,7 @@ class ColbertPairwiseCELoss(torch.nn.Module):
 
 
         import torch.distributed as dist
+        print(pos_scores[0], neg_scores[0], scores[0])
         print(f"Rank: {dist.get_rank()}, Offset: {offset}, acc: {(scores.argmax(dim=1) == torch.arange(scores.shape[0], device=scores.device) + offset).sum().item() / scores.shape[0]},  scores: {scores.argmax(dim=1)}")
 
         return loss
