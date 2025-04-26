@@ -342,12 +342,13 @@ class ColModelTraining:
             if eval_loader and self._is_rank0():
                 self.evaluate(eval_loader)
 
+        self.model = self.model.module if hasattr(self.model, "module") else self.model
         # Final actions
         if self._is_rank0():
             print("Training complete. Saving model.")
-            self.model = self.model.module if hasattr(self.model, "module") else self.model
             self.save()
             print("Model saved.")
+
         if dist.is_initialized():
             dist.destroy_process_group()
 

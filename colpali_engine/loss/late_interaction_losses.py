@@ -37,7 +37,7 @@ class ColbertLoss(torch.nn.Module):
                 raise ValueError("Scores must be between 0 and 1 after normalization")
             
         # print max index per row
-        print(dist.get_rank(), query_embeddings.shape, doc_embeddings.shape, offset, scores.shape, scores.argmax(dim=1))
+        print(f"Rank: {dist.get_rank()}, Offset: {offset}, scores: {scores.argmax(dim=1)}")
 
         loss_rowwise = self.ce_loss(
             scores / self.temperature, torch.arange(scores.shape[0], device=scores.device) + offset
