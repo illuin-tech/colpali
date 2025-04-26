@@ -25,7 +25,7 @@ config = ColModelTrainingConfig(
     dataset_loading_func=load_train_set,
     eval_dataset_loader=None,
     run_eval=True,
-    loss_func=ColbertLoss(normalize_scores=True),
+    loss_func=ColbertLoss(normalize_scores=True, use_smooth_max=True),
     tr_args=TrainingArguments(
         output_dir=None,
         overwrite_output_dir=True,

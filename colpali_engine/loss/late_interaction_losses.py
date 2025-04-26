@@ -4,7 +4,7 @@ from torch.nn import CrossEntropyLoss
 
 
 class ColbertLoss(torch.nn.Module):
-    def __init__(self, temperature: float = 0.02, normalize_scores: bool = True):
+    def __init__(self, temperature: float = 0.02, normalize_scores: bool = True, use_smooth_max=False):
         """
         InfoNCE loss generalized for late interaction models.
         Args:
@@ -15,6 +15,7 @@ class ColbertLoss(torch.nn.Module):
         self.ce_loss = CrossEntropyLoss()
         self.temperature = temperature
         self.normalize_scores = normalize_scores
+        self.use_smooth_max = use_smooth_max
 
     def forward(self, query_embeddings, doc_embeddings, offset: int = 0):
         """
@@ -22,9 +23,18 @@ class ColbertLoss(torch.nn.Module):
         doc_embeddings: (batch_size, num_doc_tokens, dim)
         offset: The offset to use for the loss. This is useful in cross-gpu tasks when there are more docs than queries.
         """
-        import torch.distributed as dist
+        
 
-        scores = torch.einsum("bnd,csd->bcns", query_embeddings, doc_embeddings).max(dim=3)[0].sum(dim=2)
+        scores = torch.einsum("bnd,csd->bcns", query_embeddings, doc_embeddings)
+        
+        if self.use_smooth_max:
+            # τ is a temperature hyperparameter (smaller τ → closer to hard max)
+            tau = 0.1
+            # logsumexp gives a smooth approximation of max
+            soft_max = tau * torch.logsumexp(scores / tau, dim=3)    # shape [b, c, n]
+            scores   = soft_max.sum(dim=2)
+        else:       
+            scores = scores.max(dim=3)[0].sum(dim=2)
 
         if self.normalize_scores:
             # find lengths of non-zero query embeddings
@@ -38,7 +48,8 @@ class ColbertLoss(torch.nn.Module):
             scores / self.temperature, torch.arange(scores.shape[0], device=scores.device) + offset
         )
 
-        print(f"Rank: {dist.get_rank()}, Offset: {offset}, acc: {(scores.argmax(dim=1) == torch.arange(scores.shape[0], device=scores.device) + offset).sum().item() / scores.shape[0]},  scores: {scores.argmax(dim=1)}")
+        # import torch.distributed as dist
+        # print(f"Rank: {dist.get_rank()}, Offset: {offset}, acc: {(scores.argmax(dim=1) == torch.arange(scores.shape[0], device=scores.device) + offset).sum().item() / scores.shape[0]},  scores: {scores.argmax(dim=1)}")
 
         return loss_rowwise
 
