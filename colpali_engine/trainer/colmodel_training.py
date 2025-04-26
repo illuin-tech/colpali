@@ -136,6 +136,12 @@ class ColModelTraining:
 
         self.model = DistributedDataParallel(self.model, device_ids=[self.local_rank], output_device=self.local_rank)
 
+        self.model = torch.compile(
+            self.model,
+            backend="inductor",
+            dynamic=True,     # or True if you know shapes will vary a lot
+        )
+
     def _is_rank0(self) -> bool:
         return not dist.is_initialized() or dist.get_rank() == 0
 

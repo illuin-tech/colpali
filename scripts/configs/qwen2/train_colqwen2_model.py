@@ -12,7 +12,7 @@ from colpali_engine.trainer.colmodel_training import ColModelTraining, ColModelT
 from colpali_engine.utils.dataset_transformation import load_train_set_ir_negs, load_train_set
 
 config = ColModelTrainingConfig(
-    output_dir="./models/colqwen2-pairsmoothmax-5e-2604",
+    output_dir="./models/colqwen2-cesmoothmax-5e-2604",
     processor=ColQwen2Processor.from_pretrained(
         pretrained_model_name_or_path="./models/base_models/colqwen2-base",
     ),
@@ -25,8 +25,8 @@ config = ColModelTrainingConfig(
     dataset_loading_func=load_train_set,
     eval_dataset_loader=None,
     run_eval=True,
-    # loss_func=ColbertLoss(normalize_scores=True, use_smooth_max=True),
-    loss_func=ColbertPairwiseCELoss(use_smooth_max=True),
+    loss_func=ColbertLoss(normalize_scores=True, use_smooth_max=True),
+    # loss_func=ColbertPairwiseCELoss(use_smooth_max=True),
     tr_args=TrainingArguments(
         output_dir=None,
         overwrite_output_dir=True,
