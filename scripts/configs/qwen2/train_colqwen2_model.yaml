@@ -1,6 +1,6 @@
 config:
   (): colpali_engine.trainer.colmodel_training.ColModelTrainingConfig
-  output_dir: !path ../../../models/colqwen2-ba256-5e-0304
+  output_dir: !path ../../../models/colqwen2-cesmoothmax-5e-2604
   processor:
     (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
     class_to_instanciate: !ext colpali_engine.models.ColQwen2Processor
@@ -34,7 +34,7 @@ config:
     # gradient_accumulation_steps: 4
     per_device_eval_batch_size: 8
     eval_strategy: "steps"
-    dataloader_num_workers: 8
+    dataloader_num_workers: 16
     # bf16: true
     save_steps: 500
     logging_steps: 10

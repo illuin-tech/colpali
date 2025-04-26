@@ -9,12 +9,13 @@ from transformers import TrainingArguments
 from colpali_engine.loss.late_interaction_losses import ColbertLoss, ColbertPairwiseCELoss
 from colpali_engine.models import ColQwen2, ColQwen2Processor
 from colpali_engine.trainer.colmodel_training import ColModelTraining, ColModelTrainingConfig
-from colpali_engine.utils.dataset_transformation import load_train_set_ir_negs, load_train_set
+from colpali_engine.utils.dataset_transformation import load_train_set
 
 config = ColModelTrainingConfig(
     output_dir="./models/colqwen2-cesmoothmax-5e-2604",
     processor=ColQwen2Processor.from_pretrained(
         pretrained_model_name_or_path="./models/base_models/colqwen2-base",
+        max_num_visual_tokens=1024,
     ),
     model=ColQwen2.from_pretrained(
         pretrained_model_name_or_path="./models/base_models/colqwen2-base",
@@ -25,7 +26,7 @@ config = ColModelTrainingConfig(
     dataset_loading_func=load_train_set,
     eval_dataset_loader=None,
     run_eval=True,
-    loss_func=ColbertLoss(normalize_scores=True, use_smooth_max=True),
+    loss_func=ColbertLoss(normalize_scores=True, use_smooth_max=True, pos_aware_negative_filtering=True),
     # loss_func=ColbertPairwiseCELoss(use_smooth_max=True),
     tr_args=TrainingArguments(
         output_dir=None,

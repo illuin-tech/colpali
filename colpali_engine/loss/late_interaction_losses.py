@@ -4,7 +4,10 @@ from torch.nn import CrossEntropyLoss
 
 
 class ColbertLoss(torch.nn.Module):
-    def __init__(self, temperature: float = 0.02, normalize_scores: bool = True, use_smooth_max=False):
+    def __init__(self, temperature: float = 0.02, 
+                 normalize_scores: bool = True, 
+                 use_smooth_max=False,
+                 pos_aware_negative_filtering: bool = False):
         """
         InfoNCE loss generalized for late interaction models.
         Args:
@@ -16,6 +19,7 @@ class ColbertLoss(torch.nn.Module):
         self.temperature = temperature
         self.normalize_scores = normalize_scores
         self.use_smooth_max = use_smooth_max
+        self.pos_aware_negative_filtering = pos_aware_negative_filtering
 
     def forward(self, query_embeddings, doc_embeddings, offset: int = 0):
         """
@@ -43,10 +47,35 @@ class ColbertLoss(torch.nn.Module):
 
             if not self.use_smooth_max and (not (scores >= 0).all().item() or not (scores <= 1).all().item()):
                 raise ValueError("Scores must be between 0 and 1 after normalization")
+            
+        if self.pos_aware_negative_filtering:
+            # assume `scores` is [B, B] with scores[i,j] = sim(qᵢ, dⱼ)
+            batch_size = scores.size(0)
+            idx = torch.arange(batch_size, device=scores.device)
+            pos_idx = idx + offset                            # shifted diag position
 
-        loss_rowwise = self.ce_loss(
-            scores / self.temperature, torch.arange(scores.shape[0], device=scores.device) + offset
-        )
+            # 1) gather the positive scores
+            pos_scores = scores[idx, pos_idx]                  # shape [B]
+
+            # 2) build a mask of “too-high” negatives
+            thresholds = 0.95 * pos_scores.unsqueeze(1)        # shape [B,1]
+            high_neg_mask = scores > thresholds               # shape [B,B]
+            high_neg_mask[idx, pos_idx] = False
+
+            # 3) scale those logits down by α
+            alpha = 0.5                                        # tune me!
+            scores = torch.where(high_neg_mask, scores * alpha, scores)
+
+            # now run the CE as before
+            loss_rowwise = self.ce_loss(
+                scores / self.temperature,
+                pos_idx
+            )
+        else:
+
+            loss_rowwise = self.ce_loss(
+                scores / self.temperature, torch.arange(scores.shape[0], device=scores.device) + offset
+            )
 
         import torch.distributed as dist
         print(f"Rank: {dist.get_rank()}, Offset: {offset}, acc: {(scores.argmax(dim=1) == torch.arange(scores.shape[0], device=scores.device) + offset).sum().item() / scores.shape[0]},  scores: {scores.argmax(dim=1)}")
