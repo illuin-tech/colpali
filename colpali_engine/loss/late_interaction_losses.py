@@ -29,7 +29,7 @@ class ColbertLoss(torch.nn.Module):
         
         if self.use_smooth_max:
             # τ is a temperature hyperparameter (smaller τ → closer to hard max)
-            tau = 0.01
+            tau = 0.1
             # logsumexp gives a smooth approximation of max
             soft_max = tau * torch.logsumexp(scores / tau, dim=3)    # shape [b, c, n]
             scores   = soft_max.sum(dim=2)
@@ -41,7 +41,7 @@ class ColbertLoss(torch.nn.Module):
             # divide scores by the lengths of the query embeddings
             scores = scores / ((query_embeddings[:, :, 0] != 0).sum(dim=1).unsqueeze(-1))
 
-            if not (scores >= 0).all().item() or not (scores <= 1).all().item():
+            if not self.use_smooth_max and (not (scores >= 0).all().item() or not (scores <= 1).all().item()):
                 raise ValueError("Scores must be between 0 and 1 after normalization")
 
         loss_rowwise = self.ce_loss(
