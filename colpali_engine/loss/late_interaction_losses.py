@@ -29,7 +29,7 @@ class ColbertLoss(torch.nn.Module):
         
         if self.use_smooth_max:
             # τ is a temperature hyperparameter (smaller τ → closer to hard max)
-            tau = 0.1
+            tau = 0.01
             # logsumexp gives a smooth approximation of max
             soft_max = tau * torch.logsumexp(scores / tau, dim=3)    # shape [b, c, n]
             scores   = soft_max.sum(dim=2)
