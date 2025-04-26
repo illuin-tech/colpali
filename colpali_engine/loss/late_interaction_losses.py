@@ -54,7 +54,7 @@ class ColbertLoss(torch.nn.Module):
         idx = torch.arange(batch_size, device=scores.device)
         pos_idx = idx + offset
 
-        # acc = (scores.argmax(dim=1) == pos_idx).sum().item() / batch_size
+        acc = (scores.argmax(dim=1) == pos_idx).sum().item() / batch_size
 
         if self.pos_aware_negative_filtering:
             pos_scores = scores[idx, pos_idx]  # shape [B]
@@ -63,7 +63,7 @@ class ColbertLoss(torch.nn.Module):
             high_neg_mask = scores > thresholds  # shape [B,B]
             high_neg_mask[idx, pos_idx] = False
             scores[high_neg_mask] *= 0.5
-            # print(f"Acc: {acc}, num_high_neg per row: {high_neg_mask.sum().item() / high_neg_mask.shape[0]}")
+            print(f"Acc: {acc}, num_high_neg per row: {high_neg_mask.sum().item() / high_neg_mask.shape[0]}")
 
         loss_rowwise = self.ce_loss(scores / self.temperature, pos_idx)
         return loss_rowwise
