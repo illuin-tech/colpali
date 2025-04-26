@@ -221,8 +221,10 @@ class ColModelTraining:
         #     """Convenience wrapper to call the custom autograd gather."""
         #     return AllGatherWithGrad.apply(x)
 
-        from torch.distributed.nn.functional import _AllGather as GradAllGather
-        gather_with_grad = GradAllGather.apply
+        # from torch.distributed.nn.functional import _AllGather as GradAllGather
+        # gather_with_grad = GradAllGather.apply
+
+        from torch.distributed.nn.functional import all_gather as gather_with_grad
 
 
         # Training loop
