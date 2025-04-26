@@ -247,10 +247,41 @@ class ColModelTraining:
                     if "neg_doc_input_ids" in batch:
                         neg_embed = self.model(**{k[8:]: v for k, v in batch.items() if k.startswith("neg_doc")})
 
-                    # Gather embeddings with autograd
-                    # q_global = gather_with_grad(q_embed) ---> no need to gather query embeddings
+                    import torch.nn.functional as F
+
+                    def pad_to_max_len_right(x: torch.Tensor) -> torch.Tensor:
+                        """
+                        Right-pad x along dim=1 so that all ranks share the same length.
+
+                        Args:
+                            x: Tensor of shape [B, L, D] (or [B, L] if 2D)
+                        Returns:
+                            Padded tensor of shape [B, max_L, D], with zeros on the right.
+                        """
+                        # 1) local length
+                        local_L = x.size(1)
+                        # 2) get global max length
+                        len_tensor = torch.tensor(local_L, device=x.device)
+                        dist.all_reduce(len_tensor, op=dist.ReduceOp.MAX)
+                        max_L = len_tensor.item()
+
+                        # 3) if shorter, pad on the right of dim=1
+                        if local_L < max_L:
+                            pad_amount = max_L - local_L
+                            # F.pad takes (D_left, D_right, L_left, L_right)
+                            x = F.pad(x, (0, 0, 0, pad_amount), value=0.0)
+                        return x
+
+                    # Usage before gathering:
+                    d_embed = pad_to_max_len_right(d_embed)
+                    if neg_embed is not None:
+                        neg_embed = pad_to_max_len_right(neg_embed)
+
+                    # Now safe to all_gather:
                     d_global = gather_with_grad(d_embed)
                     n_global = gather_with_grad(neg_embed) if neg_embed is not None else None
+
+
 
                     if step % 10 == 1:
                         if self._is_rank0():
