@@ -47,7 +47,8 @@ class ColbertLoss(torch.nn.Module):
 
             if not self.use_smooth_max and (not (scores >= 0).all().item() or not (scores <= 1).all().item()):
                 raise ValueError("Scores must be between 0 and 1 after normalization")
-            
+        
+        acc = (scores.argmax(dim=1) == torch.arange(scores.shape[0], device=scores.device) + offset).sum().item() / scores.shape[0]
         if self.pos_aware_negative_filtering:
             # assume `scores` is [B, B] with scores[i,j] = sim(qᵢ, dⱼ)
             batch_size = scores.size(0)
@@ -71,14 +72,12 @@ class ColbertLoss(torch.nn.Module):
                 scores / self.temperature,
                 pos_idx
             )
+            print(f"Acc: {acc}, num_high_neg per row: {high_neg_mask.sum().item()/high_neg_mask.shape[0]}")
         else:
 
             loss_rowwise = self.ce_loss(
                 scores / self.temperature, torch.arange(scores.shape[0], device=scores.device) + offset
             )
-
-        import torch.distributed as dist
-        print(f"Rank: {dist.get_rank()}, Offset: {offset}, acc: {(scores.argmax(dim=1) == torch.arange(scores.shape[0], device=scores.device) + offset).sum().item() / scores.shape[0]},  scores: {scores.argmax(dim=1)}")
 
         return loss_rowwise
 
