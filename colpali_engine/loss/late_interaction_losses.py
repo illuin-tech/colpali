@@ -24,8 +24,6 @@ class ColbertLoss(torch.nn.Module):
         """
         import torch.distributed as dist
 
-        
-
         scores = torch.einsum("bnd,csd->bcns", query_embeddings, doc_embeddings).max(dim=3)[0].sum(dim=2)
 
         if self.normalize_scores:
@@ -35,13 +33,13 @@ class ColbertLoss(torch.nn.Module):
 
             if not (scores >= 0).all().item() or not (scores <= 1).all().item():
                 raise ValueError("Scores must be between 0 and 1 after normalization")
-            
-        # print max index per row
-        print(f"Rank: {dist.get_rank()}, Offset: {offset}, scores: {scores.argmax(dim=1)}")
 
         loss_rowwise = self.ce_loss(
             scores / self.temperature, torch.arange(scores.shape[0], device=scores.device) + offset
         )
+
+                # print max index per row
+        print(f"Rank: {dist.get_rank()}, Offset: {offset}, scores: {scores.argmax(dim=1)}, loss: {loss_rowwise.item()}")
 
         return loss_rowwise
 
