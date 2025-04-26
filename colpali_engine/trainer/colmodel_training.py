@@ -335,13 +335,12 @@ class ColModelTraining:
                     print(f"Local loss: {loss.item()}")
                     print(f"Learning rate: {optimizer.param_groups[0]['lr']}")
                     print(f"Epoch: {epoch + 1}/{self.config.tr_args.num_train_epochs}")
-                    print(f"Step: {step}/{len(train_loader)}")
                     print(f"World size: {dist.get_world_size()}")
-                    with torch.no_grad():
-                        avg_loss = loss.detach()
-                        dist.all_reduce(avg_loss, op=dist.ReduceOp.SUM)
-                        avg_loss /= dist.get_world_size()
-                        print(f"Local loss: {avg_loss.item()}")
+                    # with torch.no_grad():
+                    #     avg_loss = loss.detach()
+                    #     dist.all_reduce(avg_loss, op=dist.ReduceOp.SUM)
+                    #     avg_loss /= dist.get_world_size()
+                    #     print(f"Local loss: {avg_loss.item()}")
 
             # Optional evaluation
             if eval_loader and self._is_rank0():
