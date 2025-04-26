@@ -23,17 +23,17 @@ class ColbertLoss(torch.nn.Module):
         doc_embeddings: (batch_size, num_doc_tokens, dim)
         offset: The offset to use for the loss. This is useful in cross-gpu tasks when there are more docs than queries.
         """
-        
+
 
         scores = torch.einsum("bnd,csd->bcns", query_embeddings, doc_embeddings)
-        
+
         if self.use_smooth_max:
             # τ is a temperature hyperparameter (smaller τ → closer to hard max)
             tau = 0.1
             # logsumexp gives a smooth approximation of max
             soft_max = tau * torch.logsumexp(scores / tau, dim=3)    # shape [b, c, n]
             scores   = soft_max.sum(dim=2)
-        else:       
+        else:
             scores = scores.max(dim=3)[0].sum(dim=2)
 
         if self.normalize_scores:
@@ -48,8 +48,8 @@ class ColbertLoss(torch.nn.Module):
             scores / self.temperature, torch.arange(scores.shape[0], device=scores.device) + offset
         )
 
-        # import torch.distributed as dist
-        # print(f"Rank: {dist.get_rank()}, Offset: {offset}, acc: {(scores.argmax(dim=1) == torch.arange(scores.shape[0], device=scores.device) + offset).sum().item() / scores.shape[0]},  scores: {scores.argmax(dim=1)}")
+        import torch.distributed as dist
+        print(f"Rank: {dist.get_rank()}, Offset: {offset}, acc: {(scores.argmax(dim=1) == torch.arange(scores.shape[0], device=scores.device) + offset).sum().item() / scores.shape[0]},  scores: {scores.argmax(dim=1)}")
 
         return loss_rowwise
 
@@ -100,14 +100,15 @@ class ColbertNegativeCELoss(torch.nn.Module):
 
 
 class ColbertPairwiseCELoss(torch.nn.Module):
-    def __init__(self):
+    def __init__(self, use_smooth_max=False):
         """
         Pairwise loss for ColBERT.
         """
         super().__init__()
         self.ce_loss = CrossEntropyLoss()
+        self.use_smooth_max = use_smooth_max
 
-    def forward(self, query_embeddings, doc_embeddings):
+    def forward(self, query_embeddings, doc_embeddings, offset: int = 0):
         """
         query_embeddings: (batch_size, num_query_tokens, dim)
         doc_embeddings: (batch_size, num_doc_tokens, dim)
@@ -117,17 +118,33 @@ class ColbertPairwiseCELoss(torch.nn.Module):
 
         # Compute the ColBERT scores
         scores = (
-            torch.einsum("bnd,csd->bcns", query_embeddings, doc_embeddings).max(dim=3)[0].sum(dim=2)
+            torch.einsum("bnd,csd->bcns", query_embeddings, doc_embeddings)
         )  # (batch_size, batch_size)
 
-        # Positive scores are the diagonal of the scores matrix.
-        pos_scores = scores.diagonal()  # (batch_size,)
+        if self.use_smooth_max:
+            # τ is a temperature hyperparameter (smaller τ → closer to hard max)
+            tau = 0.1
+            # logsumexp gives a smooth approximation of max
+            soft_max = tau * torch.logsumexp(scores / tau, dim=3)
+            scores = soft_max.sum(dim=2)
+        else:
+            scores = scores.max(dim=3)[0].sum(dim=2)
+
+        # Positive scores are the diagonal of the scores matrix but shifted by the offset.
+        pos_scores = scores.diagonal(offset=offset)  # (batch_size,)
 
         # Negative score for a given query is the maximum of the scores against all all other pages.
         # NOTE: We exclude the diagonal by setting it to a very low value: since we know the maximum score is 1,
         # we can subtract 1 from the diagonal to exclude it from the maximum operation.
         neg_scores = scores - torch.eye(scores.shape[0], device=scores.device) * 1e6  # (batch_size, batch_size)
-        neg_scores = neg_scores.max(dim=1)[0]  # (batch_size,)
+
+        if self.use_smooth_max:
+            # τ is a temperature hyperparameter (smaller τ → closer to hard max)
+            tau = 0.1
+            # logsumexp gives a smooth approximation of max
+            neg_scores = tau * torch.logsumexp(neg_scores / tau, dim=1)
+        else:
+            neg_scores = neg_scores.max(dim=1)[0]  # (batch_size,)
 
         # Compute the loss
         # The loss is computed as the negative log of the softmax of the positive scores
@@ -136,6 +153,10 @@ class ColbertPairwiseCELoss(torch.nn.Module):
         # for numerical stability.
         # torch.vstack((pos_scores, neg_scores)).T.softmax(1)[:, 0].log()*(-1)
         loss = F.softplus(neg_scores - pos_scores).mean()
+
+
+        import torch.distributed as dist
+        print(f"Rank: {dist.get_rank()}, Offset: {offset}, acc: {(scores.argmax(dim=1) == torch.arange(scores.shape[0], device=scores.device) + offset).sum().item() / scores.shape[0]},  scores: {scores.argmax(dim=1)}")
 
         return loss
 

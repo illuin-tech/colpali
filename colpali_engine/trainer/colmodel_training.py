@@ -316,7 +316,7 @@ class ColModelTraining:
 
                 if self._is_rank0() and not isinstance(loader, DataLoader):
                     loader.set_postfix({"loss": loss.item()})
-                
+
                 if self._is_rank0() and step % 10 == 0:
                     print(f"Step {step}/{len(train_loader)}")
                     print(f"Query embedding shape: {q_embed.shape}")
