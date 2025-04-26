@@ -186,40 +186,44 @@ class ColModelTraining:
 
         loss_fn = self.config.loss_func
 
-        class AllGatherWithGrad(Function):
-            @staticmethod
-            def forward(ctx, x):
-                """
-                Gathers x from all ranks into one big tensor.
-                """
-                world_size = dist.get_world_size()
-                ctx.batch_size = x.size(0)
-                ctx.world_size = world_size
-                ctx.rank = dist.get_rank()
+        # class AllGatherWithGrad(Function):
+        #     @staticmethod
+        #     def forward(ctx, x):
+        #         """
+        #         Gathers x from all ranks into one big tensor.
+        #         """
+        #         world_size = dist.get_world_size()
+        #         ctx.batch_size = x.size(0)
+        #         ctx.world_size = world_size
+        #         ctx.rank = dist.get_rank()
 
-                # Gather into list
-                x_list = [torch.zeros_like(x) for _ in range(world_size)]
-                dist.all_gather(x_list, x)
-                # Save for backward
-                ctx.save_for_backward()
-                return torch.cat(x_list, dim=0)  # [B * W, D]
+        #         # Gather into list
+        #         x_list = [torch.zeros_like(x) for _ in range(world_size)]
+        #         dist.all_gather(x_list, x)
+        #         # Save for backward
+        #         ctx.save_for_backward()
+        #         return torch.cat(x_list, dim=0)  # [B * W, D]
 
-            @staticmethod
-            def backward(ctx, grad_output):
-                """
-                Receives gradient of the big gathered tensor,
-                extracts this rank’s slice, and returns it.
-                """
-                b = ctx.batch_size
-                r = ctx.rank
-                start = r * b
-                end = start + b
-                # Only this slice flows back
-                return grad_output[start:end]
+        #     @staticmethod
+        #     def backward(ctx, grad_output):
+        #         """
+        #         Receives gradient of the big gathered tensor,
+        #         extracts this rank’s slice, and returns it.
+        #         """
+        #         b = ctx.batch_size
+        #         r = ctx.rank
+        #         start = r * b
+        #         end = start + b
+        #         # Only this slice flows back
+        #         return grad_output[start:end]
 
-        def gather_with_grad(x: torch.Tensor) -> torch.Tensor:
-            """Convenience wrapper to call the custom autograd gather."""
-            return AllGatherWithGrad.apply(x)
+        # def gather_with_grad(x: torch.Tensor) -> torch.Tensor:
+        #     """Convenience wrapper to call the custom autograd gather."""
+        #     return AllGatherWithGrad.apply(x)
+
+        from torch.distributed.nn.functional import _AllGather as GradAllGather
+        gather_with_grad = GradAllGather.apply
+
 
         # Training loop
         for epoch in range(self.config.tr_args.num_train_epochs):
