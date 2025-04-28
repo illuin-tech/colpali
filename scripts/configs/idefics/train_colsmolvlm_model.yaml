@@ -24,12 +24,12 @@ config:
 #      bnb_4bit_use_double_quant: true
 
   train_dataset:
-    (): colpali_engine.utils.dataset_transformation.load_train_set_ir_negs
+    (): colpali_engine.utils.dataset_transformation.load_train_set
       
   # max_length: 50
   run_eval: false
   loss_func:
-    (): colpali_engine.loss.late_interaction_losses.ColbertPairwiseNegativeCELoss
+    (): colpali_engine.loss.late_interaction_losses.ColbertPairwiseCELoss
   tr_args:
     (): transformers.training_args.TrainingArguments
     output_dir: ./checkpoints/test

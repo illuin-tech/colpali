@@ -18,7 +18,7 @@ def add_metadata_column(dataset, column_name, value):
 
 def load_train_set() -> ColPaliEngineDataset:
     dataset = load_dataset("vidore/colpali_train_set", split="train")
-    dataset = dataset.rename_column("image", "pos_target")
+    dataset = dataset.rename_column("image", ColPaliEngineDataset.POS_TARGET_KEY)
 
     train_dataset = ColPaliEngineDataset(
         data=dataset,
@@ -34,8 +34,7 @@ def load_train_set_ir() -> ColPaliEngineDataset:
     corpus = ExternalDocumentCorpus(corpus_data=corpus_data)
 
     dataset = load_dataset("manu/colpali-queries", split="train")
-    dataset = dataset.rename_column("positive_passages", "pos_target")
-    dataset = dataset.rename_column("negative_passages", "neg_target")
+    dataset = dataset.rename_column("positive_passages", ColPaliEngineDataset.POS_TARGET_KEY)
 
     print("Dataset size:", len(dataset))
     # filter out queries with "gold_in_top_100" == False
@@ -63,8 +62,8 @@ def load_train_set_ir_negs() -> ColPaliEngineDataset:
     # keep only top 5 negative passages
     dataset = dataset.map(lambda x: {"negative_passages": x["negative_passages"][:5]})
     print("Dataset size after filtering:", len(dataset))
-    dataset = dataset.rename_column("positive_passages", "pos_target")
-    dataset = dataset.rename_column("negative_passages", "neg_target")
+    dataset = dataset.rename_column("positive_passages", ColPaliEngineDataset.POS_TARGET_KEY)
+    dataset = dataset.rename_column("negative_passages", ColPaliEngineDataset.NEG_TARGET_KEY)
 
     train_dataset = ColPaliEngineDataset(data=dataset, external_document_corpus=corpus)
 
