@@ -17,12 +17,18 @@ class ExternalDocumentCorpus:
         docid_to_idx_mapping (Optional[Dict[str, int]]): Optional mapping from doc IDs to indices.
     """
 
-    def __init__(self, corpus_data: List[Dict[str, Any]], docid_to_idx_mapping: Optional[Dict[str, int]] = None):
+    def __init__(
+        self,
+        corpus_data: List[Dict[str, Any]],
+        docid_to_idx_mapping: Optional[Dict[str, int]] = None,
+        doc_column_name: str = "doc",
+    ):
         """
         Initialize the corpus with the provided data.
         """
         self.corpus_data = corpus_data
         self.docid_to_idx_mapping = docid_to_idx_mapping
+        self.doc_column_name = doc_column_name
 
         assert isinstance(
             self.corpus_data,
@@ -53,8 +59,8 @@ class ExternalDocumentCorpus:
             Document: The document retrieved from the corpus.
         """
         if self.docid_to_idx_mapping is not None:
-            return self.corpus_data[self.docid_to_idx_mapping.get(docid)]["doc"]
-        return self.corpus_data[docid]["doc"]
+            return self.corpus_data[self.docid_to_idx_mapping.get(docid)][self.doc_column_name]
+        return self.corpus_data[docid][self.doc_column_name]
 
 
 class ColPaliEngineDataset(Dataset):
