@@ -24,7 +24,7 @@ class BiIdefics3(Idefics3PreTrainedModel):
 
     def forward(
         self,
-        pooling_strategy: Literal["cls", "last", "mean"] = "last",
+        pooling_strategy: Literal["last", "mean"] = "last",
         *args,
         **kwargs,
     ) -> torch.Tensor:
@@ -43,10 +43,7 @@ class BiIdefics3(Idefics3PreTrainedModel):
         last_hidden_states = outputs[0]  # (batch_size, sequence_length, hidden_size)
 
         # Get CLS token embedding, last token, or mean pool over sequence
-        if pooling_strategy == "cls":
-            # Use CLS token (first token) embedding
-            pooled_output = last_hidden_states[:, 0]  # (batch_size, hidden_size)
-        elif pooling_strategy == "last":
+        if pooling_strategy == "last":
             # use last token since we are left padding
             pooled_output = last_hidden_states[:, -1]  # (batch_size, hidden_size)
         elif pooling_strategy == "mean":
