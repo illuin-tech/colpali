@@ -2,6 +2,7 @@ import os
 from typing import List, Literal, Tuple, cast
 
 from datasets import Dataset, DatasetDict, concatenate_datasets, load_dataset
+from PIL import Image
 
 from colpali_engine.data.dataset import ColPaliEngineDataset, ExternalDocumentCorpus
 
@@ -234,6 +235,51 @@ def load_docvqa_dataset() -> DatasetDict:
     ds_dict = DatasetDict({"train": dataset, "test": dataset_eval})
 
     return ds_dict
+
+
+def load_dummy_dataset() -> List[DatasetDict]:
+    # create a dataset from the queries and images
+    queries_1 = ["What is the capital of France?", "What is the capital of Germany?"]
+    queries_2 = ["What is the capital of Italy?", "What is the capital of Spain?"]
+
+    images_1 = [Image.new("RGB", (100, 100)) for _ in range(2)]
+    images_2 = [Image.new("RGB", (120, 120)) for _ in range(2)]
+
+    dataset_1 = Dataset.from_list([{"query": q, "image": i} for q, i in zip(queries_1, images_1)])
+    dataset_2 = Dataset.from_list([{"query": q, "image": i} for q, i in zip(queries_2, images_2)])
+
+    return DatasetDict(
+        {
+            "train": DatasetDict({"dataset_1": dataset_1, "dataset_2": dataset_2}),
+            "test": DatasetDict({"dataset_1": dataset_2, "dataset_2": dataset_1}),
+        }
+    )
+
+
+def load_multi_qa_datasets() -> List[DatasetDict]:
+    dataset_args = [
+        ("vidore/colpali_train_set"),
+        ("llamaindex/vdr-multilingual-train", "de"),
+        ("llamaindex/vdr-multilingual-train", "en"),
+        ("llamaindex/vdr-multilingual-train", "es"),
+        ("llamaindex/vdr-multilingual-train", "fr"),
+        ("llamaindex/vdr-multilingual-train", "it"),
+    ]
+
+    train_datasets = {}
+    test_datasets = {}
+    for args in dataset_args:
+        dataset_name = args[0] + "_" + args[1]
+        dataset = load_dataset(*args)
+        if "test" in dataset:
+            train_datasets[dataset_name] = dataset["train"]
+            test_datasets[dataset_name] = dataset["test"]
+        else:
+            train_dataset, test_dataset = dataset.split_by_ratio(test_size=200)
+            train_datasets[dataset_name] = train_dataset
+            test_datasets[dataset_name] = test_dataset
+
+    return DatasetDict({"train": DatasetDict(train_datasets), "test": DatasetDict(test_datasets)})
 
 
 class TestSetFactory:
