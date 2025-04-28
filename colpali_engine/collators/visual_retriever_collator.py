@@ -20,10 +20,6 @@ class VisualRetrieverCollator:
     Collator for training vision retrieval models.
     """
 
-    # Input keys
-    query_key = ColPaliEngineDataset.QUERY_KEY
-    pos_target_key = ColPaliEngineDataset.POS_TARGET_KEY
-    neg_target_key = ColPaliEngineDataset.NEG_TARGET_KEY
     # Prefixes
     query_prefix = "query_"
     pos_doc_prefix = "doc_"
@@ -59,18 +55,18 @@ class VisualRetrieverCollator:
 
         # Parse the examples.
         for example in examples:
-            query = example.get(self.query_key)
+            query = example.get(ColPaliEngineDataset.QUERY_KEY)
             sampled_query = random.choice(query) if isinstance(query, list) else query
             queries.append(sampled_query)
 
-            pos_tgt = example.get(self.pos_target_key)
+            pos_tgt = example.get(ColPaliEngineDataset.POS_TARGET_KEY)
             if pos_tgt is not None:
                 sample_pos = random.choice(pos_tgt) if isinstance(pos_tgt, list) else pos_tgt
                 pos_targets.append(sample_pos)
             else:
-                raise ValueError("Image is None - This collator does not support None images yet.")
+                raise ValueError("Positive target is none!")
 
-            neg_tgt = example.get(self.neg_target_key)
+            neg_tgt = example.get(ColPaliEngineDataset.NEG_TARGET_KEY)
             if neg_tgt is not None:
                 sampled_neg = random.choice(neg_tgt) if isinstance(neg_tgt, list) else neg_tgt
                 neg_targets.append(sampled_neg)
