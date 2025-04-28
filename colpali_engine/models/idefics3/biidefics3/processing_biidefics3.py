@@ -88,7 +88,7 @@ class BiIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
         **kwargs,
     ) -> torch.Tensor:
         """
-        Compute the MaxSim score (ColBERT-like) for the given multi-vector query and passage embeddings.
+        Compute the cosine similarity for the given query and passage embeddings.
         """
         return self.score_single_vector(qs, ps, device=device, **kwargs)
 

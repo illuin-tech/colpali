@@ -1,7 +1,6 @@
-from typing import Literal, ClassVar
+from typing import ClassVar, Literal
 
 import torch
-from torch import nn
 from transformers import Idefics3Model, Idefics3PreTrainedModel
 
 
@@ -42,7 +41,7 @@ class BiIdefics3(Idefics3PreTrainedModel):
         """
         outputs = self.model(*args, **kwargs)
         last_hidden_states = outputs[0]  # (batch_size, sequence_length, hidden_size)
-    
+
         # Get CLS token embedding, last token, or mean pool over sequence
         if pooling_strategy == "cls":
             # Use CLS token (first token) embedding
