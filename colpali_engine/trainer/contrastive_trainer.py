@@ -26,6 +26,12 @@ class SingleDatasetBatchSampler(BatchSampler):
         drop_last: bool = True,
         generator: Optional[torch.Generator] = None,
     ):
+        # round down each dataset if not divible by global batch size
+        for i in range(len(datasets)):
+            if len(datasets[i]) % global_batch_size != 0:
+                total_samples = (len(datasets[i]) // global_batch_size) * global_batch_size
+                datasets[i] = datasets[i].take(total_samples)
+
         self.datasets = datasets
         self.global_batch_size = global_batch_size
         self.drop_last = drop_last
@@ -105,17 +111,13 @@ class ContrastiveTrainer(Trainer):
     def __init__(self, loss_func, is_vision_model, *args, **kwargs):
         if isinstance(kwargs["train_dataset"], DatasetDict):
             dataset_list = list(kwargs["train_dataset"].values())
-            # TODO: This is quite hacky, we should find a better way to handle this
-            # round down each dataset if not divible by global batch size
-            batch_size = kwargs["args"].train_batch_size
-            for i in range(len(dataset_list)):
-                if len(dataset_list[i]) % batch_size != 0:
-                    total_samples = (len(dataset_list[i]) // batch_size) * batch_size
-                    dataset_list[i] = dataset_list[i].take(total_samples)
-
-            kwargs["train_dataset"] = ConcatDataset(dataset_list)
+        elif isinstance(kwargs["train_dataset"], list):
+            dataset_list = kwargs["train_dataset"]
         else:
             dataset_list = None
+
+        if dataset_list is not None:
+            kwargs["train_dataset"] = ConcatDataset(dataset_list)
 
         super().__init__(*args, **kwargs)
         self.loss_func = loss_func

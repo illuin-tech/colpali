@@ -130,3 +130,15 @@ class ColPaliEngineDataset(Dataset):
             doc_ids = [doc_ids]
 
         return [self.external_document_corpus.retrieve(doc_id) for doc_id in doc_ids]
+
+    def take(self, n: int) -> "ColPaliEngineDataset":
+        """
+        Take the first n samples from the dataset.
+
+        Args:
+            n (int): The number of samples to take.
+
+        Returns:
+            ColPaliEngineDataset: A new dataset containing the first n samples.
+        """
+        return self.__class__(self.data.take(n), self.external_document_corpus)
