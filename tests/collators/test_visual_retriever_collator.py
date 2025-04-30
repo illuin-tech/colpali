@@ -25,7 +25,7 @@ class TestColPaliCollator:
     def test_colpali_collator_call(self, colpali_collator: VisualRetrieverCollator):
         example_image = Image.new("RGB", (16, 16), color="red")
         examples = [
-            {"query": "What is this?", "image": example_image},
+            {"query": "What is this?", "pos_target": example_image},
         ]
 
         result = colpali_collator(examples)
@@ -43,8 +43,8 @@ class TestColPaliCollator:
         examples = [
             {
                 "query": "What is this?",
-                "image": example_image,
-                "neg_image": neg_image,
+                "pos_target": example_image,
+                "neg_target": neg_image,
             },
         ]
 

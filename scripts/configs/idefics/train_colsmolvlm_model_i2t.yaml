@@ -24,8 +24,11 @@ config:
 #      bnb_4bit_use_double_quant: true
 
   train_dataset:
-    (): colpali_engine.utils.dataset_transformation.load_train_set
-      
+    (): colpali_engine.utils.dataset_transformation.load_mmeb
+    subset: "DocVQA"
+    corpus_path: !path "/lustre/fsn1/projects/rech/nwd/uyn61im/hf_home/hub/datasets--TIGER-Lab--MMEB-train/snapshots/76dd0a440b6d4c02776830a804443fffbb2d0bfa/images/DocVQA/Train"
+    type: "i2t"
+  
   # max_length: 50
   run_eval: false
   loss_func:
@@ -69,3 +72,4 @@ config:
     task_type: "FEATURE_EXTRACTION"
     target_modules: '(.*(model.text_model).*(down_proj|gate_proj|up_proj|k_proj|q_proj|v_proj|o_proj).*$|.*(custom_text_proj).*$)'
     # target_modules: '(.*(language_model).*(down_proj|gate_proj|up_proj|k_proj|q_proj|v_proj|o_proj).*$|.*(custom_text_proj).*$)'
+
