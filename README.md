@@ -117,6 +117,9 @@ pip install colpali-engine[interpretability]
 
 Then, after generating your embeddings with ColPali, use the following code to plot the similarity maps for each query token:
 
+<details>
+<summary><strong>🔽 Click to expand code snippet</strong></summary>
+
 ```python
 import torch
 from PIL import Image
@@ -184,6 +187,9 @@ for idx, (fig, ax) in enumerate(plots):
     fig.savefig(f"similarity_map_{idx}.png")
 ```
 
+</details>
+<br>
+
 For a more detailed example, you can refer to the interpretability notebooks from the [ColPali Cookbooks 👨🏻‍🍳](https://github.com/tonywu71/colpali-cookbooks) repository.
 
 ### Token pooling
@@ -191,6 +197,9 @@ For a more detailed example, you can refer to the interpretability notebooks fro
 [Token pooling](https://doi.org/10.48550/arXiv.2409.14683) is a CRUDE-compliant method (document addition/deletion-friendly) that aims at reducing the sequence length of multi-vector embeddings. For ColPali, many image patches share redundant information, e.g. white background patches. By pooling these patches together, we can reduce the amount of embeddings while retaining most of the page's signal. Retrieval performance with hierarchical mean token pooling on image embeddings can be found in the [ColPali paper](https://doi.org/10.48550/arXiv.2407.01449). In our experiments, we found that a pool factor of 3 offered the optimal trade-off: the total number of vectors is reduced by $66.7\%$ while $97.8\%$ of the original performance is maintained.
 
 To use token pooling, you can use the `HierarchicalEmbeddingPooler` class from the `colpali-engine` package:
+
+<details>
+<summary><strong>🔽 Click to expand code snippet</strong></summary>
 
 ```python
 import torch
@@ -253,8 +262,13 @@ image_embeddings = token_pooler.pool_embeddings(
 )
 ```
 
+</details>
+<br>
 
 Alternatively, you can use the `LambdaTokenPooler` to define your own custom pooling function:
+
+<details>
+<summary><strong>🔽 Click to expand code snippet</strong></summary>
 
 ```python
 import torch
@@ -293,6 +307,9 @@ list_embeddings = [
 outputs = pooler.pool_embeddings(list_embeddings)
 ```
 
+</details>
+<br>
+
 The custom pooling function should take a 2D tensor (token_length, embedding_dim) as input and return a tensor of shape (num_clusters, embedding_dim) representing the pooled embeddings.
 
 ### Training
@@ -305,7 +322,8 @@ pip install "colpali-engine[train]"
 
 All the model configs used can be found in `scripts/configs/` and rely on the [configue](https://github.com/illuin-tech/configue) package for straightforward configuration. They should be used with the `train_colbert.py` script.
 
-#### Example 1: Local training
+<details>
+<summary><strong>🔽 Example 1: Local training</strong></summary>
 
 ```bash
 USE_LOCAL_DATASET=0 python scripts/train/train_colbert.py scripts/configs/pali/train_colpali_docmatix_hardneg_model.yaml
@@ -317,13 +335,18 @@ or using `accelerate`:
 accelerate launch scripts/train/train_colbert.py scripts/configs/pali/train_colpali_docmatix_hardneg_model.yaml
 ```
 
-#### Example 2: Training on a SLURM cluster
+</details>
+
+<details>
+<summary><strong>🔽 Example 2: Training on a SLURM cluster</strong></summary>
 
 ```bash
 sbatch --nodes=1 --cpus-per-task=16 --mem-per-cpu=32GB --time=20:00:00 --gres=gpu:1  -p gpua100 --job-name=colidefics --output=colidefics.out --error=colidefics.err --wrap="accelerate launch scripts/train/train_colbert.py scripts/configs/pali/train_colpali_docmatix_hardneg_model.yaml"
 
 sbatch --nodes=1  --time=5:00:00 -A cad15443 --gres=gpu:8  --constraint=MI250 --job-name=colpali --wrap="python scripts/train/train_colbert.py scripts/configs/pali/train_colpali_docmatix_hardneg_model.yaml"
 ```
+
+</details>
 
 ## Contributing
 
@@ -347,7 +370,8 @@ When your PR is ready, ping one of the repository maintainers. We will do our be
 
 Several community projects and ressources have been developed around ColPali to facilitate its usage. Feel free to reach out if you want to add your project to this list!
 
-### Libraries 📚
+<details>
+<summary><strong>🔽 Libraries 📚</strong></summary>
 
 | Library Name  | Description                                                                                                                                                                                                                                          |
 |---------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------  |
@@ -366,7 +390,10 @@ Several community projects and ressources have been developed around ColPali to 
 | NoOCR       | NoOCR is end-to-end, [open source](https://github.com/kyryl-opens-ml/no-ocr) solution for complex PDFs, powered by ColPali embeddings. |
 | Astra Multi-vector     | [`Astra-multivector`](https://github.com/brian-ogrady/astradb-multivector) provides enterprise-grade integration with AstraDB for late-interaction models like ColPali, ColQwen2, and ColBERT. It implements efficient token pooling and embedding caching strategies to dramatically reduce latency and index size while maintaining retrieval quality. The library leverages Cassandra's distributed architecture for high-throughput vector search at scale. |
 
-### Notebooks 📙
+</details>
+
+<details>
+<summary><strong>🔽 Notebooks 📙</strong></summary>
 
 | Notebook Title                                               | Author & Link                                                |
 | ------------------------------------------------------------ | ------------------------------------------------------------ |
@@ -385,7 +412,10 @@ Several community projects and ressources have been developed around ColPali to 
 | Multimodal RAG with Document Retrieval (ColPali), Vision Language Model (ColQwen2) and Amazon Nova | [Suman's Notebook (AWS)](https://github.com/debnsuma/fcc-ai-engineering-aws/blob/main/05-multimodal-rag-with-colpali/01-multimodal-retrival-with-colpali-retreve-gen.ipynb) |
 | Multi-vector RAG: Using Weaviate to search a collection of PDF documents | [Weaviate's Notebook](https://github.com/weaviate/recipes/blob/main/weaviate-features/multi-vector/multi-vector-colipali-rag.ipynb) |
 
-### Other resources
+</details>
+
+<details>
+<summary><strong>🔽 Other resources</strong></summary>
 
 - 📝 = blog post
 - 📋 = PDF / slides
@@ -401,7 +431,7 @@ Several community projects and ressources have been developed around ColPali to 
 | Neural Search Talks: ColPali (with Manuel Faysse)                                        | [Zeta Alpha's Podcast](https://open.spotify.com/episode/2s6ljhd6VQTL2mIU9cFzCb) 📹                                                                            |
 | Multimodal Document RAG with Llama 3.2 Vision and ColQwen2                               | [Zain's blog post (Together AI)](https://www.together.ai/blog/multimodal-document-rag-with-llama-3-2-vision-and-colqwen2) 📝                                  |
 | ColPali: Document Retrieval with Vision Language Models                                  | [Antaripa Saha](https://antaripasaha.notion.site/ColPali-Efficient-Document-Retrieval-with-Vision-Language-Models-10f5314a5639803d94d0d7ac191bb5b1) 📝        |
-| Minimalist diagrams explaining ColPali                                                   | [Leonie's ColPali diagrams on X ](https://twitter.com/helloiamleonie/status/1839321865195851859)📝                                                            |
+| Minimalist diagrams explaining ColPali                                                   | [Leonie's ColPali diagrams on X](https://twitter.com/helloiamleonie/status/1839321865195851859)📝                                                            |
 | Multimodal RAG with ColPali and Gemini : Financial Report Analysis Application           | [Jaykumaran's blog post (LearnOpenCV)](https://learnopencv.com/multimodal-rag-with-colpali/) 📝                                                               |
 | Implement Multimodal RAG with ColPali and Vision Language Model Groq(Llava) and Qwen2-VL | [Plaban's blog post](https://medium.com/the-ai-forum/implement-multimodal-rag-with-colpali-and-vision-language-model-groq-llava-and-qwen2-vl-5c113b8c08fd) 📝 |
 | multimodal AI. open-source. in a nutshell.                                               | [Merve's Youtube video](https://youtu.be/IoGaGfU1CIg?si=yEhxMqJYxvMzGyUm) 📹                                                                                  |
@@ -409,6 +439,8 @@ Several community projects and ressources have been developed around ColPali to 
 | Late interaction & efficient Multi-modal retrievers need more than a vector index        | [Ayush Chaurasia (LanceDB)](https://blog.lancedb.com/late-interaction-efficient-multi-modal-retrievers-need-more-than-just-a-vector-index/) 📝                |
 | Optimizing Document Retrieval with ColPali and Qdrant's Binary Quantization              | [Sabrina Aquino (Qdrant)]( https://youtu.be/_A90A-grwIc?si=MS5RV17D6sgirCRm)  📹                                                                              |
 | Hands-On Multimodal Retrieval and Interpretability (ColQwen + Vespa)                     | [Antaripa Saha](https://www.analyticsvidhya.com/blog/2024/10/multimodal-retrieval-with-colqwen-vespa/) 📝                                                     |
+
+</details>
 
 ## Paper result reproduction
 
