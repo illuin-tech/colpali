@@ -188,7 +188,6 @@ for idx, (fig, ax) in enumerate(plots):
 ```
 
 </details>
-<br>
 
 For a more detailed example, you can refer to the interpretability notebooks from the [ColPali Cookbooks 👨🏻‍🍳](https://github.com/tonywu71/colpali-cookbooks) repository.
 
@@ -263,7 +262,6 @@ image_embeddings = token_pooler.pool_embeddings(
 ```
 
 </details>
-<br>
 
 Alternatively, you can use the `LambdaTokenPooler` to define your own custom pooling function:
 
@@ -308,7 +306,6 @@ outputs = pooler.pool_embeddings(list_embeddings)
 ```
 
 </details>
-<br>
 
 The custom pooling function should take a 2D tensor (token_length, embedding_dim) as input and return a tensor of shape (num_clusters, embedding_dim) representing the pooled embeddings.
 
