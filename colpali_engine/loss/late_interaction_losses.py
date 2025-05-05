@@ -169,14 +169,14 @@ class ColbertPairwiseCELoss(torch.nn.Module):
         # torch.vstack((pos_scores, neg_scores)).T.softmax(1)[:, 0].log()*(-1)
         loss = F.softplus(neg_scores - pos_scores).mean()
 
-        import torch.distributed as dist
+        # import torch.distributed as dist
 
-        print(
-            f"Scores (0): {pos_scores[0].item(), neg_scores[0].item()}, shapes: {scores.shape}, {pos_scores.shape}, {neg_scores.shape}"
-        )
-        print(
-            f"Rank: {dist.get_rank()}, Offset: {offset}, acc: {(scores.argmax(dim=1) == torch.arange(scores.shape[0], device=scores.device) + offset).sum().item() / scores.shape[0]},  scores: {scores.argmax(dim=1)}"
-        )
+        # print(
+        #     f"Scores (0): {pos_scores[0].item(), neg_scores[0].item()}, shapes: {scores.shape}, {pos_scores.shape}, {neg_scores.shape}"
+        # )
+        # print(
+        #     f"Rank: {dist.get_rank()}, Offset: {offset}, acc: {(scores.argmax(dim=1) == torch.arange(scores.shape[0], device=scores.device) + offset).sum().item() / scores.shape[0]},  scores: {scores.argmax(dim=1)}"
+        # )
 
         return loss
 
