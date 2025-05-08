@@ -13,7 +13,7 @@ from colpali_engine.trainer.colmodel_training_with_trainer import ColModelTraini
 from colpali_engine.utils.dataset_transformation import load_train_set
 
 config = ColModelTrainingConfig(
-    output_dir="./models/colqwen2-ce-posaware-smoothamx-trainer-5e-0505",
+    output_dir="./models/colqwen2-pairwise-5e5-trainer-5e-0505",
     processor=ColQwen2Processor.from_pretrained(
         pretrained_model_name_or_path="./models/base_models/colqwen2-base",
         max_num_visual_tokens=1024,
@@ -27,8 +27,8 @@ config = ColModelTrainingConfig(
     dataset_loading_func=load_train_set,
     eval_dataset_loader=None,
     run_eval=True,
-    loss_func=ColbertLoss(normalize_scores=True, use_smooth_max=True, pos_aware_negative_filtering=True),
-    # loss_func=ColbertPairwiseCELoss(use_smooth_max=True),
+    # loss_func=ColbertLoss(normalize_scores=True, use_smooth_max=True, pos_aware_negative_filtering=True),
+    loss_func=ColbertPairwiseCELoss(),
     tr_args=TrainingArguments(
         output_dir=None,
         overwrite_output_dir=True,
@@ -43,7 +43,7 @@ config = ColModelTrainingConfig(
         logging_steps=10,
         eval_steps=100,
         warmup_steps=100,
-        learning_rate=2e-4,
+        learning_rate=5e-5,
         save_total_limit=1,
     ),
     peft_config=LoraConfig(
