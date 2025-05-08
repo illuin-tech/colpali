@@ -13,7 +13,7 @@ from colpali_engine.trainer.colmodel_training_with_trainer import ColModelTraini
 from colpali_engine.utils.dataset_transformation import load_train_set
 
 config = ColModelTrainingConfig(
-    output_dir="./models/colqwen2-ce-5e5-trainer-5e-0505",
+    output_dir="./models/colqwen2-ce-2e4-trainer-3e-0505",
     processor=ColQwen2Processor.from_pretrained(
         pretrained_model_name_or_path="./models/base_models/colqwen2-base",
         max_num_visual_tokens=1024,
@@ -32,7 +32,7 @@ config = ColModelTrainingConfig(
     tr_args=TrainingArguments(
         output_dir=None,
         overwrite_output_dir=True,
-        num_train_epochs=5,
+        num_train_epochs=3,
         per_device_train_batch_size=64,
         gradient_checkpointing=True,
         gradient_checkpointing_kwargs={"use_reentrant": False},
