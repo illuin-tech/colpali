@@ -43,7 +43,7 @@ config = ColModelTrainingConfig(
         logging_steps=10,
         eval_steps=100,
         warmup_steps=100,
-        learning_rate=5e-5,
+        learning_rate=2e-4,
         save_total_limit=1,
     ),
     peft_config=LoraConfig(
