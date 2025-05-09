@@ -258,8 +258,6 @@ class ColModelTraining:
                     if "neg_doc_input_ids" in batch:
                         neg_embed = self.model(**{k[8:]: v for k, v in batch.items() if k.startswith("neg_doc")})
 
-                    import torch.nn.functional as F
-
                     def pad_to_max_len_right(x: torch.Tensor) -> torch.Tensor:
                         """
                         Right-pad x along dim=1 so that all ranks share the same length.
@@ -270,17 +268,17 @@ class ColModelTraining:
                             Padded tensor of shape [B, max_L, D], with zeros on the right.
                         """
                         # 1) local length
-                        local_L = x.size(1)
+                        local_len = x.size(1)
                         # 2) get global max length
-                        len_tensor = torch.tensor(local_L, device=x.device)
+                        len_tensor = torch.tensor(local_len, device=x.device)
                         dist.all_reduce(len_tensor, op=dist.ReduceOp.MAX)
-                        max_L = len_tensor.item()
+                        max_len = len_tensor.item()
 
                         # 3) if shorter, pad on the right of dim=1
-                        if local_L < max_L:
-                            pad_amount = max_L - local_L
-                            # F.pad takes (D_left, D_right, L_left, L_right)
-                            x = F.pad(x, (0, 0, 0, pad_amount), value=0.0)
+                        if local_len < max_len:
+                            pad_amount = max_len - local_len
+                            # torch.nn.functional.pad takes (D_left, D_right, L_left, L_right)
+                            x = torch.nn.functional.pad(x, (0, 0, 0, pad_amount), value=0.0)
                         return x
 
                     # Usage before gathering:

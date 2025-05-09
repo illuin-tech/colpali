@@ -8,7 +8,7 @@ from transformers import TrainingArguments
 
 from colpali_engine.loss.bi_encoder_losses import BiNegativeCELoss, BiEncoderLoss
 from colpali_engine.models import BiQwen2, BiQwen2Processor
-from colpali_engine.trainer.colmodel_training import ColModelTraining, ColModelTrainingConfig
+from colpali_engine.trainer.colmodel_hf_training import ColModelTraining, ColModelTrainingConfig
 from colpali_engine.utils.dataset_transformation import load_train_set_ir_negs, load_train_set
 
 config = ColModelTrainingConfig(
