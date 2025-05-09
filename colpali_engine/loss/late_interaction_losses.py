@@ -196,7 +196,7 @@ class ColbertPairwiseNegativeCELoss(torch.nn.Module):
         self.ce_loss = CrossEntropyLoss()
         self.in_batch_term = in_batch_term
 
-    def forward(self, query_embeddings, doc_embeddings, neg_doc_embeddings):
+    def forward(self, query_embeddings, doc_embeddings, neg_doc_embeddings, offset: int = 0):
         """
         query_embeddings: (batch_size, num_query_tokens, dim)
         doc_embeddings: (batch_size, num_doc_tokens, dim)
@@ -214,10 +214,16 @@ class ColbertPairwiseNegativeCELoss(torch.nn.Module):
                 torch.einsum("bnd,csd->bcns", query_embeddings, doc_embeddings).max(dim=3)[0].sum(dim=2)
             )  # (batch_size, batch_size)
 
-            # Positive scores are the diagonal of the scores matrix.
-            pos_scores = scores.diagonal()  # (batch_size,)
-            neg_scores = scores - torch.eye(scores.shape[0], device=scores.device) * 1e6  # (batch_size, batch_size)
-            neg_scores = neg_scores.max(dim=1)[0]  # (batch_size,)
+            # Positive scores are the diagonal of the scores matrix but shifted by the offset.
+            pos_scores = scores.diagonal(offset=offset)  # (batch_size,)
+
+            # 1) clone so you don’t overwrite your original scores
+            neg_scores = scores.clone()
+            # 2) get a *view* on that offset‐diagonal…
+            d = neg_scores.diagonal(offset=offset)
+            # 3) fill it with a very large negative (or -inf) so it never wins the max
+            d.fill_(-1e6)
+            neg_scores = neg_scores.max(dim=1)[0]
 
             loss += F.softplus(neg_scores - pos_scores).mean()
 
