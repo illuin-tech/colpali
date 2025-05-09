@@ -6,10 +6,10 @@ import torch
 from peft import LoraConfig
 from transformers import TrainingArguments
 
-from colpali_engine.loss.bi_encoder_losses import BiNegativeCELoss, BiEncoderLoss
+from colpali_engine.loss.bi_encoder_losses import BiEncoderLoss
 from colpali_engine.models import BiQwen2, BiQwen2Processor
 from colpali_engine.trainer.colmodel_hf_training import ColModelTraining, ColModelTrainingConfig
-from colpali_engine.utils.dataset_transformation import load_train_set_ir_negs, load_train_set
+from colpali_engine.utils.dataset_transformation import load_train_set
 
 config = ColModelTrainingConfig(
     output_dir="./models/biqwen2-hardneg-5e-0304",
@@ -22,10 +22,10 @@ config = ColModelTrainingConfig(
         use_cache=False,
         attn_implementation="flash_attention_2",
     ),
-    dataset_loading_func=load_train_set, # load_train_set_ir_negs,
+    dataset_loading_func=load_train_set,  # load_train_set_ir_negs,
     eval_dataset_loader=None,
     run_eval=True,
-    loss_func=BiEncoderLoss(), # BiNegativeCELoss(in_batch_term=True),
+    loss_func=BiEncoderLoss(),  # BiNegativeCELoss(in_batch_term=True),
     tr_args=TrainingArguments(
         output_dir=None,
         overwrite_output_dir=True,
