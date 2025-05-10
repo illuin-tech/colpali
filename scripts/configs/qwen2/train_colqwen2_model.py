@@ -6,7 +6,7 @@ import torch
 from peft import LoraConfig
 from transformers import TrainingArguments
 
-from colpali_engine.loss.late_interaction_losses import ColbertPairwiseCELoss, ColbertLoss
+from colpali_engine.loss.late_interaction_losses import ColbertLoss
 from colpali_engine.models import ColQwen2, ColQwen2Processor
 
 # from colpali_engine.trainer.colmodel_torch_training import ColModelTraining, ColModelTrainingConfig
@@ -28,7 +28,8 @@ config = ColModelTrainingConfig(
     dataset_loading_func=load_train_set,
     eval_dataset_loader=None,
     run_eval=True,
-    loss_func=ColbertLoss(temperature=0.02, normalize_scores=True, use_smooth_max=False, pos_aware_negative_filtering=False),
+    loss_func=ColbertLoss(temperature=0.02, normalize_scores=True, use_smooth_max=False,
+                          pos_aware_negative_filtering=False),
     # loss_func=ColbertPairwiseCELoss(),
     tr_args=TrainingArguments(
         output_dir=None,
