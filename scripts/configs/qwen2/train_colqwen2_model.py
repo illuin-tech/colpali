@@ -28,10 +28,9 @@ config = ColModelTrainingConfig(
     dataset_loading_func=load_train_set,
     eval_dataset_loader=None,
     run_eval=True,
-    loss_func=ColbertLoss(temperature=0.02, 
-                          normalize_scores=True, 
-                          use_smooth_max=False,
-                          pos_aware_negative_filtering=False),
+    loss_func=ColbertLoss(
+        temperature=0.02, normalize_scores=True, use_smooth_max=False, pos_aware_negative_filtering=False
+    ),
     # loss_func=ColbertPairwiseCELoss(),
     tr_args=TrainingArguments(
         output_dir=None,
