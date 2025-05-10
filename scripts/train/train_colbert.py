@@ -4,7 +4,7 @@ from pathlib import Path
 import configue
 import typer
 
-from colpali_engine.trainer.colmodel_hf_training import ColModelTraining, ColModelTrainingConfig
+from colpali_engine.trainer.colmodel_training import ColModelTraining, ColModelTrainingConfig
 from colpali_engine.utils.gpu_stats import print_gpu_utilization
 
 app = typer.Typer(pretty_exceptions_enable=False)

@@ -10,7 +10,7 @@ from colpali_engine.loss.late_interaction_losses import ColbertLoss
 from colpali_engine.models import ColQwen2, ColQwen2Processor
 
 # from colpali_engine.trainer.colmodel_torch_training import ColModelTraining, ColModelTrainingConfig
-from colpali_engine.trainer.colmodel_hf_training import ColModelTraining, ColModelTrainingConfig
+from colpali_engine.trainer.colmodel_training import ColModelTraining, ColModelTrainingConfig
 from colpali_engine.utils.dataset_transformation import load_train_set
 
 config = ColModelTrainingConfig(
