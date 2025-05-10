@@ -9,12 +9,12 @@ from transformers import TrainingArguments
 from colpali_engine.loss.late_interaction_losses import ColbertLoss
 from colpali_engine.models import ColQwen2, ColQwen2Processor
 
-# from colpali_engine.trainer.colmodel_torch_training import ColModelTorchTraining as ColModelTraining
-from colpali_engine.trainer.colmodel_training import ColModelTraining, ColModelTrainingConfig
+from colpali_engine.trainer.colmodel_torch_training import ColModelTorchTraining as ColModelTraining
+from colpali_engine.trainer.colmodel_training import ColModelTrainingConfig
 from colpali_engine.utils.dataset_transformation import load_train_set
 
 config = ColModelTrainingConfig(
-    output_dir="./models/colqwen2-ce-2e4-trainer-3e-1005",
+    output_dir="./models/colqwen2-ce-2e4-torch-3e-1005",
     processor=ColQwen2Processor.from_pretrained(
         pretrained_model_name_or_path="./models/base_models/colqwen2-base",
         max_num_visual_tokens=1024,
