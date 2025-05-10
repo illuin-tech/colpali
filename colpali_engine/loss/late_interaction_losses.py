@@ -58,7 +58,7 @@ class ColbertModule(torch.nn.Module):
             ValueError: If normalized scores exceed tolerance.
         """
         normalized = scores / lengths.unsqueeze(1)
-        mn, mx = torch.minmax(normalized)
+        mn, mx = torch.aminmax(normalized)
         if mn < -self.norm_tol or mx > 1 + self.norm_tol:
             raise ValueError(
                 f"Scores out of bounds after normalization: "
