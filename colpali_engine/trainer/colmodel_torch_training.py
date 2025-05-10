@@ -1,81 +1,19 @@
 import os
-from dataclasses import dataclass
-from typing import Callable, Dict, Optional, Tuple, Union
+from typing import Tuple
 
 import torch
 import torch.distributed as dist
-from peft import LoraConfig, PeftModel, get_peft_model
-from torch.autograd import Function
+from torch.distributed._functional_collectives import all_gather_tensor_autograd
 from torch.nn.parallel import DistributedDataParallel
 from torch.utils.data import DataLoader, DistributedSampler
 from tqdm.auto import tqdm
-from transformers import (
-    PreTrainedModel,
-    TrainingArguments,
-)
 
 from colpali_engine.collators import CorpusQueryCollator, VisualRetrieverCollator
-from colpali_engine.loss.late_interaction_losses import (
-    ColbertLoss,
-)
+from colpali_engine.trainer.colmodel_training import ColModelTrainingConfig
 from colpali_engine.utils.gpu_stats import print_gpu_utilization
-from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 
 
-@dataclass
-class ColModelTrainingConfig:
-    model: Union[PreTrainedModel, PeftModel]
-    processor: BaseVisualRetrieverProcessor
-    tr_args: Optional[TrainingArguments] = None
-    output_dir: Optional[str] = None
-    max_length: int = 256
-    run_eval: bool = True
-    run_train: bool = True
-    peft_config: Optional[LoraConfig] = None
-    loss_func: Optional[Callable] = ColbertLoss()
-    dataset_loading_func: Optional[Callable] = None
-    eval_dataset_loader: Optional[Dict[str, Callable]] = None
-    pretrained_peft_model_name_or_path: Optional[str] = None
-    """
-    Config class used for training a ColVision model.
-    """
-
-    def __post_init__(self):
-        """
-        Initialize the model and tokenizer if not provided
-        """
-        if self.output_dir is None:
-            sanitized_name = str(self.model.name_or_path).replace("/", "_")
-            self.output_dir = f"./models/{sanitized_name}"
-
-        if self.tr_args is None:
-            print("No training arguments provided. Using default.")
-            self.tr_args = TrainingArguments(output_dir=self.output_dir)
-        elif self.tr_args.output_dir is None or self.tr_args.output_dir == "trainer_output":
-            self.tr_args.output_dir = self.output_dir
-
-        if isinstance(self.tr_args.learning_rate, str):
-            print("Casting learning rate to float")
-            self.tr_args.learning_rate = float(self.tr_args.learning_rate)
-
-        self.tr_args.remove_unused_columns = False
-
-        if self.pretrained_peft_model_name_or_path is not None:
-            print("Loading pretrained PEFT model")
-            self.model.load_adapter(self.pretrained_peft_model_name_or_path, is_trainable=True)
-
-        if self.peft_config is not None:
-            print("Configurating PEFT model")
-            if self.pretrained_peft_model_name_or_path is None:
-                self.model = get_peft_model(self.model, self.peft_config)
-                self.model.print_trainable_parameters()
-            else:
-                print(f"Adapter already loaded from {self.pretrained_peft_model_name_or_path}. Not overwriting.")
-
-    print_gpu_utilization()
-
-
-class ColModelTraining:
+class ColModelTorchTraining:
     """
     Class that contains the training and evaluation logic for a ColVision model.
     """
@@ -192,45 +130,43 @@ class ColModelTraining:
 
         loss_fn = self.config.loss_func
 
-        class AllGatherWithGrad(Function):
-            @staticmethod
-            def forward(ctx, x):
-                """
-                Gathers x from all ranks into one big tensor.
-                """
-                world_size = dist.get_world_size()
-                ctx.batch_size = x.size(0)
-                ctx.world_size = world_size
-                ctx.rank = dist.get_rank()
-
-                # Gather into list
-                x_list = [torch.zeros_like(x) for _ in range(world_size)]
-                dist.all_gather(x_list, x)
-                # Save for backward
-                ctx.save_for_backward()
-                return torch.cat(x_list, dim=0)  # [B * W, D]
-
-            @staticmethod
-            def backward(ctx, grad_output):
-                """
-                Receives gradient of the big gathered tensor,
-                extracts this rank’s slice, and returns it.
-                """
-                b = ctx.batch_size
-                r = ctx.rank
-                start = r * b
-                end = start + b
-                # Only this slice flows back
-                return grad_output[start:end]
-
         def gather_with_grad(x: torch.Tensor) -> torch.Tensor:
-            """Convenience wrapper to call the custom autograd gather."""
-            return AllGatherWithGrad.apply(x)
+            return all_gather_tensor_autograd(x, gather_dim=0, group=dist.group.WORLD)
 
-        # from torch.distributed.nn.functional import _AllGather as GradAllGather
-        # gather_with_grad = GradAllGather.apply
+        # class AllGatherWithGrad(Function):
+        #     @staticmethod
+        #     def forward(ctx, x):
+        #         """
+        #         Gathers x from all ranks into one big tensor.
+        #         """
+        #         world_size = dist.get_world_size()
+        #         ctx.batch_size = x.size(0)
+        #         ctx.world_size = world_size
+        #         ctx.rank = dist.get_rank()
 
-        # from torch.distributed.nn.functional import all_gather as gather_with_grad
+        #         # Gather into list
+        #         x_list = [torch.zeros_like(x) for _ in range(world_size)]
+        #         dist.all_gather(x_list, x)
+        #         # Save for backward
+        #         ctx.save_for_backward()
+        #         return torch.cat(x_list, dim=0)  # [B * W, D]
+
+        #     @staticmethod
+        #     def backward(ctx, grad_output):
+        #         """
+        #         Receives gradient of the big gathered tensor,
+        #         extracts this rank’s slice, and returns it.
+        #         """
+        #         b = ctx.batch_size
+        #         r = ctx.rank
+        #         start = r * b
+        #         end = start + b
+        #         # Only this slice flows back
+        #         return grad_output[start:end]
+
+        # def gather_with_grad(x: torch.Tensor) -> torch.Tensor:
+        #     """Convenience wrapper to call the custom autograd gather."""
+        #     return AllGatherWithGrad.apply(x)
 
         # Training loop
         for epoch in range(self.config.tr_args.num_train_epochs):
