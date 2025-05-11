@@ -54,7 +54,7 @@ if __name__ == "__main__":
             gradient_checkpointing_kwargs={"use_reentrant": False},
             per_device_eval_batch_size=16,
             eval_strategy="steps",
-            dataloader_num_workers=8,
+            dataloader_num_workers=4,
             save_steps=500,
             logging_steps=10,
             eval_steps=100,
