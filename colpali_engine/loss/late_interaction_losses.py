@@ -148,7 +148,6 @@ class ColbertLoss(ColbertModule):
         lengths = (query_embeddings[:, :, 0] != 0).sum(dim=1)
         raw = torch.einsum("bnd,csd->bcns", query_embeddings, doc_embeddings)
         scores = self._aggregate(raw, self.use_smooth_max, dim_max=3, dim_sum=2)
-        print(f"scores shape: {scores.shape}, query shape: {query_embeddings.shape}, doc shape: {doc_embeddings.shape}")
 
         if self.normalize_scores:
             scores = self._apply_normalization(scores, lengths)

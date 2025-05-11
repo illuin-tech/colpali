@@ -88,6 +88,7 @@ class ColModelTorchTraining:
         use_amp = getattr(self.config, "use_amp", False)
         scaler = torch.amp.GradScaler("cuda") if use_amp else None
         max_grad_norm = getattr(self.config.tr_args, "max_grad_norm", None)
+        print(f"Using AMP: {use_amp}, Max grad norm: {max_grad_norm}")
 
         sampler = DistributedSampler(self.dataset["train"]) if dist.is_initialized() else None
         train_loader = DataLoader(
@@ -99,6 +100,7 @@ class ColModelTorchTraining:
             prefetch_factor=2,
             pin_memory=True,
             drop_last=True,
+            shuffle=True,
         )
 
         # Evaluation loader
@@ -169,18 +171,18 @@ class ColModelTorchTraining:
         #     return AllGatherWithGrad.apply(x)
 
         # Training loop
+        # only rank0 should display
+        if self._is_rank0():
+            pbar = tqdm(total=num_training_steps, desc="Training", leave=True)
+        else:
+            pbar = None
+
         for epoch in range(self.config.tr_args.num_train_epochs):
-            if self._is_rank0():
-                print(f"Epoch {epoch + 1}/{self.config.tr_args.num_train_epochs}")
             if sampler:
                 sampler.set_epoch(epoch)
             self.model.train()
 
-            loader = train_loader
-            if self._is_rank0():
-                loader = tqdm(train_loader, desc=f"Epoch {epoch + 1}", disable=not self._is_rank0())
-
-            for step, batch in enumerate(loader):
+            for step, batch in enumerate(train_loader):
                 # Move batch to device
                 batch = {k: v.to(self.model.device, non_blocking=True) for k, v in batch.items()}
 
@@ -252,8 +254,11 @@ class ColModelTorchTraining:
                 scheduler.step()
                 optimizer.zero_grad()
 
-                if self._is_rank0() and not isinstance(loader, DataLoader):
-                    loader.set_postfix({"loss": loss.item()})
+                if self._is_rank0() and not isinstance(train_loader, DataLoader):
+                    # advance the global bar
+                    # you can also show epoch/step in the postfix if you like:
+                    pbar.set_postfix(epoch=epoch + 1, step=step + 1, refresh=False)
+                    pbar.update(1)
 
                 if self._is_rank0() and step % 10 == 0:
                     print(f"Step {step}/{len(train_loader)}")
@@ -287,6 +292,7 @@ class ColModelTorchTraining:
         self.model = self.model.module if hasattr(self.model, "module") else self.model
         # Final actions
         if self._is_rank0():
+            pbar.close()
             print("Training complete. Saving model.")
             self.save()
             print("Model saved.")
