@@ -100,7 +100,6 @@ class ColModelTorchTraining:
             prefetch_factor=2,
             pin_memory=True,
             drop_last=True,
-            shuffle=True,
         )
 
         # Evaluation loader
