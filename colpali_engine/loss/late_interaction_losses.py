@@ -256,7 +256,7 @@ class ColbertPairwiseCELoss(ColbertModule):
 
     def __init__(
         self,
-        temperature: float = 0.02,
+        temperature: float = 1.0,
         normalize_scores: bool = True,
         use_smooth_max: bool = False,
         pos_aware_negative_filtering: bool = False,

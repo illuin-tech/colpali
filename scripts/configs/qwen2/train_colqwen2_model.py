@@ -6,7 +6,7 @@ import torch
 from peft import LoraConfig
 from transformers import TrainingArguments
 
-from colpali_engine.loss.late_interaction_losses import ColbertLoss
+from colpali_engine.loss.late_interaction_losses import ColbertLoss, ColbertPairwiseCELoss
 from colpali_engine.models import ColQwen2, ColQwen2Processor
 from colpali_engine.trainer.colmodel_torch_training import ColModelTorchTraining
 from colpali_engine.trainer.colmodel_training import ColModelTraining, ColModelTrainingConfig
@@ -19,12 +19,27 @@ def parse_args():
     p.add_argument("--lr", type=float, default=2e-4, help="learning rate")
     p.add_argument("--tau", type=float, default=0.02, help="temperature for loss function")
     p.add_argument("--trainer", type=str, default="hf", choices=["torch", "hf"], help="trainer to use")
+    p.add_argument("--loss", type=str, default="ce", choices=["ce", "pairwise"], help="loss function to use")
     return p.parse_args()
 
 
 if __name__ == "__main__":
     args = parse_args()
 
+    if args.loss == "ce":
+        loss_func = ColbertLoss(
+            temperature=args.tau,
+            normalize_scores=True,
+            use_smooth_max=False,
+            pos_aware_negative_filtering=False,
+        )
+    elif args.loss == "pairwise":
+        loss_func = ColbertPairwiseCELoss(
+            normalize_scores=True,
+        )
+    else:
+        raise ValueError(f"Unknown loss function: {args.loss}")
+    
     config = ColModelTrainingConfig(
         output_dir=args.output_dir,
         processor=ColQwen2Processor.from_pretrained(
@@ -39,12 +54,7 @@ if __name__ == "__main__":
         ),
         dataset_loading_func=load_train_set,
         run_eval=True,
-        loss_func=ColbertLoss(
-            temperature=args.tau,
-            normalize_scores=True,
-            use_smooth_max=False,
-            pos_aware_negative_filtering=False,
-        ),
+        loss_func=loss_func,
         tr_args=TrainingArguments(
             output_dir=None,
             overwrite_output_dir=True,
