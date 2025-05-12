@@ -39,7 +39,7 @@ if __name__ == "__main__":
         )
     else:
         raise ValueError(f"Unknown loss function: {args.loss}")
-    
+
     config = ColModelTrainingConfig(
         output_dir=args.output_dir,
         processor=ColQwen2Processor.from_pretrained(
