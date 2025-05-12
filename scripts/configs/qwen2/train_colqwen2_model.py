@@ -29,7 +29,7 @@ if __name__ == "__main__":
         output_dir=args.output_dir,
         processor=ColQwen2Processor.from_pretrained(
             pretrained_model_name_or_path="./models/base_models/colqwen2-base",
-            max_num_visual_tokens=768,
+            max_num_visual_tokens=1024,
         ),
         model=ColQwen2.from_pretrained(
             pretrained_model_name_or_path="./models/base_models/colqwen2-base",
@@ -48,7 +48,7 @@ if __name__ == "__main__":
         tr_args=TrainingArguments(
             output_dir=None,
             overwrite_output_dir=True,
-            num_train_epochs=3,
+            num_train_epochs=5,
             per_device_train_batch_size=64,
             gradient_checkpointing=True,
             gradient_checkpointing_kwargs={"use_reentrant": False},
