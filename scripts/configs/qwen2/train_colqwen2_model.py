@@ -44,7 +44,7 @@ if __name__ == "__main__":
         output_dir=args.output_dir,
         processor=ColQwen2Processor.from_pretrained(
             pretrained_model_name_or_path="./models/base_models/colqwen2-base",
-            max_num_visual_tokens=1024,
+            max_num_visual_tokens=768,
         ),
         model=ColQwen2.from_pretrained(
             pretrained_model_name_or_path="./models/base_models/colqwen2-base",
