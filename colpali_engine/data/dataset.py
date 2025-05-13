@@ -115,7 +115,7 @@ class ColPaliEngineDataset(Dataset):
         pos_targets = sample[self.pos_target_column_name]
         if not isinstance(pos_targets, list):
             pos_targets = [pos_targets]
-        
+
         neg_targets = sample.get(self.neg_target_column_name, None)
         if neg_targets is not None and not isinstance(neg_targets, list):
             neg_targets = [neg_targets]

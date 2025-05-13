@@ -60,7 +60,9 @@ class VisualRetrieverCollator:
             sampled_query = random.choice(query) if isinstance(query, list) else query
             queries.append(sampled_query)
 
-            assert ColPaliEngineDataset.POS_TARGET_KEY in example, f"Missing {ColPaliEngineDataset.POS_TARGET_KEY} in example."
+            assert ColPaliEngineDataset.POS_TARGET_KEY in example, (
+                f"Missing {ColPaliEngineDataset.POS_TARGET_KEY} in example."
+            )
             pos_tgt = example[ColPaliEngineDataset.POS_TARGET_KEY]
             sample_pos = random.choice(pos_tgt) if isinstance(pos_tgt, list) else pos_tgt
             pos_targets.append(sample_pos)
