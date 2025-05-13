@@ -124,6 +124,8 @@ class ColPaliEngineDataset(Dataset):
             neg_targets = sample[self.neg_target_column_name]
             if not isinstance(neg_targets, list):
                 neg_targets = [neg_targets]
+        else:
+            neg_targets = None
 
         # If an external document corpus is provided, retrieve the documents from it.
         if self.corpus is not None:

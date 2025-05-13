@@ -33,6 +33,7 @@ class SingleDatasetBatchSampler(BatchSampler):
         self.global_batch_size = global_batch_size
         self.drop_last = drop_last
         self.generator = generator or torch.Generator()
+        self.initial_seed = self.generator.initial_seed()
 
         # Calculate dataset sizes and create index mappings
         self.dataset_sizes = [len(dataset) for dataset in datasets]
@@ -89,9 +90,12 @@ class SingleDatasetBatchSampler(BatchSampler):
         Args:
             epoch (int): Epoch number
         """
-        # Set seed based on epoch to ensure different shuffling each epoch
         torch_gen = torch.Generator()
-        torch_gen.manual_seed(self.generator.initial_seed() + epoch)
+
+        # Set seed based on epoch to ensure different shuffling each epoch
+        new_seed = self.initial_seed + epoch
+        torch_gen.manual_seed(new_seed)
+        self.generator.manual_seed(new_seed)
 
         # Reshuffle indices for each dataset
         self.indices_per_dataset = [torch.randperm(size, generator=torch_gen).tolist() for size in self.dataset_sizes]
