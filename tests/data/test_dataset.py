@@ -136,8 +136,8 @@ def test_error_if_data_mix_neg_and_non_neg(data_with_neg, data_no_neg):
 @pytest.mark.parametrize(
     "source_data, neg_col",
     [
-        (pytest.lazy_fixture("data_no_neg"), None),
-        (pytest.lazy_fixture("data_with_neg"), "neg_target"),
+        (data_no_neg, None),
+        (data_with_neg, "neg_target"),
     ],
 )
 def test_take_returns_subset(source_data, neg_col):
