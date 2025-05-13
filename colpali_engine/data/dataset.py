@@ -74,7 +74,7 @@ class ColPaliEngineDataset(Dataset):
     def __init__(
         self,
         data: List[Dict[str, Any]],
-        external_document_corpus: Optional[Corpus] = None,
+        corpus: Optional[Corpus] = None,
         query_column_name: str = "query",
         pos_target_column_name: str = "pos_target",
         neg_target_column_name: str = None,
@@ -84,11 +84,11 @@ class ColPaliEngineDataset(Dataset):
 
         Args:
             data (Dict[str, List[Any]]): A dictionary containing the dataset samples.
-            external_document_corpus (Optional[HFDataset]): An optional external document corpus to retrieve
+            corpus (Optional[Corpus]): An optional external document corpus to retrieve
             documents (images) from.
         """
         self.data = data
-        self.external_document_corpus = external_document_corpus
+        self.corpus = corpus
 
         # Column args
         self.query_column_name = query_column_name
@@ -121,10 +121,10 @@ class ColPaliEngineDataset(Dataset):
             neg_targets = [neg_targets]
 
         # If an external document corpus is provided, retrieve the documents from it.
-        if self.external_document_corpus is not None:
-            pos_targets = [self.external_document_corpus.retrieve(doc_id) for doc_id in pos_targets]
+        if self.corpus is not None:
+            pos_targets = [self.corpus.retrieve(doc_id) for doc_id in pos_targets]
             if neg_targets is not None:
-                neg_targets = [self.external_document_corpus.retrieve(doc_id) for doc_id in neg_targets]
+                neg_targets = [self.corpus.retrieve(doc_id) for doc_id in neg_targets]
 
         return {
             self.QUERY_KEY: query,
@@ -142,4 +142,4 @@ class ColPaliEngineDataset(Dataset):
         Returns:
             ColPaliEngineDataset: A new dataset containing the first n samples.
         """
-        return self.__class__(self.data.take(n), self.external_document_corpus)
+        return self.__class__(self.data.take(n), self.corpus)
