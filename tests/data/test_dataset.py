@@ -4,12 +4,12 @@ import pytest
 from datasets import Dataset as HFDataset
 from PIL import Image
 
-from colpali_engine.data.dataset import ColPaliEngineDataset, ExternalDocumentCorpus
+from colpali_engine.data.dataset import ColPaliEngineDataset, Corpus
 
 
 class TestColPaliEngineDataset:
     @pytest.fixture(scope="class")
-    def corpus(self) -> Generator[ExternalDocumentCorpus, None, None]:
+    def corpus(self) -> Generator[Corpus, None, None]:
         # Mock data for the corpus
         corpus_data = HFDataset.from_list(
             [
@@ -17,7 +17,7 @@ class TestColPaliEngineDataset:
                 {"doc": Image.new("RGB", (16, 16), color="blue")},
             ]
         )
-        yield ExternalDocumentCorpus(corpus_data=corpus_data)
+        yield Corpus(corpus_data=corpus_data)
 
     @pytest.fixture(scope="class")
     def colpali_engine_dataset(self) -> Generator[ColPaliEngineDataset, None, None]:

@@ -4,7 +4,7 @@ from typing import List, Literal, Tuple, cast
 from datasets import Dataset, DatasetDict, concatenate_datasets, load_dataset
 from PIL import Image
 
-from colpali_engine.data.dataset import ColPaliEngineDataset, ExternalDocumentCorpus
+from colpali_engine.data.dataset import ColPaliEngineDataset, Corpus
 
 USE_LOCAL_DATASET = os.environ.get("USE_LOCAL_DATASET", "1") == "1"
 
@@ -32,7 +32,7 @@ def load_train_set_ir() -> ColPaliEngineDataset:
     """Returns the query dataset, then the anchor dataset with the documents, then the dataset type"""
     corpus_data = load_dataset("manu/colpali-corpus", split="train")
     corpus_data = corpus_data.rename_column("image", "doc")
-    corpus = ExternalDocumentCorpus(corpus_data=corpus_data)
+    corpus = Corpus(corpus_data=corpus_data)
 
     dataset = load_dataset("manu/colpali-queries", split="train")
     dataset = dataset.rename_column("positive_passages", ColPaliEngineDataset.POS_TARGET_KEY)
@@ -54,7 +54,7 @@ def load_train_set_ir_negs() -> ColPaliEngineDataset:
     """Returns the query dataset, then the anchor dataset with the documents, then the dataset type"""
     corpus_data = load_dataset("manu/colpali-corpus", split="train")
     corpus_data = corpus_data.rename_column("image", "doc")
-    corpus = ExternalDocumentCorpus(corpus_data=corpus_data)
+    corpus = Corpus(corpus_data=corpus_data)
 
     dataset = load_dataset("manu/colpali-queries", split="train")
     print("Dataset size:", len(dataset))

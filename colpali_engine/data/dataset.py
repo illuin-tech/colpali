@@ -7,7 +7,7 @@ from torch.utils.data import Dataset
 Document = Union[str, Image]
 
 
-class ExternalDocumentCorpus:
+class Corpus:
     """
     Corpus class for handling retrieving with simple mapping.
     This class is meant to be overridden by the user to handle their own corpus.
@@ -59,8 +59,10 @@ class ExternalDocumentCorpus:
             Document: The document retrieved from the corpus.
         """
         if self.docid_to_idx_mapping is not None:
-            return self.corpus_data[self.docid_to_idx_mapping.get(docid)][self.doc_column_name]
-        return self.corpus_data[docid][self.doc_column_name]
+            doc_idx = self.docid_to_idx_mapping[docid]
+        else:
+            doc_idx = docid
+        return self.corpus_data[doc_idx][self.doc_column_name]
 
 
 class ColPaliEngineDataset(Dataset):
@@ -72,7 +74,10 @@ class ColPaliEngineDataset(Dataset):
     def __init__(
         self,
         data: List[Dict[str, Any]],
-        external_document_corpus: Optional[ExternalDocumentCorpus] = None,
+        external_document_corpus: Optional[Corpus] = None,
+        query_column_name: str = "query",
+        pos_target_column_name: str = "pos_target",
+        neg_target_column_name: str = None,
     ):
         """
         Initialize the dataset with the provided data and external document corpus.
@@ -85,13 +90,18 @@ class ColPaliEngineDataset(Dataset):
         self.data = data
         self.external_document_corpus = external_document_corpus
 
+        # Column args
+        self.query_column_name = query_column_name
+        self.pos_target_column_name = pos_target_column_name
+        self.neg_target_column_name = neg_target_column_name
+
         assert isinstance(
             self.data,
             (list, Dataset, HFDataset),
         ), "Data must be a map-style dataset"
 
-        assert self.QUERY_KEY in self.data[0], f"Data must contain a {self.QUERY_KEY} column"
-        assert self.POS_TARGET_KEY in self.data[0], f"Data must contain a {self.POS_TARGET_KEY} column"
+        assert self.QUERY_KEY in self.data[0], f"Data must contain the {self.query_column_name} column"
+        assert self.POS_TARGET_KEY in self.data[0], f"Data must contain a {self.pos_target_column_name} column"
 
     def __len__(self) -> int:
         """Return the number of samples in the dataset."""
@@ -100,36 +110,27 @@ class ColPaliEngineDataset(Dataset):
     def __getitem__(self, idx: int) -> Dict[str, Any]:
         sample = self.data[idx]
 
+        query = sample[self.query_column_name]
+
+        pos_targets = sample[self.pos_target_column_name]
+        if not isinstance(pos_targets, list):
+            pos_targets = [pos_targets]
+        
+        neg_targets = sample.get(self.neg_target_column_name, None)
+        if neg_targets is not None and not isinstance(neg_targets, list):
+            neg_targets = [neg_targets]
+
+        # If an external document corpus is provided, retrieve the documents from it.
         if self.external_document_corpus is not None:
-            return {
-                self.QUERY_KEY: sample[self.QUERY_KEY],
-                self.POS_TARGET_KEY: self.get_external_documents_from_docid(sample[self.POS_TARGET_KEY]),
-                self.NEG_TARGET_KEY: (
-                    self.get_external_documents_from_docid(sample[self.NEG_TARGET_KEY])
-                    if self.NEG_TARGET_KEY in sample
-                    else None
-                ),
-            }
+            pos_targets = [self.external_document_corpus.retrieve(doc_id) for doc_id in pos_targets]
+            if neg_targets is not None:
+                neg_targets = [self.external_document_corpus.retrieve(doc_id) for doc_id in neg_targets]
 
         return {
-            self.QUERY_KEY: sample[self.QUERY_KEY],
-            self.POS_TARGET_KEY: sample[self.POS_TARGET_KEY],
-            self.NEG_TARGET_KEY: sample[self.NEG_TARGET_KEY] if self.NEG_TARGET_KEY in sample else None,
+            self.QUERY_KEY: query,
+            self.POS_TARGET_KEY: pos_targets,
+            self.NEG_TARGET_KEY: neg_targets,
         }
-
-    def get_external_documents_from_docid(self, doc_ids) -> List[Document]:
-        """
-        Get the documents from the external corpus using the document ID.
-        Args:
-            doc_id (str): The document ID to retrieve.
-        Returns:
-            List[Document]: The documents retrieved from the external corpus.
-        """
-
-        if not isinstance(doc_ids, list):
-            doc_ids = [doc_ids]
-
-        return [self.external_document_corpus.retrieve(doc_id) for doc_id in doc_ids]
 
     def take(self, n: int) -> "ColPaliEngineDataset":
         """
