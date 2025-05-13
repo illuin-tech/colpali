@@ -55,9 +55,7 @@ class VisualRetrieverCollator:
 
         # Parse the examples.
         for example in examples:
-            assert ColPaliEngineDataset.QUERY_KEY in example, (
-                f"Missing {ColPaliEngineDataset.QUERY_KEY} in example."
-            )
+            assert ColPaliEngineDataset.QUERY_KEY in example, f"Missing {ColPaliEngineDataset.QUERY_KEY} in example."
             query = example[ColPaliEngineDataset.QUERY_KEY]
             sampled_query = random.choice(query) if isinstance(query, list) else query
             queries.append(sampled_query)
