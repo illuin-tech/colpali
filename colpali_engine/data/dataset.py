@@ -1,152 +1,150 @@
-import pytest
+from typing import Any, Dict, List, Optional, Union
+
+from datasets import Dataset as HFDataset
+from PIL.Image import Image
 from torch.utils.data import Dataset
 
-from colpali_engine.data import ColPaliEngineDataset, Corpus
+Document = Union[str, Image]
 
 
-# --------------------------------------------------------------------------- #
-#                              Helper utilities                               #
-# --------------------------------------------------------------------------- #
-class DummyMapDataset(Dataset):
+class Corpus:
     """
-    Minimal map‑style dataset that includes a `.take()` method so we can
-    exercise ColPaliEngineDataset.take() without depending on HF datasets.
+    Corpus class for handling retrieving with simple mapping.
+    This class is meant to be overridden by the user to handle their own corpus.
+
+    Args:
+        corpus_data (List[Dict[str, Any]]): List of dictionaries containing doc data.
+        docid_to_idx_mapping (Optional[Dict[str, int]]): Optional mapping from doc IDs to indices.
     """
 
-    def __init__(self, samples):
-        self._samples = list(samples)
+    def __init__(
+        self,
+        corpus_data: List[Dict[str, Any]],
+        docid_to_idx_mapping: Optional[Dict[str, int]] = None,
+        doc_column_name: str = "doc",
+    ):
+        """
+        Initialize the corpus with the provided data.
+        """
+        self.corpus_data = corpus_data
+        self.docid_to_idx_mapping = docid_to_idx_mapping
+        self.doc_column_name = doc_column_name
 
-    def __len__(self):
-        return len(self._samples)
+        assert isinstance(
+            self.corpus_data,
+            (list, Dataset, HFDataset),
+        ), "Corpus data must be a map-style dataset"
 
-    def __getitem__(self, idx):
-        return self._samples[idx]
-
-    def take(self, n):
-        return DummyMapDataset(self._samples[:n])
-
-
-# --------------------------------------------------------------------------- #
-#                             Fixtures & samples                              #
-# --------------------------------------------------------------------------- #
-@pytest.fixture
-def corpus():
-    data = [{"doc": f"doc_{i}"} for i in range(3)]
-    return Corpus(corpus_data=data)
-
-
-@pytest.fixture
-def data_no_neg():
-    """3 samples – *no* neg_target column at all."""
-    return [
-        {"query": "q0", "pos_target": 0},
-        {"query": "q1", "pos_target": [1]},
-        {"query": "q2", "pos_target": [2]},
-    ]
-
-
-@pytest.fixture
-def data_with_neg():
-    """2 samples – every sample has a neg_target column."""
-    return [
-        {"query": "q0", "pos_target": 1, "neg_target": 0},
-        {"query": "q1", "pos_target": [2], "neg_target": [0, 1]},
-    ]
-
-
-# --------------------------------------------------------------------------- #
-#                          Tests – NO negatives case                          #
-# --------------------------------------------------------------------------- #
-def test_no_negatives_basic(data_no_neg):
-    ds = ColPaliEngineDataset(data_no_neg)  # neg_target_column_name defaults to None
-    assert len(ds) == 3
-
-    sample = ds[0]
-    assert sample[ColPaliEngineDataset.QUERY_KEY] == "q0"
-    assert sample[ColPaliEngineDataset.POS_TARGET_KEY] == [0]
-    # NEG_TARGET_KEY should be None
-    assert sample[ColPaliEngineDataset.NEG_TARGET_KEY] is None
-
-
-def test_no_negatives_with_corpus_resolution(data_no_neg, corpus):
-    ds = ColPaliEngineDataset(data_no_neg, corpus=corpus)
-    s1 = ds[1]
-    # pos_target indices 1 should be resolved to the actual doc string
-    assert s1[ColPaliEngineDataset.POS_TARGET_KEY] == ["doc_1"]
-    # still no negatives
-    assert s1[ColPaliEngineDataset.NEG_TARGET_KEY] is None
-
-
-# --------------------------------------------------------------------------- #
-#                           Tests – WITH negatives case                       #
-# --------------------------------------------------------------------------- #
-def test_with_negatives_basic(data_with_neg):
-    ds = ColPaliEngineDataset(
-        data_with_neg,
-        neg_target_column_name="neg_target",
-    )
-    assert len(ds) == 2
-
-    s0 = ds[0]
-    assert s0[ColPaliEngineDataset.POS_TARGET_KEY] == [1]
-    assert s0[ColPaliEngineDataset.NEG_TARGET_KEY] == [0]
-
-
-def test_with_negatives_and_corpus(data_with_neg, corpus):
-    ds = ColPaliEngineDataset(
-        data_with_neg,
-        corpus=corpus,
-        neg_target_column_name="neg_target",
-    )
-    s1 = ds[1]
-    # pos 2 -> "doc_2", negs 0,1 -> "doc_0", "doc_1"
-    assert s1[ColPaliEngineDataset.POS_TARGET_KEY] == ["doc_2"]
-    assert s1[ColPaliEngineDataset.NEG_TARGET_KEY] == ["doc_0", "doc_1"]
-
-
-# --------------------------------------------------------------------------- #
-#                    Tests for mixed / inconsistent scenarios                 #
-# --------------------------------------------------------------------------- #
-def test_error_if_neg_column_specified_but_missing(data_no_neg):
-    """All samples must include the column when neg_target_column_name is given."""
-    with pytest.raises(KeyError):
-        ds = ColPaliEngineDataset(  # noqa: F841
-            data_no_neg,
-            neg_target_column_name="neg_target",
+        assert "doc" in self.corpus_data[0], (
+            f"Corpus data must contain a 'doc' column. Got: {self.corpus_data[0].keys()}"
         )
-        _ = ds[0]  # force __getitem__
+
+    def __len__(self) -> int:
+        """
+        Return the number of docs in the corpus.
+
+        Returns:
+            int: The number of docs in the corpus.
+        """
+        return len(self.corpus_data)
+
+    def retrieve(self, docid: Any) -> Document:
+        """
+        Get the corpus row from the given Doc ID.
+
+        Args:
+            docid (str): The id of the document.
+
+        Returns:
+            Document: The document retrieved from the corpus.
+        """
+        if self.docid_to_idx_mapping is not None:
+            doc_idx = self.docid_to_idx_mapping[docid]
+        else:
+            doc_idx = docid
+        return self.corpus_data[doc_idx][self.doc_column_name]
 
 
-def test_error_if_data_mix_neg_and_non_neg(data_with_neg, data_no_neg):
-    """A mixed dataset (some samples without neg_target) should fail."""
-    mixed = data_with_neg + data_no_neg
-    # The first sample *does* have neg_target, so __init__ succeeds.
-    ds = ColPaliEngineDataset(
-        mixed,
-        neg_target_column_name="neg_target",
-    )
-    # Accessing a sample lacking the column should raise.
-    with pytest.raises(KeyError):
-        _ = ds[len(data_with_neg)]  # first sample from the 'no_neg' part
+class ColPaliEngineDataset(Dataset):
+    # Output keys
+    QUERY_KEY = "query"
+    POS_TARGET_KEY = "pos_target"
+    NEG_TARGET_KEY = "neg_target"
 
+    def __init__(
+        self,
+        data: List[Dict[str, Any]],
+        corpus: Optional[Corpus] = None,
+        query_column_name: str = "query",
+        pos_target_column_name: str = "pos_target",
+        neg_target_column_name: str = None,
+    ):
+        """
+        Initialize the dataset with the provided data and external document corpus.
 
-# --------------------------------------------------------------------------- #
-#                          .take() works in both modes                        #
-# --------------------------------------------------------------------------- #
-@pytest.mark.parametrize(
-    "source_data, neg_col",
-    [
-        (pytest.lazy_fixture("data_no_neg"), None),
-        (pytest.lazy_fixture("data_with_neg"), "neg_target"),
-    ],
-)
-def test_take_returns_subset(source_data, neg_col):
-    wrapped = DummyMapDataset(source_data)
-    ds = ColPaliEngineDataset(wrapped, neg_target_column_name=neg_col)
+        Args:
+            data (Dict[str, List[Any]]): A dictionary containing the dataset samples.
+            corpus (Optional[Corpus]): An optional external document corpus to retrieve
+            documents (images) from.
+        """
+        self.data = data
+        self.corpus = corpus
 
-    sub_ds = ds.take(1)
+        # Column args
+        self.query_column_name = query_column_name
+        self.pos_target_column_name = pos_target_column_name
+        self.neg_target_column_name = neg_target_column_name
 
-    assert isinstance(sub_ds, ColPaliEngineDataset)
-    assert len(sub_ds) == 1
-    # Make sure we can still index
-    _ = sub_ds[0]
+        assert isinstance(
+            self.data,
+            (list, Dataset, HFDataset),
+        ), "Data must be a map-style dataset"
+
+        assert self.query_column_name in self.data[0], f"Data must contain the {self.query_column_name} column"
+        assert self.pos_target_column_name in self.data[0], f"Data must contain a {self.pos_target_column_name} column"
+        if self.neg_target_column_name is not None:
+            assert self.neg_target_column_name in self.data[0], (
+                f"Data must contain a {self.neg_target_column_name} column"
+            )
+
+    def __len__(self) -> int:
+        """Return the number of samples in the dataset."""
+        return len(self.data)
+
+    def __getitem__(self, idx: int) -> Dict[str, Any]:
+        sample = self.data[idx]
+
+        query = sample[self.query_column_name]
+
+        pos_targets = sample[self.pos_target_column_name]
+        if not isinstance(pos_targets, list):
+            pos_targets = [pos_targets]
+
+        if self.neg_target_column_name is not None:
+            neg_targets = sample[self.neg_target_column_name]
+            if not isinstance(neg_targets, list):
+                neg_targets = [neg_targets]
+
+        # If an external document corpus is provided, retrieve the documents from it.
+        if self.corpus is not None:
+            pos_targets = [self.corpus.retrieve(doc_id) for doc_id in pos_targets]
+            if neg_targets is not None:
+                neg_targets = [self.corpus.retrieve(doc_id) for doc_id in neg_targets]
+
+        return {
+            self.QUERY_KEY: query,
+            self.POS_TARGET_KEY: pos_targets,
+            self.NEG_TARGET_KEY: neg_targets,
+        }
+
+    def take(self, n: int) -> "ColPaliEngineDataset":
+        """
+        Take the first n samples from the dataset.
+
+        Args:
+            n (int): The number of samples to take.
+
+        Returns:
+            ColPaliEngineDataset: A new dataset containing the first n samples.
+        """
+        return self.__class__(self.data.take(n), self.corpus)
