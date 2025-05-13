@@ -44,7 +44,7 @@ def load_train_set_ir() -> ColPaliEngineDataset:
 
     train_dataset = ColPaliEngineDataset(
         data=dataset,
-        external_document_corpus=corpus,
+        corpus=corpus,
     )
 
     return train_dataset
@@ -66,7 +66,7 @@ def load_train_set_ir_negs() -> ColPaliEngineDataset:
     dataset = dataset.rename_column("positive_passages", ColPaliEngineDataset.POS_TARGET_KEY)
     dataset = dataset.rename_column("negative_passages", ColPaliEngineDataset.NEG_TARGET_KEY)
 
-    train_dataset = ColPaliEngineDataset(data=dataset, external_document_corpus=corpus)
+    train_dataset = ColPaliEngineDataset(data=dataset, corpus=corpus)
 
     return train_dataset
 

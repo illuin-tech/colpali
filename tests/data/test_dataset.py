@@ -59,7 +59,7 @@ class TestColPaliEngineDataset:
         )
         yield ColPaliEngineDataset(
             data=data,
-            external_document_corpus=corpus,
+            corpus=corpus,
         )
 
     def test_colpali_engine_call(self, colpali_engine_dataset: ColPaliEngineDataset):
