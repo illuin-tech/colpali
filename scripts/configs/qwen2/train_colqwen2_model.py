@@ -35,7 +35,7 @@ if __name__ == "__main__":
         )
     elif args.loss == "pairwise":
         loss_func = ColbertPairwiseCELoss(
-            normalize_scores=True,
+            normalize_scores=False,
         )
     else:
         raise ValueError(f"Unknown loss function: {args.loss}")
