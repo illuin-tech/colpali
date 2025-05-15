@@ -60,7 +60,7 @@ class Corpus:
             doc_idx = self.docid_to_idx_mapping[docid]
         else:
             doc_idx = docid
-        return Image.open(self.corpus_data[doc_idx][self.doc_column_name])
+        return self.corpus_data[doc_idx][self.doc_column_name]
 
 
 class ColPaliEngineDataset(Dataset):
