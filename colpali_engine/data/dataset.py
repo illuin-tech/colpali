@@ -1,10 +1,10 @@
 from typing import Any, Dict, List, Optional, Union
 
 from datasets import Dataset as HFDataset
-from PIL.Image import Image
+from PIL import Image
 from torch.utils.data import Dataset
 
-Document = Union[str, Image]
+Document = Union[str, Image.Image]
 
 
 class Corpus:
@@ -60,7 +60,7 @@ class Corpus:
             doc_idx = self.docid_to_idx_mapping[docid]
         else:
             doc_idx = docid
-        return self.corpus_data[doc_idx][self.doc_column_name]
+        return Image.open(self.corpus_data[doc_idx][self.doc_column_name])
 
 
 class ColPaliEngineDataset(Dataset):
