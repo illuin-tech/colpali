@@ -1,5 +1,5 @@
 import os
-from typing import List, Literal, Tuple, cast
+from typing import List, Tuple, cast
 
 from datasets import Dataset, DatasetDict, concatenate_datasets, load_dataset
 from PIL import Image
@@ -9,73 +9,37 @@ from colpali_engine.data.dataset import ColPaliEngineDataset, Corpus
 USE_LOCAL_DATASET = os.environ.get("USE_LOCAL_DATASET", "1") == "1"
 
 
-def add_metadata_column(dataset, column_name, value):
-    def add_source(example):
-        example[column_name] = value
-        return example
-
-    return dataset.map(add_source)
-
-
 def load_train_set() -> ColPaliEngineDataset:
     dataset = load_dataset("vidore/colpali_train_set", split="train")
-    dataset = dataset.rename_column("image", ColPaliEngineDataset.POS_TARGET_KEY)
 
-    train_dataset = ColPaliEngineDataset(
-        data=dataset,
-    )
+    train_dataset = ColPaliEngineDataset(dataset, pos_target_column_name="image")
 
     return train_dataset
 
 
-def load_train_set_ir() -> ColPaliEngineDataset:
+def load_train_set_ir(num_negs=0) -> ColPaliEngineDataset:
     """Returns the query dataset, then the anchor dataset with the documents, then the dataset type"""
     corpus_data = load_dataset("manu/colpali-corpus", split="train")
-    corpus_data = corpus_data.rename_column("image", "doc")
-    corpus = Corpus(corpus_data=corpus_data)
+    corpus = Corpus(corpus_data=corpus_data, doc_column_name="image")
 
     dataset = load_dataset("manu/colpali-queries", split="train")
-    dataset = dataset.rename_column("positive_passages", ColPaliEngineDataset.POS_TARGET_KEY)
 
     print("Dataset size:", len(dataset))
     # filter out queries with "gold_in_top_100" == False
     dataset = dataset.filter(lambda x: x["gold_in_top_100"], num_proc=16)
+    if num_negs > 0:
+        # keep only top 5 negative passages
+        dataset = dataset.map(lambda x: {"negative_passages": x["negative_passages"][:num_negs]})
     print("Dataset size after filtering:", len(dataset))
 
     train_dataset = ColPaliEngineDataset(
         data=dataset,
         corpus=corpus,
+        pos_target_column_name="positive_passages",
+        neg_target_column_name="negative_passages" if num_negs else None,
     )
 
     return train_dataset
-
-
-def load_train_set_ir_negs() -> ColPaliEngineDataset:
-    """Returns the query dataset, then the anchor dataset with the documents, then the dataset type"""
-    corpus_data = load_dataset("manu/colpali-corpus", split="train")
-    corpus_data = corpus_data.rename_column("image", "doc")
-    corpus = Corpus(corpus_data=corpus_data)
-
-    dataset = load_dataset("manu/colpali-queries", split="train")
-    print("Dataset size:", len(dataset))
-    # filter out queries with "gold_in_top_100" == False
-    dataset = dataset.filter(lambda x: x["gold_in_top_100"], num_proc=16)
-    # keep only top 5 negative passages
-    dataset = dataset.map(lambda x: {"negative_passages": x["negative_passages"][:5]})
-    print("Dataset size after filtering:", len(dataset))
-    dataset = dataset.rename_column("positive_passages", ColPaliEngineDataset.POS_TARGET_KEY)
-    dataset = dataset.rename_column("negative_passages", ColPaliEngineDataset.NEG_TARGET_KEY)
-
-    train_dataset = ColPaliEngineDataset(data=dataset, corpus=corpus)
-
-    return train_dataset
-
-
-def load_mmeb(
-    subset: str, corpus_path: str, type: Literal["t2i", "i2t"], use_negatives: bool = False
-) -> ColPaliEngineDataset:
-    # to be redefined but in the scripts
-    raise NotImplementedError("This function is not implemented yet.")
 
 
 def load_train_set_detailed() -> DatasetDict:

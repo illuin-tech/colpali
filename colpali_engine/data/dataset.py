@@ -35,9 +35,7 @@ class Corpus:
             (list, Dataset, HFDataset),
         ), "Corpus data must be a map-style dataset"
 
-        assert "doc" in self.corpus_data[0], (
-            f"Corpus data must contain a 'doc' column. Got: {self.corpus_data[0].keys()}"
-        )
+        assert self.doc_column_name in self.corpus_data[0], f"Corpus data must contain a column {self.doc_column_name}."
 
     def __len__(self) -> int:
         """
@@ -149,4 +147,10 @@ class ColPaliEngineDataset(Dataset):
         Returns:
             ColPaliEngineDataset: A new dataset containing the first n samples.
         """
-        return self.__class__(self.data.take(n), self.corpus)
+        return self.__class__(
+            self.data.take(n),
+            self.corpus,
+            self.query_column_name,
+            self.pos_target_column_name,
+            self.neg_target_column_name,
+        )
