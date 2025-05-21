@@ -1,5 +1,4 @@
 import os
-from typing import Tuple
 
 import torch
 import torch.distributed as dist
@@ -8,7 +7,7 @@ from torch.nn.parallel import DistributedDataParallel
 from torch.utils.data import DataLoader, DistributedSampler
 from tqdm.auto import tqdm
 
-from colpali_engine.collators import CorpusQueryCollator, VisualRetrieverCollator
+from colpali_engine.collators import VisualRetrieverCollator
 from colpali_engine.trainer.colmodel_training import ColModelTrainingConfig
 from colpali_engine.utils.gpu_stats import print_gpu_utilization
 
@@ -22,29 +21,12 @@ class ColModelTorchTraining:
         self.config = config
         self.model = self.config.model
         self.current_git_hash = os.popen("git rev-parse HEAD").read().strip()
-        self.dataset = self.config.dataset_loading_func()
-
-        # Choose collator based on dataset format
-        if isinstance(self.dataset, Tuple):
-            if self._is_rank0():
-                print("Dataset has BEIR/hard negatives format. Using CorpusQueryCollator.")
-            corpus_format = self.dataset[2]
-            neg_dataset = self.dataset[1]
-            self.dataset = self.dataset[0]
-            self.collator = CorpusQueryCollator(
-                processor=self.config.processor,
-                max_length=self.config.max_length,
-                image_dataset=neg_dataset,
-                mined_negatives=True,
-                corpus_format=corpus_format,
-            )
-        else:
-            if self._is_rank0():
-                print("Dataset has QA format. Using VisualRetrieverCollator.")
-            self.collator = VisualRetrieverCollator(
-                processor=self.config.processor,
-                max_length=self.config.max_length,
-            )
+        self.train_dataset = self.config.train_dataset
+        self.eval_dataset = self.config.eval_dataset
+        self.collator = VisualRetrieverCollator(
+            processor=self.config.processor,
+            max_length=self.config.max_length,
+        )
 
         # Initialize distributed if needed
         if dist.is_available() and not dist.is_initialized():
@@ -90,9 +72,9 @@ class ColModelTorchTraining:
         max_grad_norm = getattr(self.config.tr_args, "max_grad_norm", None)
         print(f"Using AMP: {use_amp}, Max grad norm: {max_grad_norm}")
 
-        sampler = DistributedSampler(self.dataset["train"]) if dist.is_initialized() else None
+        sampler = DistributedSampler(self.train_dataset) if dist.is_initialized() else None
         train_loader = DataLoader(
-            self.dataset["train"],
+            self.train_dataset,
             batch_size=self.config.tr_args.per_device_train_batch_size,
             sampler=sampler,
             collate_fn=self.collator,
@@ -106,7 +88,7 @@ class ColModelTorchTraining:
         eval_loader = None
         if self.config.eval_dataset_loader is not None:
             eval_loader = DataLoader(
-                self.dataset["validation"],
+                self.eval_dataset,
                 batch_size=self.config.tr_args.per_device_eval_batch_size,
                 collate_fn=self.collator,
             )
@@ -133,41 +115,6 @@ class ColModelTorchTraining:
 
         def gather_with_grad(x: torch.Tensor) -> torch.Tensor:
             return all_gather_tensor_autograd(x, gather_dim=0, group=dist.group.WORLD)
-
-        # class AllGatherWithGrad(Function):
-        #     @staticmethod
-        #     def forward(ctx, x):
-        #         """
-        #         Gathers x from all ranks into one big tensor.
-        #         """
-        #         world_size = dist.get_world_size()
-        #         ctx.batch_size = x.size(0)
-        #         ctx.world_size = world_size
-        #         ctx.rank = dist.get_rank()
-
-        #         # Gather into list
-        #         x_list = [torch.zeros_like(x) for _ in range(world_size)]
-        #         dist.all_gather(x_list, x)
-        #         # Save for backward
-        #         ctx.save_for_backward()
-        #         return torch.cat(x_list, dim=0)  # [B * W, D]
-
-        #     @staticmethod
-        #     def backward(ctx, grad_output):
-        #         """
-        #         Receives gradient of the big gathered tensor,
-        #         extracts this rank’s slice, and returns it.
-        #         """
-        #         b = ctx.batch_size
-        #         r = ctx.rank
-        #         start = r * b
-        #         end = start + b
-        #         # Only this slice flows back
-        #         return grad_output[start:end]
-
-        # def gather_with_grad(x: torch.Tensor) -> torch.Tensor:
-        #     """Convenience wrapper to call the custom autograd gather."""
-        #     return AllGatherWithGrad.apply(x)
 
         # Training loop
         # only rank0 should display
