@@ -6,6 +6,14 @@ from transformers.trainer_utils import seed_worker
 
 from colpali_engine.data.sampler import SingleDatasetBatchSampler
 
+from torch.distributed.nn.functional import all_gather  # PyTorch ≥ 2.1
+
+
+def concat_all_gather(t: torch.Tensor) -> torch.Tensor:
+    if torch.distributed.is_available() and torch.distributed.is_initialized():
+        return torch.cat(all_gather(t), dim=0)  # keeps grad graph
+    return t
+
 
 class ContrastiveTrainer(Trainer):
     def __init__(self, loss_func, is_vision_model, *args, **kwargs):
@@ -82,6 +90,14 @@ class ContrastiveTrainer(Trainer):
         doc_outputs = model(**{k[4:]: v for k, v in inputs.items() if k.startswith("doc")})
         if "neg_doc_input_ids" in inputs:
             neg_doc_outputs = model(**{k[8:]: v for k, v in inputs.items() if k.startswith("neg_doc")})
+
+        if self.accelerator.num_processes > 1 and self.accelerator.sync_gradients:
+            query_outputs = concat_all_gather(query_outputs)
+            doc_outputs = concat_all_gather(doc_outputs)
+            if "neg_doc_input_ids" in inputs:
+                neg_doc_outputs = concat_all_gather(neg_doc_outputs)
+
+        if "neg_doc_input_ids" in inputs:
             loss = self.loss_func(query_outputs, doc_outputs, neg_doc_outputs)
             return (loss, (query_outputs, doc_outputs, neg_doc_outputs)) if return_outputs else loss
 
