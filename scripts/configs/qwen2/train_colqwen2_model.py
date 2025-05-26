@@ -55,7 +55,7 @@ if __name__ == "__main__":
             attn_implementation="flash_attention_2",
         ),
         train_dataset=load_train_set(),
-        eval_dataset=ColPaliEngineDataset(load_dataset( "./data_dir/colpali_train_set", split="validation"), pos_target_column_name="image"),
+        eval_dataset=ColPaliEngineDataset(load_dataset( "./data_dir/colpali_train_set", split="test"), pos_target_column_name="image"),
         run_eval=True,
         loss_func=loss_func,
         tr_args=TrainingArguments(
