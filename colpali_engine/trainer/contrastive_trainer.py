@@ -1,12 +1,11 @@
 import torch
 from datasets import DatasetDict
+from torch.distributed.nn.functional import all_gather  # PyTorch ≥ 2.1
 from torch.utils.data import ConcatDataset, DataLoader, Dataset
 from transformers import Trainer, is_datasets_available
 from transformers.trainer_utils import seed_worker
 
 from colpali_engine.data.sampler import SingleDatasetBatchSampler
-
-from torch.distributed.nn.functional import all_gather  # PyTorch ≥ 2.1
 
 
 def concat_all_gather(t: torch.Tensor) -> torch.Tensor:
@@ -94,9 +93,6 @@ class ContrastiveTrainer(Trainer):
             loss = self.loss_func(query_outputs, doc_outputs, neg_doc_outputs)
             return (loss, (query_outputs, doc_outputs, neg_doc_outputs)) if return_outputs else loss
 
-        # if "labels" in inputs:
-        #     loss = self.loss_func(query_outputs, doc_outputs, inputs["labels"])
-        # else:
         offset = 0
         if self.accelerator.num_processes > 1 and self.accelerator.sync_gradients:
             # gather docs across all processes
@@ -105,8 +101,7 @@ class ContrastiveTrainer(Trainer):
             doc_outputs = concat_all_gather(doc_outputs)
             rank = self.accelerator.process_index
             offset = rank * num_items_in_batch
-            
-            
+
         loss = self.loss_func(query_outputs, doc_outputs, offset=offset)
 
         return (loss, (query_outputs, doc_outputs)) if return_outputs else loss
@@ -125,8 +120,5 @@ class ContrastiveTrainer(Trainer):
                 loss = self.loss_func(query_outputs, doc_outputs, neg_doc_outputs)
                 return loss, None, None
 
-            # if "labels" in inputs:
-            #     loss = self.loss_func(query_outputs, doc_outputs, inputs["labels"])
-            # else:
             loss = self.loss_func(query_outputs, doc_outputs)
             return loss, None, None
