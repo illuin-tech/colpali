@@ -90,21 +90,21 @@ class ContrastiveTrainer(Trainer):
         doc_outputs = model(**{k[4:]: v for k, v in inputs.items() if k.startswith("doc")})
         if "neg_doc_input_ids" in inputs:
             neg_doc_outputs = model(**{k[8:]: v for k, v in inputs.items() if k.startswith("neg_doc")})
-
-        if self.accelerator.num_processes > 1 and self.accelerator.sync_gradients:
-            query_outputs = concat_all_gather(query_outputs)
-            doc_outputs = concat_all_gather(doc_outputs)
-            if "neg_doc_input_ids" in inputs:
-                neg_doc_outputs = concat_all_gather(neg_doc_outputs)
-
-        if "neg_doc_input_ids" in inputs:
             loss = self.loss_func(query_outputs, doc_outputs, neg_doc_outputs)
             return (loss, (query_outputs, doc_outputs, neg_doc_outputs)) if return_outputs else loss
 
         if "labels" in inputs:
             loss = self.loss_func(query_outputs, doc_outputs, inputs["labels"])
         else:
-            loss = self.loss_func(query_outputs, doc_outputs)
+            offset = 0
+            if self.accelerator.num_processes > 1 and self.accelerator.sync_gradients:
+                # gather docs across all processes
+                doc_outputs = concat_all_gather(doc_outputs)
+                rank = self.accelerator.process_index
+                offset = rank * num_items_in_batch if num_items_in_batch is not None else 0
+                
+            loss = self.loss_func(query_outputs, doc_outputs, offset=offset)
+            
         return (loss, (query_outputs, doc_outputs)) if return_outputs else loss
 
     def prediction_step(self, model, inputs, prediction_loss_only, ignore_keys=True):
