@@ -5,12 +5,14 @@ from pathlib import Path
 import torch
 from peft import LoraConfig
 from transformers import TrainingArguments
+from datasets import load_dataset
 
 from colpali_engine.loss.late_interaction_losses import ColbertLoss, ColbertPairwiseCELoss
 from colpali_engine.models import ColQwen2, ColQwen2Processor
 from colpali_engine.trainer.colmodel_torch_training import ColModelTorchTraining
 from colpali_engine.trainer.colmodel_training import ColModelTraining, ColModelTrainingConfig
 from colpali_engine.utils.dataset_transformation import load_train_set
+from colpali_engine.data.dataset import ColPaliEngineDataset
 
 
 def parse_args():
@@ -53,6 +55,7 @@ if __name__ == "__main__":
             attn_implementation="flash_attention_2",
         ),
         train_dataset=load_train_set(),
+        eval_dataset=ColPaliEngineDataset(load_dataset( "./data_dir/colpali_train_set", split="validation"), pos_target_column_name="image"),
         run_eval=True,
         loss_func=loss_func,
         tr_args=TrainingArguments(
