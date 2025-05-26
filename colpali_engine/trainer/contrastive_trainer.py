@@ -89,22 +89,26 @@ class ContrastiveTrainer(Trainer):
         # feed only kwargs with 'doc_' prefix
         doc_outputs = model(**{k[4:]: v for k, v in inputs.items() if k.startswith("doc")})
         if "neg_doc_input_ids" in inputs:
+            # Negative docs are not gathered across processes, so we can use them without offset
             neg_doc_outputs = model(**{k[8:]: v for k, v in inputs.items() if k.startswith("neg_doc")})
             loss = self.loss_func(query_outputs, doc_outputs, neg_doc_outputs)
             return (loss, (query_outputs, doc_outputs, neg_doc_outputs)) if return_outputs else loss
 
-        if "labels" in inputs:
-            loss = self.loss_func(query_outputs, doc_outputs, inputs["labels"])
-        else:
-            offset = 0
-            if self.accelerator.num_processes > 1 and self.accelerator.sync_gradients:
-                # gather docs across all processes
-                doc_outputs = concat_all_gather(doc_outputs)
-                rank = self.accelerator.process_index
-                offset = rank * num_items_in_batch if num_items_in_batch is not None else 0
-                
-            loss = self.loss_func(query_outputs, doc_outputs, offset=offset)
+        # if "labels" in inputs:
+        #     loss = self.loss_func(query_outputs, doc_outputs, inputs["labels"])
+        # else:
+        offset = 0
+        if self.accelerator.num_processes > 1 and self.accelerator.sync_gradients:
+            # gather docs across all processes
+            if num_items_in_batch is None:
+                num_items_in_batch = inputs["doc_input_ids"].shape[0]
+            doc_outputs = concat_all_gather(doc_outputs)
+            rank = self.accelerator.process_index
+            offset = rank * num_items_in_batch
             
+            
+        loss = self.loss_func(query_outputs, doc_outputs, offset=offset)
+
         return (loss, (query_outputs, doc_outputs)) if return_outputs else loss
 
     def prediction_step(self, model, inputs, prediction_loss_only, ignore_keys=True):
@@ -121,8 +125,8 @@ class ContrastiveTrainer(Trainer):
                 loss = self.loss_func(query_outputs, doc_outputs, neg_doc_outputs)
                 return loss, None, None
 
-            if "labels" in inputs:
-                loss = self.loss_func(query_outputs, doc_outputs, inputs["labels"])
-            else:
-                loss = self.loss_func(query_outputs, doc_outputs)
+            # if "labels" in inputs:
+            #     loss = self.loss_func(query_outputs, doc_outputs, inputs["labels"])
+            # else:
+            loss = self.loss_func(query_outputs, doc_outputs)
             return loss, None, None
