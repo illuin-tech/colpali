@@ -158,7 +158,7 @@ class ColbertLoss(ColbertModule):
         if self.pos_aware_negative_filtering:
             self._filter_high_negatives(scores, pos_idx)
 
-        print(f"Scores shape: {scores.shape}, idx shape: {idx.shape}, pos_idx shape: {pos_idx.shape}, offset: {offset}")
+        # print(f"Scores shape: {scores.shape}, offset: {offset}")
 
         return self.ce_loss(scores / self.temperature, pos_idx)
 

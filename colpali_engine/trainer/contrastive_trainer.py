@@ -74,6 +74,9 @@ class ContrastiveTrainer(Trainer):
         if self.dataset_list is None:
             return super()._get_train_sampler()
 
+        # Use SingleDatasetBatchSampler to ensure that each dataset in the list is sampled independently
+        # Note: Surely breaks in distributed training
+        # TODO: fix this
         generator = torch.Generator()
         generator.manual_seed(self.args.seed)
         return SingleDatasetBatchSampler(
