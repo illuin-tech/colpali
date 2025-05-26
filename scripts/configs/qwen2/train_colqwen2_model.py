@@ -52,7 +52,7 @@ if __name__ == "__main__":
             use_cache=False,
             attn_implementation="flash_attention_2",
         ),
-        dataset_loading_func=load_train_set,
+        train_dataset=load_train_set(),
         run_eval=True,
         loss_func=loss_func,
         tr_args=TrainingArguments(
