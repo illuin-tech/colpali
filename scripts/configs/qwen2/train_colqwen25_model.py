@@ -86,7 +86,9 @@ if __name__ == "__main__":
             bias="none",
             task_type="FEATURE_EXTRACTION",
             target_modules="(.*(model).*(down_proj|gate_proj|up_proj|k_proj|q_proj|v_proj|o_proj).*$|.*(custom_text_proj).*$)",
-        ) if args.peft else None,
+        )
+        if args.peft
+        else None,
     )
 
     # make sure output_dir exists and copy script for provenance
