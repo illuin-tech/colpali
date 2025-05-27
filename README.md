@@ -465,4 +465,14 @@ Authors: **Manuel Faysse**\*, **Hugues Sibille**\*, **Tony Wu**\*, Bilel Omrani,
       primaryClass={cs.IR},
       url={https://arxiv.org/abs/2407.01449}, 
 }
+
+@misc{macé2025vidorebenchmarkv2raising,
+      title={ViDoRe Benchmark V2: Raising the Bar for Visual Retrieval}, 
+      author={Quentin Macé and António Loison and Manuel Faysse},
+      year={2025},
+      eprint={2505.17166},
+      archivePrefix={arXiv},
+      primaryClass={cs.IR},
+      url={https://arxiv.org/abs/2505.17166}, 
+}
 ```
