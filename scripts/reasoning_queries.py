@@ -11,11 +11,13 @@ client = OpenAI()
 def reformulate_with_4o(query):
     query_template = """
     Given a query:
-    1. Identify the essential problem.
-    2. Think step by step to reason and describe what information could be relevant and helpful to address
+    1. Repeat the query.
+    2. Identify the essential problem.
+    3. Think step by step to reason and describe what information could be relevant and helpful to address
     the questions in detail.
-    3. Draft an answer with as many thoughts as you have.
+    4. Draft an answer with as many thoughts as you have.
 
+    Answer in the same language as the query.
     Query: {query}
     """
     prompt = query_template.format(query=query)
