@@ -23,8 +23,7 @@ config:
 
   train_dataset: 
     (): colpali_engine.utils.dataset_transformation.load_train_set
-  eval_dataset: 
-    (): !import ../data/test_data.yaml
+  eval_dataset: !import ../data/test_data.yaml
 
   max_length: 50
   run_eval: true
