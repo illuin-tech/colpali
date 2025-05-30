@@ -16,8 +16,9 @@ config:
     attn_implementation: "flash_attention_2"
 
 
-  dataset_loading_func: !ext colpali_engine.utils.dataset_transformation.load_train_set
-  eval_dataset_loader: !import ../data/test_data.yaml
+  train_dataset: 
+    (): colpali_engine.utils.dataset_transformation.load_train_set
+  eval_dataset: !import ../data/test_data.yaml
 
   # max_length: 50
   run_eval: true

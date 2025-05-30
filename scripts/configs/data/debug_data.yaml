@@ -1,3 +1,3 @@
 syntheticDocQA_energy:
-  (): colpali_engine.utils.dataset_transformation.TestSetFactory
+  (): colpali_engine.utils.dataset_transformation.load_eval_set
   dataset_path: vidore/syntheticDocQA_energy_test

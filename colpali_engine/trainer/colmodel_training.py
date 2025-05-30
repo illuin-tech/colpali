@@ -1,6 +1,6 @@
 import os
 from dataclasses import dataclass
-from typing import Callable, List, Optional, Union
+from typing import Callable, Dict, List, Optional, Union
 
 from peft import LoraConfig, PeftModel, get_peft_model
 from transformers import (
@@ -23,7 +23,7 @@ class ColModelTrainingConfig:
     model: Union[PreTrainedModel, PeftModel]
     processor: BaseVisualRetrieverProcessor
     train_dataset: Union[ColPaliEngineDataset, List[ColPaliEngineDataset]]
-    eval_dataset: Optional[ColPaliEngineDataset] = None
+    eval_dataset: Optional[Union[ColPaliEngineDataset, Dict[str, ColPaliEngineDataset]]] = None
     tr_args: Optional[TrainingArguments] = None
     output_dir: Optional[str] = None
     max_length: int = 256
