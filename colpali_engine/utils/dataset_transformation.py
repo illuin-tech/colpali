@@ -17,6 +17,12 @@ def load_train_set() -> ColPaliEngineDataset:
     return train_dataset
 
 
+def load_eval_set(dataset_path) -> ColPaliEngineDataset:
+    dataset = load_dataset(dataset_path, split="test")
+
+    return dataset
+
+
 def load_train_set_ir(num_negs=0) -> ColPaliEngineDataset:
     """Returns the query dataset, then the anchor dataset with the documents, then the dataset type"""
     corpus_data = load_dataset("manu/colpali-corpus", split="train")
