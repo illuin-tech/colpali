@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [0.3.11] - 2025-06-05
+
+### Added
+
+- Introduce the ColPaliEngineDataset and Corpus class. This is to delegate all data loading to a standard format before training. The concept is for users to override the dataset class if needed for their specific usecases.
+- Added smooth_max option to loss functions
+- Added weighted in_batch terms for losses with hard negatives
+- Added an option to filter out (presumably) false negatives during online training
+- Added a training script in pure torch without the HF trainer
+- Added a sampler to train with multiple datasets at once, with each batch coming from the same source. (experimental, might still need testing on multi-GPU)
+- Adds score normalization to LI models (diving by token length) for betetr performance with CE loss
+
+### Changed
+
+- Stops pooling queries between GPUs and instead pools only documents, enabling training with way bigger batch sizes. We recomment training with accelerate launch now.
+- Updated loss functions for better abstractions and coherence between the various loss functions. Small speedups and less memory requirements.
+
+
 ## [0.3.10] - 2025-04-18
 
 ### Added
