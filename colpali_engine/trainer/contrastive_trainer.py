@@ -1,10 +1,17 @@
 import torch
 from datasets import DatasetDict
+from torch.distributed.nn.functional import all_gather  # PyTorch ≥ 2.1
 from torch.utils.data import ConcatDataset, DataLoader, Dataset
 from transformers import Trainer, is_datasets_available
 from transformers.trainer_utils import seed_worker
 
 from colpali_engine.data.sampler import SingleDatasetBatchSampler
+
+
+def concat_all_gather(t: torch.Tensor) -> torch.Tensor:
+    if torch.distributed.is_available() and torch.distributed.is_initialized():
+        return torch.cat(all_gather(t), dim=0)  # keeps grad graph
+    return t
 
 
 class ContrastiveTrainer(Trainer):
@@ -67,6 +74,9 @@ class ContrastiveTrainer(Trainer):
         if self.dataset_list is None:
             return super()._get_train_sampler()
 
+        # Use SingleDatasetBatchSampler to ensure that each dataset in the list is sampled independently
+        # Note: Surely breaks in distributed training
+        # TODO: fix this
         generator = torch.Generator()
         generator.manual_seed(self.args.seed)
         return SingleDatasetBatchSampler(
@@ -81,14 +91,22 @@ class ContrastiveTrainer(Trainer):
         # feed only kwargs with 'doc_' prefix
         doc_outputs = model(**{k[4:]: v for k, v in inputs.items() if k.startswith("doc")})
         if "neg_doc_input_ids" in inputs:
+            # Negative docs are not gathered across processes, so we can use them without offset
             neg_doc_outputs = model(**{k[8:]: v for k, v in inputs.items() if k.startswith("neg_doc")})
             loss = self.loss_func(query_outputs, doc_outputs, neg_doc_outputs)
             return (loss, (query_outputs, doc_outputs, neg_doc_outputs)) if return_outputs else loss
 
-        if "labels" in inputs:
-            loss = self.loss_func(query_outputs, doc_outputs, inputs["labels"])
-        else:
-            loss = self.loss_func(query_outputs, doc_outputs)
+        offset = 0
+        if self.accelerator.num_processes > 1 and self.accelerator.sync_gradients:
+            # gather docs across all processes
+            if num_items_in_batch is None:
+                num_items_in_batch = inputs["doc_input_ids"].shape[0]
+            doc_outputs = concat_all_gather(doc_outputs)
+            rank = self.accelerator.process_index
+            offset = rank * num_items_in_batch
+
+        loss = self.loss_func(query_outputs, doc_outputs, offset=offset)
+
         return (loss, (query_outputs, doc_outputs)) if return_outputs else loss
 
     def prediction_step(self, model, inputs, prediction_loss_only, ignore_keys=True):
@@ -105,8 +123,5 @@ class ContrastiveTrainer(Trainer):
                 loss = self.loss_func(query_outputs, doc_outputs, neg_doc_outputs)
                 return loss, None, None
 
-            if "labels" in inputs:
-                loss = self.loss_func(query_outputs, doc_outputs, inputs["labels"])
-            else:
-                loss = self.loss_func(query_outputs, doc_outputs)
+            loss = self.loss_func(query_outputs, doc_outputs)
             return loss, None, None

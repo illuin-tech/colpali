@@ -27,7 +27,7 @@ config:
   
   loss_func:
     (): colpali_engine.loss.late_interaction_losses.ColbertPairwiseNegativeCELoss
-    in_batch_term: true
+    in_batch_term_weight: 0.5
   tr_args:
     (): transformers.training_args.TrainingArguments
     output_dir: null

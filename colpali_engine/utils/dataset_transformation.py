@@ -10,7 +10,8 @@ USE_LOCAL_DATASET = os.environ.get("USE_LOCAL_DATASET", "1") == "1"
 
 
 def load_train_set() -> ColPaliEngineDataset:
-    dataset = load_dataset("vidore/colpali_train_set", split="train")
+    base_path = "./data_dir/" if USE_LOCAL_DATASET else "vidore/"
+    dataset = load_dataset(base_path + "colpali_train_set", split="train")
 
     train_dataset = ColPaliEngineDataset(dataset, pos_target_column_name="image")
 
@@ -25,10 +26,11 @@ def load_eval_set(dataset_path) -> ColPaliEngineDataset:
 
 def load_train_set_ir(num_negs=0) -> ColPaliEngineDataset:
     """Returns the query dataset, then the anchor dataset with the documents, then the dataset type"""
-    corpus_data = load_dataset("manu/colpali-corpus", split="train")
+    base_path = "./data_dir/" if USE_LOCAL_DATASET else "manu/"
+    corpus_data = load_dataset(base_path + "colpali-corpus", split="train")
     corpus = Corpus(corpus_data=corpus_data, doc_column_name="image")
 
-    dataset = load_dataset("manu/colpali-queries", split="train")
+    dataset = load_dataset(base_path + "colpali-queries", split="train")
 
     print("Dataset size:", len(dataset))
     # filter out queries with "gold_in_top_100" == False
