@@ -159,7 +159,7 @@ class BaseVisualRetrieverProcessor(ABC, ProcessorMixin):
             )
             # Use the plaid index to get the top-k scores
             scores_batch = plaid_index.search(
-                queries_embeddings=qs_batch.to(torch.float16),
+                queries_embeddings=qs_batch.to(torch.float32),
                 top_k=k,
             )
             scores_list.append(scores_batch)
@@ -186,7 +186,7 @@ class BaseVisualRetrieverProcessor(ABC, ProcessorMixin):
         fast_plaid_index = search.FastPlaid(index="index")
         # torch.nn.utils.rnn.pad_sequence(ds, batch_first=True, padding_value=0).to(device)
         device = device or get_torch_device("auto")
-        fast_plaid_index.create(documents_embeddings=[d.to(device).to(torch.float16) for d in ps])
+        fast_plaid_index.create(documents_embeddings=[d.to(device).to(torch.float32) for d in ps])
         return fast_plaid_index
 
     @abstractmethod
