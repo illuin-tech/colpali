@@ -1,4 +1,5 @@
 import importlib
+import logging
 from abc import ABC, abstractmethod
 from typing import List, Optional, Tuple, Union
 
@@ -12,7 +13,7 @@ try:
     from fast_plaid import search
 except ImportError:
     # not blocking, just a warning
-    print(
+    logging.info(
         "FastPlaid is not installed. Some functionalities will be unavailable. "
         "Install it with `pip install fast-plaid` if you want to use it."
     )
@@ -140,7 +141,7 @@ class BaseVisualRetrieverProcessor(ABC, ProcessorMixin):
         device: Optional[Union[str, torch.device]] = None,
     ) -> torch.Tensor:
         """
-        Compute the late-interaction/MaxSim score (ColBERT-like) for the given multi-vector
+        Experimental: Compute the late-interaction/MaxSim score (ColBERT-like) for the given multi-vector
         query embeddings (`qs`) and passage embeddings endoded in a plaid index. For ColPali, a passage is the
         image of a document page.
         """
@@ -171,7 +172,7 @@ class BaseVisualRetrieverProcessor(ABC, ProcessorMixin):
         device: Optional[Union[str, torch.device]] = None,
     ) -> torch.Tensor:
         """
-        Create a FastPlaid index from the given passage embeddings.
+        Experimental: Create a FastPlaid index from the given passage embeddings.
         Args:
             ps (`Union[torch.Tensor, List[torch.Tensor]]`): Passage embeddings. Should be a list of tensors,
                 where each tensor is of shape (sequence_length_i, embedding_dim).
