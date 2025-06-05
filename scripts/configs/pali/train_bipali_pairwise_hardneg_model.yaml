@@ -26,7 +26,7 @@ config:
   
   loss_func:
     (): colpali_engine.loss.bi_encoder_losses.BiPairwiseNegativeCELoss
-    in_batch_term: true
+    in_batch_term_weight: 0.5
   tr_args: !import ../tr_args/default_neg_tr_args.yaml
   peft_config:
     (): peft.LoraConfig

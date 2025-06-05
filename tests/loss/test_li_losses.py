@@ -107,7 +107,7 @@ class TestColbertNegativeCELoss:
             normalize_scores=False,
             use_smooth_max=False,
             pos_aware_negative_filtering=False,
-            in_batch_term=False,
+            in_batch_term_weight=0,
         )
         B, Nq, D, Nneg = 2, 1, 3, 1
         query = torch.zeros(B, Nq, D)
@@ -123,7 +123,7 @@ class TestColbertNegativeCELoss:
             normalize_scores=False,
             use_smooth_max=False,
             pos_aware_negative_filtering=False,
-            in_batch_term=True,
+            in_batch_term_weight=0.5,
         )
         B, Nq, D = 2, 1, 3
         query = torch.zeros(B, Nq, D)
@@ -154,7 +154,7 @@ class TestColbertPairwiseNegativeCELoss:
             normalize_scores=False,
             use_smooth_max=False,
             pos_aware_negative_filtering=False,
-            in_batch_term=False,
+            in_batch_term_weight=0,
         )
         B, Nq, D = 2, 1, 3
         query = torch.zeros(B, Nq, D)
@@ -170,7 +170,7 @@ class TestColbertPairwiseNegativeCELoss:
             normalize_scores=False,
             use_smooth_max=False,
             pos_aware_negative_filtering=False,
-            in_batch_term=True,
+            in_batch_term_weight=0.5,
         )
         B, Nq, D = 2, 1, 3
         query = torch.zeros(B, Nq, D)

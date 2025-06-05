@@ -25,7 +25,7 @@ config = ColModelTrainingConfig(
     dataset_loading_func=load_train_set,  # load_train_set_ir_negs,
     eval_dataset_loader=None,
     run_eval=True,
-    loss_func=BiEncoderLoss(),  # BiNegativeCELoss(in_batch_term=True),
+    loss_func=BiEncoderLoss(),  # BiNegativeCELoss(in_batch_term_weight=0.5),
     tr_args=TrainingArguments(
         output_dir=None,
         overwrite_output_dir=True,

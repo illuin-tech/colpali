@@ -63,7 +63,7 @@ class TestBiEncoderLoss:
 
 class TestBiNegativeCELoss:
     def test_forward_no_inbatch(self):
-        loss_fn = BiNegativeCELoss(temperature=1.0, in_batch_term=False, pos_aware_negative_filtering=False)
+        loss_fn = BiNegativeCELoss(temperature=1.0, in_batch_term_weight=0, pos_aware_negative_filtering=False)
         B, D = 3, 4
         query = torch.zeros(B, D)
         pos = torch.zeros(B, D)
@@ -74,7 +74,7 @@ class TestBiNegativeCELoss:
         assert torch.allclose(loss, expected)
 
     def test_forward_with_inbatch(self):
-        loss_fn = BiNegativeCELoss(temperature=1.0, in_batch_term=True, pos_aware_negative_filtering=False)
+        loss_fn = BiNegativeCELoss(temperature=1.0, in_batch_term_weight=0.5, pos_aware_negative_filtering=False)
         B, D = 2, 3
         query = torch.zeros(B, D)
         pos = torch.zeros(B, D)
@@ -109,7 +109,7 @@ class TestBiPairwiseCELoss:
 
 class TestBiPairwiseNegativeCELoss:
     def test_forward_no_inbatch(self):
-        loss_fn = BiPairwiseNegativeCELoss(temperature=1.0, in_batch_term=False)
+        loss_fn = BiPairwiseNegativeCELoss(temperature=1.0, in_batch_term_weight=0)
         B, D = 5, 4
         query = torch.zeros(B, D)
         pos = torch.zeros(B, D)
@@ -119,7 +119,7 @@ class TestBiPairwiseNegativeCELoss:
         assert torch.allclose(loss, expected)
 
     def test_forward_with_inbatch(self):
-        loss_fn = BiPairwiseNegativeCELoss(temperature=1.0, in_batch_term=True)
+        loss_fn = BiPairwiseNegativeCELoss(temperature=1.0, in_batch_term_weight=0.5)
         B, D = 2, 3
         query = torch.zeros(B, D)
         pos = torch.zeros(B, D)
