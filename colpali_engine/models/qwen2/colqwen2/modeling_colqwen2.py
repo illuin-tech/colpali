@@ -68,7 +68,7 @@ class ColQwen2(Qwen2VLForConditionalGeneration):
             if attention_mask is not None:
                 attention_mask = attention_mask.to(inputs_embeds.device)
 
-        outputs = self.model.model(
+        outputs = self.model(
             input_ids=None,
             position_ids=position_ids,
             attention_mask=attention_mask,
