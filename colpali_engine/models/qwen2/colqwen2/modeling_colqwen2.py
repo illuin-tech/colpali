@@ -50,7 +50,7 @@ class ColQwen2(Qwen2VLForConditionalGeneration):
         video_grid_thw: Optional[torch.LongTensor] = None,
     ) -> torch.Tensor:
         if inputs_embeds is None:
-            inputs_embeds = self.model.embed_tokens(input_ids)
+            inputs_embeds = self.model.language_model.embed_tokens(input_ids)
             if pixel_values is not None:
                 pixel_values = pixel_values.type(self.visual.get_dtype())
                 image_embeds = self.visual(pixel_values, grid_thw=image_grid_thw)
@@ -68,7 +68,7 @@ class ColQwen2(Qwen2VLForConditionalGeneration):
             if attention_mask is not None:
                 attention_mask = attention_mask.to(inputs_embeds.device)
 
-        outputs = self.model(
+        outputs = self.model.model(
             input_ids=None,
             position_ids=position_ids,
             attention_mask=attention_mask,
@@ -94,7 +94,7 @@ class ColQwen2(Qwen2VLForConditionalGeneration):
                 dim=0,
             )
 
-        position_ids, rope_deltas = self.get_rope_index(
+        position_ids, rope_deltas = self.model.get_rope_index(
             input_ids=kwargs["input_ids"],
             image_grid_thw=kwargs.get("image_grid_thw", None),
             video_grid_thw=None,
