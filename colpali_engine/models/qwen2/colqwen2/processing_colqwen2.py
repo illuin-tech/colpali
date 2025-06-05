@@ -26,14 +26,6 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
     query_augmentation_token: ClassVar[str] = "<|endoftext|>"
     image_token: ClassVar[str] = "<|image_pad|>"
 
-    @property
-    def image_token_id(self) -> int:
-        return self.tokenizer.convert_tokens_to_ids(self.image_token)
-
-    @image_token_id.setter
-    def image_token_id(self, value):
-        self.image_token_id = value
-
     def __init__(
         self,
         *args,

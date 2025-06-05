@@ -20,10 +20,6 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    @property
-    def image_token_id(self) -> int:
-        return self.tokenizer.convert_tokens_to_ids(self.image_token)
-
     def process_images(
         self,
         images: List[Image.Image],
