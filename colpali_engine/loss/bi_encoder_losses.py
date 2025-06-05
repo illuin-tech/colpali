@@ -118,7 +118,7 @@ class BiNegativeCELoss(BiEncoderModule):
 
     Args:
         temperature (float): Scaling factor for logits.
-        in_batch_term (bool): Include in-batch cross-entropy if True.
+        in_batch_term_weight (float): Weight for in-batch cross-entropy term (0 to 1).
         pos_aware_negative_filtering (bool): Apply in-batch negative filtering.
         max_batch_size (int): Max batch size for index buffer.
         filter_threshold (float): Threshold ratio for filtering.
@@ -128,18 +128,19 @@ class BiNegativeCELoss(BiEncoderModule):
     def __init__(
         self,
         temperature: float = 0.02,
-        in_batch_term: bool = False,
+        in_batch_term_weight: float = 0.5,
         pos_aware_negative_filtering: bool = False,
         max_batch_size: int = 1024,
         filter_threshold: float = 0.95,
         filter_factor: float = 0.5,
     ):
         super().__init__(max_batch_size, temperature, filter_threshold, filter_factor)
-        self.in_batch_term = in_batch_term
+        self.in_batch_term_weight = in_batch_term_weight
+        assert 0 <= in_batch_term_weight <= 1, "in_batch_term_weight must be between 0 and 1"
         self.pos_aware_negative_filtering = pos_aware_negative_filtering
         self.ce_loss = CrossEntropyLoss()
         # Inner InfoNCE for in-batch
-        self.inner_ce = BiEncoderLoss(
+        self.inner_loss = BiEncoderLoss(
             temperature=temperature,
             pos_aware_negative_filtering=pos_aware_negative_filtering,
             max_batch_size=max_batch_size,
@@ -172,10 +173,9 @@ class BiNegativeCELoss(BiEncoderModule):
 
         loss = torch.nn.functional.softplus(neg_scores - pos_scores).mean()
 
-        if self.in_batch_term:
-            ce = self.inner_ce(query_embeddings, doc_embeddings, offset)
-            loss = (loss + ce) / 2
-
+        if self.in_batch_term_weight > 0:
+            loss_ib = self.inner_loss(query_embeddings, doc_embeddings, offset)
+            loss = loss * (1 - self.in_batch_term_weight) + loss_ib * self.in_batch_term_weight
         return loss
 
 
@@ -237,7 +237,7 @@ class BiPairwiseNegativeCELoss(BiEncoderModule):
 
     Args:
         temperature (float): Scaling factor for logits.
-        in_batch_term (bool): Include pairwise in-batch loss.
+        in_batch_term_weight (float): Weight for in-batch cross-entropy term (0 to 1).
         max_batch_size (int): Maximum batch size for indexing.
         filter_threshold (float): Threshold for pos-aware filtering.
         filter_factor (float): Factor to down-weight filtered negatives.
@@ -246,13 +246,14 @@ class BiPairwiseNegativeCELoss(BiEncoderModule):
     def __init__(
         self,
         temperature: float = 0.02,
-        in_batch_term: bool = False,
+        in_batch_term_weight: float = 0.5,
         max_batch_size: int = 1024,
         filter_threshold: float = 0.95,
         filter_factor: float = 0.5,
     ):
         super().__init__(max_batch_size, temperature, filter_threshold, filter_factor)
-        self.in_batch_term = in_batch_term
+        self.in_batch_term_weight = in_batch_term_weight
+        assert 0 <= in_batch_term_weight <= 1, "in_batch_term_weight must be between 0 and 1"
         self.inner_pairwise = BiPairwiseCELoss(
             temperature=temperature,
             pos_aware_negative_filtering=False,
@@ -284,8 +285,8 @@ class BiPairwiseNegativeCELoss(BiEncoderModule):
 
         loss = torch.nn.functional.softplus((neg - pos) / self.temperature).mean()
 
-        if self.in_batch_term:
+        if self.in_batch_term_weight > 0:
             loss_ib = self.inner_pairwise(query_embeddings, doc_embeddings)
-            loss = (loss + loss_ib) / 2
+            loss = loss * (1 - self.in_batch_term_weight) + loss_ib * self.in_batch_term_weight
 
         return loss

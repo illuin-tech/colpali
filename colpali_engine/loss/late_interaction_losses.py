@@ -172,7 +172,7 @@ class ColbertNegativeCELoss(ColbertModule):
         normalize_scores (bool): Normalize scores by query lengths.
         use_smooth_max (bool): Use log-sum-exp instead of amax.
         pos_aware_negative_filtering (bool): Apply pos-aware negative filtering.
-        in_batch_term (bool): Add in-batch CE term.
+        in_batch_term_weight (float): Add in-batch CE term (between 0 and 1).
     """
 
     def __init__(
@@ -181,7 +181,7 @@ class ColbertNegativeCELoss(ColbertModule):
         normalize_scores: bool = True,
         use_smooth_max: bool = False,
         pos_aware_negative_filtering: bool = False,
-        in_batch_term: bool = False,
+        in_batch_term_weight: float = 0.5,
         max_batch_size: int = 1024,
         tau: float = 0.1,
         norm_tol: float = 1e-3,
@@ -193,8 +193,12 @@ class ColbertNegativeCELoss(ColbertModule):
         self.normalize_scores = normalize_scores
         self.use_smooth_max = use_smooth_max
         self.pos_aware_negative_filtering = pos_aware_negative_filtering
-        self.in_batch_term = in_batch_term
+        self.in_batch_term_weight = in_batch_term_weight
         self.ce_loss = CrossEntropyLoss()
+
+        assert in_batch_term_weight >= 0, "in_batch_term_weight must be non-negative"
+        assert in_batch_term_weight <= 1, "in_batch_term_weight must be less than 1"
+
         self.inner_loss = ColbertLoss(
             temperature=temperature,
             normalize_scores=normalize_scores,
@@ -238,9 +242,9 @@ class ColbertNegativeCELoss(ColbertModule):
 
         loss = F.softplus((neg_scores - pos_scores) / self.temperature).mean()
 
-        if self.in_batch_term:
+        if self.in_batch_term_weight > 0:
             loss_ib = self.inner_loss(query_embeddings, doc_embeddings, offset)
-            loss = (loss + loss_ib) / 2
+            loss = loss * (1 - self.in_batch_term_weight) + loss_ib * self.in_batch_term_weight
 
         return loss
 
@@ -315,7 +319,7 @@ class ColbertPairwiseNegativeCELoss(ColbertModule):
         normalize_scores (bool): Normalize scores by query lengths.
         use_smooth_max (bool): Use log-sum-exp instead of amax.
         pos_aware_negative_filtering (bool): Apply pos-aware negative filtering.
-        in_batch_term (bool): Add pairwise in-batch loss.
+        in_batch_term_weight (float): Add in-batch CE term (between 0 and 1).
     """
 
     def __init__(
@@ -324,7 +328,7 @@ class ColbertPairwiseNegativeCELoss(ColbertModule):
         normalize_scores: bool = True,
         use_smooth_max: bool = False,
         pos_aware_negative_filtering: bool = False,
-        in_batch_term: bool = False,
+        in_batch_term_weight: float = 0.5,
         max_batch_size: int = 1024,
         tau: float = 0.1,
         norm_tol: float = 1e-3,
@@ -336,7 +340,9 @@ class ColbertPairwiseNegativeCELoss(ColbertModule):
         self.normalize_scores = normalize_scores
         self.use_smooth_max = use_smooth_max
         self.pos_aware_negative_filtering = pos_aware_negative_filtering
-        self.in_batch_term = in_batch_term
+        self.in_batch_term_weight = in_batch_term_weight
+        assert in_batch_term_weight >= 0, "in_batch_term_weight must be non-negative"
+        assert in_batch_term_weight <= 1, "in_batch_term_weight must be less than 1"
         self.inner_pairwise = ColbertPairwiseCELoss(
             temperature=temperature,
             normalize_scores=normalize_scores,
@@ -380,8 +386,8 @@ class ColbertPairwiseNegativeCELoss(ColbertModule):
 
         loss = F.softplus((neg_scores - pos_scores) / self.temperature).mean()
 
-        if self.in_batch_term:
+        if self.in_batch_term_weight > 0:
             loss_ib = self.inner_pairwise(query_embeddings, doc_embeddings, offset)
-            loss = (loss + loss_ib) / 2
+            loss = loss * (1 - self.in_batch_term_weight) + loss_ib * self.in_batch_term_weight
 
         return loss
