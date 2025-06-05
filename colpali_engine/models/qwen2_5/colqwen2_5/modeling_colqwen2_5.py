@@ -27,6 +27,13 @@ class ColQwen2_5(Qwen2_5_VLForConditionalGeneration):  # noqa: N801
         self.mask_non_image_embeddings = mask_non_image_embeddings
         self.post_init()
 
+    @classmethod
+    def from_pretrained(cls, *args, **kwargs):
+        key_mapping = kwargs.pop("key_mapping", None)
+        if key_mapping is None:
+            key_mapping = super()._checkpoint_conversion_mapping
+        return super().from_pretrained(*args, **kwargs, key_mapping=key_mapping)
+
     def inner_forward(
         self,
         input_ids: torch.LongTensor = None,
