@@ -126,7 +126,6 @@ plaid_index = processor.create_plaid_index(ds)
 scores = processor.get_topk_plaid(query_embeddings, plaid_index, k=10)
 ```
 
-
 ### Benchmarking
 
 To benchmark ColPali on the [ViDoRe leaderboard](https://huggingface.co/spaces/vidore/vidore-leaderboard), use the [`vidore-benchmark`](https://github.com/illuin-tech/vidore-benchmark) package.
