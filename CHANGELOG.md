@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Added a training script in pure torch without the HF trainer
 - Added a sampler to train with multiple datasets at once, with each batch coming from the same source. (experimental, might still need testing on multi-GPU)
 - Adds score normalization to LI models (diving by token length) for betetr performance with CE loss
+- Add experimental PLAID support
 
 ### Changed
 
