@@ -103,7 +103,7 @@ scores = processor.score_multi_vector(query_embeddings, image_embeddings)
 
 We now support `fast-plaid` experimentally to make matching quicker for larger corpus sizes:
 
-```
+```python
 # !pip install --no-deps fast-plaid fastkmeans
 
 # Process the inputs by batches of 4
