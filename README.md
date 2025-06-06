@@ -101,6 +101,31 @@ with torch.no_grad():
 scores = processor.score_multi_vector(query_embeddings, image_embeddings)
 ```
 
+We now support `fast-plaid` experimentally to make matching quicker for larger corpus sizes:
+
+```
+# !pip install --no-deps fast-plaid fastkmeans
+
+# Process the inputs by batches of 4
+dataloader = DataLoader(
+    dataset=images,
+    batch_size=4,
+    shuffle=False,
+    collate_fn=lambda x: processor.process_images(x),
+)
+
+ds  = []
+for batch_doc in tqdm(dataloader):
+    with torch.no_grad():
+        batch_doc = {k: v.to(model.device) for k, v in batch_doc.items()}
+        embeddings_doc = model(**batch_doc)
+    ds.extend(list(torch.unbind(embeddings_doc.to("cpu"))))
+
+plaid_index = processor.create_plaid_index(ds)
+
+scores = processor.get_topk_plaid(query_embeddings, plaid_index, k=10)
+```
+
 ### Benchmarking
 
 To benchmark ColPali on the [ViDoRe leaderboard](https://huggingface.co/spaces/vidore/vidore-leaderboard), use the [`vidore-benchmark`](https://github.com/illuin-tech/vidore-benchmark) package.
