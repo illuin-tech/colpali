@@ -23,12 +23,6 @@ class SingleDatasetBatchSampler(BatchSampler):
         drop_last: bool = True,
         generator: Optional[torch.Generator] = None,
     ):
-        # round down each dataset if not divible by global batch size
-        for i in range(len(datasets)):
-            if len(datasets[i]) % global_batch_size != 0:
-                total_samples = (len(datasets[i]) // global_batch_size) * global_batch_size
-                datasets[i] = datasets[i].take(total_samples)
-
         self.datasets = datasets
         self.global_batch_size = global_batch_size
         self.drop_last = drop_last
