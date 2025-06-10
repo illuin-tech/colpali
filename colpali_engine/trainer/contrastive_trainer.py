@@ -23,6 +23,14 @@ class ContrastiveTrainer(Trainer):
         else:
             dataset_list = None
 
+        if isinstance(dataset_list, list):
+            # round down each dataset if not divible by global batch size
+            batch_size = kwargs["args"].train_batch_size
+            for i in range(len(dataset_list)):
+                if len(dataset_list[i]) % batch_size != 0:
+                    total_samples = (len(dataset_list[i]) // batch_size) * batch_size
+                    dataset_list[i] = dataset_list[i].take(total_samples)
+
         if dataset_list is not None:
             kwargs["train_dataset"] = ConcatDataset(dataset_list)
 
