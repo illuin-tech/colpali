@@ -1,7 +1,7 @@
 import importlib
 import logging
 from abc import ABC, abstractmethod
-from typing import List, Optional, Tuple, Union
+from typing import ClassVar, List, Optional, Tuple, Union
 
 import torch
 from PIL import Image
@@ -22,20 +22,42 @@ class BaseVisualRetrieverProcessor(ABC, ProcessorMixin):
     Base class for visual retriever processors.
     """
 
+    query_prefix: ClassVar[str] = "Query: "     # Default prefix for queries. Override in subclasses if needed.
+
     @abstractmethod
     def process_images(
         self,
         images: List[Image.Image],
+        contexts: Optional[List[str]] = None,
     ) -> Union[BatchFeature, BatchEncoding]:
+        """
+        Process a list of images and optional contexts into a format suitable for the model.
+        Args:
+            images (List[Image.Image]): List of images to process.
+            contexts (Optional[List[str]]): Optional list of textual context corresponding to the images.
+        Returns:
+            Union[BatchFeature, BatchEncoding]: Processed images.
+        """
         pass
 
     @abstractmethod
-    def process_queries(
+    def process_texts(
         self,
-        queries: List[str],
+        texts: List[str],
         max_length: int = 50,
+        contexts: Optional[List[str]] = None,
         suffix: Optional[str] = None,
     ) -> Union[BatchFeature, BatchEncoding]:
+        """
+        Process a list of texts into a format suitable for the model.
+        Args:
+            texts (List[str]): List of texts to process.
+            max_length (int, optional): Maximum length of the texts. Defaults to 50.
+            contexts (Optional[List[str]], optional): Optional list of textual context corresponding to the texts.
+            suffix (Optional[str], optional): Optional suffix to append to each text.
+        Returns:
+            Union[BatchFeature, BatchEncoding]: Processed texts.
+        """
         pass
 
     @abstractmethod

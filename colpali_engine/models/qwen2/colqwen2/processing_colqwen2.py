@@ -2,7 +2,7 @@ from typing import ClassVar, List, Optional, Tuple, Union
 
 import torch
 from PIL import Image
-from transformers import BatchFeature
+from transformers import BatchEncoding, BatchFeature
 from transformers.models.qwen2_vl import Qwen2VLProcessor
 from transformers.models.qwen2_vl.image_processing_qwen2_vl import smart_resize
 
@@ -22,7 +22,6 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
     visual_prompt_prefix: ClassVar[str] = (
         "<|im_start|>user\n<|vision_start|><|image_pad|><|vision_end|>Describe the image.<|im_end|><|endoftext|>"
     )
-    query_prefix: ClassVar[str] = "Query: "
     query_augmentation_token: ClassVar[str] = "<|endoftext|>"
     image_token: ClassVar[str] = "<|image_pad|>"
 
@@ -57,25 +56,25 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
 
         return instance
 
-    def process_images(self, images: List[Image.Image], context_prompts: Optional[List[str]] = None) -> BatchFeature:
+    def process_images(
+        self,
+        images: List[Image.Image],
+        contexts: Optional[List[str]] = None,
+    ) -> Union[BatchFeature, BatchEncoding]:
         """
         Process images for ColQwen2.
 
         Args:
             images: List of PIL images.
-            context_prompts: List of optional context prompts, i.e. some text description of the context of the image.
+            contexts: List of optional context prompts, i.e. some text description of the context of the image.
         """
+        if contexts is None:
+            contexts = [self.visual_prompt_prefix] * len(images)
 
-        if context_prompts:
-            if len(images) != len(context_prompts):
-                raise ValueError("Length of images and context prompts must match.")
-            texts_doc = context_prompts
-        else:
-            texts_doc = [self.visual_prompt_prefix] * len(images)
         images = [image.convert("RGB") for image in images]
 
         batch_doc = self(
-            text=texts_doc,
+            text=contexts,
             images=images,
             padding="longest",
             return_tensors="pt",
@@ -96,32 +95,32 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
 
         return batch_doc
 
-    def process_queries(
+    def process_texts(
         self,
-        queries: List[str],
+        texts: List[str],
         max_length: int = 50,
+        contexts: Optional[List[str]] = None,
         suffix: Optional[str] = None,
-    ) -> BatchFeature:
+    ) -> Union[BatchFeature, BatchEncoding]:
         """
-        Process queries for ColQwen2.
+        Process texts for ColQwen2.
 
         NOTE: `max_length` is not used and kept only for trainer compatibility.
         """
         if suffix is None:
             suffix = self.query_augmentation_token * 10
-        texts_query: List[str] = []
+        if contexts is None:
+            contexts = [""] * len(texts)
+            
+        prompts = [context + text + suffix for context, text in zip(contexts, texts)]
 
-        for query in queries:
-            query = self.query_prefix + query + suffix
-            texts_query.append(query)
-
-        batch_query = self(
-            text=texts_query,
+        batch_texts = self(
+            text=prompts,
             return_tensors="pt",
             padding="longest",
         )
 
-        return batch_query
+        return batch_texts
 
     def score(
         self,

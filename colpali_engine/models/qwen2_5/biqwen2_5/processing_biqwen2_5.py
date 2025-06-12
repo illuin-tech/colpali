@@ -1,7 +1,7 @@
 from typing import List, Optional, Union
 
 import torch
-from transformers import BatchFeature
+from transformers import BatchEncoding, BatchFeature
 
 from colpali_engine.models.qwen2_5.colqwen2_5 import ColQwen2_5_Processor
 
@@ -11,30 +11,32 @@ class BiQwen2_5_Processor(ColQwen2_5_Processor):  # noqa: N801
     Processor for BiQwen2.5.
     """
 
-    def process_queries(
+    def process_texts(
         self,
-        queries: List[str],
+        texts: List[str],
         max_length: int = 50,
+        contexts: Optional[List[str]] = None,
         suffix: Optional[str] = None,
-    ) -> BatchFeature:
+    ) -> Union[BatchFeature, BatchEncoding]:
         """
-        Process queries for BiQwen2.5.
+        Process texts for BiQwen2.5.
+
+        NOTE: `max_length` is not used and kept only for trainer compatibility.
         """
         if suffix is None:
             suffix = self.query_augmentation_token  # we remove buffer tokens
-        texts_query: List[str] = []
+        if contexts is None:
+            contexts = [""] * len(texts)
 
-        for query in queries:
-            query = self.query_prefix + query + suffix
-            texts_query.append(query)
+        prompts = [context + text + suffix for context, text in zip(contexts, texts)]
 
-        batch_query = self(
-            text=texts_query,
+        batch_texts = self(
+            text=prompts,
             return_tensors="pt",
             padding="longest",
         )
 
-        return batch_query
+        return batch_texts
 
     def score(
         self,

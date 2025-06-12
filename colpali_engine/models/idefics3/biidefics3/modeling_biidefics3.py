@@ -1,8 +1,7 @@
-import torch
-from torch import nn
-from transformers import Idefics3Model, Idefics3PreTrainedModel, Idefics3Config
+from typing import Literal
 
-from typing import Literal, Optional
+import torch
+from transformers import Idefics3Config, Idefics3Model, Idefics3PreTrainedModel
 
 
 class BiIdefics3(Idefics3PreTrainedModel):
@@ -52,7 +51,7 @@ class BiIdefics3(Idefics3PreTrainedModel):
             pooled_output = (last_hidden_states * mask).sum(dim=1) / mask.sum(dim=1)  # (batch_size, hidden_size)
         else:
             raise ValueError(f"Invalid pooling strategy: {pooling_strategy}")
-        
+
         # L2 normalization
         pooled_output = pooled_output / pooled_output.norm(dim=-1, keepdim=True)
         return pooled_output

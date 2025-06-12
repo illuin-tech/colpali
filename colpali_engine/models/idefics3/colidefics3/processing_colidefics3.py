@@ -2,7 +2,7 @@ from typing import ClassVar, List, Optional, Tuple, Union
 
 import torch
 from PIL import Image
-from transformers import BatchEncoding, Idefics3Processor
+from transformers import BatchEncoding, BatchFeature, Idefics3Processor
 
 from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 
@@ -12,10 +12,9 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
     Processor for ColIdefics3.
     """
 
-    query_prefix: ClassVar[str] = "Query: "
     query_augmentation_token: ClassVar[str] = "<end_of_utterance>"
     image_token: ClassVar[str] = "<image>"
-    visual_prompt_prefix: ClassVar[str] = "<|im_start|>user\n<image>Describe the image.<end_of_utterance>"
+    visual_prompt_prefix: ClassVar[str] = "<|im_start|>User:<image>Describe the image.<end_of_utterance>\nAssistant:"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -27,58 +26,54 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
     def process_images(
         self,
         images: List[Image.Image],
-        context_prompts: Optional[List[str]] = None,
-    ) -> BatchEncoding:
+        contexts: Optional[List[str]] = None,
+    ) -> Union[BatchFeature, BatchEncoding]:
         """
         Process images for ColIdefics3.
 
         Args:
             images: List of PIL images.
-            context_prompts: List of optional context prompts, i.e. some text description of the context of the image.
+            contexts: List of optional context prompts, i.e. some text description of the context of the image.
         """
+        if contexts is None:
+            contexts = [self.visual_prompt_prefix] * len(images)
 
-        texts_doc: List[str] = []
-        images = [[image.convert("RGB")] for image in images]
-
-        if context_prompts:
-            if len(images) != len(context_prompts):
-                raise ValueError("Length of images and context prompts must match.")
-            texts_doc = context_prompts
-        else:
-            texts_doc = [self.visual_prompt_prefix] * len(images)
+        images = [image.convert("RGB") for image in images]
 
         batch_doc = self(
-            text=texts_doc,
+            text=contexts,
             images=images,
-            return_tensors="pt",
             padding="longest",
+            return_tensors="pt",
         )
         return batch_doc
 
-    def process_queries(
+    def process_texts(
         self,
-        queries: List[str],
+        texts: List[str],
         max_length: int = 50,
+        contexts: Optional[List[str]] = None,
         suffix: Optional[str] = None,
-    ) -> BatchEncoding:
+    ) -> Union[BatchFeature, BatchEncoding]:
         """
-        Process queries for ColIdefics3.
+        Process texts for ColIdefics3.
+
+        NOTE: `max_length` is not used and kept only for trainer compatibility.
         """
         if suffix is None:
             suffix = self.query_augmentation_token * 10
-        texts_query: List[str] = []
+        if contexts is None:
+            contexts = [""] * len(texts)
 
-        for query in queries:
-            query = self.query_prefix + query + suffix + "\n"
-            texts_query.append(query)
+        prompts = [context + text + suffix for context, text in zip(contexts, texts)]
 
-        batch_query = self.tokenizer(
-            text=texts_query,
+        batch_texts = self(
+            text=prompts,
             return_tensors="pt",
             padding="longest",
         )
 
-        return batch_query
+        return batch_texts
 
     def score(
         self,

@@ -1,8 +1,7 @@
-from typing import ClassVar, List, Optional, Tuple, Union
+from typing import List, Optional, Union
 
 import torch
-from PIL import Image
-from transformers import BatchFeature, BatchEncoding
+from transformers import BatchEncoding, BatchFeature
 
 from colpali_engine.models.idefics3.colidefics3 import ColIdefics3Processor
 
@@ -27,7 +26,7 @@ class BiIdefics3Processor(ColIdefics3Processor):  # noqa: N801
         if suffix is None:
             suffix = self.query_augmentation_token  # we remove buffer tokens
         if contexts is None:
-            contexts = [self.query_prefix] * len(texts)
+            contexts = [""] * len(texts)
 
         prompts = [context + text + suffix for context, text in zip(contexts, texts)]
 
