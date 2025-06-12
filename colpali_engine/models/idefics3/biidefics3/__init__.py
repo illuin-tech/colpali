@@ -1,0 +1,2 @@
+from .modeling_biidefics3 import BiIdefics3
+from .processing_biidefics3 import BiIdefics3Processor
