@@ -45,7 +45,7 @@ def test_process_images_with_context(processor_from_pretrained: ColQwen2_5_Proce
     contexts = ["Open source is the best!"]
 
     # Process the image
-    batch_feature = processor_from_pretrained.process_images(images, context_prompts=contexts)
+    batch_feature = processor_from_pretrained.process_images(images, contexts=contexts)
 
     # Assertions
     assert "pixel_values" in batch_feature
@@ -60,8 +60,10 @@ def test_process_queries(processor_from_pretrained: ColQwen2_5_Processor):
         "Are Benjamin, Antoine, Merve, and Jo best friends?",
     ]
 
+    contexts = [processor_from_pretrained.query_prefix] * 2
+
     # Process the queries
-    batch_encoding = processor_from_pretrained.process_queries(queries)
+    batch_encoding = processor_from_pretrained.process_texts(queries, contexts=contexts)
 
     # Assertions
     assert "input_ids" in batch_encoding
