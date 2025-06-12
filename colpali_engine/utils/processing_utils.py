@@ -28,7 +28,6 @@ class BaseVisualRetrieverProcessor(ABC):
     def process_images(
         self,
         images: List[Image.Image],
-        contexts: Optional[List[str]] = None,
     ) -> Union[BatchFeature, BatchEncoding]:
         """
         Process a list of images into a format suitable for the model.
