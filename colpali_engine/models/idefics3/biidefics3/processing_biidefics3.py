@@ -25,7 +25,7 @@ class BiIdefics3Processor(ColIdefics3Processor):  # noqa: N801
         NOTE: `max_length` is not used and kept only for trainer compatibility.
         """
         if suffix is None:
-            suffix = self.query_augmentation_token * 10
+            suffix = self.query_augmentation_token  # we remove buffer tokens
         if contexts is None:
             contexts = [self.query_prefix] * len(texts)
 
