@@ -79,20 +79,12 @@ class VisualRetrieverCollator:
             raise ValueError("Some queries are None. This collator does not support None queries yet.")
         else:
             batch_query = self.auto_collate(
-                queries,
-                contexts=[self.processor.query_prefix] * len(queries),
-                key_prefix=self.query_prefix
+                queries, contexts=[self.processor.query_prefix] * len(queries), key_prefix=self.query_prefix
             )
 
         # Process targets.
-        batch_pos_target = self.auto_collate(
-            pos_targets,
-            key_prefix=self.pos_doc_prefix
-        )
-        batch_neg_target = self.auto_collate(
-            neg_targets,
-            key_prefix=self.neg_doc_prefix
-        ) if neg_targets else {}
+        batch_pos_target = self.auto_collate(pos_targets, key_prefix=self.pos_doc_prefix)
+        batch_neg_target = self.auto_collate(neg_targets, key_prefix=self.neg_doc_prefix) if neg_targets else {}
 
         return {
             **batch_query,
@@ -101,10 +93,7 @@ class VisualRetrieverCollator:
         }
 
     def auto_collate(
-        self,
-        batch: List[Union[str, Image]],
-        contexts: List[str] = None,
-        key_prefix: str = ""
+        self, batch: List[Union[str, Image]], contexts: List[str] = None, key_prefix: str = ""
     ) -> Dict[str, Any]:
         """Automatically collate a batch of documents."""
         # Convert Document objects to their underlying data.

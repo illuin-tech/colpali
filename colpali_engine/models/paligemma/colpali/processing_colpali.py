@@ -67,9 +67,7 @@ class ColPaliProcessor(BaseVisualRetrieverProcessor, PaliGemmaProcessor):
         if contexts is None:
             contexts = [self.tokenizer.bos_token] * len(texts)
 
-        prompts = [
-            context + text + suffix for context, text in zip(contexts, texts)
-        ]
+        prompts = [context + text + suffix for context, text in zip(contexts, texts)]
 
         batch_query = self.tokenizer(
             prompts,

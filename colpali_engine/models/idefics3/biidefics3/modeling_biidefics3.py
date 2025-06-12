@@ -55,4 +55,3 @@ class BiIdefics3(Idefics3PreTrainedModel):
         # L2 normalization
         pooled_output = pooled_output / pooled_output.norm(dim=-1, keepdim=True)
         return pooled_output
-

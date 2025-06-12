@@ -111,7 +111,7 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
             suffix = self.query_augmentation_token * 10
         if contexts is None:
             contexts = [""] * len(texts)
-            
+
         prompts = [context + text + suffix for context, text in zip(contexts, texts)]
 
         batch_texts = self(
