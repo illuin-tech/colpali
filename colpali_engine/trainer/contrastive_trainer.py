@@ -109,6 +109,7 @@ class ContrastiveTrainer(Trainer):
             # gather docs across all processes
             if num_items_in_batch is None:
                 num_items_in_batch = inputs["doc_input_ids"].shape[0]
+            doc_outputs = self.accelerator.pad_across_processes(doc_outputs, dim=1, pad_index=0, pad_first=True)
             doc_outputs = concat_all_gather(doc_outputs)
             rank = self.accelerator.process_index
             offset = rank * num_items_in_batch
