@@ -60,10 +60,8 @@ def test_process_queries(processor_from_pretrained: ColQwen2_5_Processor):
         "Are Benjamin, Antoine, Merve, and Jo best friends?",
     ]
 
-    contexts = [processor_from_pretrained.query_prefix] * 2
-
     # Process the queries
-    batch_encoding = processor_from_pretrained.process_texts(queries, contexts=contexts)
+    batch_encoding = processor_from_pretrained.process_queries(queries)
 
     # Assertions
     assert "input_ids" in batch_encoding
