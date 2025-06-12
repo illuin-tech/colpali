@@ -43,7 +43,7 @@ def test_process_images_with_context(processor_from_pretrained: ColPaliProcessor
     images = [image]
 
     # Process the image
-    batch_feature = processor_from_pretrained.process_images(images, context_prompts=contexts)
+    batch_feature = processor_from_pretrained.process_images(images, contexts=contexts)
 
     # Assertions
     assert "pixel_values" in batch_feature

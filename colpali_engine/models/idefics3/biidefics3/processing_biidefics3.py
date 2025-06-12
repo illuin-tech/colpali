@@ -3,12 +3,12 @@ from typing import List, Optional, Union
 import torch
 from transformers import BatchEncoding, BatchFeature
 
-from colpali_engine.models.qwen2.colqwen2 import ColQwen2Processor
+from colpali_engine.models.idefics3.colidefics3 import ColIdefics3Processor
 
 
-class BiQwen2Processor(ColQwen2Processor):
+class BiIdefics3Processor(ColIdefics3Processor):  # noqa: N801
     """
-    Processor for ColQwen2.
+    Processor for BiIdefics3.
     """
 
     def process_texts(
@@ -19,7 +19,7 @@ class BiQwen2Processor(ColQwen2Processor):
         suffix: Optional[str] = None,
     ) -> Union[BatchFeature, BatchEncoding]:
         """
-        Process texts for ColQwen2.
+        Process texts for BiIdefics3.
 
         NOTE: `max_length` is not used and kept only for trainer compatibility.
         """
@@ -46,6 +46,6 @@ class BiQwen2Processor(ColQwen2Processor):
         **kwargs,
     ) -> torch.Tensor:
         """
-        Compute the MaxSim score (ColBERT-like) for the given multi-vector query and passage embeddings.
+        Compute the cosine similarity for the given query and passage embeddings.
         """
         return self.score_single_vector(qs, ps, device=device)
