@@ -37,12 +37,12 @@ class ColQwen2(Qwen2VLModel):
         kwargs.pop("output_hidden_states", None)
 
         # Handle the custom "pixel_values" input obtained with `ColQwen2Processor` through unpadding
-        if "pixel_values" in kwargs:
-            offsets = kwargs["image_grid_thw"][:, 1] * kwargs["image_grid_thw"][:, 2]  # (batch_size,)
-            kwargs["pixel_values"] = torch.cat(
-                [pixel_sequence[:offset] for pixel_sequence, offset in zip(kwargs["pixel_values"], offsets)],
-                dim=0,
-            )
+        # if "pixel_values" in kwargs:
+        #     offsets = kwargs["image_grid_thw"][:, 1] * kwargs["image_grid_thw"][:, 2]  # (batch_size,)
+        #     kwargs["pixel_values"] = torch.cat(
+        #         [pixel_sequence[:offset] for pixel_sequence, offset in zip(kwargs["pixel_values"], offsets)],
+        #         dim=0,
+        #     )
 
         hidden_states = (
             super()
