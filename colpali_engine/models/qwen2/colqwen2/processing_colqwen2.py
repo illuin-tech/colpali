@@ -77,18 +77,18 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
             return_tensors="pt",
         )
 
-        # NOTE: The following adjustment ensures correct behavior with DDP on multiple GPUs.
-        offsets = batch_doc["image_grid_thw"][:, 1] * batch_doc["image_grid_thw"][:, 2]  # (batch_size,)
+        # # NOTE: The following adjustment ensures correct behavior with DDP on multiple GPUs.
+        # offsets = batch_doc["image_grid_thw"][:, 1] * batch_doc["image_grid_thw"][:, 2]  # (batch_size,)
 
-        # Split the pixel_values tensor into a list of tensors, one per image
-        pixel_values = list(
-            torch.split(batch_doc["pixel_values"], offsets.tolist())
-        )  # [(num_patches_image_0, pixel_values), ..., (num_patches_image_n, pixel_values)]
+        # # Split the pixel_values tensor into a list of tensors, one per image
+        # pixel_values = list(
+        #     torch.split(batch_doc["pixel_values"], offsets.tolist())
+        # )  # [(num_patches_image_0, pixel_values), ..., (num_patches_image_n, pixel_values)]
 
-        # Pad the list of pixel_value tensors to the same length along the sequence dimension
-        batch_doc["pixel_values"] = torch.nn.utils.rnn.pad_sequence(
-            pixel_values, batch_first=True
-        )  # (batch_size, max_num_patches, pixel_values)
+        # # Pad the list of pixel_value tensors to the same length along the sequence dimension
+        # batch_doc["pixel_values"] = torch.nn.utils.rnn.pad_sequence(
+        #     pixel_values, batch_first=True
+        # )  # (batch_size, max_num_patches, pixel_values)
 
         return batch_doc
 
