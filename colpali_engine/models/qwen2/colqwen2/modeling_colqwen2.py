@@ -46,7 +46,8 @@ class ColQwen2(Qwen2VLModel):
             print(
                 f"Unpadded pixel_values: {kwargs['pixel_values'].shape} from offsets: {offsets.tolist()}"
             )
-            print(kwargs["pixel_values"][:10, :10])
+            print(kwargs["input_ids"])
+            print(kwargs["attention_mask"])
 
         hidden_states = (
             super()
