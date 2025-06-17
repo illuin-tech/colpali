@@ -47,13 +47,20 @@ class ColQwen2(Qwen2VLModel):
             # print(kwargs["attention_mask"])
 
         breakpoint()
+        if kwargs["input_ids"].shape[0]==2:
+            hidden_states2 = (
+                super()
+                .forward(input_ids=kwargs["input_ids"][:1], attention_mask=kwargs["attention_mask"][:1], pixel_values=kwargs["pixel_values"][:2916], image_grid_thw=kwargs["image_grid_thw"][:1]
+                         , use_cache=False, output_hidden_states=True, return_dict=True)
+                .last_hidden_state
+            )
+            print(hidden_states2)
         hidden_states = (
             super()
             .forward(*args, **kwargs, use_cache=False, output_hidden_states=True, return_dict=True)
             .last_hidden_state
         )  # (batch_size, sequence_length, hidden_size)
-
-        breakpoint()
+        print(hidden_states)
 
         proj = self.custom_text_proj(hidden_states)  # (batch_size, sequence_length, dim)
 
