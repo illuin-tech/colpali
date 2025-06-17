@@ -43,19 +43,17 @@ class ColQwen2(Qwen2VLModel):
                 [pixel_sequence[:offset] for pixel_sequence, offset in zip(kwargs["pixel_values"], offsets)],
                 dim=0,
             )
-            print(
-                f"Unpadded pixel_values: {kwargs['pixel_values'].shape} from offsets: {offsets.tolist()}"
-            )
             # print(kwargs["input_ids"])
             # print(kwargs["attention_mask"])
 
+        breakpoint()
         hidden_states = (
             super()
             .forward(*args, **kwargs, use_cache=False, output_hidden_states=True, return_dict=True)
             .last_hidden_state
         )  # (batch_size, sequence_length, hidden_size)
 
-        print(hidden_states)
+        breakpoint()
 
         proj = self.custom_text_proj(hidden_states)  # (batch_size, sequence_length, dim)
 
