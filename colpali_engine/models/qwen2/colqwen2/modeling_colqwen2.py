@@ -43,6 +43,10 @@ class ColQwen2(Qwen2VLModel):
                 [pixel_sequence[:offset] for pixel_sequence, offset in zip(kwargs["pixel_values"], offsets)],
                 dim=0,
             )
+            print(
+                f"Unpadded pixel_values: {kwargs['pixel_values'].shape} from offsets: {offsets.tolist()}"
+            )
+            print(kwargs["pixel_values"].shape)
 
         hidden_states = (
             super()
