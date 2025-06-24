@@ -26,22 +26,17 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
     def process_images(
         self,
         images: List[Image.Image],
-        contexts: Optional[List[str]] = None,
     ) -> Union[BatchFeature, BatchEncoding]:
         """
         Process images for ColIdefics3.
 
         Args:
             images: List of PIL images.
-            contexts: List of optional context prompts, i.e. some text description of the context of the image.
         """
-        if contexts is None:
-            contexts = [self.visual_prompt_prefix] * len(images)
-
         images = [image.convert("RGB") for image in images]
 
         batch_doc = self(
-            text=contexts,
+            text=[self.visual_prompt_prefix] * len(images),
             images=images,
             padding="longest",
             return_tensors="pt",
@@ -52,7 +47,6 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
         self,
         texts: List[str],
         max_length: int = 50,
-        contexts: Optional[List[str]] = None,
         suffix: Optional[str] = None,
     ) -> Union[BatchFeature, BatchEncoding]:
         """
@@ -62,10 +56,8 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
         """
         if suffix is None:
             suffix = self.query_augmentation_token * 10
-        if contexts is None:
-            contexts = [""] * len(texts)
 
-        prompts = [context + text + suffix for context, text in zip(contexts, texts)]
+        prompts = [text + suffix for text in texts]
 
         batch_texts = self(
             text=prompts,

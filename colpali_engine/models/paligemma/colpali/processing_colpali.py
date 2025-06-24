@@ -28,23 +28,17 @@ class ColPaliProcessor(BaseVisualRetrieverProcessor, PaliGemmaProcessor):
     def process_images(
         self,
         images: List[Image.Image],
-        contexts: Optional[List[str]] = None,
     ) -> Union[BatchFeature, BatchEncoding]:
         """
         Process images for ColPali.
 
         Args:
             images: List of PIL images.
-            context_prompts: List of optional context prompts, i.e. some text description of the context of the image.
         """
-
-        if contexts is None:
-            contexts = [self.visual_prompt_prefix] * len(images)
-
         images = [image.convert("RGB") for image in images]
 
         batch_doc = self(
-            text=contexts,
+            text=[self.visual_prompt_prefix] * len(images),
             images=images,
             return_tensors="pt",
             padding="longest",
@@ -55,7 +49,6 @@ class ColPaliProcessor(BaseVisualRetrieverProcessor, PaliGemmaProcessor):
         self,
         texts: List[str],
         max_length: int = 50,
-        contexts: Optional[List[str]] = None,
         suffix: Optional[str] = None,
     ) -> Union[BatchFeature, BatchEncoding]:
         """
@@ -64,10 +57,8 @@ class ColPaliProcessor(BaseVisualRetrieverProcessor, PaliGemmaProcessor):
 
         if suffix is None:
             suffix = self.query_augmentation_token * 10 + "\n"
-        if contexts is None:
-            contexts = [self.tokenizer.bos_token] * len(texts)
 
-        prompts = [context + text + suffix for context, text in zip(contexts, texts)]
+        prompts = [self.tokenizer.bos_token + text + suffix for text in texts]
 
         batch_query = self.tokenizer(
             prompts,

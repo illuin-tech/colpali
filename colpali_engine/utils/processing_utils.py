@@ -28,13 +28,11 @@ class BaseVisualRetrieverProcessor(ABC, ProcessorMixin):
     def process_images(
         self,
         images: List[Image.Image],
-        contexts: Optional[List[str]] = None,
     ) -> Union[BatchFeature, BatchEncoding]:
         """
-        Process a list of images and optional contexts into a format suitable for the model.
+        Process a list of images into a format suitable for the model.
         Args:
             images (List[Image.Image]): List of images to process.
-            contexts (Optional[List[str]]): Optional list of textual context corresponding to the images.
         Returns:
             Union[BatchFeature, BatchEncoding]: Processed images.
         """
@@ -45,7 +43,6 @@ class BaseVisualRetrieverProcessor(ABC, ProcessorMixin):
         self,
         texts: List[str],
         max_length: int = 50,
-        contexts: Optional[List[str]] = None,
         suffix: Optional[str] = None,
     ) -> Union[BatchFeature, BatchEncoding]:
         """
@@ -53,7 +50,6 @@ class BaseVisualRetrieverProcessor(ABC, ProcessorMixin):
         Args:
             texts (List[str]): List of texts to process.
             max_length (int, optional): Maximum length of the texts. Defaults to 50.
-            contexts (Optional[List[str]], optional): Optional list of textual context corresponding to the texts.
             suffix (Optional[str], optional): Optional suffix to append to each text.
         Returns:
             Union[BatchFeature, BatchEncoding]: Processed texts.
@@ -75,11 +71,11 @@ class BaseVisualRetrieverProcessor(ABC, ProcessorMixin):
         Returns:
             Union[BatchFeature, BatchEncoding]: Processed texts.
 
-        NOTE: This function maintains back-compatibility, use `process_texts` for better control on context.
+        NOTE: This function will be deprecated. Use `process_texts`
+        It is kept to maintain back-compatibility with vidore evaluator.
         """
         return self.process_texts(
             texts=texts,
-            contexts=[self.query_prefix] * len(texts),
             max_length=max_length,
             suffix=suffix,
         )
@@ -105,15 +101,7 @@ class BaseVisualRetrieverProcessor(ABC, ProcessorMixin):
         """
         device = device or get_torch_device("auto")
 
-        if len(qs) == 0:
-            raise ValueError("No queries provided")
-        if len(ps) == 0:
-            raise ValueError("No passages provided")
-
-        qs_stacked = torch.stack(qs).to(device)
-        ps_stacked = torch.stack(ps).to(device)
-
-        scores = torch.einsum("bd,cd->bc", qs_stacked, ps_stacked)
+        scores = torch.einsum("bd,cd->bc", qs, ps)
         assert scores.shape[0] == len(qs), f"Expected {len(qs)} scores, got {scores.shape[0]}"
 
         scores = scores.to(torch.float32)

@@ -59,22 +59,18 @@ class ColQwen2_5_Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):  # n
     def process_images(
         self,
         images: List[Image.Image],
-        contexts: Optional[List[str]] = None,
     ) -> Union[BatchFeature, BatchEncoding]:
         """
         Process images for ColQwen2.5.
 
         Args:
             images: List of PIL images.
-            contexts: List of optional context prompts, i.e. some text description of the context of the image.
         """
-        if contexts is None:
-            contexts = [self.visual_prompt_prefix] * len(images)
 
         images = [image.convert("RGB") for image in images]
 
         batch_doc = self(
-            text=contexts,
+            text=[self.visual_prompt_prefix] * len(images),
             images=images,
             padding="longest",
             return_tensors="pt",
@@ -99,7 +95,6 @@ class ColQwen2_5_Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):  # n
         self,
         texts: List[str],
         max_length: int = 50,
-        contexts: Optional[List[str]] = None,
         suffix: Optional[str] = None,
     ) -> Union[BatchFeature, BatchEncoding]:
         """
@@ -109,10 +104,7 @@ class ColQwen2_5_Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):  # n
         """
         if suffix is None:
             suffix = self.query_augmentation_token * 10
-        if contexts is None:
-            contexts = [""] * len(texts)
-
-        prompts = [context + text + suffix for context, text in zip(contexts, texts)]
+        prompts = [text + suffix for text in texts]
 
         batch_texts = self(
             text=prompts,

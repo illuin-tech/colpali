@@ -15,7 +15,6 @@ class BiQwen2_5_Processor(ColQwen2_5_Processor):  # noqa: N801
         self,
         texts: List[str],
         max_length: int = 50,
-        contexts: Optional[List[str]] = None,
         suffix: Optional[str] = None,
     ) -> Union[BatchFeature, BatchEncoding]:
         """
@@ -25,10 +24,8 @@ class BiQwen2_5_Processor(ColQwen2_5_Processor):  # noqa: N801
         """
         if suffix is None:
             suffix = self.query_augmentation_token  # we remove buffer tokens
-        if contexts is None:
-            contexts = [""] * len(texts)
 
-        prompts = [context + text + suffix for context, text in zip(contexts, texts)]
+        prompts = [text + suffix for text in texts]
 
         batch_texts = self(
             text=prompts,
