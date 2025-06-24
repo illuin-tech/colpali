@@ -79,7 +79,7 @@ class VisualRetrieverCollator:
             raise ValueError("Some queries are None. This collator does not support None queries yet.")
         else:
             batch_query = self.auto_collate(
-                queries, contexts=[self.processor.query_prefix] * len(queries), key_prefix=self.query_prefix
+                queries, key_prefix=self.query_prefix
             )
 
         # Process targets.
@@ -93,20 +93,18 @@ class VisualRetrieverCollator:
         }
 
     def auto_collate(
-        self, batch: List[Union[str, Image]], contexts: List[str] = None, key_prefix: str = ""
+        self, batch: List[Union[str, Image]], key_prefix: str = ""
     ) -> Dict[str, Any]:
         """Automatically collate a batch of documents."""
         # Convert Document objects to their underlying data.
         if isinstance(batch[0], str):
             proc_batch = self.processor.process_texts(
                 texts=batch,
-                contexts=contexts,
                 max_length=self.max_length,
             )
         elif isinstance(batch[0], Image):
             proc_batch = self.processor.process_images(
                 images=batch,
-                contexts=contexts,
             )
         else:
             raise ValueError(f"Unsupported batch type: {type(batch[0])}. Expected str or Image.")
