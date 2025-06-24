@@ -6,7 +6,7 @@ from transformers import BatchEncoding, BatchFeature
 from colpali_engine.models.idefics3.colidefics3 import ColIdefics3Processor
 
 
-class BiIdefics3Processor(ColIdefics3Processor):  # noqa: N801
+class BiIdefics3Processor(ColIdefics3Processor):
     """
     Processor for BiIdefics3.
     """
