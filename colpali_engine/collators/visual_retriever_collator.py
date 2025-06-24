@@ -97,13 +97,12 @@ class VisualRetrieverCollator:
         all_types = set(type(item) for item in batch)
         if len(all_types) > 1:
             raise ValueError(f"Batch contains mixed types: {all_types}. Expected all items to be of the same type.")
-        batch_type = all_types.pop()
-        if isinstance(batch_type, str):
+        if isinstance(batch[0], str):
             proc_batch = self.processor.process_texts(
                 texts=batch,
                 max_length=self.max_length,
             )
-        elif isinstance(batch_type, Image):
+        elif isinstance(batch[0], Image):
             proc_batch = self.processor.process_images(
                 images=batch,
             )
