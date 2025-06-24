@@ -17,14 +17,15 @@ class BiVBert(VBertPreTrainedModel):
     _supports_sdpa = True
     _supports_cache_class = True
 
-    def __init__(self, config, **kwargs):
+    def __init__(self, config, pooling_strategy = "last", **kwargs):
         super().__init__(config=config)
         self.model = VBertModel(config, **kwargs)
+        self.pooling_strategy = pooling_strategy
         self.post_init()
 
     def forward(
         self,
-        pooling_strategy: Literal["cls", "last", "mean"] = "last",
+        pooling_strategy: Literal["cls", "last", "mean"] = None,
         *args,
         **kwargs,
     ) -> torch.Tensor:
@@ -41,6 +42,8 @@ class BiVBert(VBertPreTrainedModel):
         """
         outputs = self.model(*args, **kwargs)
         last_hidden_states = outputs[0]  # (batch_size, sequence_length, hidden_size)
+
+        pooling_strategy = pooling_strategy or self.pooling_strategy
 
         # Get CLS token embedding, last token, or mean pool over sequence
         if pooling_strategy == "cls":
