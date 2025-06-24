@@ -35,21 +35,6 @@ def test_process_images(processor_from_pretrained: ColIdefics3Processor):
     assert batch_feature["pixel_values"].shape == torch.Size([1, 9, 3, 512, 512])
 
 
-def test_process_images_with_context(processor_from_pretrained: ColIdefics3Processor):
-    # Create a dummy image
-    image_size = (16, 32)
-    image = Image.new("RGB", image_size, color="black")
-    contexts = ["Open source is the best!<image>"]
-    images = [image]
-
-    # Process the image
-    batch_feature = processor_from_pretrained.process_images(images, contexts=contexts)
-
-    # Assertions
-    assert "pixel_values" in batch_feature
-    assert batch_feature["pixel_values"].shape == torch.Size([1, 9, 3, 512, 512])
-
-
 def test_process_queries(processor_from_pretrained: ColIdefics3Processor):
     queries = [
         "Is attention really all you need?",

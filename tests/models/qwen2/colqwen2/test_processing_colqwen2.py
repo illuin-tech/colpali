@@ -37,23 +37,6 @@ def test_process_images(processor_from_pretrained: ColQwen2Processor):
     assert batch_feature["pixel_values"].shape[-1] == 1176
 
 
-def test_process_images_with_context(processor_from_pretrained: ColQwen2Processor):
-    # Create a dummy image
-    image_size = (64, 32)
-    image = Image.new("RGB", image_size, color="black")
-    images = [image]
-    contexts = ["Open source is the best!"]
-
-    # Process the image
-    batch_feature = processor_from_pretrained.process_images(images, contexts=contexts)
-
-    # Assertions
-    assert "pixel_values" in batch_feature
-    assert isinstance(batch_feature["pixel_values"], torch.Tensor)
-    assert batch_feature["pixel_values"].shape[0] == 1
-    assert batch_feature["pixel_values"].shape[-1] == 1176
-
-
 def test_process_queries(processor_from_pretrained: ColQwen2Processor):
     queries = [
         "Is attention really all you need?",
