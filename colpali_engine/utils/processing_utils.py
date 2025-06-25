@@ -47,10 +47,12 @@ class BaseVisualRetrieverProcessor(ABC, ProcessorMixin):
     ) -> Union[BatchFeature, BatchEncoding]:
         """
         Process a list of texts into a format suitable for the model.
+
         Args:
-            texts (List[str]): List of texts to process.
-            max_length (int, optional): Maximum length of the texts. Defaults to 50.
-            suffix (Optional[str], optional): Optional suffix to append to each text.
+            texts: List of input texts.
+            [DEPRECATED] max_length: Maximum length of the text.
+            suffix: Suffix to append to each text. If None, the default query augmentation token is used.
+
         Returns:
             Union[BatchFeature, BatchEncoding]: Processed texts.
         """

@@ -53,6 +53,16 @@ class ColPaliProcessor(BaseVisualRetrieverProcessor, PaliGemmaProcessor):
     ) -> Union[BatchFeature, BatchEncoding]:
         """
         Process texts for ColPali.
+
+        Args:
+            texts: List of input texts.
+            [DEPRECATED] max_length: Maximum length of the text.
+            suffix: Suffix to append to each text. If None, the default query augmentation token is used.
+
+        Returns:
+            Union[BatchFeature, BatchEncoding]: Processed texts.
+
+        NOTE: `max_length` is not used and kept only for trainer compatibility.
         """
 
         if suffix is None:
@@ -66,7 +76,6 @@ class ColPaliProcessor(BaseVisualRetrieverProcessor, PaliGemmaProcessor):
             return_token_type_ids=False,
             return_tensors="pt",
             padding="longest",
-            max_length=max_length,
         )
 
         return batch_query

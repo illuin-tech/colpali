@@ -52,6 +52,14 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
         """
         Process texts for ColIdefics3.
 
+        Args:
+            texts: List of input texts.
+            [DEPRECATED] max_length: Maximum length of the text.
+            suffix: Suffix to append to each text. If None, the default query augmentation token is used.
+
+        Returns:
+            Union[BatchFeature, BatchEncoding]: Processed texts.
+
         NOTE: `max_length` is not used and kept only for trainer compatibility.
         """
         if suffix is None:
