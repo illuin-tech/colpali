@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+- Added BiIdefics3 modeling and processor.
+- Removed context argument in process methods
+- Uniform processor doc
+- Update the collator to align with the new function signatures
+- Add a `process_text` method to replace the `process_query` one. We keep support of the last one for the moment, but we'll deprecate it later
+
 ## [0.3.11] - 2025-06-05
 
 ### Added
