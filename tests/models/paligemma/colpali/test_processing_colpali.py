@@ -35,14 +35,14 @@ def test_process_images(processor_from_pretrained: ColPaliProcessor):
     assert batch_feature["pixel_values"].shape == torch.Size([1, 3, 448, 448])
 
 
-def test_process_queries(processor_from_pretrained: ColPaliProcessor):
+def test_process_texts(processor_from_pretrained: ColPaliProcessor):
     queries = [
         "Is attention really all you need?",
         "Are Benjamin, Antoine, Merve, and Jo best friends?",
     ]
 
     # Process the queries
-    batch_encoding = processor_from_pretrained.process_queries(queries)
+    batch_encoding = processor_from_pretrained.process_texts(queries)
 
     # Assertions
     assert "input_ids" in batch_encoding

@@ -37,14 +37,14 @@ def test_process_images(processor_from_pretrained: ColQwen2Processor):
     assert batch_feature["pixel_values"].shape[-1] == 1176
 
 
-def test_process_queries(processor_from_pretrained: ColQwen2Processor):
+def test_process_texts(processor_from_pretrained: ColQwen2Processor):
     queries = [
         "Is attention really all you need?",
         "Are Benjamin, Antoine, Merve, and Jo best friends?",
     ]
 
     # Process the queries
-    batch_encoding = processor_from_pretrained.process_queries(queries)
+    batch_encoding = processor_from_pretrained.process_texts(queries)
 
     # Assertions
     assert "input_ids" in batch_encoding
