@@ -101,7 +101,15 @@ class BaseVisualRetrieverProcessor(ABC, ProcessorMixin):
         """
         device = device or get_torch_device("auto")
 
-        scores = torch.einsum("bd,cd->bc", qs, ps)
+        if len(qs) == 0:
+            raise ValueError("No queries provided")
+        if len(ps) == 0:
+            raise ValueError("No passages provided")
+
+        qs_stacked = torch.stack(qs).to(device)
+        ps_stacked = torch.stack(ps).to(device)
+
+        scores = torch.einsum("bd,cd->bc", qs_stacked, ps_stacked)
         assert scores.shape[0] == len(qs), f"Expected {len(qs)} scores, got {scores.shape[0]}"
 
         scores = scores.to(torch.float32)
