@@ -73,7 +73,9 @@ class VisualRetrieverCollator:
                 neg_targets.append(sampled_neg)
 
         # Ensure all queries are strings or images.
-        assert all(isinstance(q, str) for q in queries), "All queries must be strings, this collator does not support images in queries."
+        assert all(isinstance(q, str) for q in queries), (
+            "All queries must be strings, this collator does not support images in queries."
+        )
 
         # Process queries.
         queries = [self.processor.query_prefix + q + self.processor.query_augmentation_token * 10 for q in queries]

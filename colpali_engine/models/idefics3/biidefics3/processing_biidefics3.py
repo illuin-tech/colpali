@@ -11,10 +11,7 @@ class BiIdefics3Processor(ColIdefics3Processor):
     Processor for BiIdefics3.
     """
 
-    def process_texts(
-        self,
-        texts: List[str]
-    ) -> Union[BatchFeature, BatchEncoding]:
+    def process_texts(self, texts: List[str]) -> Union[BatchFeature, BatchEncoding]:
         """
         Process texts for BiIdefics3.
 

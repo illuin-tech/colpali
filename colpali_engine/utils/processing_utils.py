@@ -39,10 +39,7 @@ class BaseVisualRetrieverProcessor(ABC):
         pass
 
     @abstractmethod
-    def process_texts(
-        self,
-        texts: List[str]
-    ) -> Union[BatchFeature, BatchEncoding]:
+    def process_texts(self, texts: List[str]) -> Union[BatchFeature, BatchEncoding]:
         """
         Process a list of texts into a format suitable for the model.
 

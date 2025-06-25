@@ -43,10 +43,7 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
         )
         return batch_doc
 
-    def process_texts(
-        self,
-        texts: List[str]
-    ) -> Union[BatchFeature, BatchEncoding]:
+    def process_texts(self, texts: List[str]) -> Union[BatchFeature, BatchEncoding]:
         """
         Process texts for ColIdefics3.
 

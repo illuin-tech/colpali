@@ -91,10 +91,7 @@ class ColQwen2_5_Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):  # n
 
         return batch_doc
 
-    def process_texts(
-        self,
-        texts: List[str]
-    ) -> Union[BatchFeature, BatchEncoding]:
+    def process_texts(self, texts: List[str]) -> Union[BatchFeature, BatchEncoding]:
         """
         Process texts for ColQwen2.5.
 

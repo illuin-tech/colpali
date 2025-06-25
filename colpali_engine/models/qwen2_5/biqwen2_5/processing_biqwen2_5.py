@@ -11,10 +11,7 @@ class BiQwen2_5_Processor(ColQwen2_5_Processor):  # noqa: N801
     Processor for BiQwen2.5.
     """
 
-    def process_texts(
-        self,
-        texts: List[str]
-    ) -> Union[BatchFeature, BatchEncoding]:
+    def process_texts(self, texts: List[str]) -> Union[BatchFeature, BatchEncoding]:
         """
         Process texts for BiQwen2.5.
 
