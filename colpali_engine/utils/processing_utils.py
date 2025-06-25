@@ -5,7 +5,7 @@ from typing import ClassVar, List, Optional, Tuple, Union
 
 import torch
 from PIL import Image
-from transformers import BatchEncoding, BatchFeature, ProcessorMixin
+from transformers import BatchEncoding, BatchFeature
 
 try:
     from fast_plaid import search
@@ -17,7 +17,7 @@ except ImportError:
 from colpali_engine.utils.torch_utils import get_torch_device
 
 
-class BaseVisualRetrieverProcessor(ABC, ProcessorMixin):
+class BaseVisualRetrieverProcessor(ABC):
     """
     Base class for visual retriever processors.
     """
@@ -41,17 +41,13 @@ class BaseVisualRetrieverProcessor(ABC, ProcessorMixin):
     @abstractmethod
     def process_texts(
         self,
-        texts: List[str],
-        max_length: int = 50,
-        suffix: Optional[str] = None,
+        texts: List[str]
     ) -> Union[BatchFeature, BatchEncoding]:
         """
         Process a list of texts into a format suitable for the model.
 
         Args:
             texts: List of input texts.
-            [DEPRECATED] max_length: Maximum length of the text.
-            suffix: Suffix to append to each text. If None, the default query augmentation token is used.
 
         Returns:
             Union[BatchFeature, BatchEncoding]: Processed texts.
@@ -66,16 +62,25 @@ class BaseVisualRetrieverProcessor(ABC, ProcessorMixin):
     ) -> Union[BatchFeature, BatchEncoding]:
         """
         Process a list of queries into a format suitable for the model.
+
         Args:
-            texts (List[str]): List of texts to process.
-            max_length (int, optional): Maximum length of the texts. Defaults to 50.
-            suffix (Optional[str], optional): Optional suffix to append to each text.
+            texts: List of input texts.
+            [DEPRECATED] max_length: Maximum length of the text.
+            suffix: Suffix to append to each text. If None, the default query augmentation token is used.
+
         Returns:
             Union[BatchFeature, BatchEncoding]: Processed texts.
 
-        NOTE: This function will be deprecated. Use `process_texts`
+        NOTE: This function will be deprecated. Use `process_texts` instead.
         It is kept to maintain back-compatibility with vidore evaluator.
         """
+
+        if suffix is None:
+            suffix = self.query_augmentation_token * 10
+
+        # Add the query prefix and suffix to each text
+        texts = [self.query_prefix + text + suffix for text in texts]
+
         return self.process_texts(
             texts=texts,
             max_length=max_length,

@@ -47,38 +47,24 @@ class ColPaliProcessor(BaseVisualRetrieverProcessor, PaliGemmaProcessor):
 
     def process_texts(
         self,
-        texts: List[str],
-        max_length: int = 50,
-        suffix: Optional[str] = None,
+        texts: List[str]
     ) -> Union[BatchFeature, BatchEncoding]:
         """
         Process texts for ColPali.
 
         Args:
             texts: List of input texts.
-            [DEPRECATED] max_length: Maximum length of the text.
-            suffix: Suffix to append to each text. If None, the default query augmentation token is used.
 
         Returns:
             Union[BatchFeature, BatchEncoding]: Processed texts.
-
-        NOTE: `max_length` is not used and kept only for trainer compatibility.
         """
-
-        if suffix is None:
-            suffix = self.query_augmentation_token * 10 + "\n"
-
-        prompts = [self.tokenizer.bos_token + text + suffix for text in texts]
-
-        batch_query = self.tokenizer(
-            prompts,
+        return self.tokenizer(
+            [self.tokenizer.bos_token + text for text in texts],
             text_pair=None,
             return_token_type_ids=False,
             return_tensors="pt",
             padding="longest",
         )
-
-        return batch_query
 
     def score(
         self,

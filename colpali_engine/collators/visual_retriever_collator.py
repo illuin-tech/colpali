@@ -72,13 +72,12 @@ class VisualRetrieverCollator:
                 sampled_neg = random.choice(neg_tgt) if isinstance(neg_tgt, list) else neg_tgt
                 neg_targets.append(sampled_neg)
 
+        # Ensure all queries are strings or images.
+        assert all(isinstance(q, str) for q in queries), "All queries must be strings, this collator does not support images in queries."
+
         # Process queries.
-        if all(q is None for q in queries):
-            batch_query = None
-        elif any(q is None for q in queries):
-            raise ValueError("Some queries are None. This collator does not support None queries yet.")
-        else:
-            batch_query = self.auto_collate(queries, key_prefix=self.query_prefix)
+        queries = [self.processor.query_prefix + q + self.processor.query_augmentation_token * 10 for q in queries]
+        batch_query = self.auto_collate(queries, key_prefix=self.query_prefix)
 
         # Process targets.
         batch_pos_target = self.auto_collate(pos_targets, key_prefix=self.pos_doc_prefix)
@@ -95,17 +94,12 @@ class VisualRetrieverCollator:
         # Convert Document objects to their underlying data.
         # if type is mixed across the batch, raise an error.
         all_types = set(type(item) for item in batch)
-        if len(all_types) > 1:
+        if str in all_types and Image in all_types:
             raise ValueError(f"Batch contains mixed types: {all_types}. Expected all items to be of the same type.")
         if isinstance(batch[0], str):
-            proc_batch = self.processor.process_texts(
-                texts=batch,
-                max_length=self.max_length,
-            )
+            proc_batch = self.processor.process_texts(texts=batch)
         elif isinstance(batch[0], Image):
-            proc_batch = self.processor.process_images(
-                images=batch,
-            )
+            proc_batch = self.processor.process_images(images=batch)
         else:
             raise ValueError(f"Unsupported batch type: {type(batch[0])}. Expected str or Image.")
         return prefix_keys(proc_batch, key_prefix)

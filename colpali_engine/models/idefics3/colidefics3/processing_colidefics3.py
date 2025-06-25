@@ -45,35 +45,22 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
 
     def process_texts(
         self,
-        texts: List[str],
-        max_length: int = 50,
-        suffix: Optional[str] = None,
+        texts: List[str]
     ) -> Union[BatchFeature, BatchEncoding]:
         """
         Process texts for ColIdefics3.
 
         Args:
             texts: List of input texts.
-            [DEPRECATED] max_length: Maximum length of the text.
-            suffix: Suffix to append to each text. If None, the default query augmentation token is used.
 
         Returns:
             Union[BatchFeature, BatchEncoding]: Processed texts.
-
-        NOTE: `max_length` is not used and kept only for trainer compatibility.
         """
-        if suffix is None:
-            suffix = self.query_augmentation_token * 10
-
-        prompts = [text + suffix for text in texts]
-
-        batch_texts = self(
-            text=prompts,
+        return self(
+            text=texts,
             return_tensors="pt",
             padding="longest",
         )
-
-        return batch_texts
 
     def score(
         self,
