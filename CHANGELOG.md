@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Added BiIdefics3 modeling and processor.
 - [Breaking] (minor) Remove support for context-augmented queries and images
-- Uniform processor doc
+- Uniform processor docstring
 - Update the collator to align with the new function signatures
 - Add a `process_text` method to replace the `process_query` one. We keep support of the last one for the moment, but we'll deprecate it later
 
