@@ -1,10 +1,10 @@
-from typing import ClassVar, List, Literal, Optional
+from typing import ClassVar, Literal
 
 import torch
-from transformers.models.qwen2_vl import Qwen2VLConfig, Qwen2VLForConditionalGeneration
+from transformers.models.qwen2_vl import Qwen2VLConfig, Qwen2VLModel
 
 
-class BiQwen2(Qwen2VLForConditionalGeneration):
+class BiQwen2(Qwen2VLModel):
     """
     BiQwen2 is an implementation from the "ColPali: Efficient Document Retrieval with Vision Language Models" paper.
     Representations are pooled to obtain a single vector representation. Based on the Qwen2.5-VL backbone.
@@ -23,56 +23,6 @@ class BiQwen2(Qwen2VLForConditionalGeneration):
         if key_mapping is None:
             key_mapping = super()._checkpoint_conversion_mapping
         return super().from_pretrained(*args, **kwargs, key_mapping=key_mapping)
-
-    def inner_forward(
-        self,
-        input_ids: torch.LongTensor = None,
-        attention_mask: Optional[torch.Tensor] = None,
-        position_ids: Optional[torch.LongTensor] = None,
-        past_key_values: Optional[List[torch.FloatTensor]] = None,
-        inputs_embeds: Optional[torch.FloatTensor] = None,
-        use_cache: Optional[bool] = None,
-        output_attentions: Optional[bool] = None,
-        output_hidden_states: Optional[bool] = None,
-        return_dict: Optional[bool] = None,
-        pixel_values: Optional[torch.Tensor] = None,
-        pixel_values_videos: Optional[torch.FloatTensor] = None,
-        image_grid_thw: Optional[torch.LongTensor] = None,
-        video_grid_thw: Optional[torch.LongTensor] = None,
-    ) -> torch.Tensor:
-        if inputs_embeds is None:
-            inputs_embeds = self.model.language_model.embed_tokens(input_ids)
-            if pixel_values is not None:
-                pixel_values = pixel_values.type(self.visual.get_dtype())
-                image_embeds = self.visual(pixel_values, grid_thw=image_grid_thw)
-                image_mask = (input_ids == self.config.image_token_id).unsqueeze(-1).expand_as(inputs_embeds)
-                image_embeds = image_embeds.to(inputs_embeds.device, inputs_embeds.dtype)
-                inputs_embeds = inputs_embeds.masked_scatter(image_mask, image_embeds)
-
-            if pixel_values_videos is not None:
-                pixel_values_videos = pixel_values_videos.type(self.visual.get_dtype())
-                video_embeds = self.visual(pixel_values_videos, grid_thw=video_grid_thw)
-                video_mask = (input_ids == self.config.video_token_id).unsqueeze(-1).expand_as(inputs_embeds)
-                video_embeds = video_embeds.to(inputs_embeds.device, inputs_embeds.dtype)
-                inputs_embeds = inputs_embeds.masked_scatter(video_mask, video_embeds)
-
-            if attention_mask is not None:
-                attention_mask = attention_mask.to(inputs_embeds.device)
-
-        outputs = self.model(
-            input_ids=None,
-            position_ids=position_ids,
-            attention_mask=attention_mask,
-            past_key_values=past_key_values,
-            inputs_embeds=inputs_embeds,
-            use_cache=use_cache,
-            output_attentions=output_attentions,
-            output_hidden_states=output_hidden_states,
-            return_dict=return_dict,
-        )
-
-        hidden_states = outputs[0]
-        return hidden_states
 
     def forward(
         self,
@@ -101,18 +51,10 @@ class BiQwen2(Qwen2VLForConditionalGeneration):
                 dim=0,
             )
 
-        position_ids, rope_deltas = self.model.get_rope_index(
-            input_ids=kwargs["input_ids"],
-            image_grid_thw=kwargs.get("image_grid_thw", None),
-            video_grid_thw=None,
-            attention_mask=kwargs.get("attention_mask", None),
-        )
-        last_hidden_states = self.inner_forward(
-            *args,
-            **kwargs,
-            position_ids=position_ids,
-            use_cache=False,
-            output_hidden_states=True,
+        last_hidden_states = (
+            super()
+            .forward(*args, **kwargs, use_cache=False, output_hidden_states=True, return_dict=True)
+            .last_hidden_state
         )  # (batch_size, sequence_length, hidden_size)
 
         # Get CLS token embedding, last token, or mean pool over sequence

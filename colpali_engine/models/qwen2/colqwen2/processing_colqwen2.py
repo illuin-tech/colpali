@@ -77,7 +77,7 @@ class ColQwen2Processor(BaseVisualRetrieverProcessor, Qwen2VLProcessor):
             return_tensors="pt",
         )
 
-        # NOTE: The following adjustment ensures correct behavior with DDP on multiple GPUs.
+        # # NOTE: The following adjustment ensures correct behavior with DDP on multiple GPUs.
         offsets = batch_doc["image_grid_thw"][:, 1] * batch_doc["image_grid_thw"][:, 2]  # (batch_size,)
 
         # Split the pixel_values tensor into a list of tensors, one per image
