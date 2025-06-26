@@ -17,6 +17,13 @@ class BiQwen2(Qwen2VLForConditionalGeneration):
         self.padding_side = "left"
         self.post_init()
 
+    @classmethod
+    def from_pretrained(cls, *args, **kwargs):
+        key_mapping = kwargs.pop("key_mapping", None)
+        if key_mapping is None:
+            key_mapping = super()._checkpoint_conversion_mapping
+        return super().from_pretrained(*args, **kwargs, key_mapping=key_mapping)
+
     def inner_forward(
         self,
         input_ids: torch.LongTensor = None,
@@ -34,7 +41,7 @@ class BiQwen2(Qwen2VLForConditionalGeneration):
         video_grid_thw: Optional[torch.LongTensor] = None,
     ) -> torch.Tensor:
         if inputs_embeds is None:
-            inputs_embeds = self.model.embed_tokens(input_ids)
+            inputs_embeds = self.model.language_model.embed_tokens(input_ids)
             if pixel_values is not None:
                 pixel_values = pixel_values.type(self.visual.get_dtype())
                 image_embeds = self.visual(pixel_values, grid_thw=image_grid_thw)
@@ -94,7 +101,7 @@ class BiQwen2(Qwen2VLForConditionalGeneration):
                 dim=0,
             )
 
-        position_ids, rope_deltas = self.get_rope_index(
+        position_ids, rope_deltas = self.model.get_rope_index(
             input_ids=kwargs["input_ids"],
             image_grid_thw=kwargs.get("image_grid_thw", None),
             video_grid_thw=None,
