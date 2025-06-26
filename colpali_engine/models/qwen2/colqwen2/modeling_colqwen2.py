@@ -43,7 +43,9 @@ class ColQwen2(Qwen2VLModel):
                 [pixel_sequence[:offset] for pixel_sequence, offset in zip(kwargs["pixel_values"], offsets)],
                 dim=0,
             )
-
+        kwargs.pop("return_dict", True)
+        kwargs.pop("output_hidden_states", None)
+        kwargs.pop("use_cache", None)
         hidden_states = (
             super()
             .forward(*args, **kwargs, use_cache=False, output_hidden_states=True, return_dict=True)

@@ -1,0 +1,2 @@
+from .modeling_colqwen_omni import ColQwen2_5Omni
+from .processing_colqwen_omni import ColQwen2_5OmniProcessor
