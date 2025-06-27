@@ -3,17 +3,17 @@ from typing import List, Optional, Union
 import torch
 from transformers import BatchEncoding, BatchFeature
 
-from colpali_engine.models.qwen2_5.colqwen2_5 import ColQwen2_5_Processor
+from colpali_engine.models.idefics3.colidefics3 import ColIdefics3Processor
 
 
-class BiQwen2_5_Processor(ColQwen2_5_Processor):  # noqa: N801
+class BiIdefics3Processor(ColIdefics3Processor):
     """
-    Processor for BiQwen2.5.
+    Processor for BiIdefics3.
     """
 
     def process_texts(self, texts: List[str]) -> Union[BatchFeature, BatchEncoding]:
         """
-        Process texts for BiQwen2.5.
+        Process texts for BiIdefics3.
 
         Args:
             texts: List of input texts.

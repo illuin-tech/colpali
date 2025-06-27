@@ -2,7 +2,7 @@ from typing import ClassVar, List, Optional, Tuple, Union
 
 import torch
 from PIL import Image
-from transformers import BatchFeature, PaliGemmaProcessor
+from transformers import BatchEncoding, BatchFeature, PaliGemmaProcessor
 
 from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 
@@ -13,7 +13,6 @@ class ColPaliProcessor(BaseVisualRetrieverProcessor, PaliGemmaProcessor):
     """
 
     visual_prompt_prefix: ClassVar[str] = "<image><bos>Describe the image."
-    query_prefix: ClassVar[str] = "Query: "
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -29,66 +28,40 @@ class ColPaliProcessor(BaseVisualRetrieverProcessor, PaliGemmaProcessor):
     def process_images(
         self,
         images: List[Image.Image],
-        context_prompts: Optional[List[str]] = None,
-    ) -> BatchFeature:
+    ) -> Union[BatchFeature, BatchEncoding]:
         """
         Process images for ColPali.
 
         Args:
             images: List of PIL images.
-            context_prompts: List of optional context prompts, i.e. some text description of the context of the image.
         """
-
-        if context_prompts:
-            if len(images) != len(context_prompts):
-                raise ValueError("Length of images and context prompts must match.")
-            texts_doc = context_prompts
-        else:
-            texts_doc = [self.visual_prompt_prefix] * len(images)
-
         images = [image.convert("RGB") for image in images]
 
         batch_doc = self(
-            text=texts_doc,
+            text=[self.visual_prompt_prefix] * len(images),
             images=images,
             return_tensors="pt",
             padding="longest",
         )
         return batch_doc
 
-    def process_queries(
-        self,
-        queries: List[str],
-        max_length: int = 50,
-        suffix: Optional[str] = None,
-    ) -> BatchFeature:
+    def process_texts(self, texts: List[str]) -> Union[BatchFeature, BatchEncoding]:
         """
-        Process queries for ColPali.
+        Process texts for ColPali.
+
+        Args:
+            texts: List of input texts.
+
+        Returns:
+            Union[BatchFeature, BatchEncoding]: Processed texts.
         """
-
-        if suffix is None:
-            suffix = self.query_augmentation_token * 10
-        texts_query: List[str] = []
-
-        for query in queries:
-            query = self.tokenizer.bos_token + self.query_prefix + query
-            query += suffix  # add suffix (pad tokens)
-
-            # NOTE: Make input ISO to PaliGemma's processor
-            query += "\n"
-
-            texts_query.append(query)
-
-        batch_query = self.tokenizer(
-            texts_query,
+        return self.tokenizer(
+            [self.tokenizer.bos_token + text for text in texts],
             text_pair=None,
             return_token_type_ids=False,
             return_tensors="pt",
             padding="longest",
-            max_length=max_length,
         )
-
-        return batch_query
 
     def score(
         self,

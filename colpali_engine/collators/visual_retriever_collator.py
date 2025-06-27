@@ -72,17 +72,18 @@ class VisualRetrieverCollator:
                 sampled_neg = random.choice(neg_tgt) if isinstance(neg_tgt, list) else neg_tgt
                 neg_targets.append(sampled_neg)
 
+        # Ensure all queries are strings or images.
+        assert all(isinstance(q, str) for q in queries), (
+            "All queries must be strings, this collator does not support images in queries."
+        )
+
         # Process queries.
-        if all(q is None for q in queries):
-            batch_query = None
-        elif any(q is None for q in queries):
-            raise ValueError("Some queries are None. This collator does not support None queries yet.")
-        else:
-            batch_query = self.auto_collate(queries, prefix=self.query_prefix)
+        queries = [self.processor.query_prefix + q + self.processor.query_augmentation_token * 10 for q in queries]
+        batch_query = self.auto_collate(queries, key_prefix=self.query_prefix)
 
         # Process targets.
-        batch_pos_target = self.auto_collate(pos_targets, prefix=self.pos_doc_prefix)
-        batch_neg_target = self.auto_collate(neg_targets, prefix=self.neg_doc_prefix) if neg_targets else {}
+        batch_pos_target = self.auto_collate(pos_targets, key_prefix=self.pos_doc_prefix)
+        batch_neg_target = self.auto_collate(neg_targets, key_prefix=self.neg_doc_prefix) if neg_targets else {}
 
         return {
             **batch_query,
@@ -90,29 +91,17 @@ class VisualRetrieverCollator:
             **batch_neg_target,
         }
 
-    def auto_collate(self, batch: List[Union[str, Image]], prefix: str = "") -> Dict[str, Any]:
+    def auto_collate(self, batch: List[Union[str, Image]], key_prefix: str = "") -> Dict[str, Any]:
         """Automatically collate a batch of documents."""
         # Convert Document objects to their underlying data.
+        # if type is mixed across the batch, raise an error.
+        all_types = set(type(item) for item in batch)
+        if str in all_types and Image in all_types:
+            raise ValueError(f"Batch contains mixed types: {all_types}. Expected all items to be of the same type.")
         if isinstance(batch[0], str):
-            return self.collate_texts(batch, prefix=prefix)
+            proc_batch = self.processor.process_texts(texts=batch)
         elif isinstance(batch[0], Image):
-            return self.collate_images(batch, prefix=prefix)
+            proc_batch = self.processor.process_images(images=batch)
         else:
             raise ValueError(f"Unsupported batch type: {type(batch[0])}. Expected str or Image.")
-
-    def collate_images(self, images: List[Image], prefix: str = "") -> Dict[str, Any]:
-        """Collate images into a batch."""
-        # Process images.
-        batch_im = self.processor.process_images(images=images)
-        # Prefix keys to avoid collisions.
-        return prefix_keys(batch_im, prefix)
-
-    def collate_texts(self, texts: List[str], prefix: str = "") -> Dict[str, Any]:
-        """Collate texts into a batch."""
-        # Process texts.
-        batch_text = self.processor.process_queries(
-            queries=texts,
-            max_length=self.max_length,
-        )
-        # Prefix keys to avoid collisions.
-        return prefix_keys(batch_text, prefix)
+        return prefix_keys(proc_batch, key_prefix)

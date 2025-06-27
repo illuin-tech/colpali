@@ -35,29 +35,14 @@ def test_process_images(processor_from_pretrained: ColPaliProcessor):
     assert batch_feature["pixel_values"].shape == torch.Size([1, 3, 448, 448])
 
 
-def test_process_images_with_context(processor_from_pretrained: ColPaliProcessor):
-    # Create a dummy image
-    image_size = (16, 32)
-    image = Image.new("RGB", image_size, color="black")
-    contexts = ["Open source is the best!"]
-    images = [image]
-
-    # Process the image
-    batch_feature = processor_from_pretrained.process_images(images, context_prompts=contexts)
-
-    # Assertions
-    assert "pixel_values" in batch_feature
-    assert batch_feature["pixel_values"].shape == torch.Size([1, 3, 448, 448])
-
-
-def test_process_queries(processor_from_pretrained: ColPaliProcessor):
+def test_process_texts(processor_from_pretrained: ColPaliProcessor):
     queries = [
         "Is attention really all you need?",
         "Are Benjamin, Antoine, Merve, and Jo best friends?",
     ]
 
     # Process the queries
-    batch_encoding = processor_from_pretrained.process_queries(queries)
+    batch_encoding = processor_from_pretrained.process_texts(queries)
 
     # Assertions
     assert "input_ids" in batch_encoding

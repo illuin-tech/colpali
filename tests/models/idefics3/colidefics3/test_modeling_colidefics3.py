@@ -90,37 +90,6 @@ class TestColIdefics3ModelIntegration:
         assert emb_dim == model_without_mask.dim
 
     @pytest.mark.slow
-    def test_forward_images_with_context_integration(
-        self,
-        model_with_mask: ColIdefics3,
-        processor: ColIdefics3Processor,
-    ):
-        # Create a batch of dummy images
-        images = [
-            Image.new("RGB", (32, 32), color="white"),
-            Image.new("RGB", (16, 16), color="black"),
-        ]
-
-        contexts = [
-            "Is this a white image?<image>",
-            "Is this a black image?<image>",
-        ]
-
-        # Process the image
-        batch_images = processor.process_images(images, context_prompts=contexts).to(model_with_mask.device)
-
-        # Forward pass
-        with torch.no_grad():
-            outputs = model_with_mask(**batch_images)
-
-        # Assertions
-        assert isinstance(outputs, torch.Tensor)
-        assert outputs.dim() == 3
-        batch_size, n_visual_tokens, emb_dim = outputs.shape
-        assert batch_size == len(images)
-        assert emb_dim == model_with_mask.dim
-
-    @pytest.mark.slow
     def test_forward_queries_integration(
         self,
         model_without_mask: ColIdefics3,

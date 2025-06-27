@@ -1,11 +1,11 @@
 import importlib
 import logging
 from abc import ABC, abstractmethod
-from typing import List, Optional, Tuple, Union
+from typing import ClassVar, List, Optional, Tuple, Union
 
 import torch
 from PIL import Image
-from transformers import BatchEncoding, BatchFeature, ProcessorMixin
+from transformers import BatchEncoding, BatchFeature
 
 try:
     from fast_plaid import search
@@ -17,26 +17,72 @@ except ImportError:
 from colpali_engine.utils.torch_utils import get_torch_device
 
 
-class BaseVisualRetrieverProcessor(ABC, ProcessorMixin):
+class BaseVisualRetrieverProcessor(ABC):
     """
     Base class for visual retriever processors.
     """
+
+    query_prefix: ClassVar[str] = "Query: "  # Default prefix for queries. Override in subclasses if needed.
 
     @abstractmethod
     def process_images(
         self,
         images: List[Image.Image],
     ) -> Union[BatchFeature, BatchEncoding]:
+        """
+        Process a list of images into a format suitable for the model.
+        Args:
+            images (List[Image.Image]): List of images to process.
+        Returns:
+            Union[BatchFeature, BatchEncoding]: Processed images.
+        """
         pass
 
     @abstractmethod
+    def process_texts(self, texts: List[str]) -> Union[BatchFeature, BatchEncoding]:
+        """
+        Process a list of texts into a format suitable for the model.
+
+        Args:
+            texts: List of input texts.
+
+        Returns:
+            Union[BatchFeature, BatchEncoding]: Processed texts.
+        """
+        pass
+
     def process_queries(
         self,
-        queries: List[str],
+        texts: List[str],
         max_length: int = 50,
         suffix: Optional[str] = None,
     ) -> Union[BatchFeature, BatchEncoding]:
-        pass
+        """
+        Process a list of queries into a format suitable for the model.
+
+        Args:
+            texts: List of input texts.
+            [DEPRECATED] max_length: Maximum length of the text.
+            suffix: Suffix to append to each text. If None, the default query augmentation token is used.
+
+        Returns:
+            Union[BatchFeature, BatchEncoding]: Processed texts.
+
+        NOTE: This function will be deprecated. Use `process_texts` instead.
+        It is kept to maintain back-compatibility with vidore evaluator.
+        """
+
+        if suffix is None:
+            suffix = self.query_augmentation_token * 10
+
+        # Add the query prefix and suffix to each text
+        texts = [self.query_prefix + text + suffix for text in texts]
+
+        return self.process_texts(
+            texts=texts,
+            max_length=max_length,
+            suffix=suffix,
+        )
 
     @abstractmethod
     def score(
