@@ -22,7 +22,7 @@ class ColVLlama(VLlamaPreTrainedModel):
         super().__init__(config=config)
         self.model = VLlamaModel(config, **kwargs)
         self.dim = 128
-        self.linear = nn.Linear(self.model.config.text_config.hidden_size, self.dim)
+        self.custom_text_proj = nn.Linear(self.model.config.text_config.hidden_size, self.dim)
         self.mask_non_image_embeddings = mask_non_image_embeddings
         self.main_input_name = "doc_input_ids"
 
@@ -39,7 +39,7 @@ class ColVLlama(VLlamaPreTrainedModel):
         """
         outputs = self.model(*args, **kwargs)
         last_hidden_states = outputs[0]  # (batch_size, sequence_length, hidden_size)
-        proj = self.linear(last_hidden_states)
+        proj = self.custom_text_proj(last_hidden_states)
         # normalize l2 norm
         proj = proj / proj.norm(dim=-1, keepdim=True)
         proj = proj * kwargs["attention_mask"].unsqueeze(-1)
