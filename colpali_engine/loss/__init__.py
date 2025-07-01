@@ -11,4 +11,5 @@ from .late_interaction_losses import (
     ColbertNegativeCELoss,
     ColbertPairwiseCELoss,
     ColbertPairwiseNegativeCELoss,
+    ColbertSigmoidLoss,
 )
