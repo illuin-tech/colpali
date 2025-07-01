@@ -50,3 +50,18 @@ def test_process_texts(processor_from_pretrained: ColQwen2_5_Processor):
     assert "input_ids" in batch_encoding
     assert isinstance(batch_encoding["input_ids"], torch.Tensor)
     assert cast(torch.Tensor, batch_encoding["input_ids"]).shape[0] == len(queries)
+
+
+def test_process_queries(processor_from_pretrained: ColQwen2_5_Processor):
+    queries = [
+        "Is attention really all you need?",
+        "Are Benjamin, Antoine, Merve, and Jo best friends?",
+    ]
+
+    # Process the queries
+    batch_encoding = processor_from_pretrained.process_queries(queries)
+
+    # Assertions
+    assert "input_ids" in batch_encoding
+    assert isinstance(batch_encoding["input_ids"], torch.Tensor)
+    assert cast(torch.Tensor, batch_encoding["input_ids"]).shape[0] == len(queries)
