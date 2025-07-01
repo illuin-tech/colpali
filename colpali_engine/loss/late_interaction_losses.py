@@ -395,3 +395,63 @@ class ColbertPairwiseNegativeCELoss(ColbertModule):
             loss = loss * (1 - self.in_batch_term_weight) + loss_ib * self.in_batch_term_weight
 
         return loss
+
+
+class ColbertSigmoidLoss(ColbertModule):
+    """
+    Sigmoid loss for ColBERT with explicit negatives.
+
+    Args:
+        temperature (float): Scaling for logits.
+        normalize_scores (bool): Normalize scores by query lengths.
+        use_smooth_max (bool): Use log-sum-exp instead of amax.
+        pos_aware_negative_filtering (bool): Apply pos-aware negative filtering.
+    """
+
+    def __init__(
+        self,
+        temperature: float = 0.02,
+        normalize_scores: bool = True,
+        use_smooth_max: bool = False,
+        pos_aware_negative_filtering: bool = False,
+        max_batch_size: int = 1024,
+        tau: float = 0.1,
+        norm_tol: float = 1e-3,
+        filter_threshold: float = 0.95,
+        filter_factor: float = 0.5,
+    ):
+        super().__init__(max_batch_size, tau, norm_tol, filter_threshold, filter_factor)
+        self.temperature = temperature
+        self.normalize_scores = normalize_scores
+        self.use_smooth_max = use_smooth_max
+        self.pos_aware_negative_filtering = pos_aware_negative_filtering
+        self.ce_loss = CrossEntropyLoss()
+
+    def forward(self, query_embeddings: torch.Tensor, doc_embeddings: torch.Tensor, offset: int = 0) -> torch.Tensor:
+        """
+        Compute sigmoid loss over positive and negative document pairs.
+
+        Args:
+            query_embeddings (Tensor): [B, Nq, D]
+            doc_embeddings (Tensor): [B, Nd, D] positive docs
+
+        Returns:
+            Tensor: Scalar loss value.
+        """
+
+        lengths = (query_embeddings[:, :, 0] != 0).sum(dim=1)
+        raw = torch.einsum("bnd,csd->bcns", query_embeddings, doc_embeddings)
+        scores = self._aggregate(raw, self.use_smooth_max, dim_max=3, dim_sum=2)
+
+        if self.normalize_scores:
+            scores = self._apply_normalization(scores, lengths)
+
+        batch_size = scores.size(0)
+        idx, pos_idx = self._get_idx(batch_size, offset, scores.device)
+
+        if self.pos_aware_negative_filtering:
+            self._filter_high_negatives(scores, pos_idx)
+
+        loss = self.ce_loss(scores / self.temperature, pos_idx)
+
+        return loss.mean()

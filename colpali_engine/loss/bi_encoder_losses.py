@@ -206,6 +206,7 @@ class BiPairwiseCELoss(BiEncoderModule):
         self,
         query_embeddings: torch.Tensor,
         doc_embeddings: torch.Tensor,
+        offset: int = 0,
     ) -> torch.Tensor:
         """
         Compute softplus(hardest_neg - pos) where hardest_neg is the highest off-diagonal score.
@@ -267,6 +268,7 @@ class BiPairwiseNegativeCELoss(BiEncoderModule):
         query_embeddings: torch.Tensor,
         doc_embeddings: torch.Tensor,
         neg_doc_embeddings: torch.Tensor,
+        offset: int = 0,
     ) -> torch.Tensor:
         """
         Compute softplus(neg-explicit - pos) plus optional pairwise in-batch loss.
