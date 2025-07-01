@@ -78,11 +78,7 @@ class BaseVisualRetrieverProcessor(ABC):
         # Add the query prefix and suffix to each text
         texts = [self.query_prefix + text + suffix for text in texts]
 
-        return self.process_texts(
-            texts=texts,
-            max_length=max_length,
-            suffix=suffix,
-        )
+        return self.process_texts(texts=texts)
 
     @abstractmethod
     def score(
