@@ -80,7 +80,6 @@ class BaseVisualRetrieverProcessor(ABC):
 
         return self.process_texts(
             texts=texts,
-            max_length=max_length,
             suffix=suffix,
         )
 
