@@ -1,6 +1,8 @@
-from typing import Optional
+from functools import partial
+from typing import Callable, Optional
 
 import torch
+import datasets
 from datasets import DatasetDict
 from torch.distributed.nn.functional import all_gather  # PyTorch ≥ 2.1
 from torch.utils.data import ConcatDataset, DataLoader, Dataset
@@ -42,25 +44,24 @@ class ContrastiveTrainer(Trainer):
         self.args.remove_unused_columns = False  # Safety, don't remove dataset columns from dataloader
         self.dataset_list = dataset_list
 
-    def get_train_dataloader(self):
-        ######## adapted from Transformers Trainer (gross) ########
-        """
-        Returns the training [`~torch.utils.data.DataLoader`].
-
-        Will use no sampler if `train_dataset` does not implement `__len__`, a random sampler (adapted to distributed
-        training if necessary) otherwise.
-
-        Subclass and override this method if you want to inject some custom behavior.
-        """
+    def _get_dataloader(
+        self,
+        dataset: Dataset,
+        description: str,
+        batch_size: int,
+        sampler_fn: Optional[Callable[[Dataset], torch.utils.data.Sampler]] = None,
+        is_training: bool = False,
+        dataloader_key: Optional[str] = None,
+    ) -> DataLoader:
+        """Create a [`~torch.utils.data.DataLoader`] from the given dataset."""
         if self.dataset_list is None:
-            return super().get_train_dataloader()
+            return super()._get_dataloader(dataset, description, batch_size, sampler_fn, is_training, dataloader_key)
 
-        train_dataset = self.train_dataset
         data_collator = self.data_collator
-        if is_datasets_available() and isinstance(train_dataset, Dataset):
-            train_dataset = self._remove_unused_columns(train_dataset, description="training")
+        if is_datasets_available() and isinstance(dataset, datasets.Dataset):
+            dataset = self._remove_unused_columns(dataset, description=description)
         else:
-            data_collator = self._get_collator_with_removed_columns(data_collator, description="training")
+            data_collator = self._get_collator_with_removed_columns(self.data_collator, description=description)
 
         dataloader_params = {
             ######### don't set batch size, mutually exclusive from batch sampler ######
@@ -70,15 +71,28 @@ class ContrastiveTrainer(Trainer):
             "persistent_workers": self.args.dataloader_persistent_workers,
         }
 
-        if not isinstance(train_dataset, torch.utils.data.IterableDataset):
-            ###### batch_sampler set instead of sampler in trainer code #######
-            dataloader_params["batch_sampler"] = self._get_train_sampler()
+        if not isinstance(dataset, torch.utils.data.IterableDataset):
+            if sampler_fn is not None:
+                ###### batch_sampler set instead of sampler in trainer code #######
+                dataloader_params["batch_sampler"] = sampler_fn(dataset)
             dataloader_params["drop_last"] = self.args.dataloader_drop_last
-            dataloader_params["worker_init_fn"] = seed_worker
             dataloader_params["prefetch_factor"] = self.args.dataloader_prefetch_factor
+            if is_training:
+                dataloader_params["worker_init_fn"] = partial(
+                    seed_worker, num_workers=self.args.dataloader_num_workers, rank=self.args.process_index
+                )
 
-        dataloader = self.accelerator.prepare(DataLoader(train_dataset, **dataloader_params))
-        return dataloader
+        dataloader = DataLoader(dataset, **dataloader_params)
+
+        # Accelerator.free_memory() will destroy the references, so
+        # we need to store the non-prepared version for eval dataloaders.
+        if dataloader_key is not None and self.args.dataloader_persistent_workers:
+            if hasattr(self, "_eval_dataloaders"):
+                self._eval_dataloaders[dataloader_key] = dataloader
+            else:
+                self._eval_dataloaders = {dataloader_key: dataloader}
+
+        return self.accelerator.prepare(dataloader)
 
     def _get_train_sampler(self, train_dataset: Optional[Dataset] = None) -> Optional[torch.utils.data.Sampler]:
         if self.dataset_list is None:
