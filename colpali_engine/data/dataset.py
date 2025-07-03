@@ -1,3 +1,4 @@
+import random
 from typing import Any, Dict, List, Optional, Union
 
 from datasets import Dataset as HFDataset
@@ -129,6 +130,9 @@ class ColPaliEngineDataset(Dataset):
         if self.corpus is not None:
             pos_targets = [self.corpus.retrieve(doc_id) for doc_id in pos_targets]
             if neg_targets is not None:
+                # to avoid oveflowing CPU memory
+                if len(neg_targets) > 5:
+                    neg_targets = random.sample(neg_targets, 5)
                 neg_targets = [self.corpus.retrieve(doc_id) for doc_id in neg_targets]
 
         return {
