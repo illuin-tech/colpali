@@ -24,8 +24,6 @@ class ColQwen2_5Omni(Qwen2_5OmniThinkerForConditionalGeneration):  # noqa: N801
         self.post_init()
 
     def forward(self, *args, **kwargs) -> torch.Tensor:
-        kwargs.pop("output_hidden_states", None)
-
         # # Handle the custom "pixel_values" input obtained with `ColQwen2Processor` through unpadding
         # if "pixel_values" in kwargs:
         #     offsets = kwargs["image_grid_thw"][:, 1] * kwargs["image_grid_thw"][:, 2]  # (batch_size,)

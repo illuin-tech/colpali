@@ -41,8 +41,6 @@ class BiQwen2(Qwen2VLModel):
         Returns:
             torch.Tensor: Dense embeddings (batch_size, hidden_size).
         """
-        kwargs.pop("output_hidden_states", None)
-
         # Handle the custom "pixel_values" input obtained with `ColQwen2Processor` through unpadding
         if "pixel_values" in kwargs:
             offsets = kwargs["image_grid_thw"][:, 1] * kwargs["image_grid_thw"][:, 2]  # (batch_size,)
