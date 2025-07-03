@@ -1,3 +1,5 @@
+from typing import Optional
+
 import torch
 from datasets import DatasetDict
 from torch.distributed.nn.functional import all_gather  # PyTorch ≥ 2.1
@@ -78,9 +80,9 @@ class ContrastiveTrainer(Trainer):
         dataloader = self.accelerator.prepare(DataLoader(train_dataset, **dataloader_params))
         return dataloader
 
-    def _get_train_sampler(self):
+    def _get_train_sampler(self, train_dataset: Optional[Dataset] = None) -> Optional[torch.utils.data.Sampler]:
         if self.dataset_list is None:
-            return super()._get_train_sampler()
+            return super()._get_train_sampler(train_dataset=train_dataset)
 
         # Use SingleDatasetBatchSampler to ensure that each dataset in the list is sampled independently
         # Note: Surely breaks in distributed training
