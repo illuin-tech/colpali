@@ -56,12 +56,12 @@ class ContrastiveTrainer(Trainer):
         if self.train_dataset is None:
             raise ValueError("Trainer: training requires a train_dataset.")
 
-        dataset=self.train_dataset
-        description="Training"
-        batch_size=self._train_batch_size
-        sampler_fn=self._get_train_sampler
-        is_training=True
-        dataloader_key=None
+        dataset = self.train_dataset
+        description = "Training"
+        batch_size = self._train_batch_size
+        sampler_fn = self._get_train_sampler
+        is_training = True
+        dataloader_key = None
 
         if self.dataset_list is None:
             return super()._get_dataloader(dataset, description, batch_size, sampler_fn, is_training, dataloader_key)
