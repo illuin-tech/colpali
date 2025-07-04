@@ -1,8 +1,8 @@
 from functools import partial
-from typing import Callable, Optional
+from typing import Optional
 
-import torch
 import datasets
+import torch
 from datasets import DatasetDict
 from torch.distributed.nn.functional import all_gather  # PyTorch ≥ 2.1
 from torch.utils.data import ConcatDataset, DataLoader, Dataset
