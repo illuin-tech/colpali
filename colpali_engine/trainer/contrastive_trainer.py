@@ -44,16 +44,25 @@ class ContrastiveTrainer(Trainer):
         self.args.remove_unused_columns = False  # Safety, don't remove dataset columns from dataloader
         self.dataset_list = dataset_list
 
-    def _get_dataloader(
-        self,
-        dataset: Dataset,
-        description: str,
-        batch_size: int,
-        sampler_fn: Optional[Callable[[Dataset], torch.utils.data.Sampler]] = None,
-        is_training: bool = False,
-        dataloader_key: Optional[str] = None,
-    ) -> DataLoader:
-        """Create a [`~torch.utils.data.DataLoader`] from the given dataset."""
+    def get_train_dataloader(self) -> DataLoader:
+        """
+        Returns the training [`~torch.utils.data.DataLoader`].
+
+        Will use no sampler if `train_dataset` does not implement `__len__`, a random sampler (adapted to distributed
+        training if necessary) otherwise.
+
+        Subclass and override this method if you want to inject some custom behavior.
+        """
+        if self.train_dataset is None:
+            raise ValueError("Trainer: training requires a train_dataset.")
+
+        dataset=self.train_dataset
+        description="Training"
+        batch_size=self._train_batch_size
+        sampler_fn=self._get_train_sampler
+        is_training=True
+        dataloader_key=None
+
         if self.dataset_list is None:
             return super()._get_dataloader(dataset, description, batch_size, sampler_fn, is_training, dataloader_key)
 
