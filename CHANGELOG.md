@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [0.3.11] - 2025-07-04
+
 ### Added
 
 - Added BiIdefics3 modeling and processor.
