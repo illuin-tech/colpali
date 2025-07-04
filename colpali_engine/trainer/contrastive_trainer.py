@@ -1,5 +1,7 @@
+from functools import partial
 from typing import Optional
 
+import datasets
 import torch
 from datasets import DatasetDict
 from torch.distributed.nn.functional import all_gather  # PyTorch ≥ 2.1
@@ -42,8 +44,7 @@ class ContrastiveTrainer(Trainer):
         self.args.remove_unused_columns = False  # Safety, don't remove dataset columns from dataloader
         self.dataset_list = dataset_list
 
-    def get_train_dataloader(self):
-        ######## adapted from Transformers Trainer (gross) ########
+    def get_train_dataloader(self) -> DataLoader:
         """
         Returns the training [`~torch.utils.data.DataLoader`].
 
@@ -52,15 +53,24 @@ class ContrastiveTrainer(Trainer):
 
         Subclass and override this method if you want to inject some custom behavior.
         """
-        if self.dataset_list is None:
-            return super().get_train_dataloader()
+        if self.train_dataset is None:
+            raise ValueError("Trainer: training requires a train_dataset.")
 
-        train_dataset = self.train_dataset
+        dataset = self.train_dataset
+        description = "Training"
+        batch_size = self._train_batch_size
+        sampler_fn = self._get_train_sampler
+        is_training = True
+        dataloader_key = None
+
+        if self.dataset_list is None:
+            return super()._get_dataloader(dataset, description, batch_size, sampler_fn, is_training, dataloader_key)
+
         data_collator = self.data_collator
-        if is_datasets_available() and isinstance(train_dataset, Dataset):
-            train_dataset = self._remove_unused_columns(train_dataset, description="training")
+        if is_datasets_available() and isinstance(dataset, datasets.Dataset):
+            dataset = self._remove_unused_columns(dataset, description=description)
         else:
-            data_collator = self._get_collator_with_removed_columns(data_collator, description="training")
+            data_collator = self._get_collator_with_removed_columns(self.data_collator, description=description)
 
         dataloader_params = {
             ######### don't set batch size, mutually exclusive from batch sampler ######
@@ -70,15 +80,28 @@ class ContrastiveTrainer(Trainer):
             "persistent_workers": self.args.dataloader_persistent_workers,
         }
 
-        if not isinstance(train_dataset, torch.utils.data.IterableDataset):
-            ###### batch_sampler set instead of sampler in trainer code #######
-            dataloader_params["batch_sampler"] = self._get_train_sampler()
+        if not isinstance(dataset, torch.utils.data.IterableDataset):
+            if sampler_fn is not None:
+                ###### batch_sampler set instead of sampler in trainer code #######
+                dataloader_params["batch_sampler"] = sampler_fn(dataset)
             dataloader_params["drop_last"] = self.args.dataloader_drop_last
-            dataloader_params["worker_init_fn"] = seed_worker
             dataloader_params["prefetch_factor"] = self.args.dataloader_prefetch_factor
+            if is_training:
+                dataloader_params["worker_init_fn"] = partial(
+                    seed_worker, num_workers=self.args.dataloader_num_workers, rank=self.args.process_index
+                )
 
-        dataloader = self.accelerator.prepare(DataLoader(train_dataset, **dataloader_params))
-        return dataloader
+        dataloader = DataLoader(dataset, **dataloader_params)
+
+        # Accelerator.free_memory() will destroy the references, so
+        # we need to store the non-prepared version for eval dataloaders.
+        if dataloader_key is not None and self.args.dataloader_persistent_workers:
+            if hasattr(self, "_eval_dataloaders"):
+                self._eval_dataloaders[dataloader_key] = dataloader
+            else:
+                self._eval_dataloaders = {dataloader_key: dataloader}
+
+        return self.accelerator.prepare(dataloader)
 
     def _get_train_sampler(self, train_dataset: Optional[Dataset] = None) -> Optional[torch.utils.data.Sampler]:
         if self.dataset_list is None:

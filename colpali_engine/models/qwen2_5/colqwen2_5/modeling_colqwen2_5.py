@@ -35,8 +35,6 @@ class ColQwen2_5(Qwen2_5_VLModel):  # noqa: N801
         return super().from_pretrained(*args, **kwargs, key_mapping=key_mapping)
 
     def forward(self, *args, **kwargs) -> torch.Tensor:
-        kwargs.pop("output_hidden_states", None)
-
         # Handle the custom "pixel_values" input obtained with `ColQwen2Processor` through unpadding
         if "pixel_values" in kwargs:
             offsets = kwargs["image_grid_thw"][:, 1] * kwargs["image_grid_thw"][:, 2]  # (batch_size,)
