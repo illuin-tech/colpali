@@ -7,16 +7,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+### Added
+
 - Added BiIdefics3 modeling and processor.
 - [Breaking] (minor) Remove support for context-augmented queries and images
 - Uniform processor docstring
 - Update the collator to align with the new function signatures
 - Add a `process_text` method to replace the `process_query` one. We keep support of the last one for the moment, but we'll deprecate it later
-
-## [0.3.11] - 2025-06-05
-
-### Added
-
 - Introduce the ColPaliEngineDataset and Corpus class. This is to delegate all data loading to a standard format before training. The concept is for users to override the dataset class if needed for their specific usecases.
 - Added smooth_max option to loss functions
 - Added weighted in_batch terms for losses with hard negatives
