@@ -147,19 +147,13 @@ class ColQwen2_5OmniProcessor(BaseVisualRetrieverProcessor, Qwen2_5OmniProcessor
         batch_doc = self.process_conversations(conversations)
         return batch_doc
 
-    def process_queries(
+    def process_texts(
         self,
-        queries: List[str],
-        max_length: int = 50,
-        suffix: Optional[str] = None,
+        texts: List[str],
     ) -> BatchFeature:
         """
-        Process queries for ColQwen2.5.
-
-        NOTE: `max_length` is not used and kept only for trainer compatibility.
+        Process texts for ColQwenOmni.
         """
-        if suffix is None:
-            suffix = self.query_augmentation_token * 10
 
         conversations = [
             [
@@ -175,10 +169,10 @@ class ColQwen2_5OmniProcessor(BaseVisualRetrieverProcessor, Qwen2_5OmniProcessor
                 },
                 {
                     "role": "user",
-                    "content": [{"type": "text", "text": self.query_prefix + query + suffix}],
+                    "content": [{"type": "text", "text": text}],
                 },
             ]
-            for query in queries
+            for text in texts
         ]
         batch_query = self.process_conversations(conversations)
         return batch_query
