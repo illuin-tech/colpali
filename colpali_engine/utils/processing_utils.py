@@ -53,7 +53,8 @@ class BaseVisualRetrieverProcessor(ABC):
 
     def process_queries(
         self,
-        texts: List[str],
+        texts: Optional[List[str]] = None,
+        queries: Optional[List[str]] = None,
         max_length: int = 50,
         suffix: Optional[str] = None,
     ) -> Union[BatchFeature, BatchEncoding]:
@@ -71,6 +72,13 @@ class BaseVisualRetrieverProcessor(ABC):
         NOTE: This function will be deprecated. Use `process_texts` instead.
         It is kept to maintain back-compatibility with vidore evaluator.
         """
+
+        if texts and queries:
+            raise ValueError("Only one of 'texts' or 'queries' should be provided.")
+        if queries is not None:
+            texts = queries
+        elif texts is None:
+            raise ValueError("No texts or queries provided.")
 
         if suffix is None:
             suffix = self.query_augmentation_token * 10
