@@ -21,7 +21,6 @@ config = ColModelTrainingConfig(
     model=BiSiglip.from_pretrained(
         pretrained_model_name_or_path="./models/base_models/siglip2-base-patch32-256",
         torch_dtype=torch.bfloat16,
-        use_cache=False,
         attn_implementation="flash_attention_2",
     ),
     dataset_loading_func=load_train_set,  # load_train_set_ir_negs,
