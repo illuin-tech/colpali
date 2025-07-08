@@ -28,6 +28,7 @@ class BiSiglipProcessor(BaseVisualRetrieverProcessor, SiglipProcessor):  # noqa:
             return_tensors="pt",
             padding="max_length",  # the model was trained with max_length padding
             max_length=64,
+            truncation=True,
         )
 
     def process_images(
