@@ -5,6 +5,8 @@ from .models import (
     BiQwen2_5,
     BiQwen2_5_Processor,
     BiQwen2Processor,
+    BiSiglip,
+    BiSiglipProcessor,
     ColIdefics3,
     ColIdefics3Processor,
     ColPali,
