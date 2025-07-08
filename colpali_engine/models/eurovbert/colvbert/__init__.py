@@ -1,0 +1,2 @@
+from .modeling_coleurovbert import ColEuroVBert
+from .processing_coleurovbert import ColEuroVBertProcessor
