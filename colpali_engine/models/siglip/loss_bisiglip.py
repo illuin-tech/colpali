@@ -55,7 +55,7 @@ class BiSigLipEncoderLoss(BiEncoderModule):
         logit_scale = self.model.logit_scale.to(query_embeddings.device)
         logit_bias = self.model.logit_bias.to(query_embeddings.device)
         scores = logits_per_text * logit_scale.exp() + logit_bias
-        # scores = torch.sigmoid(scores)
+        scores = torch.sigmoid(scores)
 
         batch_size = scores.size(0)
         idx, pos_idx = self._get_idx(batch_size, offset, scores.device)
