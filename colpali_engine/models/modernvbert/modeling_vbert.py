@@ -15,6 +15,7 @@ from .configuration_vbert import VBertConfig
 
 logger = logging.get_logger(__name__)
 
+torch.set_float32_matmul_precision('high')
 
 class DecoupledEmbedding(nn.Embedding):
     # Derived from https://pytorch.org/docs/stable/_modules/torch/nn/modules/sparse.html#Embedding

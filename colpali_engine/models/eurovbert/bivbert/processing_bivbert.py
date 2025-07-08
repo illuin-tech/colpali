@@ -3,10 +3,10 @@ from typing import List, Optional, Union
 import torch
 from transformers import BatchEncoding, BatchFeature
 
-from colpali_engine.models.vbert.colvbert import ColVBertProcessor  # noqa: N801
+from colpali_engine.models.eurovbert.colvbert import ColEuroVBertProcessor
 
 
-class BiVBertProcessor(ColVBertProcessor):  # noqa: N801
+class BiVBertProcessor(ColEuroVBertProcessor):  # noqa: N801
     """
     Processor for BiVBert.
     """

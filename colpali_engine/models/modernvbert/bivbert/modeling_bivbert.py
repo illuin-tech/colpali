@@ -5,7 +5,7 @@ import torch
 from colpali_engine.models.vbert.modeling_vbert import VBertModel, VBertPreTrainedModel
 
 
-class BiVBert(VBertPreTrainedModel):
+class BiModernVBert(VBertPreTrainedModel):
     """
     Initializes the BiIdefics3 model.
 
@@ -61,5 +61,5 @@ class BiVBert(VBertPreTrainedModel):
             raise ValueError(f"Invalid pooling strategy: {pooling_strategy}")
 
         # L2 normalization
-        pooled_output = pooled_output / pooled_output.norm(dim=-1, keepdim=True)
+        pooled_output = pooled_output / pooled_output.norm(dim=-1, keepdim=True).clamp_min(1e-12)
         return pooled_output
