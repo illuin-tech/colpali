@@ -63,6 +63,6 @@ class BiSigLipEncoderLoss(BiEncoderModule):
         if self.pos_aware_negative_filtering:
             self._filter_high_negatives(scores, pos_idx)
 
-        print(scores.shape, scores.argmax(dim=1), pos_idx)
+        print(scores.shape, (scores.argmax(dim=1)==pos_idx).sum()/len(pos_idx))
 
         return self.ce_loss(scores / self.temperature, pos_idx)
