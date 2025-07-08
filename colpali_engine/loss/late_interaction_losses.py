@@ -152,7 +152,6 @@ class ColbertLoss(ColbertModule):
         lengths = (query_embeddings[:, :, 0] != 0).sum(dim=1)
         raw = torch.einsum("bnd,csd->bcns", query_embeddings, doc_embeddings)
         scores = self._aggregate(raw, self.use_smooth_max, dim_max=3, dim_sum=2)
-
         if self.normalize_scores:
             scores = self._apply_normalization(scores, lengths)
 
@@ -163,7 +162,6 @@ class ColbertLoss(ColbertModule):
             self._filter_high_negatives(scores, pos_idx)
 
         # print(f"Scores shape: {scores.shape}, offset: {offset}")
-
         return self.ce_loss(scores / self.temperature, pos_idx)
 
 
@@ -452,6 +450,13 @@ class ColbertSigmoidLoss(ColbertModule):
         if self.pos_aware_negative_filtering:
             self._filter_high_negatives(scores, pos_idx)
 
-        loss = self.ce_loss(scores / self.temperature, pos_idx)
+        # for each idx in pos_idx, the 2D index (idx, idx) → flat index = idx * B + idx
+        # build a 1-D mask of length B*B with ones at those positions
+        flat_pos = pos_idx * (batch_size + 1)
+        pos_mask = -torch.ones(batch_size * batch_size, device=scores.device)
+        pos_mask[flat_pos] = 1.0
 
-        return loss.mean()
+        # flatten the scores to [B * B]
+        scores = scores.view(-1) / self.temperature
+        
+        return F.softplus(scores * pos_mask).mean()
