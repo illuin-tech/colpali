@@ -23,7 +23,7 @@ config = ColModelTrainingConfig(
         torch_dtype=torch.bfloat16,
         attn_implementation="flash_attention_2",
     ),
-    dataset_loading_func=load_train_set,  # load_train_set_ir_negs,
+    train_dataset=load_train_set(),  # load_train_set_ir_negs,
     eval_dataset=ColPaliEngineDataset(
         load_dataset("./data_dir/colpali_train_set", split="test"), pos_target_column_name="image"
     ),

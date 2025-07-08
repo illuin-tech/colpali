@@ -3,9 +3,11 @@ import shutil
 from pathlib import Path
 
 import torch
+from datasets import load_dataset
 from peft import LoraConfig
 from transformers import TrainingArguments
 
+from colpali_engine.data.dataset import ColPaliEngineDataset
 from colpali_engine.loss.bi_encoder_losses import BiEncoderLoss
 from colpali_engine.models import BiQwen2, BiQwen2Processor
 from colpali_engine.trainer.colmodel_training import ColModelTraining, ColModelTrainingConfig
@@ -22,8 +24,10 @@ config = ColModelTrainingConfig(
         use_cache=False,
         attn_implementation="flash_attention_2",
     ),
-    dataset_loading_func=load_train_set,  # load_train_set_ir_negs,
-    eval_dataset_loader=None,
+    train_dataset=load_train_set(),
+    eval_dataset=ColPaliEngineDataset(
+        load_dataset("./data_dir/colpali_train_set", split="test"), pos_target_column_name="image"
+    ),
     run_eval=True,
     loss_func=BiEncoderLoss(),  # BiNegativeCELoss(in_batch_term_weight=0.5),
     tr_args=TrainingArguments(
