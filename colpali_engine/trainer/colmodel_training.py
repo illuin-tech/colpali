@@ -88,6 +88,10 @@ class ColModelTraining:
         )
 
     def train(self) -> None:
+        if hasattr(self.config.loss_func, "model"):
+            # If the loss function is a BiSigLipEncoderLoss, we need to set the model
+            self.config.loss_func.model = self.model
+
         trainer = ContrastiveTrainer(
             model=self.model,
             train_dataset=self.train_dataset,
