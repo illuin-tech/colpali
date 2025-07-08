@@ -1,7 +1,11 @@
+from typing import ClassVar
+
 from transformers import SiglipModel
 
 
 class BiSiglip(SiglipModel):
+    main_input_name: ClassVar[str] = "doc_input_ids"  # transformers-related
+
     def forward(self, *args, **kwargs):
         """
         Forward pass through Llama and the linear layer for dimensionality reduction
