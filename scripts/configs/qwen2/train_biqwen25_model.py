@@ -16,10 +16,10 @@ from colpali_engine.utils.dataset_transformation import load_train_set
 config = ColModelTrainingConfig(
     output_dir="./models/biqwen25-0809",
     processor=BiQwen2_5_Processor.from_pretrained(
-        pretrained_model_name_or_path="./models/base_models/colqwen25-base",
+        pretrained_model_name_or_path="./models/base_models/colqwen2.5-base",
     ),
     model=BiQwen2_5.from_pretrained(
-        pretrained_model_name_or_path="./models/base_models/colqwen25-base",
+        pretrained_model_name_or_path="./models/base_models/colqwen2.5-base",
         torch_dtype=torch.bfloat16,
         use_cache=False,
         attn_implementation="flash_attention_2",
