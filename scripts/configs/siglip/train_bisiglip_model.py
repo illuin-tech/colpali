@@ -14,12 +14,12 @@ from colpali_engine.trainer.colmodel_training import ColModelTraining, ColModelT
 from colpali_engine.utils.dataset_transformation import load_train_set
 
 config = ColModelTrainingConfig(
-    output_dir="./models/bisiglip-0804",
+    output_dir="./models/bisiglip-0810",
     processor=BiSiglipProcessor.from_pretrained(
-        pretrained_model_name_or_path="./models/base_models/siglip2-base-patch32-256",
+        pretrained_model_name_or_path="./models/base_models/siglip2-base-patch16-512",
     ),
     model=BiSiglip.from_pretrained(
-        pretrained_model_name_or_path="./models/base_models/siglip2-base-patch32-256",
+        pretrained_model_name_or_path="./models/base_models/siglip2-base-patch16-512",
         torch_dtype=torch.bfloat16,
         attn_implementation="flash_attention_2",
     ),
