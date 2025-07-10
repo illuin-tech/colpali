@@ -19,7 +19,7 @@ def concat_all_gather(t: torch.Tensor) -> torch.Tensor:
 
 
 class ContrastiveTrainer(Trainer):
-    def __init__(self, loss_func, is_vision_model, *args, **kwargs):
+    def __init__(self, loss_func, is_vision_model, compute_symetric_loss=False, *args, **kwargs):
         if isinstance(kwargs["train_dataset"], DatasetDict):
             dataset_list = list(kwargs["train_dataset"].values())
         elif isinstance(kwargs["train_dataset"], list):
@@ -43,6 +43,7 @@ class ContrastiveTrainer(Trainer):
         self.is_vision_model = is_vision_model  # Unused argument, will be removed in 0.4.0
         self.args.remove_unused_columns = False  # Safety, don't remove dataset columns from dataloader
         self.dataset_list = dataset_list
+        self.compute_symetric_loss = compute_symetric_loss 
 
     def get_train_dataloader(self) -> DataLoader:
         """
@@ -118,6 +119,27 @@ class ContrastiveTrainer(Trainer):
             drop_last=self.args.dataloader_drop_last,
             generator=generator,
         )
+    
+    def _compute_loss_from_outputs(
+        self, 
+        query_outputs, 
+        pos_target_outputs, 
+        neg_target_outputs=None,
+    ):
+        offset = 0
+        batch_size = query_outputs.size(0)
+        if self.accelerator.num_processes > 1 and self.accelerator.sync_gradients:
+            # gather docs across all processes
+            pos_target_outputs = concat_all_gather(pos_target_outputs)
+            rank = self.accelerator.process_index
+            offset = rank * batch_size
+
+        if neg_target_outputs is not None:
+            loss = self.loss_func(query_outputs, pos_target_outputs, neg_target_outputs, offset=offset)
+        else:
+            loss = self.loss_func(query_outputs, pos_target_outputs, offset=offset)
+
+        return loss
 
     def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
         query_outputs = model(input_ids=inputs["query_input_ids"], attention_mask=inputs["query_attention_mask"])
@@ -126,20 +148,17 @@ class ContrastiveTrainer(Trainer):
         if "neg_doc_input_ids" in inputs:
             # Negative docs are not gathered across processes, so we can use them without offset
             neg_doc_outputs = model(**{k[8:]: v for k, v in inputs.items() if k.startswith("neg_doc")})
-            loss = self.loss_func(query_outputs, doc_outputs, neg_doc_outputs)
-            return (loss, (query_outputs, doc_outputs, neg_doc_outputs)) if return_outputs else loss
+        else:
+            neg_doc_outputs = None
+        
+        # query -> doc loss
+        loss = self._compute_loss_from_outputs(query_outputs, doc_outputs, neg_doc_outputs)
 
-        offset = 0
-        if self.accelerator.num_processes > 1 and self.accelerator.sync_gradients:
-            # gather docs across all processes
-            if num_items_in_batch is None:
-                num_items_in_batch = inputs["doc_input_ids"].shape[0]
-            doc_outputs = self.accelerator.pad_across_processes(doc_outputs, dim=1, pad_index=0, pad_first=True)
-            doc_outputs = concat_all_gather(doc_outputs)
-            rank = self.accelerator.process_index
-            offset = rank * num_items_in_batch
-
-        loss = self.loss_func(query_outputs, doc_outputs, offset=offset)
+        if self.compute_symetric_loss:
+            assert neg_doc_outputs is None, "Symmetric loss is not compatible with negative documents."
+            # doc -> query loss
+            sym_loss = self._compute_loss_from_outputs(doc_outputs, query_outputs)
+            loss = (loss + sym_loss) / 2
 
         return (loss, (query_outputs, doc_outputs)) if return_outputs else loss
 
