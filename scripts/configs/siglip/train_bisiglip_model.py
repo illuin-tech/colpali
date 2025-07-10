@@ -14,7 +14,7 @@ from colpali_engine.trainer.colmodel_training import ColModelTraining, ColModelT
 from colpali_engine.utils.dataset_transformation import load_train_set
 
 config = ColModelTrainingConfig(
-    output_dir="./models/bisiglip-base-0810",
+    output_dir="./models/bisiglip-base-ce-0810",
     processor=BiSiglipProcessor.from_pretrained(
         pretrained_model_name_or_path="./models/base_models/siglip2-base-patch16-512",
     ),
@@ -28,8 +28,8 @@ config = ColModelTrainingConfig(
         load_dataset("./data_dir/colpali_train_set", split="test"), pos_target_column_name="image"
     ),
     run_eval=True,
-    # loss_func=BiEncoderLoss(),  # BiNegativeCELoss(in_batch_term_weight=0.5),
-    loss_func=BiSigLipEncoderLoss(),
+    loss_func=BiEncoderLoss(),  # BiNegativeCELoss(in_batch_term_weight=0.5),
+    # loss_func=BiSigLipEncoderLoss(),
     tr_args=TrainingArguments(
         output_dir=None,
         overwrite_output_dir=True,
