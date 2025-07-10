@@ -22,7 +22,7 @@ class BaseVisualRetrieverProcessor(ABC):
     Base class for visual retriever processors.
     """
 
-    query_prefix: ClassVar[str] = ""  # Default prefix for queries. Override in subclasses if needed.
+    query_prefix: ClassVar[str] = "Query: "  # Default prefix for queries. Override in subclasses if needed.
 
     @abstractmethod
     def process_images(
