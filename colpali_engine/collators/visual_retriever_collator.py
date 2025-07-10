@@ -78,9 +78,7 @@ class VisualRetrieverCollator:
         elif any(q is None for q in queries):
             raise ValueError("Some queries are None. This collator does not support None queries yet.")
         else:
-            batch_query = self.auto_collate(
-                queries, contexts=[self.processor.query_prefix] * len(queries), key_prefix=self.query_prefix
-            )
+            batch_query = self.auto_collate(queries, key_prefix=self.query_prefix)
 
         # Process targets.
         batch_pos_target = self.auto_collate(pos_targets, key_prefix=self.pos_doc_prefix)
