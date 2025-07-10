@@ -22,7 +22,7 @@ class BaseVisualRetrieverProcessor(ABC):
     Base class for visual retriever processors.
     """
 
-    query_prefix: ClassVar[str] = "Query: "  # Default prefix for queries. Override in subclasses if needed.
+    query_prefix: ClassVar[str] = ""  # Default prefix for queries. Override in subclasses if needed.
 
     @abstractmethod
     def process_images(
@@ -134,14 +134,17 @@ class BaseVisualRetrieverProcessor(ABC):
         """
         device = device or get_torch_device("auto")
 
-        if len(qs) == 0:
-            raise ValueError("No queries provided")
-        if len(ps) == 0:
-            raise ValueError("No passages provided")
+        if isinstance(qs, list) and isinstance(ps, list):
+            if len(qs) == 0:
+                raise ValueError("No queries provided")
+            if len(ps) == 0:
+                raise ValueError("No passages provided")
 
-        if isinstance(qs, list):
             qs = torch.stack(qs).to(device)
             ps = torch.stack(ps).to(device)
+        else:
+            qs = qs.to(device)
+            ps = ps.to(device)
 
         scores = torch.einsum("bd,cd->bc", qs, ps)
         assert scores.shape[0] == len(qs), f"Expected {len(qs)} scores, got {scores.shape[0]}"
