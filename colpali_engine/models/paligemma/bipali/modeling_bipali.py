@@ -12,11 +12,26 @@ class BiPali(PaliGemmaPreTrainedModel):
     Representations are average pooled to obtain a single vector representation.
     """
 
+    _checkpoint_conversion_mapping = {
+        "^model.language_model.model": "model.model.language_model",
+        "^model.vision_tower": "model.model.vision_tower",
+        "^model.multi_modal_projector": "model.model.multi_modal_projector",
+        "^model.language_model.lm_head": "model.lm_head",
+    }
+
+    @classmethod
+    def from_pretrained(cls, *args, **kwargs):
+        key_mapping = kwargs.pop("key_mapping", None)
+        if key_mapping is None:
+            key_mapping = cls._checkpoint_conversion_mapping
+        return super().from_pretrained(*args, **kwargs, key_mapping=key_mapping)
+
     def __init__(self, config: PaliGemmaConfig):
         super(BiPali, self).__init__(config=config)
         model: PaliGemmaForConditionalGeneration = PaliGemmaForConditionalGeneration(config)
         if model.language_model._tied_weights_keys is not None:
             self._tied_weights_keys = [f"model.language_model.{k}" for k in model.language_model._tied_weights_keys]
+        self.model.lm_head = torch.nn.Identity()
         self.model: PaliGemmaForConditionalGeneration = model
         self.main_input_name = "doc_input_ids"
         self.post_init()

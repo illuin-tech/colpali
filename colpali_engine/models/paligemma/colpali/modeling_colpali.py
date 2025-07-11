@@ -21,6 +21,19 @@ class ColPali(PaliGemmaPreTrainedModel):
     """
 
     main_input_name: ClassVar[str] = "doc_input_ids"  # transformers-related
+    _checkpoint_conversion_mapping = {
+        "^model.language_model.model": "model.model.language_model",
+        "^model.vision_tower": "model.model.vision_tower",
+        "^model.multi_modal_projector": "model.model.multi_modal_projector",
+        "^model.language_model.lm_head": "model.lm_head",
+    }
+
+    @classmethod
+    def from_pretrained(cls, *args, **kwargs):
+        key_mapping = kwargs.pop("key_mapping", None)
+        if key_mapping is None:
+            key_mapping = cls._checkpoint_conversion_mapping
+        return super().from_pretrained(*args, **kwargs, key_mapping=key_mapping)
 
     def __init__(self, config: PaliGemmaConfig, mask_non_image_embeddings: bool = False):
         super().__init__(config=config)
@@ -29,6 +42,7 @@ class ColPali(PaliGemmaPreTrainedModel):
         if model.language_model._tied_weights_keys is not None:
             self._tied_weights_keys = [f"model.language_model.{k}" for k in model.language_model._tied_weights_keys]
         self.model = model
+        self.model.lm_head = torch.nn.Identity()
 
         # TODO: Wait for ColPali2 to create a ColPaliConfig to allow specifying the embedding dimension.
         # We could do it now but it would break all the models trying to load the model from the checkpoint.
