@@ -21,6 +21,7 @@ class ColQwen2_5Omni(Qwen2_5OmniThinkerForConditionalGeneration):  # noqa: N801
         self.lm_head = nn.Identity()  # Disable the original lm_head
         self.padding_side = "left"
         self.mask_non_image_embeddings = mask_non_image_embeddings
+        self.lm_head = nn.Identity()  # Disable the original lm_head
         self.post_init()
 
     def forward(self, *args, **kwargs) -> torch.Tensor:
@@ -36,9 +37,7 @@ class ColQwen2_5Omni(Qwen2_5OmniThinkerForConditionalGeneration):  # noqa: N801
         kwargs.pop("output_hidden_states", None)
         kwargs.pop("use_cache", None)
         last_hidden_states = (
-            super()
-            .forward(*args, **kwargs, use_cache=False, output_hidden_states=True, return_dict=True)
-            .hidden_states[0]
+            super().forward(*args, **kwargs, use_cache=False, output_hidden_states=True, return_dict=True).logits
         )  # (batch_size, sequence_length, hidden_size)# (batch_size, sequence_length, hidden_size)
         proj = self.custom_text_proj(last_hidden_states)  # (batch_size, sequence_length, dim)
 
