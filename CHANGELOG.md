@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
+### Fixed
+- Fixed loading of PaliGemma and ColPali checkpoints (bug introduced in transformers 4.52)
+- Fixed loading of SmolVLM (Idefics3) processors that didn't transmit image_seq_len (bug introduced in transformers 4.52)
 
 ## [0.3.11] - 2025-07-04
 
