@@ -51,8 +51,7 @@ class BiModernVBert(VBertPreTrainedModel):
             pooled_output = last_hidden_states[:, 0]  # (batch_size, hidden_size)
         elif pooling_strategy == "last":
             # Use last token
-            last_unpadded_index = kwargs["attention_mask"].sum(dim=1) - 1
-            pooled_output = last_hidden_states[:, last_unpadded_index.clamp(min=0)]  # (batch_size, hidden_size)
+            pooled_output = last_hidden_states[:, -1]  # (batch_size, hidden_size)
         elif pooling_strategy == "mean":
             # Mean pooling over sequence length
             mask = kwargs["attention_mask"].unsqueeze(-1)  # (batch_size, sequence_length, 1)

@@ -18,6 +18,7 @@ class ColModernVBertProcessor(BaseVisualRetrieverProcessor, Idefics3Processor):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.tokenizer.padding_side = "left"
 
     @property
     def image_token_id(self) -> int:
@@ -26,56 +27,38 @@ class ColModernVBertProcessor(BaseVisualRetrieverProcessor, Idefics3Processor):
     def process_images(
         self,
         images: List[Image.Image],
-        contexts: Optional[List[str]] = None,
     ) -> Union[BatchFeature, BatchEncoding]:
         """
-        Process images for ColVBert.
+        Process images for ColModernVBert.
 
         Args:
             images: List of PIL images.
-            contexts: List of optional context prompts, i.e. some text description of the context of the image.
         """
-        # if contexts is None:
-        #     contexts = [self.visual_prompt_prefix] * len(images)
-        contexts = [self.visual_prompt_prefix] * len(images)
-
         images = [image.convert("RGB") for image in images]
-        
+
         batch_doc = self(
-            text=contexts,
+            text=[self.visual_prompt_prefix] * len(images),
             images=images,
             padding="longest",
             return_tensors="pt",
         )
         return batch_doc
 
-    def process_texts(
-        self,
-        texts: List[str],
-        max_length: int = 50,
-        contexts: Optional[List[str]] = None,
-        suffix: Optional[str] = None,
-    ) -> Union[BatchFeature, BatchEncoding]:
+    def process_texts(self, texts: List[str]) -> Union[BatchFeature, BatchEncoding]:
         """
-        Process texts for ColVBert.
+        Process texts for ColModernVBert.
 
-        NOTE: `max_length` is not used and kept only for trainer compatibility.
+        Args:
+            texts: List of input texts.
+
+        Returns:
+            Union[BatchFeature, BatchEncoding]: Processed texts.
         """
-        if suffix is None:
-            # suffix = self.query_augmentation_token * 10
-            suffix = ""
-        if contexts is None:
-            contexts = [""] * len(texts)
-
-        prompts = [context + text + suffix for context, text in zip(contexts, texts)]
-
-        batch_texts = self(
-            text=prompts,
+        return self(
+            text=texts,
             return_tensors="pt",
             padding="longest",
         )
-
-        return batch_texts
 
     def score(
         self,
