@@ -142,7 +142,7 @@ class ContrastiveTrainer(Trainer):
         return loss
 
     def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
-        query_outputs = model(input_ids=inputs["query_input_ids"], attention_mask=inputs["query_attention_mask"])
+        query_outputs = model(**{k[6:]: v for k, v in inputs.items() if k.startswith("query")})
         # feed only kwargs with 'doc_' prefix
         doc_outputs = model(**{k[4:]: v for k, v in inputs.items() if k.startswith("doc")})
         if "neg_doc_input_ids" in inputs:

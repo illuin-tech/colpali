@@ -11,32 +11,21 @@ class BiModernVBertProcessor(ColModernVBertProcessor):  # noqa: N801
     Processor for BiVBert.
     """
 
-    def process_texts(
-        self,
-        texts: List[str],
-        max_length: int = 50,
-        contexts: Optional[List[str]] = None,
-        suffix: Optional[str] = None,
-    ) -> Union[BatchFeature, BatchEncoding]:
+    def process_texts(self, texts: List[str]) -> Union[BatchFeature, BatchEncoding]:
         """
-        Process texts for BiVBert.
+        Process texts for BiModernVBert.
 
-        NOTE: `max_length` is not used and kept only for trainer compatibility.
+        Args:
+            texts: List of input texts.
+
+        Returns:
+            Union[BatchFeature, BatchEncoding]: Processed texts.
         """
-        if suffix is None:
-            suffix = self.query_augmentation_token  # we remove buffer tokens
-        if contexts is None:
-            contexts = [""] * len(texts)
-
-        prompts = [context + text + suffix for context, text in zip(contexts, texts)]
-
-        batch_texts = self(
-            text=prompts,
+        return self(
+            text=texts,
             return_tensors="pt",
             padding="longest",
         )
-
-        return batch_texts
 
     def score(
         self,
