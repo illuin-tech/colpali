@@ -18,6 +18,7 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.tokenizer.padding_side = "left"
 
     def process_images(
         self,
