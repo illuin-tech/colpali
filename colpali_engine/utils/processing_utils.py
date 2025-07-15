@@ -91,8 +91,8 @@ class BaseVisualRetrieverProcessor(ABC):
     @abstractmethod
     def score(
         self,
-        qs: List[torch.Tensor],
-        ps: List[torch.Tensor],
+        qs: Union[torch.Tensor, List[torch.Tensor]],
+        ps: Union[torch.Tensor, List[torch.Tensor]],
         device: Optional[Union[str, torch.device]] = None,
         **kwargs,
     ) -> torch.Tensor:
