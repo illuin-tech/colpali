@@ -91,8 +91,8 @@ class BaseVisualRetrieverProcessor(ABC):
     @abstractmethod
     def score(
         self,
-        qs: List[torch.Tensor],
-        ps: List[torch.Tensor],
+        qs: Union[torch.Tensor, List[torch.Tensor]],
+        ps: Union[torch.Tensor, List[torch.Tensor]],
         device: Optional[Union[str, torch.device]] = None,
         **kwargs,
     ) -> torch.Tensor:
@@ -100,8 +100,8 @@ class BaseVisualRetrieverProcessor(ABC):
 
     @staticmethod
     def score_single_vector(
-        qs: List[torch.Tensor],
-        ps: List[torch.Tensor],
+        qs: Union[torch.Tensor, List[torch.Tensor]],
+        ps: Union[torch.Tensor, List[torch.Tensor]],
         device: Optional[Union[str, torch.device]] = None,
     ) -> torch.Tensor:
         """
@@ -114,10 +114,11 @@ class BaseVisualRetrieverProcessor(ABC):
         if len(ps) == 0:
             raise ValueError("No passages provided")
 
-        qs_stacked = torch.stack(qs).to(device)
-        ps_stacked = torch.stack(ps).to(device)
+        if isinstance(qs, list):
+            qs = torch.stack(qs).to(device)
+            ps = torch.stack(ps).to(device)
 
-        scores = torch.einsum("bd,cd->bc", qs_stacked, ps_stacked)
+        scores = torch.einsum("bd,cd->bc", qs, ps)
         assert scores.shape[0] == len(qs), f"Expected {len(qs)} scores, got {scores.shape[0]}"
 
         scores = scores.to(torch.float32)
