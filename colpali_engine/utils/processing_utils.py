@@ -89,30 +89,6 @@ class BaseVisualRetrieverProcessor(ABC):
 
         return self.process_texts(texts=texts)
 
-    def process_queries(
-        self,
-        texts: List[str],
-        max_length: int = 50,
-        suffix: Optional[str] = None,
-    ) -> Union[BatchFeature, BatchEncoding]:
-        """
-        Process a list of queries into a format suitable for the model.
-        Args:
-            texts (List[str]): List of texts to process.
-            max_length (int, optional): Maximum length of the texts. Defaults to 50.
-            suffix (Optional[str], optional): Optional suffix to append to each text.
-        Returns:
-            Union[BatchFeature, BatchEncoding]: Processed texts.
-
-        NOTE: This function maintains back-compatibility, use `process_texts` for better control on context.
-        """
-        return self.process_texts(
-            texts=texts,
-            contexts=[self.query_prefix] * len(texts),
-            max_length=max_length,
-            suffix=suffix,
-        )
-
     @abstractmethod
     def score(
         self,
