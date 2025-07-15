@@ -31,8 +31,8 @@ class BiPali(PaliGemmaPreTrainedModel):
         model: PaliGemmaForConditionalGeneration = PaliGemmaForConditionalGeneration(config)
         if model.language_model._tied_weights_keys is not None:
             self._tied_weights_keys = [f"model.language_model.{k}" for k in model.language_model._tied_weights_keys]
-        self.model.lm_head = torch.nn.Identity()
         self.model: PaliGemmaForConditionalGeneration = model
+        self.model.lm_head = torch.nn.Identity()
         self.main_input_name = "doc_input_ids"
         self.post_init()
 
