@@ -60,7 +60,7 @@ class ColQwen2_5OmniProcessor(BaseVisualRetrieverProcessor, Qwen2_5OmniProcessor
             return_tensors="pt",
             # video_fps=1,
             padding=True,
-            use_audio_in_video=True,
+            use_audio_in_video=False,
         )
 
         # if "pixel_values" in batch_doc:
@@ -83,7 +83,7 @@ class ColQwen2_5OmniProcessor(BaseVisualRetrieverProcessor, Qwen2_5OmniProcessor
         Process images for ColQwen2.5.
 
         Args:
-            images: List of PIL images.
+            images: List of PIL images or paths/urls to images.
         """
 
         conversations = [
@@ -111,19 +111,13 @@ class ColQwen2_5OmniProcessor(BaseVisualRetrieverProcessor, Qwen2_5OmniProcessor
         batch_doc = self.process_conversations(conversations)
         return batch_doc
 
-    def process_audios(self, audios, context_prompts: Optional[List[str]] = None) -> BatchFeature:
+    def process_audios(self, audios) -> BatchFeature:
         """
-        Process images for ColQwen2.5.
+        Process audios for ColQwen2.5.
 
         Args:
-            images: List of PIL images.
-            context_prompts: List of optional context prompts, i.e. some text description of the context of the image.
+            audios: List of Numpy array of WAV files (or paths/URLs to WAV).
         """
-
-        if context_prompts:
-            raise AttributeError(
-                "ColQwen2.5 Omni supports context prompts through the `process_conversations` method only."
-            )
 
         conversations = [
             [
@@ -143,6 +137,37 @@ class ColQwen2_5OmniProcessor(BaseVisualRetrieverProcessor, Qwen2_5OmniProcessor
                 },
             ]
             for audio in audios
+        ]
+        batch_doc = self.process_conversations(conversations)
+        return batch_doc
+
+    def process_videos(self, videos) -> BatchFeature:
+        """
+        Process videos for ColQwen2.5.
+
+        Args:
+            videos: List of videos or paths/urls to videos. Each video can be a 4D NumPy array or PyTorch
+            tensor, or a nested list of 3D frames. Both channels-first and channels-last formats are supported.
+        """
+
+        conversations = [
+            [
+                {
+                    "role": "system",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "You are Qwen, a virtual human developed by the Qwen Team, Alibaba Group, capable "
+                            "of perceiving auditory and visual inputs, as well as generating text and speech.",
+                        }
+                    ],
+                },
+                {
+                    "role": "user",
+                    "content": [{"type": "video", "path": video}, {"type": "text", "text": "Describe the content."}],
+                },
+            ]
+            for video in videos
         ]
         batch_doc = self.process_conversations(conversations)
         return batch_doc
