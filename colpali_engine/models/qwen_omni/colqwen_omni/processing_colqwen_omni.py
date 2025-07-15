@@ -60,7 +60,7 @@ class ColQwen2_5OmniProcessor(BaseVisualRetrieverProcessor, Qwen2_5OmniProcessor
             return_tensors="pt",
             # video_fps=1,
             padding=True,
-            use_audio_in_video=True,
+            use_audio_in_video=False,
         )
 
         # if "pixel_values" in batch_doc:
