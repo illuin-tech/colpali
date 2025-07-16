@@ -5,7 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## Unreleased
+## [0.3.12] - 2025-07-16
+
+### Added
+- Video processing for ColQwen-Omni
+
 ### Fixed
 - Fixed loading of PaliGemma and ColPali checkpoints (bug introduced in transformers 4.52)
 - Fixed loading of SmolVLM (Idefics3) processors that didn't transmit image_seq_len (bug introduced in transformers 4.52)
