@@ -1,4 +1,5 @@
 from .models import (
+    AsymmetricModel,
     BiPali,
     BiPaliProj,
     BiQwen2,
