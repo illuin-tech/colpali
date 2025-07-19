@@ -76,7 +76,8 @@ if __name__ == "__main__":
     print(f"Document model parameters: {sum(p.numel() for p in doc_model.model.parameters())}")
 
     model = AsymmetricModel(config=config, query_model=query_model, document_model=doc_model)
-    model._set_static_graph()
+    model.query_model._set_static_graph()
+    model.document_model._set_static_graph()
 
     config = ColModelTrainingConfig(
         output_dir=args.output_dir,
