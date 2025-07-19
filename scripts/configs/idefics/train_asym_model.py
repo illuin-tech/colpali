@@ -98,7 +98,7 @@ if __name__ == "__main__":
             gradient_checkpointing_kwargs={"use_reentrant": False},
             per_device_eval_batch_size=16,
             eval_strategy="steps",
-            dataloader_num_workers=4,
+            dataloader_num_workers=2,
             save_steps=500,
             logging_steps=10,
             eval_steps=100,
@@ -127,6 +127,6 @@ if __name__ == "__main__":
     shutil.copy(Path(__file__), Path(config.output_dir) / Path(__file__).name)
 
     trainer = ColModelTraining(config) if args.trainer == "hf" else ColModelTorchTraining(config)
-    trainer.model._set_static_graph()  # Set static graph for the asymmetric model
+    # trainer.model._set_static_graph()  # Set static graph for the asymmetric model
     trainer.train()
     trainer.save()
