@@ -83,10 +83,12 @@ if __name__ == "__main__":
     print(f"Document model parameters: {sum(p.numel() for p in doc_model.model.parameters())}")
 
     model = AsymmetricModel(config=config, query_model=query_model, document_model=doc_model)
+    processor = ColIdefics3Processor.from_pretrained("./models/colSmol-256M")
+    processor.config.size["longest_edge"] = 512
 
     config = ColModelTrainingConfig(
         output_dir=args.output_dir,
-        processor=ColIdefics3Processor.from_pretrained("./models/colSmol-256M"),
+        processor=processor,
         model=model,
         train_dataset=ColPaliEngineDataset(
             load_dataset("./data_dir/colpali_train_set", split="train"), pos_target_column_name="image"
