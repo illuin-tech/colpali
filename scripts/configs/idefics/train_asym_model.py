@@ -53,13 +53,15 @@ if __name__ == "__main__":
         torch_dtype=torch.bfloat16,
         device_map="cuda",
         attn_implementation="flash_attention_2",
+        use_cache=False,
     ).train()
 
     doc_model = ColIdefics3.from_pretrained(
         "./models/colSmol-256M",
-        torch_dtype=torch.float16,
+        torch_dtype=torch.bfloat16,
         device_map="cuda",
         attn_implementation="flash_attention_2",
+        use_cache=False,
     ).train()
 
     # Example usage
