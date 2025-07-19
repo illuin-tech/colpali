@@ -84,12 +84,9 @@ if __name__ == "__main__":
     # Your inputs
     images = [
         Image.new("RGB", (32, 32), color="white"),
-        Image.new("RGB", (16, 16), color="black"),
+        Image.new("RGB", (160, 160), color="black"),
     ]
-    queries = [
-        "Is attention really all you need?",
-        "What is the amount of bananas farmed in Salvador?",
-    ]
+    queries = ["This is black", "This is white", "This is red"]
 
     # Process the inputs
     batch_images = processor.process_images(images).to(model.device)
@@ -103,12 +100,8 @@ if __name__ == "__main__":
     scores = processor.score_multi_vector(query_embeddings, image_embeddings)
     print(scores)
 
-    # Save the model and processor
-    model.query_model.save_pretrained("asymmetric_query_model")
-    model.document_model.save_pretrained("asymmetric_document_model")
-
-    # Load the model and processor
-    loaded_query_model = ColIdefics3.from_pretrained("asymmetric_query_model")
-    loaded_document_model = ColIdefics3.from_pretrained("asymmetric_document_model")
-    loaded_model = AsymmetricModel(query_model=loaded_query_model, document_model=loaded_document_model, config=config)
-    print("Asymmetric model loaded successfully.")
+    print(model)
+    # # Save the model and processor
+    # model.save_pretrained("asymmetric_model")
+    # model.query_model.save_pretrained("asymmetric_query_model")
+    # model.document_model.save_pretrained("asymmetric_document_model")
