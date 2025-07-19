@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import ClassVar, Optional
 
 import torch
 import torch.nn as nn
@@ -24,6 +24,7 @@ class AsymmetricModel(PreTrainedModel):
     _supports_flex_attn = True
     _supports_cache_class = True
     _supports_attention_backend = True
+    main_input_name: ClassVar[str] = "doc_input_ids"  # transformers-related
 
     def __init__(
         self,
