@@ -76,8 +76,6 @@ if __name__ == "__main__":
     print(f"Document model parameters: {sum(p.numel() for p in doc_model.model.parameters())}")
 
     model = AsymmetricModel(config=config, query_model=query_model, document_model=doc_model)
-    model.query_model._set_static_graph()
-    model.document_model._set_static_graph()
 
     config = ColModelTrainingConfig(
         output_dir=args.output_dir,
@@ -129,5 +127,6 @@ if __name__ == "__main__":
     shutil.copy(Path(__file__), Path(config.output_dir) / Path(__file__).name)
 
     trainer = ColModelTraining(config) if args.trainer == "hf" else ColModelTorchTraining(config)
+    trainer.model._set_static_graph()  # Set static graph for the asymmetric model
     trainer.train()
     trainer.save()
