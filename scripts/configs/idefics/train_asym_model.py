@@ -123,7 +123,7 @@ if __name__ == "__main__":
             init_lora_weights="gaussian",
             bias="none",
             task_type="FEATURE_EXTRACTION",
-            target_modules="(.*(document_model)(model.text_model).*(down_proj|gate_proj|up_proj|k_proj|q_proj|v_proj|out_proj).*$|.*(linear).*$)",
+            target_modules="(.*(document_model.model.text_model).*(down_proj|gate_proj|up_proj|k_proj|q_proj|v_proj|out_proj).*$|.*(linear).*$)",
         )
         if args.peft
         else None,
