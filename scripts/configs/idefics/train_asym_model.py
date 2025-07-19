@@ -49,7 +49,7 @@ if __name__ == "__main__":
     from colpali_engine.models.asymmetric.asymmetric_model import AsymmetricModel
 
     query_model = ColIdefics3.from_pretrained(
-        "./models/colSmol-256M",
+        "./models/base_models/ColSmolVLM-Instruct-500M-base",
         torch_dtype=torch.bfloat16,
         device_map="cuda",
         attn_implementation="flash_attention_2",
@@ -57,7 +57,7 @@ if __name__ == "__main__":
     ).train()
 
     doc_model = ColIdefics3.from_pretrained(
-        "./models/colSmol-256M",
+        "./models/ColSmolVLM-Instruct-256M-base",
         torch_dtype=torch.bfloat16,
         device_map="cuda",
         attn_implementation="flash_attention_2",
@@ -76,7 +76,6 @@ if __name__ == "__main__":
     print(f"Document model parameters: {sum(p.numel() for p in doc_model.model.parameters())}")
 
     model = AsymmetricModel(config=config, query_model=query_model, document_model=doc_model)
-    model.print_trainable_parameters()
 
     config = ColModelTrainingConfig(
         output_dir=args.output_dir,
