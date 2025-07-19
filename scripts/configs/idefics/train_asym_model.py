@@ -48,21 +48,28 @@ if __name__ == "__main__":
     from colpali_engine.models import ColIdefics3, ColIdefics3Processor
     from colpali_engine.models.asymmetric.asymmetric_model import AsymmetricModel
 
-    query_model = ColIdefics3.from_pretrained(
+    base_query_model = ColIdefics3.from_pretrained(
         "./models/base_models/ColSmolVLM-Instruct-500M-base",
         torch_dtype=torch.bfloat16,
-        device_map="cuda",
+        # device_map="cuda",
         attn_implementation="flash_attention_2",
         use_cache=False,
     ).train()
 
-    doc_model = ColIdefics3.from_pretrained(
+    base_doc_model = ColIdefics3.from_pretrained(
         "./models/ColSmolVLM-Instruct-256M-base",
         torch_dtype=torch.bfloat16,
-        device_map="cuda",
+        # device_map="cuda",
         attn_implementation="flash_attention_2",
         use_cache=False,
     ).train()
+
+    from peft import PeftModel
+
+    query_model = PeftModel.from_pretrained(base_doc_model, "./models/colSmol-500M", is_trainable=True)
+    query_model = query_model.merge_and_unload().train().to("cuda")
+    doc_model = PeftModel.from_pretrained(base_query_model, "./models/colSmol-256M", is_trainable=True)
+    doc_model = doc_model.merge_and_unload().train().to("cuda")
 
     # Example usage
     config = PretrainedConfig()
