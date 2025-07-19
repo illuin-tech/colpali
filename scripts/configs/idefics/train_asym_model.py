@@ -66,9 +66,9 @@ if __name__ == "__main__":
 
     from peft import PeftModel
 
-    query_model = PeftModel.from_pretrained(base_doc_model, "./models/colSmol-500M", is_trainable=True)
+    query_model = PeftModel.from_pretrained(base_query_model, "./models/colSmol-500M", is_trainable=True)
     query_model = query_model.merge_and_unload().train().to("cuda")
-    doc_model = PeftModel.from_pretrained(base_query_model, "./models/colSmol-256M", is_trainable=True)
+    doc_model = PeftModel.from_pretrained(base_doc_model, "./models/colSmol-256M", is_trainable=True)
     doc_model = doc_model.merge_and_unload().train().to("cuda")
 
     # Example usage
