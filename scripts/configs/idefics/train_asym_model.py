@@ -139,3 +139,5 @@ if __name__ == "__main__":
     # trainer.model._set_static_graph()  # Set static graph for the asymmetric model
     trainer.train()
     trainer.save()
+    model.document_model.save_pretrained(Path(config.output_dir) / "document_model")
+    model.query_model.save_pretrained(Path(config.output_dir) / "query_model")
