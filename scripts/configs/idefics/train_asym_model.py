@@ -102,7 +102,7 @@ if __name__ == "__main__":
             output_dir=None,
             overwrite_output_dir=True,
             num_train_epochs=5,
-            per_device_train_batch_size=16,
+            per_device_train_batch_size=32,
             gradient_checkpointing=True,
             gradient_checkpointing_kwargs={"use_reentrant": False},
             per_device_eval_batch_size=16,
