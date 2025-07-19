@@ -84,7 +84,7 @@ if __name__ == "__main__":
 
     model = AsymmetricModel(config=config, query_model=query_model, document_model=doc_model)
     processor = ColIdefics3Processor.from_pretrained("./models/colSmol-256M")
-    processor.config.size["longest_edge"] = 512
+    processor.image_processor.size["longest_edge"] = 512
 
     config = ColModelTrainingConfig(
         output_dir=args.output_dir,
