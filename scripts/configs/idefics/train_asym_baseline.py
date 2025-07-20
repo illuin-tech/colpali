@@ -77,7 +77,7 @@ if __name__ == "__main__":
         tr_args=TrainingArguments(
             output_dir=None,
             overwrite_output_dir=True,
-            num_train_epochs=5,
+            num_train_epochs=1,
             per_device_train_batch_size=64,
             gradient_checkpointing=True,
             gradient_checkpointing_kwargs={"use_reentrant": False},
