@@ -63,7 +63,7 @@ class ColbertModule(torch.nn.Module):
             normalized = scores / lengths
 
         mn, mx = torch.aminmax(normalized)
-        if mn < -self.norm_tol or mx > 1 + self.norm_tol:
+        if mn < -1 - self.norm_tol or mx > 1 + self.norm_tol:
             print(
                 f"Scores out of bounds after normalization: "
                 f"min={mn.item():.4f}, max={mx.item():.4f}, tol={self.norm_tol}"
