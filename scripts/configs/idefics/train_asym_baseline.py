@@ -42,19 +42,8 @@ if __name__ == "__main__":
         raise ValueError(f"Unknown loss function: {args.loss}")
 
     import torch
-    from torch import nn
-    from transformers import PretrainedConfig
 
     from colpali_engine.models import ColIdefics3, ColIdefics3Processor
-    from colpali_engine.models.asymmetric.asymmetric_model import AsymmetricModel
-
-    base_query_model = ColIdefics3.from_pretrained(
-        "./models/base_models/ColSmolVLM-Instruct-500M-base",
-        torch_dtype=torch.bfloat16,
-        # device_map="cuda",
-        attn_implementation="flash_attention_2",
-        use_cache=False,
-    ).train()
 
     base_doc_model = ColIdefics3.from_pretrained(
         "./models/ColSmolVLM-Instruct-256M-base",
@@ -66,23 +55,10 @@ if __name__ == "__main__":
 
     from peft import PeftModel
 
-    query_model = PeftModel.from_pretrained(base_query_model, "./models/colSmol-500M", is_trainable=True)
-    query_model = query_model.merge_and_unload().train().to("cuda")
     doc_model = PeftModel.from_pretrained(base_doc_model, "./models/colSmol-256M", is_trainable=True)
     doc_model = doc_model.merge_and_unload().train().to("cuda")
 
-    # Example usage
-    config = PretrainedConfig()
-    print(f"Query model parameters before: {sum(p.numel() for p in query_model.model.parameters())}")
-    # Remove vision model in the query model
-    query_model.model.vision_model = nn.Identity()
-
-    # print num parameters in the query model
-    print(f"Query model parameters after: {sum(p.numel() for p in query_model.model.parameters())}")
-    # print num parameters in the document model
-    print(f"Document model parameters: {sum(p.numel() for p in doc_model.model.parameters())}")
-
-    model = AsymmetricModel(config=config, query_model=query_model, document_model=doc_model)
+    model = doc_model
     processor = ColIdefics3Processor.from_pretrained("./models/colSmol-256M")
     processor.image_processor.size["longest_edge"] = 1024
 
@@ -125,7 +101,7 @@ if __name__ == "__main__":
             init_lora_weights="gaussian",
             bias="none",
             task_type="FEATURE_EXTRACTION",
-            target_modules="(.*(document_model.model.text_model).*(down_proj|gate_proj|up_proj|k_proj|q_proj|v_proj|out_proj).*$|.*(linear).*$)",
+            target_modules="(.*(model.text_model).*(down_proj|gate_proj|up_proj|k_proj|q_proj|v_proj|out_proj).*$|.*(linear).*$)",
         )
         if args.peft
         else None,
@@ -139,5 +115,3 @@ if __name__ == "__main__":
     # trainer.model._set_static_graph()  # Set static graph for the asymmetric model
     trainer.train()
     trainer.save()
-    model.document_model.save_pretrained(Path(config.output_dir) / "document_model")
-    model.query_model.save_pretrained(Path(config.output_dir) / "query_model")
