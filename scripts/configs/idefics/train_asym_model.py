@@ -108,7 +108,7 @@ if __name__ == "__main__":
             per_device_eval_batch_size=16,
             eval_strategy="steps",
             dataloader_num_workers=2,
-            save_steps=None,
+            save_strategy="no",
             max_steps=20,
             logging_steps=10,
             eval_steps=100,
