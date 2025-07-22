@@ -109,7 +109,7 @@ if __name__ == "__main__":
             eval_strategy="steps",
             dataloader_num_workers=2,
             save_strategy="no",
-            max_steps=20,
+            # max_steps=20,
             logging_steps=10,
             eval_steps=100,
             warmup_steps=100,
