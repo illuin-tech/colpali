@@ -52,7 +52,7 @@ class SingleDatasetBatchSampler(BatchSampler):
 
         while self.available_datasets:
             # Randomly select from available datasets, weighted by current dataset length
-            if self.current_data_lengths.sum() == 0:
+            if self.current_data_lengths.sum().item() == 0:
                 break
             dataset_idx_index = torch.multinomial(
                 self.current_data_lengths / self.current_data_lengths.sum(), num_samples=1, generator=self.generator
