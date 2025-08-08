@@ -92,8 +92,8 @@ class BaseVisualRetrieverProcessor(ABC):
     @abstractmethod
     def score(
         self,
-        qs: List[torch.Tensor],
-        ps: List[torch.Tensor],
+        qs: Union[torch.Tensor, List[torch.Tensor]],
+        ps: Union[torch.Tensor, List[torch.Tensor]],
         device: Optional[Union[str, torch.device]] = None,
         **kwargs,
     ) -> torch.Tensor:
@@ -122,7 +122,7 @@ class BaseVisualRetrieverProcessor(ABC):
             qs_stacked = qs.to(device)
             ps_stacked = ps.to(device)
 
-        scores = torch.einsum("bd,cd->bc", qs_stacked, ps_stacked)
+        scores = torch.einsum("bd,cd->bc", qs, ps)
         assert scores.shape[0] == len(qs), f"Expected {len(qs)} scores, got {scores.shape[0]}"
 
         scores = scores.to(torch.float32)
