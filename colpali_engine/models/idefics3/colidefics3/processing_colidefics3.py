@@ -16,8 +16,8 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
     image_token: ClassVar[str] = "<image>"
     visual_prompt_prefix: ClassVar[str] = "<|im_start|>User:<image>Describe the image.<end_of_utterance>\nAssistant:"
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, *args, image_seq_len=64, **kwargs):
+        super().__init__(*args, image_seq_len=image_seq_len, **kwargs)
         self.tokenizer.padding_side = "left"
 
     def process_images(
