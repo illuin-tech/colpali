@@ -60,9 +60,7 @@ class SingleDatasetBatchSampler(BatchSampler):
             probs = torch.tensor(lengths, dtype=torch.float) / total_length
 
             # Pick dataset
-            dataset_idx_in_available = torch.multinomial(
-                probs, num_samples=1, generator=self.generator
-            ).item()
+            dataset_idx_in_available = torch.multinomial(probs, num_samples=1, generator=self.generator).item()
             dataset_idx = self.available_datasets[dataset_idx_in_available]
 
             # Fetch batch
@@ -71,10 +69,7 @@ class SingleDatasetBatchSampler(BatchSampler):
             end_pos = current_pos + self.global_batch_size
 
             if end_pos <= self.max_positions[dataset_idx]:
-                batch_indices = [
-                    idx + self.cumsum_sizes[dataset_idx]
-                    for idx in dataset_indices[current_pos:end_pos]
-                ]
+                batch_indices = [idx + self.cumsum_sizes[dataset_idx] for idx in dataset_indices[current_pos:end_pos]]
                 self.current_positions[dataset_idx] = end_pos
                 self.current_data_lengths[dataset_idx] = self.dataset_sizes[dataset_idx] - end_pos
 
