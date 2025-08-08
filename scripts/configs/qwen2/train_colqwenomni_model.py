@@ -45,18 +45,18 @@ if __name__ == "__main__":
     config = ColModelTrainingConfig(
         output_dir=args.output_dir,
         processor=ColQwen2_5OmniProcessor.from_pretrained(
-            pretrained_model_name_or_path="vidore/colqwen2.5omni-base",
+            pretrained_model_name_or_path="./models/base_models/colqwen2.5omni-base",
         ),
         model=ColQwen2_5Omni.from_pretrained(
-            pretrained_model_name_or_path="vidore/colqwen2.5omni-base",
+            pretrained_model_name_or_path="./models/base_models/colqwen2.5omni-base",
             torch_dtype=torch.bfloat16,
             attn_implementation="flash_attention_2",
         ),
         train_dataset=ColPaliEngineDataset(
-            load_dataset("vidore/colpali_train_set", split="train"), pos_target_column_name="image"
+            load_dataset("./data_dir/colpali_train_set", split="train"), pos_target_column_name="image"
         ),
         eval_dataset=ColPaliEngineDataset(
-            load_dataset("vidore/colpali_train_set", split="test"), pos_target_column_name="image"
+            load_dataset("./data_dir/colpali_train_set", split="test"), pos_target_column_name="image"
         ),
         run_eval=True,
         loss_func=loss_func,
