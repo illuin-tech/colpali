@@ -45,45 +45,47 @@ class SingleDatasetBatchSampler(BatchSampler):
         self.max_positions = [(size // self.global_batch_size) * self.global_batch_size for size in self.dataset_sizes]
 
     def __iter__(self) -> Iterator[List[int]]:
-        # Reset current positions, available datasets and proportions
+        # Reset state
         self.current_positions = [0] * len(self.datasets)
         self.available_datasets = list(range(len(self.datasets)))
-        self.current_data_lengths = torch.tensor([size for size in self.dataset_sizes], dtype=torch.int)
+        self.current_data_lengths = [size for size in self.dataset_sizes]  # full length, never shrinks
 
         while self.available_datasets:
-            # Randomly select from available datasets, weighted by current dataset length
-            if self.current_data_lengths.sum().item() == 0:
-                break
-            dataset_idx_index = torch.multinomial(
-                self.current_data_lengths / self.current_data_lengths.sum(), num_samples=1, generator=self.generator
-            ).item()
-            dataset_idx = self.available_datasets[dataset_idx_index]
+            # Build probabilities for available datasets only
+            lengths = [self.current_data_lengths[i] for i in self.available_datasets]
+            total_length = sum(lengths)
+            if total_length <= 0:
+                break  # nothing left to sample
 
-            # Get indices for the current dataset
+            probs = torch.tensor(lengths, dtype=torch.float) / total_length
+
+            # Pick dataset
+            dataset_idx_in_available = torch.multinomial(
+                probs, num_samples=1, generator=self.generator
+            ).item()
+            dataset_idx = self.available_datasets[dataset_idx_in_available]
+
+            # Fetch batch
             dataset_indices = self.indices_per_dataset[dataset_idx]
             current_pos = self.current_positions[dataset_idx]
-
-            # Check if we have enough samples for a full batch
             end_pos = current_pos + self.global_batch_size
 
             if end_pos <= self.max_positions[dataset_idx]:
-                # Get batch indices
-                batch_indices = [idx + self.cumsum_sizes[dataset_idx] for idx in dataset_indices[current_pos:end_pos]]
-
-                # Update position
+                batch_indices = [
+                    idx + self.cumsum_sizes[dataset_idx]
+                    for idx in dataset_indices[current_pos:end_pos]
+                ]
                 self.current_positions[dataset_idx] = end_pos
                 self.current_data_lengths[dataset_idx] = self.dataset_sizes[dataset_idx] - end_pos
 
-                # If dataset is exhausted, remove from available datasets
+                # Remove if exhausted
                 if end_pos >= self.max_positions[dataset_idx]:
                     self.available_datasets.remove(dataset_idx)
-                    self.current_data_lengths[dataset_idx] = 0
 
                 yield batch_indices
             else:
-                # This dataset doesn't have enough samples for another batch
+                # Not enough for a full batch
                 self.available_datasets.remove(dataset_idx)
-                self.current_data_lengths[dataset_idx] = 0
 
     def set_epoch(self, epoch):
         """
