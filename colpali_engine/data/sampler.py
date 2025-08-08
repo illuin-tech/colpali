@@ -45,13 +45,16 @@ class SingleDatasetBatchSampler(BatchSampler):
         self.max_positions = [(size // self.global_batch_size) * self.global_batch_size for size in self.dataset_sizes]
 
     def __iter__(self) -> Iterator[List[int]]:
-        # Reset current positions and available datasets
+        # Reset current positions, available datasets and proportions
         self.current_positions = [0] * len(self.datasets)
         self.available_datasets = list(range(len(self.datasets)))
+        self.current_data_lengths = torch.tensor([size for size in self.dataset_sizes], dtype=torch.int)
 
         while self.available_datasets:
-            # Randomly select from available datasets
-            dataset_idx_index = torch.randint(len(self.available_datasets), size=(1,), generator=self.generator).item()
+            # Randomly select from available datasets, weighted by current dataset length
+            dataset_idx_index = torch.multinomial(
+                self.current_data_lengths / self.current_data_lengths.sum(), num_samples=1, generator=self.generator
+            ).item()
             dataset_idx = self.available_datasets[dataset_idx_index]
 
             # Get indices for the current dataset
@@ -67,6 +70,7 @@ class SingleDatasetBatchSampler(BatchSampler):
 
                 # Update position
                 self.current_positions[dataset_idx] = end_pos
+                self.current_data_lengths[dataset_idx] = self.dataset_sizes[dataset_idx] - end_pos
 
                 # If dataset is exhausted, remove from available datasets
                 if end_pos >= self.max_positions[dataset_idx]:
