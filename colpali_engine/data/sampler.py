@@ -52,6 +52,8 @@ class SingleDatasetBatchSampler(BatchSampler):
 
         while self.available_datasets:
             # Randomly select from available datasets, weighted by current dataset length
+            if self.current_data_lengths.sum() == 0:
+                break
             dataset_idx_index = torch.multinomial(
                 self.current_data_lengths / self.current_data_lengths.sum(), num_samples=1, generator=self.generator
             ).item()
@@ -75,11 +77,13 @@ class SingleDatasetBatchSampler(BatchSampler):
                 # If dataset is exhausted, remove from available datasets
                 if end_pos >= self.max_positions[dataset_idx]:
                     self.available_datasets.remove(dataset_idx)
+                    self.current_data_lengths[dataset_idx] = 0
 
                 yield batch_indices
             else:
                 # This dataset doesn't have enough samples for another batch
                 self.available_datasets.remove(dataset_idx)
+                self.current_data_lengths[dataset_idx] = 0
 
     def set_epoch(self, epoch):
         """
