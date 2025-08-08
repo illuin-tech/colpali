@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## Unreleased
+
+- Fix multi dataset sampling in order to weight probability of being picked by the size of the dataset
+
 ## [0.3.12] - 2025-07-16
 
 ### Added
