@@ -1,11 +1,13 @@
-from typing import Literal
-
+import os
 import torch
 
-from colpali_engine.models.vbert.modeling_vbert import VBertModel, VBertPreTrainedModel
+from typing import Literal, Union
+
+from colpali_engine.models.eurovbert.modeling_vbert import VBertModel, VBertPreTrainedModel
+from colpali_engine.models.eurovbert.configuration_vbert import VBertConfig
 
 
-class BiVBert(VBertPreTrainedModel):
+class BiEuroVBert(VBertPreTrainedModel):
     """
     Initializes the BiIdefics3 model.
 
@@ -15,7 +17,6 @@ class BiVBert(VBertPreTrainedModel):
     supports_gradient_checkpointing = True
     _supports_flash_attn_2 = True
     _supports_sdpa = True
-    _supports_cache_class = True
 
     def __init__(self, config, pooling_strategy = "mean", **kwargs):
         super().__init__(config=config)
@@ -51,8 +52,7 @@ class BiVBert(VBertPreTrainedModel):
             pooled_output = last_hidden_states[:, 0]  # (batch_size, hidden_size)
         elif pooling_strategy == "last":
             # Use last token
-            last_unpadded_index = kwargs["attention_mask"].sum(dim=1) - 1
-            pooled_output = last_hidden_states[:, last_unpadded_index.clamp(min=0)]  # (batch_size, hidden_size)
+            pooled_output = last_hidden_states[:, -1]  # (batch_size, hidden_size)
         elif pooling_strategy == "mean":
             # Mean pooling over sequence length
             mask = kwargs["attention_mask"].unsqueeze(-1)  # (batch_size, sequence_length, 1)

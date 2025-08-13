@@ -18,31 +18,40 @@ def concat_all_gather(t: torch.Tensor) -> torch.Tensor:
     return t
 
 
+def concat_datasets(datasets: list[Dataset], batch_size: int) -> Dataset:
+    """
+    Concatenates a list of datasets into a single dataset.
+    This is a utility function to handle the case where multiple datasets are provided.
+    """
+    # round down each dataset if not divible by global batch size
+    for i in range(len(datasets)):
+        if len(datasets[i]) % batch_size != 0:
+            total_samples = (len(datasets[i]) // batch_size) * batch_size
+            datasets[i] = datasets[i].take(total_samples)
+
+    return ConcatDataset(datasets)
+
+
 class ContrastiveTrainer(Trainer):
     def __init__(self, loss_func, is_vision_model, compute_symetric_loss=False, *args, **kwargs):
-        if isinstance(kwargs["train_dataset"], DatasetDict):
-            dataset_list = list(kwargs["train_dataset"].values())
-        elif isinstance(kwargs["train_dataset"], list):
-            dataset_list = kwargs["train_dataset"]
+        if isinstance(kwargs["train_dataset"], list):
+            train_dataset_list = kwargs["train_dataset"]
+            kwargs["train_dataset"] = concat_datasets(train_dataset_list, batch_size=kwargs["args"].train_batch_size)
         else:
-            dataset_list = None
+            train_dataset_list = None
 
-        if isinstance(dataset_list, list):
-            # round down each dataset if not divible by global batch size
-            batch_size = kwargs["args"].train_batch_size
-            for i in range(len(dataset_list)):
-                if len(dataset_list[i]) % batch_size != 0:
-                    total_samples = (len(dataset_list[i]) // batch_size) * batch_size
-                    dataset_list[i] = dataset_list[i].take(total_samples)
-
-        if dataset_list is not None:
-            kwargs["train_dataset"] = ConcatDataset(dataset_list)
+        if isinstance(kwargs["eval_dataset"], list):
+            eval_dataset_list = kwargs["eval_dataset"]
+            kwargs["eval_dataset"] = concat_datasets(eval_dataset_list)
+        else:
+            eval_dataset_list = None
 
         super().__init__(*args, **kwargs)
         self.loss_func = loss_func
         self.is_vision_model = is_vision_model  # Unused argument, will be removed in 0.4.0
         self.args.remove_unused_columns = False  # Safety, don't remove dataset columns from dataloader
-        self.dataset_list = dataset_list
+        self.train_dataset_list = train_dataset_list
+        self.eval_dataset_list = eval_dataset_list
         self.compute_symetric_loss = compute_symetric_loss 
 
     def get_train_dataloader(self) -> DataLoader:
@@ -56,6 +65,10 @@ class ContrastiveTrainer(Trainer):
         """
         if self.train_dataset is None:
             raise ValueError("Trainer: training requires a train_dataset.")
+        
+        if self.train_dataset_list is None:
+            # If no dataset list, use the default behavior
+            return super().get_train_dataloader()
 
         dataset = self.train_dataset
         description = "Training"
@@ -63,9 +76,6 @@ class ContrastiveTrainer(Trainer):
         sampler_fn = self._get_train_sampler
         is_training = True
         dataloader_key = None
-
-        if self.dataset_list is None:
-            return super()._get_dataloader(dataset, description, batch_size, sampler_fn, is_training, dataloader_key)
 
         data_collator = self.data_collator
         if is_datasets_available() and isinstance(dataset, datasets.Dataset):
@@ -84,7 +94,7 @@ class ContrastiveTrainer(Trainer):
         if not isinstance(dataset, torch.utils.data.IterableDataset):
             if sampler_fn is not None:
                 ###### batch_sampler set instead of sampler in trainer code #######
-                dataloader_params["batch_sampler"] = sampler_fn(dataset)
+                dataloader_params["batch_sampler"] = sampler_fn()
             dataloader_params["drop_last"] = self.args.dataloader_drop_last
             dataloader_params["prefetch_factor"] = self.args.dataloader_prefetch_factor
             if is_training:
@@ -104,9 +114,9 @@ class ContrastiveTrainer(Trainer):
 
         return self.accelerator.prepare(dataloader)
 
-    def _get_train_sampler(self, train_dataset: Optional[Dataset] = None) -> Optional[torch.utils.data.Sampler]:
-        if self.dataset_list is None:
-            return super()._get_train_sampler(train_dataset=train_dataset)
+    def _get_train_sampler(self) -> Optional[torch.utils.data.Sampler]:
+        if self.train_dataset_list is None:
+            return super()._get_train_sampler()
 
         # Use SingleDatasetBatchSampler to ensure that each dataset in the list is sampled independently
         # Note: Surely breaks in distributed training
@@ -114,7 +124,7 @@ class ContrastiveTrainer(Trainer):
         generator = torch.Generator()
         generator.manual_seed(self.args.seed)
         return SingleDatasetBatchSampler(
-            self.dataset_list,
+            self.train_dataset_list,
             self.args.train_batch_size,
             drop_last=self.args.dataloader_drop_last,
             generator=generator,

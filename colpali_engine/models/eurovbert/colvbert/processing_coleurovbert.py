@@ -12,12 +12,13 @@ class ColEuroVBertProcessor(BaseVisualRetrieverProcessor, Idefics3Processor):
     Processor for ColIdefics3.
     """
 
-    query_augmentation_token: ClassVar[str] = "<|end_of_text|>"
+    query_augmentation_token: ClassVar[str] = "<end_of_utterance>"
     image_token: ClassVar[str] = "<image>"
     visual_prompt_prefix: ClassVar[str] = "<|begin_of_text|>User:<image>Describe the image.<end_of_utterance>\nAssistant:"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.tokenizer.padding_side = "left"
 
     @property
     def image_token_id(self) -> int:
@@ -26,55 +27,38 @@ class ColEuroVBertProcessor(BaseVisualRetrieverProcessor, Idefics3Processor):
     def process_images(
         self,
         images: List[Image.Image],
-        contexts: Optional[List[str]] = None,
     ) -> Union[BatchFeature, BatchEncoding]:
         """
-        Process images for ColVBert.
+        Process images for ColEuroVBert.
 
         Args:
             images: List of PIL images.
-            contexts: List of optional context prompts, i.e. some text description of the context of the image.
         """
-        # if contexts is None:
-        #     contexts = [self.visual_prompt_prefix] * len(images)
-        contexts = [self.visual_prompt_prefix] * len(images)
-
         images = [image.convert("RGB") for image in images]
-        
+
         batch_doc = self(
-            text=contexts,
+            text=[self.visual_prompt_prefix] * len(images),
             images=images,
             padding="longest",
             return_tensors="pt",
         )
         return batch_doc
 
-    def process_texts(
-        self,
-        texts: List[str],
-        max_length: int = 50,
-        contexts: Optional[List[str]] = None,
-        suffix: Optional[str] = None,
-    ) -> Union[BatchFeature, BatchEncoding]:
+    def process_texts(self, texts: List[str]) -> Union[BatchFeature, BatchEncoding]:
         """
-        Process texts for ColVBert.
+        Process texts for ColEuroVBert.
 
-        NOTE: `max_length` is not used and kept only for trainer compatibility.
+        Args:
+            texts: List of input texts.
+
+        Returns:
+            Union[BatchFeature, BatchEncoding]: Processed texts.
         """
-        if suffix is None:
-            suffix = self.query_augmentation_token * 10
-        if contexts is None:
-            contexts = [""] * len(texts)
-
-        prompts = [context + text + suffix for context, text in zip(contexts, texts)]
-
-        batch_texts = self(
-            text=prompts,
+        return self(
+            text=texts,
             return_tensors="pt",
             padding="longest",
         )
-
-        return batch_texts
 
     def score(
         self,

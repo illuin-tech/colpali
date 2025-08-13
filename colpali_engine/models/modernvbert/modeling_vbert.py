@@ -263,13 +263,16 @@ class VBertModel(VBertPreTrainedModel):
         )
         self.image_token_id = self.config.image_token_id
 
+        self._use_flash_attention_2 = config._attn_implementation == "flash_attention_2"
+
         self.post_init()
 
     @staticmethod
     def init_vision_model(config: VBertConfig, **kwargs):
         vision_model_config = AutoConfig.from_pretrained(
             config.vision_config.vision_model_name,
-            trust_remote_code=True,
+            _attn_implementation=config._attn_implementation,
+            torch_dtype=config.torch_dtype,
             **kwargs,
         )
 
@@ -285,12 +288,13 @@ class VBertModel(VBertPreTrainedModel):
     def init_language_model(config: VBertConfig, **kwargs):
         text_model_config = AutoConfig.from_pretrained(
             config.text_config.text_model_name,
+            _attn_implementation=config._attn_implementation,
+            torch_dtype=config.torch_dtype,
             trust_remote_code=True,
             **kwargs,
         )
 
         text_model = AutoModel.from_config(text_model_config, trust_remote_code=True, **kwargs)
-        # extractor = regex_lookup(language_model_name, language_model_name2model)
 
         embed_layer = DecoupledEmbedding(
             num_embeddings=text_model_config.vocab_size,
