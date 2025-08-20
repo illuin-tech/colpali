@@ -34,6 +34,8 @@ class BiVBertProcessor(ColEuroVBertProcessor):  # noqa: N801
             text=prompts,
             return_tensors="pt",
             padding="longest",
+            truncation=True,
+            # max_length=4096,
         )
 
         return batch_texts

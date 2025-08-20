@@ -41,6 +41,8 @@ class ColModernVBertProcessor(BaseVisualRetrieverProcessor, Idefics3Processor):
             images=images,
             padding="longest",
             return_tensors="pt",
+            truncation=True,
+            # max_length=8192,
         )
         return batch_doc
 
@@ -58,6 +60,8 @@ class ColModernVBertProcessor(BaseVisualRetrieverProcessor, Idefics3Processor):
             text=texts,
             return_tensors="pt",
             padding="longest",
+            truncation=True,
+            # max_length=4096,
         )
 
     def score(
