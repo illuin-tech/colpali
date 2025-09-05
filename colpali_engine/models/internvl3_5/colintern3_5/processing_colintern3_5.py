@@ -22,6 +22,14 @@ class ColIntern3_5Processor(BaseVisualRetrieverProcessor, InternVLProcessor):  #
         if hasattr(self.tokenizer, "context_image_token_id"):
             self.image_token_id = self.tokenizer.context_image_token_id
 
+    @property
+    def query_augmentation_token(self) -> str:
+        """
+        Return the query augmentation token.
+        Query augmentation buffers are used as reasoning buffers during inference.
+        """
+        return self.tokenizer.pad_token
+
     @classmethod
     def from_pretrained(cls, *args, device_map: Optional[str] = None, **kwargs):
         instance = super().from_pretrained(*args, device_map=device_map, **kwargs)
@@ -66,6 +74,18 @@ class ColIntern3_5Processor(BaseVisualRetrieverProcessor, InternVLProcessor):  #
     # Alias for process_texts
     def process_queries(self, queries: List[str]) -> Union[BatchFeature, BatchEncoding]:
         return self.process_texts(queries)
+
+    def score(
+        self,
+        qs: List[torch.Tensor],
+        ps: List[torch.Tensor],
+        device: Optional[Union[str, torch.device]] = None,
+        **kwargs,
+    ) -> torch.Tensor:
+        """
+        Compute the MaxSim score (ColBERT-like) for the given multi-vector query and passage embeddings.
+        """
+        return self.score_multi_vector(qs, ps, device=device, **kwargs)
 
     def score_multi_vector(self, qs: Union[List[torch.Tensor], torch.Tensor], ps: Union[List[torch.Tensor], torch.Tensor], device: Optional[Union[str, torch.device]] = None) -> torch.Tensor:
         """
