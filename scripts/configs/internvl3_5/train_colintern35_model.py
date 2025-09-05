@@ -1,3 +1,13 @@
+# Useful info: 
+# - GPU: RTX 5090 32GB
+# - System RAM: 64GB
+# - CUDA: 12.8
+# - torch==2.8.0+cu128
+# - nvidia-cuda-nvrtc-cu12==12.8.93
+# - nvidia-cuda-runtime-cu12==12.8.90
+# - flash_attn==2.8.3
+# - accelerate==1.8.1
+# - bitsandbytes==0.47.0
 import argparse
 import shutil
 from pathlib import Path
@@ -59,14 +69,14 @@ if __name__ == "__main__":
     else:
         raise ValueError(f"Unknown loss function: {args.loss}")
 
-    # ---- InternVL3_5 backbone + processor ----
-    # NOTE: Do NOT pass max_num_visual_tokens here; InternVL’s processor already uses image_seq_length=256 by default.
-    #       This keeps train/eval consistent (important for ViDoRe).:contentReference[oaicite:7]{index=7}
+        # ---- InternVL3_5 backbone + processor ----
+        # NOTE: max_num_visual_tokens=768 is CRITICAL for performance! 
+        # Without this limit, InternVL processes images at full resolution creating excessive visual tokens.
     config = ColModelTrainingConfig(
         output_dir=args.output_dir,
         processor=ColIntern3_5Processor.from_pretrained(
             pretrained_model_name_or_path="OpenGVLab/InternVL3_5-1B-HF",
-            # no max_num_visual_tokens; InternVLProcessor defaults are appropriate:contentReference[oaicite:8]{index=8}
+            max_num_visual_tokens=768,
         ),
         model=ColIntern3_5.from_pretrained(
             pretrained_model_name_or_path="OpenGVLab/InternVL3_5-1B-HF",
@@ -88,18 +98,26 @@ if __name__ == "__main__":
             output_dir=None,
             overwrite_output_dir=True,
             num_train_epochs=1,
-            per_device_train_batch_size=64,
+            per_device_train_batch_size=16,  # Reduced to fit memory
+            gradient_accumulation_steps=4,   # Effective batch size = 16*4 = 64
             gradient_checkpointing=True,
             gradient_checkpointing_kwargs={"use_reentrant": False},
-            per_device_eval_batch_size=16,
+            per_device_eval_batch_size=8,   # Reduced for memory efficiency
             eval_strategy="steps",
-            dataloader_num_workers=0,
-            save_steps=500,
+            dataloader_num_workers=4,       # Increase workers for faster data loading
+            dataloader_prefetch_factor=2,   # Prefetch batches for efficiency
+            save_steps=2000,
             logging_steps=10,
             eval_steps=100,
             warmup_steps=100,
             learning_rate=args.lr,
             save_total_limit=1,
+            bf16=True,  # Enable bfloat16 training to match model dtype
+            dataloader_pin_memory=False,    # Disable pin memory to save GPU memory
+            optim="adamw_torch_fused",      # Keep fused optimizer
+            remove_unused_columns=False,    # Don't remove columns to avoid reprocessing
+            fp16_full_eval=False,           # Use bf16 for eval too
+            tf32=True,                      # Enable TensorFloat-32 for faster computation
         ),
 
         # ---- LoRA over language model + the custom projection head only ----
@@ -107,16 +125,22 @@ if __name__ == "__main__":
         # InternVL base model exposes `language_model` directly (no extra `.model` wrapper in the base class):contentReference[oaicite:12]{index=12},
         # so target that path instead:
         peft_config=LoraConfig(
-            r=32,
-            lora_alpha=32,
+            r=16,  # Reduced rank from 32 to 16 for memory efficiency
+            lora_alpha=16,  # Adjusted alpha proportionally
             lora_dropout=0.1,
             init_lora_weights="gaussian",
             bias="none",
             task_type="FEATURE_EXTRACTION",
-            target_modules=(
-                "(.*(language_model).*(down_proj|gate_proj|up_proj|k_proj|q_proj|v_proj|o_proj).*$"
-                "|.*(custom_text_proj).*$)"
-            ),
+            target_modules=[
+                "language_model.layers.*.self_attn.q_proj",
+                "language_model.layers.*.self_attn.k_proj", 
+                "language_model.layers.*.self_attn.v_proj",
+                "language_model.layers.*.self_attn.o_proj",
+                "language_model.layers.*.mlp.gate_proj",
+                "language_model.layers.*.mlp.up_proj",
+                "language_model.layers.*.mlp.down_proj",
+                "custom_text_proj",
+            ],
         ) if args.peft else None,
     )
 

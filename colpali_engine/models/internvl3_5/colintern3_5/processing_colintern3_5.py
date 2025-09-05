@@ -33,13 +33,18 @@ class ColIntern3_5Processor(BaseVisualRetrieverProcessor, InternVLProcessor):  #
     @classmethod
     def from_pretrained(cls, *args, device_map: Optional[str] = None, **kwargs):
         instance = super().from_pretrained(*args, device_map=device_map, **kwargs)
-        # Optionally limit visual tokens by adjusting image processor's max pixels (if provided)
+        # Optionally limit visual tokens by adjusting image processor's configuration (if provided)
         if "max_num_visual_tokens" in kwargs:
             max_tokens = kwargs["max_num_visual_tokens"]
-            # Each merged image patch covers 28x28 pixels (for patch_size 14 and merge size 2)
-            instance.image_processor.max_pixels = max_tokens * 28 * 28
-            if hasattr(instance.image_processor, "size") and isinstance(instance.image_processor.size, dict):
-                instance.image_processor.size["longest_edge"] = instance.image_processor.max_pixels
+            # For GotOCR2 image processor, we limit patches instead of pixels
+            if hasattr(instance.image_processor, "max_patches"):
+                # Calculate appropriate max_patches based on max_num_visual_tokens
+                # With patch_size=14 and spatial_merge_size=2, each patch covers 28x28 pixels
+                # Limit max_patches to reduce total visual tokens
+                target_patches = min(max_tokens // 64, instance.image_processor.max_patches)  # Conservative estimate
+                instance.image_processor.max_patches = max(1, target_patches)
+            # Keep the original size configuration for GotOCR2 processor
+            # Don't modify size as it may cause incompatibility issues
         return instance
 
     def process_images(self, images: List[Image.Image]) -> Union[BatchFeature, BatchEncoding]:

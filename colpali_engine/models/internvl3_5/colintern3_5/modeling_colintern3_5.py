@@ -24,10 +24,23 @@ class ColIntern3_5(InternVLModel):  # noqa: N801
 
     @classmethod
     def from_pretrained(cls, *args, **kwargs):
+        # Extract torch_dtype from kwargs to ensure proper dtype handling
+        torch_dtype = kwargs.get('torch_dtype', None)
+        
         key_mapping = kwargs.pop("key_mapping", None)
         if key_mapping is None:
             key_mapping = super()._checkpoint_conversion_mapping
-        return super().from_pretrained(*args, **kwargs, key_mapping=key_mapping)
+            
+        model = super().from_pretrained(*args, **kwargs, key_mapping=key_mapping)
+        
+        # Ensure all parameters are in the correct dtype if specified
+        if torch_dtype is not None:
+            model = model.to(dtype=torch_dtype)
+            # Specifically ensure the custom projection layer is also converted
+            if hasattr(model, 'custom_text_proj'):
+                model.custom_text_proj = model.custom_text_proj.to(dtype=torch_dtype)
+                
+        return model
 
     def forward(self, *args, **kwargs) -> torch.Tensor:
         # Remove unsupported HF arguments if present
