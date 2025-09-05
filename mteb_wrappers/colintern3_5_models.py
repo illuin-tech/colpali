@@ -36,13 +36,40 @@ class ColIntern3_5Wrapper(ColPaliEngineWrapper):
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         
         # Load model from the specified path
-        self.mdl = ColIntern3_5.from_pretrained(
-            model_name,
-            device_map=self.device,
-            torch_dtype=torch_dtype,
-            adapter_kwargs={"revision": revision} if revision else {},
-            **kwargs,
-        )
+        # For PEFT checkpoints, we need to load the base model first and then the adapter
+        if model_name.startswith("experiments/"):
+            # This is a local PEFT checkpoint
+            base_model_name = "OpenGVLab/InternVL3_5-1B-HF"
+            
+            # First load the base model without PEFT
+            self.mdl = ColIntern3_5.from_pretrained(
+                base_model_name,
+                device_map=self.device,
+                torch_dtype=torch_dtype,
+                **kwargs,
+            )
+            
+            # Then load the PEFT adapter using the proper approach
+            from peft import PeftModel
+            self.mdl = PeftModel.from_pretrained(
+                self.mdl, 
+                model_name,
+                torch_dtype=torch_dtype,
+                is_trainable=False  # Set to False for inference
+            )
+            
+            # Merge the adapter weights into the base model for inference
+            # This ensures the custom_text_proj gets the trained weights
+            self.mdl = self.mdl.merge_and_unload()
+        else:
+            # Regular model loading
+            self.mdl = ColIntern3_5.from_pretrained(
+                model_name,
+                device_map=self.device,
+                torch_dtype=torch_dtype,
+                adapter_kwargs={"revision": revision} if revision else {},
+                **kwargs,
+            )
         self.mdl.eval()
         
         # For local checkpoints, use the base model for the processor

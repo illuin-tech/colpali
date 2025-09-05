@@ -107,21 +107,23 @@ def main():
         tasks = mteb.get_benchmarks(names=args.benchmarks)
         print(f"✅ Loaded {len(tasks)} benchmark tasks")
         for task in tasks:
-            print(f"   📋 {task.metadata.name}")
+            # Try different ways to get the task name
+            task_name = getattr(task, 'name', None) or getattr(task, 'task_name', None) or str(task)
+            print(f"   📋 {task_name}")
     except Exception as e:
         print(f"❌ Failed to load benchmarks: {e}")
         # Try to list available benchmarks
         try:
             all_benchmarks = mteb.get_benchmarks()
-            vidore_benchmarks = [b for b in all_benchmarks if 'vidore' in b.metadata.name.lower()]
+            vidore_benchmarks = [b for b in all_benchmarks if 'vidore' in str(b).lower()]
             if vidore_benchmarks:
-                print(f"Available ViDoRe benchmarks: {[b.metadata.name for b in vidore_benchmarks]}")
+                print(f"Available ViDoRe benchmarks: {[str(b) for b in vidore_benchmarks[:5]]}")
             else:
                 print("No ViDoRe benchmarks found. Available benchmarks:")
                 for b in all_benchmarks[:10]:  # Show first 10
-                    print(f"   - {b.metadata.name}")
-        except:
-            pass
+                    print(f"   - {str(b)}")
+        except Exception as debug_e:
+            print(f"Debug error: {debug_e}")
         sys.exit(1)
     
     # Create evaluator

@@ -97,7 +97,7 @@ if __name__ == "__main__":
         tr_args=TrainingArguments(
             output_dir=None,
             overwrite_output_dir=True,
-            num_train_epochs=10,  # Increase epochs for better convergence
+            num_train_epochs=1,  # Increase epochs for better convergence
             per_device_train_batch_size=32,  # Balanced for visual tokens and memory
             gradient_accumulation_steps=2,   # Maintain effective batch size
             gradient_checkpointing=True,
