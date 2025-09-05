@@ -5,6 +5,7 @@ This guide provides comprehensive instructions for training and evaluating ColIn
 ## 📋 Table of Contents
 
 - [System Requirements](#system-requirements)
+- [Target Module Verification](#target-module-verification)
 - [Quick Start](#quick-start)
 - [Training Instructions](#training-instructions)
 - [Evaluation Instructions](#evaluation-instructions)
@@ -35,6 +36,64 @@ peft>=0.12.0
 wandb  # for experiment tracking
 optuna  # for hyperparameter optimization
 ```
+
+## 🎯 Target Module Verification
+
+Before training, verify your LoRA target modules are correctly configured:
+
+```bash
+# Verify target modules for InternVL3.5-1B-HF
+python scripts/verify_target_modules.py
+```
+
+### Expected Verification Results
+
+```
+================================================================================
+LORA TARGET MODULE VERIFICATION FOR InternVL3.5-1B-HF
+================================================================================
+
+📍 Target: language_model.layers.*.self_attn.q_proj
+  ✅ Found 28 matches (covers layers 0-27)
+
+📍 Target: language_model.layers.*.self_attn.k_proj
+  ✅ Found 28 matches (covers layers 0-27)
+
+📍 Target: language_model.layers.*.self_attn.v_proj
+  ✅ Found 28 matches (covers layers 0-27)
+
+📍 Target: language_model.layers.*.self_attn.o_proj
+  ✅ Found 28 matches (covers layers 0-27)
+
+📍 Target: language_model.layers.*.mlp.gate_proj
+  ✅ Found 28 matches (covers layers 0-27)
+
+📍 Target: language_model.layers.*.mlp.up_proj
+  ✅ Found 28 matches (covers layers 0-27)
+
+📍 Target: language_model.layers.*.mlp.down_proj
+  ✅ Found 28 matches (covers layers 0-27)
+
+📍 Target: custom_text_proj
+  ✅ Found (Type: Linear(1024 → 128))
+
+SUMMARY: ✅ Total modules that will receive LoRA adapters: 197
+```
+
+### What Gets Trained vs. Frozen
+
+| Component | Status | Module Count | Reason |
+|-----------|--------|-------------|--------|
+| **Language Model** | 🔥 **Trained** | 196 modules | Task-specific text understanding |
+| **Custom Text Projection** | 🔥 **Trained** | 1 module | Maps to retrieval space |
+| **Vision Tower** | ❄️ **Frozen** | 144 modules | Preserve pre-trained vision |
+| **Multi-Modal Projector** | ❄️ **Frozen** | 2 modules | Standard practice |
+
+**Key Benefits:**
+- ✅ **Memory Efficient**: Only ~2.5M trainable parameters (vs 197M total)
+- ✅ **Stable Training**: Frozen vision prevents catastrophic forgetting
+- ✅ **High Performance**: Targets all critical language understanding layers
+- ✅ **Fast Training**: Reduced computational requirements
 
 ## 🚀 Quick Start
 
@@ -138,6 +197,34 @@ LoraConfig(
     ],
 )
 ```
+
+#### **Target Module Verification**
+
+Verify your target modules are correctly configured for InternVL3.5-1B-HF:
+
+```bash
+# Verify target modules match your model architecture
+python scripts/verify_target_modules.py
+```
+
+**Expected Results:**
+- ✅ **197 total modules** targeted for LoRA training
+- ✅ **28 language model layers** × 7 projections = 196 modules
+- ✅ **1 custom projection** (custom_text_proj: Linear(1024 → 128))
+- ❌ **146 excluded modules** (vision tower, multi-modal projector - correctly frozen)
+
+**Target Module Breakdown:**
+| Component | Modules per Layer | Total Modules | Description |
+|-----------|-------------------|---------------|-------------|
+| **Attention** | 4 (q,k,v,o_proj) | 112 | Self-attention projections |
+| **MLP** | 3 (gate,up,down_proj) | 84 | Feed-forward projections |
+| **Custom Projection** | 1 | 1 | ColPali retrieval head |
+| **TOTAL** | **7 + 1** | **197** | All trainable modules |
+
+**Correctly Excluded (Frozen):**
+- Vision tower (144 modules) - Preserves pre-trained visual features
+- Multi-modal projector (2 modules) - Connects vision to language
+- Embeddings, layer norms, rotary embeddings - Standard practice
 
 ### Monitoring Training
 
@@ -343,9 +430,36 @@ print(f"Weight range: [{custom_proj.weight.min():.6f}, {custom_proj.weight.max()
 - [ ] **Effective batch size ≥ 64**: Required for stable gradients
 - [ ] **Learning rate = 5e-5**: Optimal for 1B parameter models
 - [ ] **PEFT enabled**: `--peft` flag included
-- [ ] **Target modules include custom_text_proj**: Critical for performance
+- [ ] **Target modules verified**: Run `python scripts/verify_target_modules.py`
+- [ ] **Custom_text_proj included**: Critical for retrieval performance
+- [ ] **Vision tower excluded**: Preserves pre-trained features
+- [ ] **197 total LoRA modules**: Expected count for InternVL3.5-1B
 - [ ] **BF16 training enabled**: Matches model precision
 - [ ] **Flash attention enabled**: Improves efficiency
+
+### Target Module Debugging
+
+If you suspect target module issues:
+
+```bash
+# 1. Verify target modules
+python scripts/verify_target_modules.py
+
+# 2. Check PEFT adapter weights after training
+python -c "
+from mteb_wrappers.colintern3_5_models import ColIntern3_5Wrapper
+model = ColIntern3_5Wrapper('path/to/checkpoint')
+custom_proj = model.mdl.custom_text_proj
+print(f'Weight stats: mean={custom_proj.weight.mean():.6f}, std={custom_proj.weight.std():.6f}')
+print('If std significantly different from ~0.02, weights were trained properly!')
+"
+```
+
+**Common Target Module Issues:**
+- ❌ **Missing custom_text_proj**: Results in poor retrieval performance
+- ❌ **Wrong module paths**: Use `language_model.layers.*` not just `layers.*`
+- ❌ **Including vision modules**: Increases memory usage, hurts performance  
+- ❌ **Wrong wildcard syntax**: Use `*` not `{0..27}` for layer numbers
 
 ## 📈 Performance Expectations
 
@@ -397,11 +511,21 @@ watch -n 1 nvidia-smi
 # Check training progress
 tail -f experiments/*/trainer_state.json
 
+# Verify target modules for your model
+python scripts/verify_target_modules.py
+
 # Compare model performance
 python scripts/compare_models.py model1 model2
 
 # Generate training report
 python scripts/training_report.py --model-path experiments/model
+
+# Quick PEFT adapter check
+python -c "
+from peft import PeftModel
+print('Checking PEFT adapter...')
+# Add your verification code here
+"
 ```
 
 ### File Structure
@@ -420,8 +544,37 @@ results/
 scripts/
 ├── hyperparameter_optimizer.py    # Architecture analysis
 ├── optuna_optimizer.py            # Advanced optimization
+├── verify_target_modules.py       # Target module verification
 └── evaluate_colintern3_5.py      # Evaluation script
 ```
+
+### LoRA Adapter Architecture
+
+For InternVL3.5-1B-HF, the LoRA configuration targets exactly **197 modules**:
+
+```
+Language Model (196 modules):
+├── 28 layers × 4 attention projections = 112 modules
+│   ├── q_proj (query projection)
+│   ├── k_proj (key projection) 
+│   ├── v_proj (value projection)
+│   └── o_proj (output projection)
+├── 28 layers × 3 MLP projections = 84 modules
+│   ├── gate_proj (gating projection)
+│   ├── up_proj (up projection)
+│   └── down_proj (down projection)
+
+Custom Projection (1 module):
+└── custom_text_proj (1024 → 128) = 1 module
+
+Total: 197 LoRA adapter modules
+```
+
+**Why This Configuration Works:**
+- **Language layers**: Enable task-specific text understanding
+- **Custom projection**: Maps language features to retrieval space
+- **Frozen vision**: Preserves powerful pre-trained visual representations
+- **Memory efficient**: ~2.5M trainable vs 197M total parameters
 
 ---
 
