@@ -75,17 +75,17 @@ COLINTERN3_5_TRAINING_DATA = {
 colintern3_5_1b_lora = ModelMeta(
     loader=partial(
         ColIntern3_5Wrapper,
-        model_name="experiments/colintern3_5-1B-lora/checkpoint-1847",
+        model_name="experiments/colintern3_5-1B-lora/checkpoint-1847",                                                    
         torch_dtype=torch.bfloat16,
         attn_implementation="flash_attention_2"
         if is_flash_attn_2_available()
         else None,
     ),
     name="local/colintern3_5-1B-lora",
-    languages=["eng-Latn"],
+    languages=["eng-Latn"],                                                  
     revision="checkpoint-1847",  # Our local checkpoint
     release_date="2025-09-05",  # Current date
-    n_parameters=905_000_000,  # 905M parameters as shown in training
+    n_parameters=905_000_000,  # 905M parameters as shown in training                         
     memory_usage_mb=1800,  # Approximate memory usage in MB
     max_tokens=32768,  # InternVL3.5 context length
     embed_dim=3584,  # Based on InternVL3.5-1B hidden size
