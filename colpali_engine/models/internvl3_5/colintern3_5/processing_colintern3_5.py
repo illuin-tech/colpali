@@ -18,9 +18,20 @@ class ColIntern3_5Processor(BaseVisualRetrieverProcessor, InternVLProcessor):  #
         super().__init__(*args, **kwargs)
         # Ensure text tokenizer pads on the right
         self.tokenizer.padding_side = "right"
+        
+        # Set image sequence length (number of tokens per patch)
+        self.image_seq_length = getattr(self.tokenizer, 'image_seq_length', 256)
+        
+        # Set up image token attributes if they exist
+        self.image_token = getattr(self.tokenizer, 'context_image_token', '<IMG_CONTEXT>')
+        self.start_image_token = getattr(self.tokenizer, 'start_image_token', '')
+        self.end_image_token = getattr(self.tokenizer, 'end_image_token', '')
+        
         # Store the special image token ID for quick access
         if hasattr(self.tokenizer, "context_image_token_id"):
             self.image_token_id = self.tokenizer.context_image_token_id
+        elif hasattr(self.tokenizer, "image_token_id"):
+            self.image_token_id = self.tokenizer.image_token_id
 
     @property
     def query_augmentation_token(self) -> str:
@@ -36,15 +47,15 @@ class ColIntern3_5Processor(BaseVisualRetrieverProcessor, InternVLProcessor):  #
         # Optionally limit visual tokens by adjusting image processor's configuration (if provided)
         if "max_num_visual_tokens" in kwargs:
             max_tokens = kwargs["max_num_visual_tokens"]
-            # For GotOCR2 image processor, we limit patches instead of pixels
+            # For GotOCR2 image processor, we need to limit the max_patches more aggressively
             if hasattr(instance.image_processor, "max_patches"):
-                # Calculate appropriate max_patches based on max_num_visual_tokens
-                # With patch_size=14 and spatial_merge_size=2, each patch covers 28x28 pixels
-                # Limit max_patches to reduce total visual tokens
-                target_patches = min(max_tokens // 64, instance.image_processor.max_patches)  # Conservative estimate
+                # Reduce max_patches to a much lower value to actually limit visual tokens
+                target_patches = min(max_tokens // 256, 10)  # Much more conservative estimate
                 instance.image_processor.max_patches = max(1, target_patches)
-            # Keep the original size configuration for GotOCR2 processor
-            # Don't modify size as it may cause incompatibility issues
+                # Also limit the image size to help reduce tokens
+                if hasattr(instance.image_processor, "size"):
+                    # Reduce image size for token limiting
+                    instance.image_processor.size = {"height": 224, "width": 224}
         return instance
 
     def process_images(self, images: List[Image.Image]) -> Union[BatchFeature, BatchEncoding]:
@@ -53,9 +64,20 @@ class ColIntern3_5Processor(BaseVisualRetrieverProcessor, InternVLProcessor):  #
         Returns a BatchFeature with keys including `input_ids`, `attention_mask`, and `pixel_values`.
         """
         images = [img.convert("RGB") for img in images]
-        # Prepare text placeholders for images using the special image token
-        placeholder = getattr(self, "image_token", self.tokenizer.context_image_token)
-        batch = self(text=[placeholder] * len(images), images=images, padding="longest", return_tensors="pt")
+        
+        # Use the standard InternVL processor approach by calling self() directly
+        # This will handle image tokens correctly using _insert_media_placeholders
+        placeholders = [self.image_token for _ in range(len(images))]
+        
+        # Call the parent processor which handles the token replacement properly
+        batch = self(text=placeholders, images=images, padding="longest", return_tensors="pt")
+        
+        # Convert pixel_values to bfloat16 to match model dtype
+        if "pixel_values" in batch and isinstance(batch["pixel_values"], torch.Tensor):
+            batch["pixel_values"] = batch["pixel_values"].to(torch.bfloat16)
+        elif "pixel_values" in batch and isinstance(batch["pixel_values"], list):
+            batch["pixel_values"] = [p.to(torch.bfloat16) for p in batch["pixel_values"]]
+        
         # If pixel_values are a list (images have different sizes), pad them to uniform spatial dimensions
         pixel_values = batch["pixel_values"]
         if isinstance(pixel_values, list):
@@ -96,42 +118,10 @@ class ColIntern3_5Processor(BaseVisualRetrieverProcessor, InternVLProcessor):  #
         """
         Compute ColBERT-style MaxSim score between multi-vector queries and passages.
         Each query embedding and passage embedding can be a list of token embeddings (or a tensor of shape [seq_length, dim]).
-        Returns a tensor of scores (one per query-passage pair).
+        Returns a tensor of scores with shape (len(qs), len(ps)).
         """
-        # Normalize inputs to lists of tensors
-        if isinstance(qs, torch.Tensor):
-            qs = [emb for emb in qs]
-        if isinstance(ps, torch.Tensor):
-            ps = [emb for emb in ps]
-        # Move embeddings to the target device if specified
-        if device is not None:
-            device_obj = torch.device(device)
-            qs = [emb.to(device_obj) for emb in qs]
-            ps = [emb.to(device_obj) for emb in ps]
-        scores: List[float] = []
-        if len(qs) == len(ps):
-            # Pairwise scoring for each query-passage pair
-            for q_emb, p_emb in zip(qs, ps):
-                sim = torch.matmul(q_emb, p_emb.T)  # (len_q_tokens, len_p_tokens)
-                max_sim, _ = sim.max(dim=1)         # max similarity for each query token
-                scores.append(max_sim.sum().item())
-        elif len(qs) == 1 and len(ps) > 1:
-            # One query vs many passages
-            q_emb = qs[0]
-            for p_emb in ps:
-                sim = torch.matmul(q_emb, p_emb.T)
-                max_sim, _ = sim.max(dim=1)
-                scores.append(max_sim.sum().item())
-        elif len(ps) == 1 and len(qs) > 1:
-            # Many queries vs one passage
-            p_emb = ps[0]
-            for q_emb in qs:
-                sim = torch.matmul(q_emb, p_emb.T)
-                max_sim, _ = sim.max(dim=1)
-                scores.append(max_sim.sum().item())
-        else:
-            raise ValueError("Inputs for queries and passages must have compatible batch sizes.")
-        return torch.tensor(scores, dtype=torch.float32, device=(device_obj if device is not None else None))
+        # Use the base class implementation which returns the correct shape
+        return super().score_multi_vector(qs, ps, device=device)
 
     def get_n_patches(self, image_size: Tuple[int, int], spatial_merge_size: int) -> Tuple[int, int]:
         """
