@@ -14,6 +14,9 @@ class ColIntern3_5Processor(BaseVisualRetrieverProcessor, InternVLProcessor):  #
         *args: Arguments for the InternVLProcessor.
         **kwargs: Keyword arguments for the InternVLProcessor (e.g., tokenizer or processor initialization parameters).
     """
+    
+    visual_prompt_prefix: ClassVar[str] = "<IMG_CONTEXT>Describe the image."
+    query_augmentation_token: ClassVar[str] = "<|endoftext|>"
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Ensure text tokenizer pads on the right
@@ -61,20 +64,24 @@ class ColIntern3_5Processor(BaseVisualRetrieverProcessor, InternVLProcessor):  #
         # Optionally limit visual tokens by adjusting image processor's configuration (if provided)
         if "max_num_visual_tokens" in kwargs:
             max_tokens = kwargs["max_num_visual_tokens"]
-            # For GotOCR2 image processor, we need to limit the max_patches more aggressively
+            # Based on official InternVL: limit tokens while maintaining quality
             if hasattr(instance.image_processor, "max_patches"):
-                # Reduce max_patches to a much lower value to actually limit visual tokens
-                target_patches = min(max_tokens // 256, 10)  # Much more conservative estimate
-                instance.image_processor.max_patches = max(1, target_patches)
-                # Also limit the image size to help reduce tokens
+                # Allow reasonable number of patches for document understanding
+                # Official InternVL doesn't severely limit max_patches
+                target_patches = min(max_tokens // 256, 12)  # More reasonable limit
+                instance.image_processor.max_patches = max(6, target_patches)  # Minimum 6 patches
+                # Use standard InternVL image size as per official implementation
                 if hasattr(instance.image_processor, "size"):
-                    # Reduce image size for token limiting
-                    instance.image_processor.size = {"height": 224, "width": 224}
+                    # Use official InternVL image size for better processing
+                    instance.image_processor.size = {"height": 448, "width": 448}
+                # Enable crop_to_patches as per official InternVL implementation
+                if hasattr(instance.image_processor, "crop_to_patches"):
+                    instance.image_processor.crop_to_patches = True
         return instance
 
     def process_images(self, images: List[Image.Image]) -> BatchEncoding:
         """
-        Process images for the model.
+        Process images for the model using the InternVL processor.
         
         Args:
             images: List of PIL Images
@@ -82,61 +89,25 @@ class ColIntern3_5Processor(BaseVisualRetrieverProcessor, InternVLProcessor):  #
         Returns:
             BatchEncoding with processed tensors
         """
-        # Process each image separately to maintain batch structure
-        all_input_ids = []
-        all_attention_masks = []
+        # Convert images to RGB if needed
+        images = [image.convert("RGB") for image in images]
         
-        # First process all images to get pixel values
-        image_inputs = self.image_processor(images=images, return_tensors="pt")
+        # Use a placeholder text for each image to get proper InternVL processing
+        placeholder = self.visual_prompt_prefix
         
-        # Calculate tokens per patch based on max_patches configuration
-        max_patches = getattr(self.image_processor, 'max_patches', 12)
+        # Process images and text together using the parent processor
+        batch = self(
+            text=[placeholder] * len(images), 
+            images=images, 
+            padding="longest", 
+            return_tensors="pt"
+        )
         
-        if max_patches <= 3:
-            # When max_patches is limited (e.g., 3), each patch generates fewer tokens
-            tokens_per_patch = 64  # Empirically determined for max_patches=3
-        else:
-            # Standard configuration
-            tokens_per_patch = 256
+        # Convert pixel_values to bfloat16 as expected by the model and tests
+        if "pixel_values" in batch:
+            batch["pixel_values"] = batch["pixel_values"].to(torch.bfloat16)
         
-        # Process each image individually for text placeholders
-        for i, image in enumerate(images):
-            height, width = image.size
-            # Get the actual number of patches for this image
-            patches_per_image = self.image_processor.get_number_of_image_tokens(height, width, images_kwargs={})
-            
-            # Calculate total tokens for this image
-            total_tokens_for_image = patches_per_image * tokens_per_patch
-            
-            # Create placeholder text for this image
-            placeholder_tokens = [self.image_token] * total_tokens_for_image
-            placeholder_text = "".join(placeholder_tokens)
-            
-            # Use tokenizer to create input_ids for this image
-            text_inputs = self.tokenizer(
-                placeholder_text,
-                return_tensors="pt",
-                padding=True,
-                truncation=True
-            )
-            
-            all_input_ids.append(text_inputs["input_ids"].squeeze(0))
-            all_attention_masks.append(text_inputs["attention_mask"].squeeze(0))
-        
-        # Pad sequences to same length
-        from torch.nn.utils.rnn import pad_sequence
-        
-        padded_input_ids = pad_sequence(all_input_ids, batch_first=True, padding_value=self.tokenizer.pad_token_id)
-        padded_attention_masks = pad_sequence(all_attention_masks, batch_first=True, padding_value=0)
-        
-        # Combine into a BatchEncoding
-        result = BatchEncoding({
-            "input_ids": padded_input_ids,
-            "attention_mask": padded_attention_masks,
-            "pixel_values": image_inputs["pixel_values"].to(dtype=torch.bfloat16)
-        })
-        
-        return result
+        return batch
 
     def process_texts(self, texts: List[str]) -> Union[BatchFeature, BatchEncoding]:
         """

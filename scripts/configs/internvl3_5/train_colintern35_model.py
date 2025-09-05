@@ -44,7 +44,7 @@ from colpali_engine.utils.dataset_transformation import load_train_set
 def parse_args():
     p = argparse.ArgumentParser()
     p.add_argument("--output-dir", type=str, required=True, help="where to write model + script copy")
-    p.add_argument("--lr", type=float, default=2e-4, help="learning rate")  # keep your default
+    p.add_argument("--lr", type=float, default=5e-5, help="learning rate")  # keep your default
     p.add_argument("--tau", type=float, default=0.02, help="temperature for loss function")
     p.add_argument("--trainer", type=str, default="hf", choices=["torch", "hf"], help="trainer to use")
     p.add_argument("--loss", type=str, default="ce", choices=["ce", "pairwise"], help="loss function to use")
@@ -76,7 +76,7 @@ if __name__ == "__main__":
         output_dir=args.output_dir,
         processor=ColIntern3_5Processor.from_pretrained(
             pretrained_model_name_or_path="OpenGVLab/InternVL3_5-1B-HF",
-            max_num_visual_tokens=768,
+            max_num_visual_tokens=1536,  # Reasonable limit based on official implementation
         ),
         model=ColIntern3_5.from_pretrained(
             pretrained_model_name_or_path="OpenGVLab/InternVL3_5-1B-HF",
@@ -97,12 +97,12 @@ if __name__ == "__main__":
         tr_args=TrainingArguments(
             output_dir=None,
             overwrite_output_dir=True,
-            num_train_epochs=1,
-            per_device_train_batch_size=16,  # Reduced to fit memory
-            gradient_accumulation_steps=4,   # Effective batch size = 16*4 = 64
+            num_train_epochs=10,  # Increase epochs for better convergence
+            per_device_train_batch_size=32,  # Balanced for visual tokens and memory
+            gradient_accumulation_steps=2,   # Maintain effective batch size
             gradient_checkpointing=True,
             gradient_checkpointing_kwargs={"use_reentrant": False},
-            per_device_eval_batch_size=8,   # Reduced for memory efficiency
+            per_device_eval_batch_size=32,   # Reduced for memory efficiency
             eval_strategy="steps",
             dataloader_num_workers=4,       # Increase workers for faster data loading
             dataloader_prefetch_factor=2,   # Prefetch batches for efficiency
@@ -125,8 +125,8 @@ if __name__ == "__main__":
         # InternVL base model exposes `language_model` directly (no extra `.model` wrapper in the base class):contentReference[oaicite:12]{index=12},
         # so target that path instead:
         peft_config=LoraConfig(
-            r=16,  # Reduced rank from 32 to 16 for memory efficiency
-            lora_alpha=16,  # Adjusted alpha proportionally
+            r=32,  # Reduced rank from 32 to 16 for memory efficiency
+            lora_alpha=32,  # Adjusted alpha proportionally
             lora_dropout=0.1,
             init_lora_weights="gaussian",
             bias="none",

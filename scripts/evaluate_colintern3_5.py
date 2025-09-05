@@ -31,7 +31,7 @@ def main():
     parser.add_argument(
         "--model-path",
         type=str,
-        default="experiments/colintern3_5-1B-lora/checkpoint-1847",
+        default="experiments/colintern3_5-1B-lora/checkpoint-xxx",
         help="Path to the ColIntern3.5 model checkpoint"
     )
     parser.add_argument(
