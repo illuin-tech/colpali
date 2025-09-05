@@ -6,12 +6,21 @@ import torch
 from datasets import load_dataset
 from peft import LoraConfig
 from transformers import TrainingArguments
+import multiprocessing as mp
 
 # Ensure 'colpali/' directory is on sys.path so 'colpali_engine' is importable when running this file
 _THIS_FILE = Path(__file__).resolve()
 _COLPALI_DIR = _THIS_FILE.parents[3]  # .../colpali
 if str(_COLPALI_DIR) not in sys.path:
     sys.path.insert(0, str(_COLPALI_DIR))
+
+
+# ---------- CRITICAL: avoid /dev/shm ----------
+import torch.multiprocessing as torch_mp  # noqa: E402
+try:
+    mp.set_sharing_strategy("file_descriptor")  # no torch_shm_manager
+except Exception:
+    pass
 
 
 from colpali_engine.data.dataset import ColPaliEngineDataset
@@ -78,13 +87,13 @@ if __name__ == "__main__":
         tr_args=TrainingArguments(
             output_dir=None,
             overwrite_output_dir=True,
-            num_train_epochs=5,
+            num_train_epochs=1,
             per_device_train_batch_size=64,
             gradient_checkpointing=True,
             gradient_checkpointing_kwargs={"use_reentrant": False},
             per_device_eval_batch_size=16,
             eval_strategy="steps",
-            dataloader_num_workers=8,
+            dataloader_num_workers=0,
             save_steps=500,
             logging_steps=10,
             eval_steps=100,
@@ -112,8 +121,8 @@ if __name__ == "__main__":
     )
 
     # Save a copy of the script for provenance (same as your flow)
-    Path(config.output_dir).mkdir(parents=True, exist_ok=True)
-    shutil.copy(Path(__file__), Path(config.output_dir) / Path(__file__).name)
+    # Path(config.output_dir).mkdir(parents=True, exist_ok=True)
+    # shutil.copy(Path(__file__), Path(config.output_dir) / Path(__file__).name)
 
     trainer = ColModelTraining(config) if args.trainer == "hf" else ColModelTorchTraining(config)
     trainer.train()
