@@ -70,13 +70,13 @@ if __name__ == "__main__":
         raise ValueError(f"Unknown loss function: {args.loss}")
 
         # ---- InternVL3_5 backbone + processor ----
-        # NOTE: max_num_visual_tokens=768 is CRITICAL for performance! 
-        # Without this limit, InternVL processes images at full resolution creating excessive visual tokens.
+        # NOTE: InternVL3.5 uses 256 tokens per patch after pixel shuffle compression.
+        # Default: 12 patches × 256 = 3072 tokens. We use 1536 (6 patches) for memory efficiency.
     config = ColModelTrainingConfig(
         output_dir=args.output_dir,
         processor=ColIntern3_5Processor.from_pretrained(
             pretrained_model_name_or_path="OpenGVLab/InternVL3_5-1B-HF",
-            max_num_visual_tokens=1536,  # Reasonable limit based on official implementation
+            max_num_visual_tokens=1536,  # 6 patches × 256 tokens = 1536 (memory efficient)
         ),
         model=ColIntern3_5.from_pretrained(
             pretrained_model_name_or_path="OpenGVLab/InternVL3_5-1B-HF",
