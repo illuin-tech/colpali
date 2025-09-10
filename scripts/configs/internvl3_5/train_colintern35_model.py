@@ -43,7 +43,7 @@ from colpali_engine.utils.dataset_transformation import load_train_set
 
 def parse_args():
     p = argparse.ArgumentParser()
-    p.add_argument("--output-dir", type=str, required=True, help="where to write model + script copy")
+    p.add_argument("--output-dir", type=str, default="./runs/8", help="where to write model + script copy")
     p.add_argument("--lr", type=float, default=5e-5, help="learning rate")  # keep your default
     p.add_argument("--tau", type=float, default=0.02, help="temperature for loss function")
     p.add_argument("--trainer", type=str, default="hf", choices=["torch", "hf"], help="trainer to use")
@@ -97,7 +97,7 @@ if __name__ == "__main__":
         tr_args=TrainingArguments(
             output_dir=None,
             overwrite_output_dir=True,
-            num_train_epochs=5,  # CRITICAL: Must be 5 for proper convergence
+            num_train_epochs=1,  # CRITICAL: Must be 5 for proper convergence
             per_device_train_batch_size=16,  # Optimal for RTX 5090 32GB
             gradient_accumulation_steps=4,   # Effective batch size = 64
             gradient_checkpointing=True,
@@ -106,12 +106,12 @@ if __name__ == "__main__":
             eval_strategy="steps",
             dataloader_num_workers=4,       # Increase workers for faster data loading
             dataloader_prefetch_factor=2,   # Prefetch batches for efficiency
-            save_steps=1000,               # Save more frequently
+            save_steps=500,               # Save more frequently
             logging_steps=10,
-            eval_steps=500,                # Evaluate more frequently
-            warmup_steps=198,              # Optimal warmup based on architecture analysis
+            eval_steps=100,                # Evaluate more frequently
+            warmup_steps=100,              # Optimal warmup based on architecture analysis
             learning_rate=args.lr,         # Uses 5e-5 default (optimal)
-            save_total_limit=2,            # Keep more checkpoints
+            save_total_limit=1,            # Keep more checkpoints
             bf16=True,  # Enable bfloat16 training to match model dtype
             dataloader_pin_memory=False,    # Disable pin memory to save GPU memory
             optim="adamw_torch_fused",      # Keep fused optimizer

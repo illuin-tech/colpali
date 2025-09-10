@@ -175,3 +175,6 @@ data_dir
 results
 wandb
 experiments
+runs
+output
+evals

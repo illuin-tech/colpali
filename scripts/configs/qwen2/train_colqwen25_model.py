@@ -17,7 +17,7 @@ from colpali_engine.utils.dataset_transformation import load_train_set
 
 def parse_args():
     p = argparse.ArgumentParser()
-    p.add_argument("--output-dir", type=str, required=True, help="where to write model + script copy")
+    p.add_argument("--output-dir", type=str, default="./runs/8", help="where to write model + script copy")
     p.add_argument("--lr", type=float, default=2e-4, help="learning rate")
     p.add_argument("--tau", type=float, default=0.02, help="temperature for loss function")
     p.add_argument("--trainer", type=str, default="hf", choices=["torch", "hf"], help="trainer to use")
