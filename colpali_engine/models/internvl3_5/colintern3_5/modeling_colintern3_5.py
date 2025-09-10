@@ -12,7 +12,7 @@ class ColIntern3_5(InternVLModel):  # noqa: N801
         config (InternVLConfig): Configuration of the InternVL3.5 model.
         mask_non_image_embeddings (bool, optional): If True, mask out all non-image token embeddings (e.g., text tokens) during forward pass. Defaults to False.
     """
-    main_input_name: ClassVar[str] = "doc_input_ids"
+     main_input_name: ClassVar[str] = "input_ids"
 
     def __init__(self, config: InternVLConfig, mask_non_image_embeddings: bool = False):
         super().__init__(config)

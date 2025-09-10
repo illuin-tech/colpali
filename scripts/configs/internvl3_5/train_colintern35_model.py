@@ -73,12 +73,12 @@ if __name__ == "__main__":
 
         # ---- InternVL3_5 backbone + processor ----
         # NOTE: InternVL3.5 uses 256 tokens per patch after pixel shuffle compression.
-        # Default: 12 patches × 256 = 3072 tokens. We use 1536 (6 patches) for memory efficiency.
+        # Default: 12 patches × 256 = 3072 tokens.
     config = ColModelTrainingConfig(
         output_dir=args.output_dir,
         processor=ColIntern3_5Processor.from_pretrained(
             pretrained_model_name_or_path="OpenGVLab/InternVL3_5-1B-HF",
-            max_num_visual_tokens=1536,  # 6 patches × 256 tokens = 1536 (memory efficient)
+            max_num_visual_tokens=3072,  # 12 patches × 256 tokens = 3072 (memory efficient)
         ),
         model=ColIntern3_5.from_pretrained(
             pretrained_model_name_or_path="OpenGVLab/InternVL3_5-1B-HF",
@@ -99,29 +99,30 @@ if __name__ == "__main__":
         tr_args=TrainingArguments(
             output_dir=None,
             overwrite_output_dir=True,
-            num_train_epochs=1,  # CRITICAL: Must be 5 for proper convergence
-            per_device_train_batch_size=16,  # Optimal for RTX 5090 32GB
-            gradient_accumulation_steps=4,   # Effective batch size = 64
+            num_train_epochs=1,  
+            per_device_train_batch_size=16
+            gradient_accumulation_steps=4,
             gradient_checkpointing=True,
             gradient_checkpointing_kwargs={"use_reentrant": False},
-            per_device_eval_batch_size=16,   # Match training batch size
+            per_device_eval_batch_size=16,
             eval_strategy="steps",
-            dataloader_num_workers=4,       # Increase workers for faster data loading
-            # dataloader_prefetch_factor=2,   # Prefetch batches for efficiency
-            save_steps=500,               # Save more frequently
+            dataloader_num_workers=4,     
+            dataloader_prefetch_factor=2,
+            dataloader_persistent_workers=False,
+            dataloader_pin_memory=False,    
+            save_steps=500,               
             logging_steps=10,
-            eval_steps=100,                # Evaluate more frequently
-            warmup_steps=100,              # Optimal warmup based on architecture analysis
-            learning_rate=args.lr,         # Uses 5e-5 default (optimal)
-            save_total_limit=1,            # Keep more checkpoints
-            bf16=True,                     # Enable bfloat16 training to match model dtype
-            dataloader_pin_memory=True,    # Disable pin memory to save GPU memory
-            optim="adamw_bnb_8bit",        # Keep fused optimizer
-            # remove_unused_columns=False, # Don't remove columns to avoid reprocessing
-            # fp16_full_eval=False,        # Use bf16 for eval too
-            tf32=True,                      # Enable TensorFloat-32 for faster computation
-            report_to="wandb",              # Enable wandb logging
-            torch_empty_cache_steps=4,     # Clear cache more frequently
+            eval_steps=100,                
+            warmup_steps=100,              
+            learning_rate=args.lr,         
+            save_total_limit=1,            
+            bf16=True,                                 
+            optim="adamw_bnb_8bit",        
+            # remove_unused_columns=False, 
+            # fp16_full_eval=False,        
+            tf32=True,                     
+            report_to="wandb",             
+            torch_empty_cache_steps=4,     
         ),
 
         # ---- LoRA over language model + the custom projection head only ----

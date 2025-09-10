@@ -68,8 +68,8 @@ class ColIntern3_5Processor(BaseVisualRetrieverProcessor, InternVLProcessor):  #
             if hasattr(instance.image_processor, "max_patches"):
                 # Allow reasonable number of patches for document understanding
                 # Official InternVL doesn't severely limit max_patches
-                target_patches = min(max_tokens // 256, 12)  # More reasonable limit
-                instance.image_processor.max_patches = max(6, target_patches)  # Minimum 6 patches
+                target_patches = min(max_tokens // 256, 12)
+                instance.image_processor.max_patches = target_patches
                 # Use standard InternVL image size as per official implementation
                 if hasattr(instance.image_processor, "size"):
                     # Use official InternVL image size for better processing
