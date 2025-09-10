@@ -100,25 +100,25 @@ if __name__ == "__main__":
             output_dir=None,
             overwrite_output_dir=True,
             num_train_epochs=1,  # CRITICAL: Must be 5 for proper convergence
-            per_device_train_batch_size=4,  # Optimal for RTX 5090 32GB
-            gradient_accumulation_steps=16,   # Effective batch size = 64
+            per_device_train_batch_size=16,  # Optimal for RTX 5090 32GB
+            gradient_accumulation_steps=4,   # Effective batch size = 64
             gradient_checkpointing=True,
             gradient_checkpointing_kwargs={"use_reentrant": False},
             per_device_eval_batch_size=16,   # Match training batch size
             eval_strategy="steps",
             dataloader_num_workers=4,       # Increase workers for faster data loading
-            dataloader_prefetch_factor=2,   # Prefetch batches for efficiency
+            # dataloader_prefetch_factor=2,   # Prefetch batches for efficiency
             save_steps=500,               # Save more frequently
             logging_steps=10,
             eval_steps=100,                # Evaluate more frequently
             warmup_steps=100,              # Optimal warmup based on architecture analysis
             learning_rate=args.lr,         # Uses 5e-5 default (optimal)
             save_total_limit=1,            # Keep more checkpoints
-            bf16=True,  # Enable bfloat16 training to match model dtype
+            bf16=True,                     # Enable bfloat16 training to match model dtype
             dataloader_pin_memory=True,    # Disable pin memory to save GPU memory
-            optim="adamw_bnb_8bit",      # Keep fused optimizer
-            # remove_unused_columns=False,    # Don't remove columns to avoid reprocessing
-            # fp16_full_eval=False,           # Use bf16 for eval too
+            optim="adamw_bnb_8bit",        # Keep fused optimizer
+            # remove_unused_columns=False, # Don't remove columns to avoid reprocessing
+            # fp16_full_eval=False,        # Use bf16 for eval too
             tf32=True,                      # Enable TensorFloat-32 for faster computation
             report_to="wandb",              # Enable wandb logging
             torch_empty_cache_steps=4,     # Clear cache more frequently
