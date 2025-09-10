@@ -24,6 +24,8 @@ _COLPALI_DIR = _THIS_FILE.parents[3]  # .../colpali
 if str(_COLPALI_DIR) not in sys.path:
     sys.path.insert(0, str(_COLPALI_DIR))
 
+torch.backends.cuda.matmul.allow_tf32 = True
+torch.backends.cudnn.allow_tf32 = True
 
 # ---------- CRITICAL: avoid /dev/shm ----------
 import torch.multiprocessing as torch_mp  # noqa: E402
@@ -98,8 +100,8 @@ if __name__ == "__main__":
             output_dir=None,
             overwrite_output_dir=True,
             num_train_epochs=1,  # CRITICAL: Must be 5 for proper convergence
-            per_device_train_batch_size=16,  # Optimal for RTX 5090 32GB
-            gradient_accumulation_steps=4,   # Effective batch size = 64
+            per_device_train_batch_size=4,  # Optimal for RTX 5090 32GB
+            gradient_accumulation_steps=16,   # Effective batch size = 64
             gradient_checkpointing=True,
             gradient_checkpointing_kwargs={"use_reentrant": False},
             per_device_eval_batch_size=16,   # Match training batch size
@@ -113,12 +115,13 @@ if __name__ == "__main__":
             learning_rate=args.lr,         # Uses 5e-5 default (optimal)
             save_total_limit=1,            # Keep more checkpoints
             bf16=True,  # Enable bfloat16 training to match model dtype
-            dataloader_pin_memory=False,    # Disable pin memory to save GPU memory
-            optim="adamw_torch_fused",      # Keep fused optimizer
-            remove_unused_columns=False,    # Don't remove columns to avoid reprocessing
-            fp16_full_eval=False,           # Use bf16 for eval too
+            dataloader_pin_memory=True,    # Disable pin memory to save GPU memory
+            optim="adamw_bnb_8bit",      # Keep fused optimizer
+            # remove_unused_columns=False,    # Don't remove columns to avoid reprocessing
+            # fp16_full_eval=False,           # Use bf16 for eval too
             tf32=True,                      # Enable TensorFloat-32 for faster computation
             report_to="wandb",              # Enable wandb logging
+            torch_empty_cache_steps=4,     # Clear cache more frequently
         ),
 
         # ---- LoRA over language model + the custom projection head only ----
