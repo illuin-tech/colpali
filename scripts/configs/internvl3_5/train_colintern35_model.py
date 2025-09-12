@@ -13,6 +13,7 @@ import shutil
 from pathlib import Path
 import sys
 import torch
+import re
 from datasets import load_dataset
 from peft import LoraConfig
 from transformers import TrainingArguments
@@ -34,7 +35,6 @@ try:
 except Exception:
     pass
 
-
 from colpali_engine.data.dataset import ColPaliEngineDataset
 from colpali_engine.loss.late_interaction_losses import ColbertLoss, ColbertPairwiseCELoss
 from colpali_engine.models import ColIntern3_5, ColIntern3_5Processor
@@ -43,10 +43,42 @@ from colpali_engine.trainer.colmodel_training import ColModelTraining, ColModelT
 from colpali_engine.utils.dataset_transformation import load_train_set
 
 
+def get_target_modules_by_regex(model):
+    """
+    Generate target modules for LoRA using regex pattern (like Qwen2.5 approach).
+    Pattern matches:
+    - language_model layers (excluding visual): down_proj, gate_proj, up_proj, k_proj, q_proj, v_proj, o_proj
+    - custom_text_proj
+    """
+    pattern = r"(.*(language_model)(?!.*visual).*(down_proj|gate_proj|up_proj|k_proj|q_proj|v_proj|o_proj).*$|.*(custom_text_proj).*$)"
+    
+    all_modules = dict(model.named_modules())
+    target_modules = []
+    
+    for name, module in all_modules.items():
+        if hasattr(module, 'weight') and re.match(pattern, name):
+            target_modules.append(name)
+    
+    print(f"🎯 Regex pattern matched {len(target_modules)} target modules for LoRA:")
+    print(f"   Pattern: {pattern}")
+    print(f"   Expected: 197 modules (28 layers × 7 modules + 1 custom_text_proj)")
+    print(f"   Matched: {len(target_modules)} modules")
+    
+    # Show sample matches
+    if target_modules:
+        print(f"   Sample modules:")
+        for i, mod in enumerate(target_modules[:5]):
+            print(f"     {i+1}. {mod}")
+        if len(target_modules) > 5:
+            print(f"     ... and {len(target_modules)-5} more")
+    
+    return target_modules
+
+
 def parse_args():
     p = argparse.ArgumentParser()
-    p.add_argument("--output-dir", type=str, default="./runs/8", help="where to write model + script copy")
-    p.add_argument("--lr", type=float, default=5e-5, help="learning rate")  # keep your default
+    p.add_argument("--output-dir", type=str, default="./runs/9", help="where to write model + script copy")
+    p.add_argument("--lr", type=float, default=5e-5, help="learning rate")
     p.add_argument("--tau", type=float, default=0.02, help="temperature for loss function")
     p.add_argument("--trainer", type=str, default="hf", choices=["torch", "hf"], help="trainer to use")
     p.add_argument("--loss", type=str, default="ce", choices=["ce", "pairwise"], help="loss function to use")
@@ -71,21 +103,24 @@ if __name__ == "__main__":
     else:
         raise ValueError(f"Unknown loss function: {args.loss}")
 
-        # ---- InternVL3_5 backbone + processor ----
-        # NOTE: InternVL3.5 uses 256 tokens per patch after pixel shuffle compression.
-        # Default: 12 patches × 256 = 3072 tokens.
+    # Create model first to determine target modules
+    base_model = ColIntern3_5.from_pretrained(
+        pretrained_model_name_or_path="OpenGVLab/InternVL3_5-1B-HF",
+        torch_dtype=torch.bfloat16,
+        attn_implementation="flash_attention_2",
+        trust_remote_code=True,
+    )
+
+    # Generate target modules using regex pattern (cleaner than explicit enumeration)
+    target_modules = get_target_modules_by_regex(base_model) if args.peft else None
+
     config = ColModelTrainingConfig(
         output_dir=args.output_dir,
         processor=ColIntern3_5Processor.from_pretrained(
             pretrained_model_name_or_path="OpenGVLab/InternVL3_5-1B-HF",
-            max_num_visual_tokens=3072,  # 12 patches × 256 tokens = 3072 (memory efficient)
+            max_num_visual_tokens=3072,
         ),
-        model=ColIntern3_5.from_pretrained(
-            pretrained_model_name_or_path="OpenGVLab/InternVL3_5-1B-HF",
-            torch_dtype=torch.bfloat16,
-            attn_implementation="flash_attention_2",  # InternVL supports flash-attn:contentReference[oaicite:9]{index=9}
-            trust_remote_code=True,                  # recommended for InternVL HF impl & weights:contentReference[oaicite:10]{index=10}
-        ),
+        model=base_model,
 
         # ---- Datasets identical to your flow ----
         train_dataset=load_train_set(),
@@ -100,7 +135,7 @@ if __name__ == "__main__":
             output_dir=None,
             overwrite_output_dir=True,
             num_train_epochs=1,  
-            per_device_train_batch_size=16
+            per_device_train_batch_size=16,
             gradient_accumulation_steps=4,
             gradient_checkpointing=True,
             gradient_checkpointing_kwargs={"use_reentrant": False},
@@ -115,43 +150,33 @@ if __name__ == "__main__":
             eval_steps=100,                
             warmup_steps=100,              
             learning_rate=args.lr,         
-            save_total_limit=1,            
+            save_total_limit=3,            
             bf16=True,                                 
             optim="adamw_bnb_8bit",        
-            # remove_unused_columns=False, 
-            # fp16_full_eval=False,        
             tf32=True,                     
             report_to="wandb",             
             torch_empty_cache_steps=4,     
         ),
 
-        # ---- LoRA over language model + the custom projection head only ----
-        # Your Qwen script targets MLP/attn projections and `custom_text_proj`, while excluding vision:contentReference[oaicite:11]{index=11}.
-        # InternVL base model exposes `language_model` directly (no extra `.model` wrapper in the base class):contentReference[oaicite:12]{index=12},
-        # so target that path instead:
+        # ---- LoRA with base model parameters (like ColQwen2.5-base) ----
         peft_config=LoraConfig(
-            r=32,  # Reduced rank from 32 to 16 for memory efficiency
-            lora_alpha=32,  # Adjusted alpha proportionally
-            lora_dropout=0.1,
+            r=32,                          # 🎯 Standard rank for base model training
+            lora_alpha=32,                 # 🎯 Equal alpha for aggressive adaptation (1.0 ratio)
+            lora_dropout=0.1,              # 🎯 Standard dropout for base model
             init_lora_weights="gaussian",
-            bias="none",
+            bias="none", 
             task_type="FEATURE_EXTRACTION",
-            target_modules=[
-                "language_model.layers.*.self_attn.q_proj",
-                "language_model.layers.*.self_attn.k_proj", 
-                "language_model.layers.*.self_attn.v_proj",
-                "language_model.layers.*.self_attn.o_proj",
-                "language_model.layers.*.mlp.gate_proj",
-                "language_model.layers.*.mlp.up_proj",
-                "language_model.layers.*.mlp.down_proj",
-                "custom_text_proj",
-            ],
+            target_modules=target_modules,  # 🎯 Regex-based targeting, cleaner than explicit enumeration
         ) if args.peft else None,
     )
 
-    # Save a copy of the script for provenance (same as your flow)
-    # Path(config.output_dir).mkdir(parents=True, exist_ok=True)
-    # shutil.copy(Path(__file__), Path(config.output_dir) / Path(__file__).name)
+    # Verify LoRA setup before training
+    if args.peft:
+        print(f"🔧 LoRA Configuration (Base Model Training):")
+        print(f"  Target modules: {len(target_modules)}")
+        print(f"  Expected trainable parameters: ~{len(target_modules) * 32 * 32:,}")
+        print(f"  r={32}, alpha={32}, dropout={0.1}")
+        print(f"  Alpha/Rank ratio: {32/32:.1f} (aggressive for base model training)")  
 
     trainer = ColModelTraining(config) if args.trainer == "hf" else ColModelTorchTraining(config)
     trainer.train()

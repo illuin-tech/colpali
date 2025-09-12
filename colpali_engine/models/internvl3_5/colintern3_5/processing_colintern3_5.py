@@ -32,12 +32,16 @@ class ColIntern3_5Processor(BaseVisualRetrieverProcessor, InternVLProcessor):  #
         else:
             # Try to get config from the tokenizer or fallback
             try:
-                from transformers import AutoConfig
-                config = AutoConfig.from_pretrained(args[0] if args else 'OpenGVLab/InternVL3_5-1B-HF')
+                from transformers.models.internvl import InternVLConfig
+                config = InternVLConfig.from_pretrained(args[0] if args else 'OpenGVLab/InternVL3_5-1B-HF')
             except:
                 config = None
         
-        self.downsample_ratio = getattr(config, 'downsample_ratio', 0.5) if config else 0.5
+        # Use vision_config for downsample_ratio as per official implementation
+        if config:
+            self.downsample_ratio = getattr(config, 'downsample_ratio', 0.5)
+        else:
+            self.downsample_ratio = 0.5
         
         # Set up image token attributes if they exist
         self.image_token = getattr(self.tokenizer, 'context_image_token', '<IMG_CONTEXT>')
