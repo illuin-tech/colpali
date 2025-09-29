@@ -140,16 +140,46 @@ class ContrastiveTrainer(Trainer):
         batch_size = query_outputs.size(0)
         if self.accelerator.num_processes > 1 and self.accelerator.sync_gradients:
             # gather docs across all processes
-            pos_target_outputs = concat_all_gather(pos_target_outputs)
+            pos_target_outputs = self.accelerator.pad_across_processes(pos_target_outputs, dim=1, pad_index=0, pad_first=True)
+            pos_target_outputs = concat_all_gather(pos_target_outputs)            
             rank = self.accelerator.process_index
             offset = rank * batch_size
 
         if neg_target_outputs is not None:
-            loss = self.loss_func(query_outputs, pos_target_outputs, neg_target_outputs, offset=offset)
+            loss = self.loss_func(
+                query_embeddings=query_outputs,
+                doc_embeddings=pos_target_outputs,
+                neg_doc_embeddings=neg_target_outputs,
+                offset=offset
+            )
         else:
-            loss = self.loss_func(query_outputs, pos_target_outputs, offset=offset)
+            loss = self.loss_func(
+                query_embeddings=query_outputs,
+                doc_embeddings=pos_target_outputs,
+                offset=offset
+            )
 
         return loss
+    
+    def _reshape_neg_doc_inputs(self, inputs):
+        """
+        Helper function to reshape negative doc inputs to (batch_size * num_neg_docs, ...)
+        """
+        neg_doc_inputs = {k[8:]: v for k, v in inputs.items() if k.startswith("neg_doc")}
+
+        for k in neg_doc_inputs:
+            # go from (batch_size, num_neg_docs, ...) to (batch_size * num_neg_docs, ...)
+            neg_doc_inputs[k] = neg_doc_inputs[k].view(-1, *neg_doc_inputs[k].shape[2:])
+
+        return neg_doc_inputs
+    
+    def _reshape_neg_doc_outputs(self, neg_doc_outputs, num_neg_docs):
+        """
+        Helper function to reshape negative doc outputs to (batch_size, num_neg_docs, ...)
+        """
+        neg_doc_outputs = neg_doc_outputs.view(-1, num_neg_docs, *neg_doc_outputs.shape[1:])
+        
+        return neg_doc_outputs
 
     def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
         query_outputs = model(**{k[6:]: v for k, v in inputs.items() if k.startswith("query")})
@@ -157,7 +187,10 @@ class ContrastiveTrainer(Trainer):
         doc_outputs = model(**{k[4:]: v for k, v in inputs.items() if k.startswith("doc")})
         if "neg_doc_input_ids" in inputs:
             # Negative docs are not gathered across processes, so we can use them without offset
-            neg_doc_outputs = model(**{k[8:]: v for k, v in inputs.items() if k.startswith("neg_doc")})
+            num_negs = inputs["neg_doc_input_ids"].size(1)
+            neg_doc_inputs = self._reshape_neg_doc_inputs(inputs)
+            neg_doc_outputs = model(**neg_doc_inputs)
+            neg_doc_outputs = self._reshape_neg_doc_outputs(neg_doc_outputs, num_negs)
         else:
             neg_doc_outputs = None
         
