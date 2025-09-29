@@ -162,7 +162,7 @@ class BiPairedEncoderLoss(BiEncoderModule):
             self._filter_high_negatives(scores, pos_idx)
 
         q2t = self.ce_loss(scores / self.temperature, pos_idx)
-        t2q = self.ce_loss(scores.T / self.temperature, ...)    
+        t2q = self.ce_loss(scores.T / self.temperature, ...)
 
         return (q2t + t2q) / 2.0
 
@@ -216,17 +216,18 @@ class BiNegativeCELoss(BiEncoderModule):
         Args:
             query_embeddings (Tensor[B, D]): Query vectors.
             doc_embeddings (Tensor[B, D]): Positive document vectors.
-            neg_doc_embeddings (Tensor[B, D]): Negative document vectors.
+            neg_doc_embeddings (Tensor[B, N, D]): Negative document vectors.
             offset (int): Offset for in-batch CE positives.
 
         Returns:
             Tensor: Scalar loss value.
         """
         # Dot-product only for matching pairs
-        pos_scores = (query_embeddings * doc_embeddings).sum(dim=1) / self.temperature
-        neg_scores = (query_embeddings * neg_doc_embeddings).sum(dim=1) / self.temperature
+        pos_scores = (query_embeddings * doc_embeddings[offset:offset + neg_doc_embeddings.size(0)]).sum(dim=1)
+        pos_scores /= self.temperature
+        neg_scores = torch.einsum("bd,bnd->bn", query_embeddings, neg_doc_embeddings) / self.temperature
 
-        loss = F.softplus(neg_scores - pos_scores).mean()
+        loss = F.softplus(neg_scores - pos_scores.unsqueeze(1)).mean()
 
         if self.in_batch_term_weight > 0:
             loss_ib = self.inner_loss(query_embeddings, doc_embeddings, offset)
@@ -411,5 +412,5 @@ class BiSigmoidLoss(BiEncoderModule):
             all_losses.append(block_loss)
             # shift the offset for the next batch
             offset = (offset + batch_size) % num_targets
-        
+
         return torch.stack(all_losses, dim=0).mean()
