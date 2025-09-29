@@ -122,8 +122,8 @@ class BaseVisualRetrieverProcessor(ABC):
             qs = qs.to(device)
             ps = ps.to(device)
 
-        scores = torch.einsum("bd,cd->bc", qs, ps)
-        assert scores.shape[0] == len(qs), f"Expected {len(qs)} scores, got {scores.shape[0]}"
+        scores = torch.einsum("bd,cd->bc", qs_stacked, ps_stacked)
+        assert scores.shape[0] == len(qs_stacked), f"Expected {len(qs_stacked)} scores, got {scores.shape[0]}"
 
         scores = scores.to(torch.float32)
         return scores
