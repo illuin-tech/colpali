@@ -1,6 +1,6 @@
 import random
-from typing import Any, Dict, List, Union
 import torch
+from typing import Any, Dict, List, Union
 
 from PIL.Image import Image
 
@@ -53,9 +53,11 @@ class VisualRetrieverCollator:
         queries: List[Union[None, str, Image]] = []
         pos_targets: List[Union[str, Image]] = []
         neg_targets: List[Union[str, Image]] = []
+        selected_ids: List[int] = []
 
         # Parse the examples.
-        for example in examples:
+        positive_ids_tensor = -torch.ones((len(examples), 100), dtype=torch.long)
+        for i, example in enumerate(examples):
             assert ColPaliEngineDataset.QUERY_KEY in example, f"Missing {ColPaliEngineDataset.QUERY_KEY} in example."
             query = example[ColPaliEngineDataset.QUERY_KEY]
             sampled_query = random.choice(query) if isinstance(query, list) else query
@@ -65,11 +67,21 @@ class VisualRetrieverCollator:
                 f"Missing {ColPaliEngineDataset.POS_TARGET_KEY} in example."
             )
             pos_tgt = example[ColPaliEngineDataset.POS_TARGET_KEY]
-            sample_pos = random.choice(pos_tgt) if isinstance(pos_tgt, list) else pos_tgt
+            positive_ids = example.get("positive_ids", None)
+            if isinstance(pos_tgt, list):
+                sample_tuple = random.choice([(t, id_) for t, id_ in zip(pos_tgt, positive_ids)])
+                sample_pos = sample_tuple[0]
+                selected_ids.append(sample_tuple[1])
+            else:
+                sample_pos = pos_tgt
             pos_targets.append(sample_pos)
+            if positive_ids is not None:
+                positive_ids_tensor[i, :len(positive_ids)] = torch.tensor(positive_ids)
 
             neg_tgt = example.get(ColPaliEngineDataset.NEG_TARGET_KEY, None)
             if neg_tgt is not None:
+                # sampled_neg = random.choice(neg_tgt) if isinstance(neg_tgt, list) else neg_tgt
+                # neg_targets.append(random.choice(neg_tgt)) #neg_tgts)
                 neg_targets.append(neg_tgt)
 
         # Ensure all queries are strings or images.
@@ -77,11 +89,8 @@ class VisualRetrieverCollator:
             "All queries must be strings, this collator does not support images in queries."
         )
 
-        is_str = isinstance(queries[0], str)
-
         # Process queries.
-        # queries = [self.processor.query_prefix + q + self.processor.query_augmentation_token * 10 for q in queries]
-        queries = [q + self.processor.query_augmentation_token * 10 for q in queries] if is_str else queries
+        queries = [self.processor.query_prefix + q + self.processor.query_augmentation_token * 10 for q in queries]
         batch_query = self.auto_collate(queries, key_prefix=self.query_prefix)
 
         # Process targets.
@@ -92,9 +101,11 @@ class VisualRetrieverCollator:
             **batch_query,
             **batch_pos_target,
             **batch_neg_target,
+            "selected_ids": torch.Tensor(selected_ids),
+            "positive_ids_tensor": positive_ids_tensor,
         }
 
-    def auto_collate(self, batch: List[Union[str, Image]], key_prefix: str = "") -> Dict[str, Any]:
+    def auto_collate(self, batch: List[Union[str, Image, List[str], List[Image]]], key_prefix: str = "") -> Dict[str, Any]:
         """Automatically collate a batch of documents."""
         # Convert Document objects to their underlying data.
         # if type is mixed across the batch, raise an error.
@@ -127,4 +138,5 @@ class VisualRetrieverCollator:
                     proc_batch[k] = v
         else:
             raise ValueError(f"Unsupported batch type: {type(batch[0])}. Expected str or Image.")
+
         return prefix_keys(proc_batch, key_prefix)
