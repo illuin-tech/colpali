@@ -1,5 +1,4 @@
 from torch import nn
-import torch
 
 from colpali_engine.models.modernvbert.modeling_vbert import VBertModel, VBertPreTrainedModel
 
