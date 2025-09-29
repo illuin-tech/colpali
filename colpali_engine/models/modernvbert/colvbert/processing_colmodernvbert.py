@@ -16,13 +16,13 @@ class ColModernVBertProcessor(BaseVisualRetrieverProcessor, Idefics3Processor):
     image_token: ClassVar[str] = "<image>"
     visual_prompt_prefix: ClassVar[str] = "<|begin_of_text|>User:<image>Describe the image.<end_of_utterance>\nAssistant:"
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, *args, image_seq_len=64, **kwargs):
+        super().__init__(*args, image_seq_len=image_seq_len, **kwargs)
         self.tokenizer.padding_side = "left"
 
-    @property
-    def image_token_id(self) -> int:
-        return self.tokenizer.convert_tokens_to_ids(self.image_token)
+    # @property
+    # def image_token_id(self) -> int:
+    #     return self.tokenizer.convert_tokens_to_ids(self.image_token)
 
     def process_images(
         self,
@@ -41,6 +41,8 @@ class ColModernVBertProcessor(BaseVisualRetrieverProcessor, Idefics3Processor):
             images=images,
             padding="longest",
             return_tensors="pt",
+            truncation=True,
+            max_length=8192,
         )
         return batch_doc
 
@@ -58,6 +60,8 @@ class ColModernVBertProcessor(BaseVisualRetrieverProcessor, Idefics3Processor):
             text=texts,
             return_tensors="pt",
             padding="longest",
+            truncation=True,
+            max_length=4096,
         )
 
     def score(

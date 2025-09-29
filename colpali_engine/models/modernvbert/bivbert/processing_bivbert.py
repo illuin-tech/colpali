@@ -25,6 +25,8 @@ class BiModernVBertProcessor(ColModernVBertProcessor):  # noqa: N801
             text=texts,
             return_tensors="pt",
             padding="longest",
+            truncation=True,
+            max_length=4096
         )
 
     def score(

@@ -405,7 +405,7 @@ class VBertModel(VBertPreTrainedModel):
 
         # retrieve input_ids and inputs_embeds
         if input_ids is not None:
-            batch_size, seq_length = input_ids.shape
+            batch_size, seq_length = input_sids.shape
         elif inputs_embeds is not None:
             batch_size, seq_length, _ = inputs_embeds.shape
         else:
