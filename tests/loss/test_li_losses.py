@@ -109,10 +109,10 @@ class TestColbertNegativeCELoss:
             pos_aware_negative_filtering=False,
             in_batch_term_weight=0,
         )
-        B, Nq, D, Nneg = 2, 1, 3, 1
-        query = torch.zeros(B, Nq, D)
-        doc = torch.zeros(B, Nq, D)
-        neg = torch.zeros(B, Nneg, D)
+        B, Lq, D, Lneg, Nneg = 2, 1, 3, 1, 1
+        query = torch.zeros(B, Lq, D)
+        doc = torch.zeros(B, Lq, D)
+        neg = torch.zeros(B, Nneg, Lneg, D)
         loss = loss_fn(query, doc, neg)
         expected = F.softplus(torch.tensor(0.0))
         assert torch.allclose(loss, expected)
@@ -125,10 +125,10 @@ class TestColbertNegativeCELoss:
             pos_aware_negative_filtering=False,
             in_batch_term_weight=0.5,
         )
-        B, Nq, D = 2, 1, 3
-        query = torch.zeros(B, Nq, D)
-        doc = torch.zeros(B, Nq, D)
-        neg = torch.zeros(B, 1, D)
+        B, Lq, D, Lneg, Nneg = 2, 1, 3, 1, 1
+        query = torch.zeros(B, Lq, D)
+        doc = torch.zeros(B, Lq, D)
+        neg = torch.zeros(B, Nneg, Lneg, D)
         loss = loss_fn(query, doc, neg)
         expected = F.softplus(torch.tensor(0.0))
         assert torch.allclose(loss, expected)

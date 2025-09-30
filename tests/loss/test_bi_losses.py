@@ -64,10 +64,10 @@ class TestBiEncoderLoss:
 class TestBiNegativeCELoss:
     def test_forward_no_inbatch(self):
         loss_fn = BiNegativeCELoss(temperature=1.0, in_batch_term_weight=0, pos_aware_negative_filtering=False)
-        B, D = 3, 4
+        B, D, Nneg = 3, 4, 1
         query = torch.zeros(B, D)
         pos = torch.zeros(B, D)
-        neg = torch.zeros(B, D)
+        neg = torch.zeros(B, Nneg, D)
         loss = loss_fn(query, pos, neg)
         # softplus(0 - 0) = ln(2)
         expected = F.softplus(torch.tensor(0.0))
@@ -75,10 +75,10 @@ class TestBiNegativeCELoss:
 
     def test_forward_with_inbatch(self):
         loss_fn = BiNegativeCELoss(temperature=1.0, in_batch_term_weight=0.5, pos_aware_negative_filtering=False)
-        B, D = 2, 3
+        B, D, Nneg = 2, 3, 1
         query = torch.zeros(B, D)
         pos = torch.zeros(B, D)
-        neg = torch.zeros(B, D)
+        neg = torch.zeros(B, Nneg, D)
         loss = loss_fn(query, pos, neg)
         # in-batch CE on zeros: log(B)
         ce = torch.log(torch.tensor(float(B)))
