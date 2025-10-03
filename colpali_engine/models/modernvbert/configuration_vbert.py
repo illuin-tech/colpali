@@ -39,7 +39,7 @@ class VBertTextConfig(PretrainedConfig):
     def __init__(
         self,
         # Case for when vllama3 is from the hub with no vision_model_name
-        text_model_name="EuroBERT/EuroBERT-210m",
+        text_model_name="jhu-clsp/ettin-encoder-150m",
         **kwargs,
     ):
         self.text_model_name = text_model_name
