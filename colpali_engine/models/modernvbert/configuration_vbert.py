@@ -136,7 +136,7 @@ class VBertConfig(PretrainedConfig):
     is_composition = True
     # sub_configs = {"text_config": VBertTextConfig, "vision_config": VBertVisionConfig}
 
-    DEFAULT_TEXT_MODEL_NAME = "EuroBERT/EuroBERT-210m"
+    DEFAULT_TEXT_MODEL_NAME = "jhu-clsp/ettin-encoder-150m"
     DEFAULT_VISION_MODEL_NAME = "google/siglip2-base-patch16-512"
 
     def __init__(
