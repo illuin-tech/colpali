@@ -75,27 +75,28 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
     ) -> Tuple[int, int]:
         """
         Calculate the number of patches for the given image size and patch size.
-        
+
         For Idefics3, we replicate the complete image processing pipeline to determine
-        the final resized dimensions before calculating patches.
-        
+        the final resized dimensions before calculating patches. The total number of patches
+        is the grid size multiplied by the patch subdivision (sqrt of image_seq_len).
+
         Args:
             image_size: The size of the original image as (width, height)
             patch_size: The patch size (not used directly in Idefics3, kept for API compatibility)
-            
+
         Returns:
             Tuple[int, int]: Number of patches in (x, y) dimensions
         """
         width, height = image_size
-        
+
         # Get processor parameters
         max_image_size_edge = self.image_processor.max_image_size["longest_edge"]  # Default: 364
         size_longest_edge = self.image_processor.size["longest_edge"]  # Default: 4 * 364 = 1456
-        
+
         # Step 1: Rescale to max length (preserving aspect ratio)
         max_len = size_longest_edge
         aspect_ratio = width / height
-        
+
         if width >= height:
             width = max_len
             height = int(width / aspect_ratio)
@@ -106,26 +107,26 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
             width = int(height * aspect_ratio)
             if width % 2 != 0:
                 width += 1
-        
+
         # Ensure minimum size of 1
         height = max(height, 1)
         width = max(width, 1)
-        
+
         # Step 2: Scale below upper bound (4096)
         max_bound = 4096
         aspect_ratio = width / height
-        
+
         if width >= height and width > max_bound:
             width = max_bound
             height = int(width / aspect_ratio)
         elif height > width and height > max_bound:
             height = max_bound
             width = int(height * aspect_ratio)
-        
+
         # Ensure minimum size of 1
         height = max(height, 1)
         width = max(width, 1)
-        
+
         # Step 3: Upscale to multiples of max_image_size (patch grid alignment)
         if width >= height:
             resized_width = math.ceil(width / max_image_size_edge) * max_image_size_edge
@@ -133,11 +134,17 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
         elif height > width:
             resized_height = math.ceil(height / max_image_size_edge) * max_image_size_edge
             resized_width = math.ceil(width / max_image_size_edge) * max_image_size_edge
-        
-        # Step 4: Calculate number of patches
-        n_patches_x = resized_width // max_image_size_edge
-        n_patches_y = resized_height // max_image_size_edge
-        
+
+        # Step 4: Calculate number of grid cells
+        n_grid_x = resized_width // max_image_size_edge
+        n_grid_y = resized_height // max_image_size_edge
+
+        # Step 5: Calculate actual number of patches
+        # Each grid cell contains image_seq_len tokens arranged as a square grid
+        patches_per_grid_side = int(math.sqrt(self.image_seq_len))
+        n_patches_x = n_grid_x * patches_per_grid_side
+        n_patches_y = n_grid_y * patches_per_grid_side
+
         return n_patches_x, n_patches_y
 
     def get_image_mask(self, batch_images: BatchFeature) -> torch.Tensor:
