@@ -71,7 +71,8 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
     def get_n_patches(
         self,
         image_size: Tuple[int, int],
-        patch_size: int,
+        *args,
+        **kwargs,
     ) -> Tuple[int, int]:
         """
         Calculate the number of patches for the given image size and patch size.
@@ -82,7 +83,6 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
 
         Args:
             image_size: The size of the original image as (width, height)
-            patch_size: The patch size (not used directly in Idefics3, kept for API compatibility)
 
         Returns:
             Tuple[int, int]: Number of patches in (x, y) dimensions
