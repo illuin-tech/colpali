@@ -201,7 +201,7 @@ class ModernVBertConfig(PretrainedConfig):
         self,
         text_config: Union[PretrainedConfig, Dict[str, Any]] = None,
         vision_config: Union[PretrainedConfig, Dict[str, Any]] = None,
-        image_token_id: int = 50369,
+        image_token_id: int = 50407,
         vocab_size=50368,
         use_cache=True,
         tie_word_embeddings=False,
