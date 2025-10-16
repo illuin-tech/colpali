@@ -4,4 +4,3 @@ from .qwen2 import BiQwen2, BiQwen2Processor, ColQwen2, ColQwen2Processor
 from .qwen2_5 import BiQwen2_5, BiQwen2_5_Processor, ColQwen2_5, ColQwen2_5_Processor
 from .modernvbert import BiModernVBert, BiModernVBertProcessor, ColModernVBert, ColModernVBertProcessor
 from .siglip import BiSiglip, BiSiglipProcessor
-from .vllama import BiVLlama, BiVLlamaProcessor, ColVLlama, ColVLlamaProcessor
