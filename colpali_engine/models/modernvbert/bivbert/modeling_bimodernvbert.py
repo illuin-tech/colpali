@@ -2,12 +2,12 @@ from typing import Literal
 
 import torch
 
-from colpali_engine.models.modernvbert.modeling_vbert import VBertModel, VBertPreTrainedModel
+from colpali_engine.models.modernvbert.modeling_modernvbert import ModernVBertModel, ModernVBertPreTrainedModel
 
 
-class BiModernVBert(VBertPreTrainedModel):
+class BiModernVBert(ModernVBertPreTrainedModel):
     """
-    Initializes the BiIdefics3 model.
+    Initializes the BiModernVBert model.
 
     Args:
         config : The model configuration.
@@ -19,7 +19,7 @@ class BiModernVBert(VBertPreTrainedModel):
 
     def __init__(self, config, pooling_strategy = "mean", **kwargs):
         super().__init__(config=config)
-        self.model = VBertModel(config, **kwargs)
+        self.model = ModernVBertModel(config, **kwargs)
         self.pooling_strategy = pooling_strategy
         self.post_init()
 

@@ -1,11 +1,11 @@
 from torch import nn
 
-from colpali_engine.models.modernvbert.modeling_vbert import VBertModel, VBertPreTrainedModel
+from colpali_engine.models.modernvbert.modeling_modernvbert import ModernVBertModel, ModernVBertPreTrainedModel
 
 
-class ColModernVBert(VBertPreTrainedModel):
+class ColModernVBert(ModernVBertPreTrainedModel):
     """
-    Initializes the ColVBert model.
+    Initializes the ColModernVBert model.
 
     Args:
         config : The model configuration.
@@ -20,7 +20,7 @@ class ColModernVBert(VBertPreTrainedModel):
 
     def __init__(self, config, mask_non_image_embeddings: bool = False, **kwargs):
         super().__init__(config=config)
-        self.model = VBertModel(config, **kwargs)
+        self.model = ModernVBertModel(config, **kwargs)
         self.dim = 128
         self.custom_text_proj = nn.Linear(self.model.config.text_config.hidden_size, self.dim)
         self.mask_non_image_embeddings = mask_non_image_embeddings
