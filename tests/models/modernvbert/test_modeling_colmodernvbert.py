@@ -27,7 +27,7 @@ def model_without_mask(model_name: str) -> Generator[ColModernVBert, None, None]
         ColModernVBert,
         ColModernVBert.from_pretrained(
             model_name,
-            torch_dtype=torch.bfloat16,
+            torch_dtype=torch.float16,
             device_map=device,
             attn_implementation="flash_attention_2" if is_flash_attn_2_available() else None,
             mask_non_image_embeddings=False,
@@ -45,7 +45,7 @@ def model_with_mask(model_name: str) -> Generator[ColModernVBert, None, None]:
         ColModernVBert,
         ColModernVBert.from_pretrained(
             model_name,
-            torch_dtype=torch.bfloat16,
+            torch_dtype=torch.float16,
             device_map=device,
             attn_implementation="flash_attention_2" if is_flash_attn_2_available() else None,
             mask_non_image_embeddings=True,
