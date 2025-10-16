@@ -202,11 +202,8 @@ class ModernVBertPreTrainedModel(PreTrainedModel):
     config_class = ModernVBertConfig
     base_model_prefix = "model"
     supports_gradient_checkpointing = True
-    _no_split_modules = ["ModernVBertDecoderLayer"]
-    _skip_keys_device_placement = "past_key_values"
     _supports_flash_attn_2 = True
     _supports_sdpa = True
-    _supports_cache_class = True
 
     def _init_weights(self, module):
         std = getattr(self.config, "initializer_range", 0.02)
@@ -221,39 +218,44 @@ class ModernVBertPreTrainedModel(PreTrainedModel):
 
 
 class ModernVBertModel(ModernVBertPreTrainedModel):
-    def __init__(self, config: ModernVBertConfig, **kwargs):
+    def __init__(self, config: ModernVBertConfig):
         super().__init__(config)
-        self.vision_model = ModernVBertModel.init_vision_model(config, **kwargs)
+        self.vision_model = ModernVBertModel.init_vision_model(config)
         self.connector = ModernVBertConnector(config)
-        self.text_model = ModernVBertModel.init_language_model(config, **kwargs)
+        self.text_model = ModernVBertModel.init_language_model(config)
         self.image_seq_len = int(
             ((config.vision_config.image_size // config.vision_config.patch_size) ** 2) / (config.scale_factor**2)
         )
         self.image_token_id = config.image_token_id
         self._use_flash_attention_2 = config._attn_implementation == "flash_attention_2"
+        # set the correct dtype for vision and text models
+        self.vision_model.to(self.dtype)
+        self.text_model.to(self.dtype)
         self.post_init()
 
     @staticmethod
-    def init_vision_model(config: ModernVBertConfig, **kwargs):
+    def init_vision_model(config: ModernVBertConfig):
         vision_model_config = AutoConfig.from_pretrained(
             config.vision_config.vision_model_name,
             _attn_implementation=config._attn_implementation,
-            dtype=config.torch_dtype,
-            **kwargs,
         )
-        vision_model = AutoModel.from_config(vision_model_config, trust_remote_code=True, **kwargs)
+        vision_model = AutoModel.from_config(
+            vision_model_config, 
+            trust_remote_code=True,
+        )
         return getattr(vision_model, "vision_model", vision_model)
 
     @staticmethod
-    def init_language_model(config: ModernVBertConfig, **kwargs):
+    def init_language_model(config: ModernVBertConfig):
         text_model_config = AutoConfig.from_pretrained(
             config.text_config.text_model_name,
             _attn_implementation=config._attn_implementation,
-            dtype=config.torch_dtype,
             trust_remote_code=True,
-            **kwargs,
         )
-        text_model = AutoModel.from_config(text_model_config, trust_remote_code=True, **kwargs)
+        text_model = AutoModel.from_config(
+            text_model_config, 
+            trust_remote_code=True
+        )
         embed_layer = DecoupledEmbedding(
             num_embeddings=text_model_config.vocab_size,
             num_additional_embeddings=config.additional_vocab_size,
@@ -376,10 +378,10 @@ class ModernVBertModel(ModernVBertPreTrainedModel):
         )
 
 class ModernVBertLMHead(nn.Module):
-    def __init__(self, config, **kwargs):
+    def __init__(self, config):
         super().__init__()
-        pretrained_config = AutoConfig.from_pretrained(config.text_config.text_model_name, trust_remote_code=True, **kwargs)
-        pretrained_model = AutoModelForMaskedLM.from_config(pretrained_config, trust_remote_code=True, **kwargs)
+        pretrained_config = AutoConfig.from_pretrained(config.text_config.text_model_name, trust_remote_code=True)
+        pretrained_model = AutoModelForMaskedLM.from_config(pretrained_config, trust_remote_code=True)
         self.head = pretrained_model.head
         self.decoder = pretrained_model.decoder
 
@@ -388,16 +390,17 @@ class ModernVBertLMHead(nn.Module):
 
 
 class ModernVBertForMaskedLM(ModernVBertPreTrainedModel):
-    def __init__(self, config, **kwargs):
+    def __init__(self, config):
         super().__init__(config)
         self.image_token_id = config.image_token_id
         self.in_features = config.hidden_size
         self.out_additional_features = config.additional_vocab_size
         self.vocab_size = config.vocab_size
-        self.model = ModernVBertModel(config, **kwargs)
-        self.lm_head = ModernVBertLMHead(config, **kwargs)
+        self.model = ModernVBertModel(config)
+        self.lm_head = ModernVBertLMHead(config)
         if self.out_additional_features > 0:
             self.additional_fc = nn.Linear(self.in_features, self.out_additional_features, bias=False)
+        self.lm_head.to(self.dtype)
         self.post_init()
 
     def forward(
