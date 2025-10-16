@@ -29,7 +29,7 @@ def model_without_mask(model_name: str) -> Generator[ColModernVBert, None, None]
             model_name,
             torch_dtype=torch.float16,
             device_map=device,
-            attn_implementation="flash_attention_2" if is_flash_attn_2_available() else None,
+            attn_implementation="eager",
             mask_non_image_embeddings=False,
         ).eval(),
     )
@@ -47,7 +47,7 @@ def model_with_mask(model_name: str) -> Generator[ColModernVBert, None, None]:
             model_name,
             torch_dtype=torch.float16,
             device_map=device,
-            attn_implementation="flash_attention_2" if is_flash_attn_2_available() else None,
+            attn_implementation="eager",
             mask_non_image_embeddings=True,
         ).eval(),
     )
@@ -104,7 +104,7 @@ class TestColModernVBert_ModelIntegration:  # noqa N801
         ]
 
         # Process the queries
-        batch_queries = processor.process_queries(queries).to(model_without_mask.device)
+        batch_queries = processor.process_queries(queries).to(model_without_mask.device).to(torch.float16)
 
         # Forward pass
         with torch.no_grad():
@@ -127,8 +127,8 @@ class TestColModernVBert_ModelIntegration:  # noqa N801
         ds = load_dataset("hf-internal-testing/document-visual-retrieval-test", split="test")
 
         # Preprocess the examples
-        batch_images = processor.process_images(images=ds["image"]).to(model_without_mask.device)
-        batch_queries = processor.process_queries(queries=ds["query"]).to(model_without_mask.device)
+        batch_images = processor.process_images(images=ds["image"]).to(model_without_mask.device).to(torch.float16)
+        batch_queries = processor.process_queries(queries=ds["query"]).to(model_without_mask.device).to(torch.float16)
 
         # Run inference
         with torch.inference_mode():
