@@ -1,2 +1,0 @@
-from .modeling_bisiglip import BiSiglip
-from .processing_bisiglip import BiSiglipProcessor
