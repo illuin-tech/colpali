@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+- Bump transformer, torch and peft support
 - Fix multi dataset sampling in order to weight probability of being picked by the size of the dataset
 
 ## [0.3.12] - 2025-07-16
