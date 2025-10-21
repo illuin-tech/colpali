@@ -45,7 +45,7 @@ dependencies = [
 
 [project.optional-dependencies]
 train = [
-    "accelerate>=0.34.0,<1.9.0",
+    "accelerate>=0.34.0,<1.11.0",
     "bitsandbytes",
     "configue>=5.0.0",
     "datasets>=2.19.1",
