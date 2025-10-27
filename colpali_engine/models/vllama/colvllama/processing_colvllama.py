@@ -12,16 +12,13 @@ class ColVLlamaProcessor(BaseVisualRetrieverProcessor, Idefics3Processor):
     Processor for ColVLlama.
     """
 
-    query_augmentation_token: ClassVar[str] = "<|end_of_text|>"
+    query_augmentation_token: ClassVar[str] = "<end_of_utterance>"
     image_token: ClassVar[str] = "<image>"
     visual_prompt_prefix: ClassVar[str] = "<|im_start|>User:<image>Describe the image.<end_of_utterance>\nAssistant:"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-    @property
-    def image_token_id(self) -> int:
-        return self.tokenizer.convert_tokens_to_ids(self.image_token)
+        self.tokenizer.padding_side = "left"
 
     def process_images(
         self,

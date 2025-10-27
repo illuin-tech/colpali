@@ -1,7 +1,7 @@
 from torch import nn
 import torch
 
-from colpali_engine.models.vbert.modeling_vbert import VBertModel, VBertPreTrainedModel
+from colpali_engine.models.modernvbert.modeling_vbert import VBertModel, VBertPreTrainedModel
 
 
 class ColModernVBert(VBertPreTrainedModel):

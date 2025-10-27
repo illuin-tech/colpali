@@ -262,17 +262,20 @@ class VBertModel(VBertPreTrainedModel):
         )
         self.image_token_id = self.config.image_token_id
 
+        self._use_flash_attention_2 = config._attn_implementation == "flash_attention_2"
+
         self.post_init()
 
     @staticmethod
     def init_vision_model(config: VBertConfig, **kwargs):
         vision_model_config = AutoConfig.from_pretrained(
             config.vision_config.vision_model_name,
-            trust_remote_code=True,
+            _attn_implementation=config._attn_implementation,
+            torch_dtype=config.torch_dtype,
             **kwargs,
         )
 
-        vision_model = AutoModel.from_config(vision_model_config, trust_remote_code=True, **kwargs)
+        vision_model = AutoModel.from_config(vision_model_config,**kwargs)
 
         if hasattr(vision_model, "vision_model"):
             # If the model has a vision_model attribute, it means it's a wrapper around another model
@@ -284,12 +287,17 @@ class VBertModel(VBertPreTrainedModel):
     def init_language_model(config: VBertConfig, **kwargs):
         text_model_config = AutoConfig.from_pretrained(
             config.text_config.text_model_name,
+            _attn_implementation=config._attn_implementation,
+            torch_dtype=config.torch_dtype,
             trust_remote_code=True,
             **kwargs,
         )
 
-        text_model = AutoModel.from_config(text_model_config, trust_remote_code=True, **kwargs)
-        # extractor = regex_lookup(language_model_name, language_model_name2model)
+        text_model = AutoModel.from_config(
+            text_model_config, 
+            trust_remote_code=True,
+            **kwargs
+        )
 
         embed_layer = DecoupledEmbedding(
             num_embeddings=text_model_config.vocab_size,
@@ -383,24 +391,15 @@ class VBertModel(VBertPreTrainedModel):
         pixel_values: Optional[torch.FloatTensor] = None,
         pixel_attention_mask: Optional[torch.BoolTensor] = None,
         image_hidden_states: Optional[torch.FloatTensor] = None,
-        use_cache: Optional[bool] = None,
         output_attentions: Optional[bool] = None,
         output_hidden_states: Optional[bool] = None,
         return_dict: Optional[bool] = None,
-        cache_position: Optional[torch.LongTensor] = None,
     ) -> Union[Tuple, BaseModelOutputWithPoolingAndCrossAttentions]:
         output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
         output_hidden_states = (
             output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
         )
-        use_cache = False
         return_dict = return_dict if return_dict is not None else self.config.use_return_dict
-
-        if self.training and self.text_model.gradient_checkpointing and use_cache:
-            logger.warning_once(
-                "`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`..."
-            )
-            use_cache = False
 
         # retrieve input_ids and inputs_embeds
         if input_ids is not None:
@@ -409,15 +408,6 @@ class VBertModel(VBertPreTrainedModel):
             batch_size, seq_length, _ = inputs_embeds.shape
         else:
             raise ValueError("You have to specify either input_ids or inputs_embeds")
-
-        past_seen_tokens = 0
-        if use_cache:
-            if past_key_values is None:
-                past_key_values = DynamicCache()
-            past_seen_tokens = past_key_values.get_seq_length()
-
-        if inputs_embeds is not None and input_ids is None and past_seen_tokens == 0:
-            raise ValueError("When first calling the model, if input_embeds are passed, input_ids should not be None.")
 
         if inputs_embeds is None:
             inputs_embeds = self.text_model.get_input_embeddings()(input_ids).to(input_ids.device)
@@ -487,9 +477,6 @@ class VBertModel(VBertPreTrainedModel):
             output_attentions=output_attentions,
             output_hidden_states=output_hidden_states,
             return_dict=return_dict,
-            # past_key_values=past_key_values,
-            # use_cache=use_cache,
-            # cache_position=cache_position,
         )
 
         if not return_dict:
@@ -588,7 +575,6 @@ class VBertForMaskedLM(VBertPreTrainedModel):
             pixel_values=pixel_values,
             pixel_attention_mask=pixel_attention_mask,
             image_hidden_states=image_hidden_states,
-            use_cache=use_cache,
             output_attentions=output_attentions,
             output_hidden_states=output_hidden_states,
             return_dict=return_dict,
@@ -620,311 +606,3 @@ class VBertForMaskedLM(VBertPreTrainedModel):
             attentions=outputs.attentions,
             image_hidden_states=outputs.image_hidden_states,
         )
-
-    # @classmethod
-    # def from_pretrained_models(
-    #     cls,
-    #     text_model_name,
-    #     vision_model_name,
-    #     vl_config,
-    #     *args,
-    #     **kwargs
-    # ):
-    #     """
-    #     Use this method when creating a new vloom model that hasn't been yet trained and it'll be
-    #     composed of 2 pre-trained models - hence `pretrained_models`.
-    #     """
-    #     model = super().from_pretrained_models(
-    #         text_model_name=text_model_name,
-    #         vision_model_name=vision_model_name,
-    #         vl_config=vl_config,
-    #         *args,
-    #         **kwargs
-    #     )
-    #     with ContextManagers(deepspeed_zero_init_disabled_context_manager()):
-    #         # fetch the pretrained text model w/o zero.Init
-    #         pretrained_lm_head = AutoModelForMaskedLM.from_pretrained(
-    #             text_model_name, trust_remote_code=True, **kwargs
-    #         ).lm_head
-
-    #     # Load the lm_head
-    #     load_state_dict_into_model(model.lm_head, pretrained_lm_head.state_dict(), start_prefix="")
-
-    #     return model
-
-class VModernBertLMHead(nn.Module):
-    def __init__(self, config, **kwargs):
-        super().__init__()
-        pretrained_config = AutoConfig.from_pretrained(
-            config.text_config.text_model_name,
-            trust_remote_code=True,
-            **kwargs,
-        )
-        pretrained_model = AutoModelForMaskedLM.from_config(pretrained_config, trust_remote_code=True, **kwargs)
-
-        self.head = pretrained_model.head
-        self.decoder = pretrained_model.decoder
-
-    def forward(self, hidden_states):
-        hidden_states = self.head(hidden_states)
-        hidden_states = self.decoder(hidden_states)
-        return hidden_states
-
-    # @classmethod
-    # def from_pretrained(
-    #     cls,
-    #     text_model_name,
-    #     vl_config,
-    #     *args,
-    #     **kwargs
-    # ):
-    #     """
-    #     Use this method when creating a new vloom model that hasn't been yet trained and it'll be
-    #     composed of 2 pre-trained models - hence `pretrained_models`.
-    #     """
-    #     lm_head = cls(vl_config, *args, **kwargs)
-
-    #     with ContextManagers(deepspeed_zero_init_disabled_context_manager()):
-    #         # fetch the pretrained text model w/o zero.Init
-    #         pretrained_model = AutoModelForMaskedLM.from_pretrained(
-    #             text_model_name, trust_remote_code=True, **kwargs
-    #         )
-
-    #         pretrained_head = pretrained_model.head
-    #         pretrained_decoder = pretrained_model.decoder
-
-    #     # Load the head
-    #     load_state_dict_into_model(lm_head.head, pretrained_head.state_dict(), start_prefix="")
-    #     load_state_dict_into_model(lm_head.decoder, pretrained_decoder.state_dict(), start_prefix="")
-
-    #     return lm_head
-
-class VModernBertForMaskedLM(VBertPreTrainedModel):
-    # _tied_weights_keys = ["predictions.decoder.bias", "cls.predictions.decoder.weight"]
-
-    def __init__(self, config, **kwargs):
-        super().__init__(config)
-
-        self.image_token_id = config.image_token_id
-        self.in_features = config.hidden_size
-        self.out_additional_features = config.additional_vocab_size
-        self.vocab_size = config.vocab_size
-
-        if config.is_decoder:
-            logger.warning(
-                "If you want to use `BertForMaskedLM` make sure `config.is_decoder=False` for "
-                "bi-directional self-attention."
-            )
-
-        self.model = VBertModel(config, **kwargs)
-        self.lm_head = VModernBertLMHead(config, **kwargs)
-
-        if self.out_additional_features > 0:
-            self.additional_fc = nn.Linear(
-                in_features=self.in_features,
-                out_features=self.out_additional_features,
-                bias=False,
-            )
-
-        # Initialize weights and apply final processing
-        self.post_init()
-
-    def forward(
-            self,
-            input_ids: torch.LongTensor = None,
-            attention_mask: Optional[torch.Tensor] = None,
-            position_ids: Optional[torch.LongTensor] = None,
-            past_key_values: Optional[List[torch.FloatTensor]] = None,
-            inputs_embeds: Optional[torch.FloatTensor] = None,
-            pixel_values: Optional[torch.FloatTensor] = None,
-            pixel_attention_mask: Optional[torch.BoolTensor] = None,
-            image_hidden_states: Optional[torch.FloatTensor] = None,
-            labels: Optional[torch.LongTensor] = None,
-            use_cache: Optional[bool] = None,
-            output_attentions: Optional[bool] = None,
-            output_hidden_states: Optional[bool] = None,
-            return_dict: Optional[bool] = None,
-    ) -> Union[Tuple, VBertMaskedLMOutput]:
-        r"""
-        Args:
-            labels (`torch.LongTensor` of shape `(batch_size, sequence_length)`, *optional*):
-                Labels for computing the masked language modeling loss. Indices should either be in `[0, ...,
-                config.vocab_size]` or `model.image_token_id` (where `model` is your instance of `Idefics3ForConditionalGeneration`).
-                Tokens with indices set to `model.image_token_id` are ignored (masked), the loss is only
-                computed for the tokens with labels in `[0, ..., config.vocab_size]`.
-        ```"""
-        output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
-        output_hidden_states = (
-            output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
-        )
-        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
-
-
-        # Pass the inputs to VBertModel
-        outputs = self.model(
-            input_ids=input_ids,
-            attention_mask=attention_mask,
-            position_ids=position_ids,
-            past_key_values=past_key_values,
-            inputs_embeds=inputs_embeds,
-            pixel_values=pixel_values,
-            pixel_attention_mask=pixel_attention_mask,
-            image_hidden_states=image_hidden_states,
-            use_cache=use_cache,
-            output_attentions=output_attentions,
-            output_hidden_states=output_hidden_states,
-            return_dict=return_dict,
-        )
-
-        # Pass the outputs to the MLM head
-        hidden_states = outputs[0]
-
-        logits = self.lm_head(hidden_states)
-        if self.out_additional_features > 0:
-            proj_states = self.lm_head.head(hidden_states)
-            additional_features = self.additional_fc(proj_states)
-            logits = torch.cat((logits, additional_features), -1)
-        logits = logits.float()
-
-        masked_lm_loss = None
-        if labels is not None:
-            # print the ratio of not ignored tokens
-            loss_fct = CrossEntropyLoss()
-            masked_lm_loss = loss_fct(logits.view(-1, self.vocab_size + self.out_additional_features), labels.view(-1))
-
-        if not return_dict:
-            output = (logits,) + outputs[2:]
-            return ((masked_lm_loss,) + output) if masked_lm_loss is not None else output
-
-        return VBertMaskedLMOutput(
-            loss=masked_lm_loss,
-            logits=logits,
-            hidden_states=outputs.hidden_states,
-            attentions=outputs.attentions,
-            image_hidden_states=outputs.image_hidden_states,
-        )
-
-    def get_model_tflops_per_batch_per_gpu(self, hparams, data_param, tokenizer, max_num_images, max_num_tokens=None):
-        config_vl_model = self.config
-
-        lm_config = config_vl_model.text_config
-
-        language_embed_size = lm_config.hidden_size
-        num_language_layers = lm_config.num_hidden_layers
-        ffn_inner_size = lm_config.intermediate_size
-
-        vision_config = config_vl_model.vision_config
-
-        # Get vision model blocks infos
-        vision_patch_size = vision_config.patch_size
-        vision_hidden_size = vision_config.embed_dim
-        num_vision_layers = vision_config.num_hidden_layers
-        # The +1 is for the CLS token
-        single_image_vision_encoder_seq_len = int(((vision_config.image_size // vision_patch_size) ** 2) // (self.config.pixel_shuffle_factor**2))
-        vision_exp_factor = vision_config.intermediate_size // vision_hidden_size
-
-        # Get language blocks infos
-        language_seq_len = max_num_tokens if max_num_tokens is not None else data_param.max_seq_len
-        language_exp_factor = (ffn_inner_size // language_embed_size) if ffn_inner_size is not None else 4
-
-        # Get modality projection infos
-        vision_pipeline_output_seq_len = (
-            self.config.perceiver_config.resampler_n_latents
-            if self.config.use_resampler
-            else single_image_vision_encoder_seq_len
-        )
-
-        language_tflops_per_batch_per_gpu = compute_tflops_per_batch_per_gpu(
-            num_layers=num_language_layers,
-            batch_size=hparams.batch_size_per_gpu,
-            q_seq_len=language_seq_len,
-            k_seq_len=language_seq_len,
-            hidden_size=language_embed_size,
-            kv_in_dim=language_embed_size,
-            ff_exp_factor=language_exp_factor,
-            grad_acc_size=hparams.grad_acc_size,
-            swiglu=True,
-            vocab_size=tokenizer.vocab_size,
-            count_backward=True,  # Always True regardless of freezing, because gradients are computed for vision adaptor
-            use_grad_checkpointing=hparams.gradient_checkpointing,
-        )
-        modality_projection_tflops_per_batch_per_gpu = compute_linear_tflops_per_batch_per_gpu(
-            batch_size=hparams.batch_size_per_gpu * max_num_images,
-            seq_len=vision_pipeline_output_seq_len,
-            in_features=vision_hidden_size,
-            out_features=language_embed_size,
-            count_backward=True,
-            use_grad_checkpointing=hparams.gradient_checkpointing,
-        )
-
-        vision_tflops_per_batch_per_gpu = compute_tflops_per_batch_per_gpu(
-            num_layers=num_vision_layers,
-            batch_size=hparams.batch_size_per_gpu * max_num_images,
-            q_seq_len=single_image_vision_encoder_seq_len,
-            k_seq_len=single_image_vision_encoder_seq_len,
-            hidden_size=vision_hidden_size,
-            kv_in_dim=vision_hidden_size,
-            ff_exp_factor=vision_exp_factor,
-            grad_acc_size=hparams.grad_acc_size,
-            swiglu=False,
-            vocab_size=None,
-            count_backward=not hparams.model_config["freeze_config"]["freeze_vision_layers"],
-            use_grad_checkpointing=hparams.gradient_checkpointing,
-        )
-        if self.config.use_resampler:
-            perceiver_tflops_per_batch_per_gpu = compute_perceiver_tflops_per_batch_per_gpu(
-                num_layers=self.config.perceiver_config.resampler_depth,
-                batch_size=hparams.batch_size_per_gpu * max_num_images,
-                q_seq_len=self.config.perceiver_config.resampler_n_latents,
-                vision_embed_seq_len=single_image_vision_encoder_seq_len,
-                q_k_v_input_dim=vision_hidden_size,
-                attention_hidden_size=self.config.perceiver_config.resampler_n_heads
-                * self.config.perceiver_config.resampler_head_dim,
-                ff_exp_factor=4,
-                count_backward=True,
-                use_grad_checkpointing=hparams.gradient_checkpointing,
-            )
-            tflop_count = (
-                language_tflops_per_batch_per_gpu
-                + modality_projection_tflops_per_batch_per_gpu
-                + perceiver_tflops_per_batch_per_gpu
-                + vision_tflops_per_batch_per_gpu
-            )
-        else:
-            tflop_count = (
-                language_tflops_per_batch_per_gpu
-                + modality_projection_tflops_per_batch_per_gpu
-                + vision_tflops_per_batch_per_gpu
-            )
-        return tflop_count
-
-    @classmethod
-    def from_pretrained_models(
-        cls,
-        text_model_name,
-        vision_model_name,
-        vl_config,
-        *args,
-        **kwargs
-    ):
-        """
-        Use this method when creating a new vloom model that hasn't been yet trained and it'll be
-        composed of 2 pre-trained models - hence `pretrained_models`.
-        """
-        model = super().from_pretrained_models(
-            text_model_name=text_model_name,
-            vision_model_name=vision_model_name,
-            vl_config=vl_config,
-            *args,
-            **kwargs
-        )
-
-        # Load the lm_head
-        model.lm_head = VModernBertLMHead.from_pretrained(
-            text_model_name=text_model_name,
-            vl_config=vl_config,
-            *args,
-            **kwargs
-        )
-
-        return model

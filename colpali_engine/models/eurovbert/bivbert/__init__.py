@@ -1,2 +1,2 @@
-from .modeling_bivbert import BiVBert
-from .processing_bivbert import BiVBertProcessor
+from .modeling_bieurovbert import BiEuroVBert
+from .processing_bieurovbert import BiEuroVBertProcessor

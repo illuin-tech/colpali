@@ -1,6 +1,6 @@
 from torch import nn
 
-from colpali_engine.models.vbert.modeling_vbert import VBertModel, VBertPreTrainedModel
+from colpali_engine.models.eurovbert.modeling_vbert import VBertModel, VBertPreTrainedModel
 
 
 class ColEuroVBert(VBertPreTrainedModel):

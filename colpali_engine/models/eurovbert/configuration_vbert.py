@@ -208,25 +208,3 @@ class VBertConfig(PretrainedConfig):
         # output["freeze_config"] = self.freeze_config.to_dict()
 
         return output
-
-    # @classmethod
-    # def from_pretrained(cls, pretrained_model_name_or_path: Union[str, os.PathLike], **kwargs) -> "PretrainedConfig":
-    #     outputs = super(VBertConfig, cls).from_pretrained(pretrained_model_name_or_path, **kwargs)
-    #     return outputs
-
-    @classmethod
-    def from_pretrained_models(
-        cls,
-        text_model_name: Union[str, os.PathLike],
-        vision_model_name: Union[str, os.PathLike],
-        **kwargs
-    ) -> "PretrainedConfig":
-        # text_model_config = AutoConfig.from_pretrained(text_model_name, trust_remote_code=True)
-        # vision_model_config = AutoConfig.from_pretrained(vision_model_name, trust_remote_code=True)
-        text_model_config = VBertTextConfig(text_model_name)
-        vision_model_config = VBertVisionConfig(vision_model_name)
-        return cls(
-            text_config=text_model_config,
-            vision_config=vision_model_config,
-            **kwargs
-        )

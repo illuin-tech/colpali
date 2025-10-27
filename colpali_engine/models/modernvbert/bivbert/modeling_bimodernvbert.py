@@ -2,10 +2,10 @@ from typing import Literal
 
 import torch
 
-from colpali_engine.models.vbert.modeling_vbert import VBertModel, VBertPreTrainedModel
+from colpali_engine.models.modernvbert.modeling_vbert import VBertModel, VBertPreTrainedModel
 
 
-class BiVBert(VBertPreTrainedModel):
+class BiModernVBert(VBertPreTrainedModel):
     """
     Initializes the BiIdefics3 model.
 
@@ -51,8 +51,7 @@ class BiVBert(VBertPreTrainedModel):
             pooled_output = last_hidden_states[:, 0]  # (batch_size, hidden_size)
         elif pooling_strategy == "last":
             # Use last token
-            last_unpadded_index = kwargs["attention_mask"].sum(dim=1) - 1
-            pooled_output = last_hidden_states[:, last_unpadded_index.clamp(min=0)]  # (batch_size, hidden_size)
+            pooled_output = last_hidden_states[:, -1]  # (batch_size, hidden_size)
         elif pooling_strategy == "mean":
             # Mean pooling over sequence length
             mask = kwargs["attention_mask"].unsqueeze(-1)  # (batch_size, sequence_length, 1)
@@ -61,5 +60,5 @@ class BiVBert(VBertPreTrainedModel):
             raise ValueError(f"Invalid pooling strategy: {pooling_strategy}")
 
         # L2 normalization
-        pooled_output = pooled_output / pooled_output.norm(dim=-1, keepdim=True)
+        pooled_output = pooled_output / pooled_output.norm(dim=-1, keepdim=True).clamp_min(1e-12)
         return pooled_output
