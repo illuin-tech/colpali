@@ -142,8 +142,8 @@ class ColbertLoss(ColbertModule):
         Compute ColBERT InfoNCE loss over a batch of queries and documents.
 
         Args:
-            query_embeddings (Tensor): [B, Nq, D]
-            doc_embeddings (Tensor): [B, Nd, D]
+            query_embeddings (Tensor): (batch_size, query_length, dim)
+            doc_embeddings (Tensor): positive docs (batch_size, pos_doc_length, dim)
             offset (int): Offset for positive doc indices (multi-GPU).
 
         Returns:
@@ -161,7 +161,6 @@ class ColbertLoss(ColbertModule):
         if self.pos_aware_negative_filtering:
             self._filter_high_negatives(scores, pos_idx)
 
-        # print(f"Scores shape: {scores.shape}, offset: {offset}")
         return self.ce_loss(scores / self.temperature, pos_idx)
 
 
@@ -224,9 +223,9 @@ class ColbertNegativeCELoss(ColbertModule):
         Compute InfoNCE loss with explicit negatives and optional in-batch term.
 
         Args:
-            query_embeddings (Tensor): [B, Lq, D]
-            doc_embeddings (Tensor): [B, Ld, D] positive docs
-            neg_doc_embeddings (Tensor): [B, Nneg, Lneg, D] negative docs
+            query_embeddings (Tensor): (batch_size, query_length, dim)
+            doc_embeddings (Tensor): positive docs (batch_size, pos_doc_length, dim)
+            neg_doc_embeddings (Tensor): negative docs (batch_size, num_negs, neg_doc_length, dim)
             offset (int): Positional offset for in-batch CE.
 
         Returns:
@@ -289,8 +288,8 @@ class ColbertPairwiseCELoss(ColbertModule):
         Compute pairwise softplus loss over in-batch document pairs.
 
         Args:
-            query_embeddings (Tensor): [B, Nq, D]
-            doc_embeddings (Tensor): [B, Nd, D]
+            query_embeddings (Tensor): (batch_size, query_length, dim)
+            doc_embeddings (Tensor): positive docs (batch_size, pos_doc_length, dim)
             offset (int): Positional offset for positives.
 
         Returns:
@@ -372,16 +371,16 @@ class ColbertPairwiseNegativeCELoss(ColbertModule):
         Compute pairwise softplus loss with explicit negatives and optional in-batch term.
 
         Args:
-            query_embeddings (Tensor): [B, Nq, D]
-            doc_embeddings (Tensor): [B, Nd, D] positive docs
-            neg_doc_embeddings (Tensor): [B, Nneg, Lneg, D] negative docs
+            query_embeddings (Tensor): (batch_size, query_length, dim)
+            doc_embeddings (Tensor): positive docs (batch_size, pos_doc_length, dim)
+            neg_doc_embeddings (Tensor): negative docs (batch_size, num_negs, neg_doc_length, dim)
             offset (int): Positional offset for positives.
 
         Returns:
             Tensor: Scalar loss value.
         """
         lengths = (query_embeddings[:, :, 0] != 0).sum(dim=1)
-        pos_raw = torch.einsum("bnd,bld->bnl", query_embeddings, doc_embeddings)
+        pos_raw = torch.einsum("bnd,bld->bnl", query_embeddings, doc_embeddings[offset:offset + neg_doc_embeddings.size(0)])
         neg_raw = torch.einsum("bnd,bsld->bsnl", query_embeddings, neg_doc_embeddings) # B x Nneg x Nq x Lneg
         pos_scores = self._aggregate(pos_raw, self.use_smooth_max, dim_max=2, dim_sum=1)
         neg_scores = self._aggregate(neg_raw, self.use_smooth_max, dim_max=3, dim_sum=2)
@@ -434,8 +433,8 @@ class ColbertSigmoidLoss(ColbertModule):
         Compute sigmoid loss over positive and negative document pairs.
 
         Args:
-            query_embeddings (Tensor): [B, Nq, D]
-            doc_embeddings (Tensor): [B, Nd, D] positive docs
+            query_embeddings (Tensor): (batch_size, query_length, dim)
+            doc_embeddings (Tensor): positive docs (batch_size, pos_doc_length, dim)
 
         Returns:
             Tensor: Scalar loss value.

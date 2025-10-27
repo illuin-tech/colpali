@@ -41,7 +41,6 @@ class ColModernVBert(ModernVBertPreTrainedModel):
         last_hidden_states = outputs[0]  # (batch_size, sequence_length, hidden_size)
         proj = self.custom_text_proj(last_hidden_states)
         # normalize l2 norm
-        # proj = torch.where(kwargs["attention_mask"].unsqueeze(-1).bool(), proj / proj.norm(dim=-1, keepdim=True), torch.zeros_like(proj))
         proj = proj / proj.norm(dim=-1, keepdim=True).clamp_min(1e-12)
         proj = proj * kwargs["attention_mask"].unsqueeze(-1)
 

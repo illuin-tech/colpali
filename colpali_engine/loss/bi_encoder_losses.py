@@ -338,13 +338,13 @@ class BiPairwiseNegativeCELoss(BiEncoderModule):
             Tensor: Scalar loss value.
         """
         # dot product for matching pairs only
-        pos = (query_embeddings * doc_embeddings).sum(dim=1) # B
+        pos = (query_embeddings * doc_embeddings[offset:offset + query_embeddings.size(0)]).sum(dim=1) # B
         neg = (query_embeddings.unsqueeze(1) * neg_doc_embeddings).sum(dim=2) # B x N
 
         loss = torch.nn.functional.softplus((neg - pos.unsqueeze(1)) / self.temperature).mean()
 
         if self.in_batch_term_weight > 0:
-            loss_ib = self.inner_pairwise(query_embeddings, doc_embeddings)
+            loss_ib = self.inner_pairwise(query_embeddings, doc_embeddings, offset=offset)
             loss = loss * (1 - self.in_batch_term_weight) + loss_ib * self.in_batch_term_weight
 
         return loss

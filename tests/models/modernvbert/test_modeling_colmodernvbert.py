@@ -143,6 +143,3 @@ class TestColModernVBert_ModelIntegration:  # noqa N801
 
         assert scores.ndim == 2, f"Expected 2D tensor, got {scores.ndim}"
         assert scores.shape == (len(ds), len(ds)), f"Expected shape {(len(ds), len(ds))}, got {scores.shape}"
-
-        # # Check if the maximum scores per row are in the diagonal of the matrix score
-        # assert (scores.argmax(dim=1) == torch.arange(len(ds), device=scores.device)).all()

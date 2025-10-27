@@ -83,6 +83,10 @@ class ContrastiveTrainer(Trainer):
         else:
             data_collator = self._get_collator_with_removed_columns(self.data_collator, description=description)
 
+        self.query_prefix = data_collator.query_prefix
+        self.pos_prefix = data_collator.pos_doc_prefix
+        self.neg_prefix = data_collator.neg_doc_prefix
+
         dataloader_params = {
             ######### don't set batch size, mutually exclusive from batch sampler ######
             "collate_fn": data_collator,
@@ -165,7 +169,7 @@ class ContrastiveTrainer(Trainer):
         """
         Helper function to reshape negative doc inputs to (batch_size * num_neg_docs, ...)
         """
-        neg_doc_inputs = {k[8:]: v for k, v in inputs.items() if k.startswith("neg_doc")}
+        neg_doc_inputs = {k[len(self.neg_prefix):]: v for k, v in inputs.items() if k.startswith(self.neg_prefix)}
 
         for k in neg_doc_inputs:
             # go from (batch_size, num_neg_docs, ...) to (batch_size * num_neg_docs, ...)
@@ -182,9 +186,9 @@ class ContrastiveTrainer(Trainer):
         return neg_doc_outputs
 
     def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
-        query_outputs = model(**{k[6:]: v for k, v in inputs.items() if k.startswith("query")})
+        query_outputs = model(**{k[len(self.query_prefix):]: v for k, v in inputs.items() if k.startswith(self.query_prefix)})
         # feed only kwargs with 'doc_' prefix
-        doc_outputs = model(**{k[4:]: v for k, v in inputs.items() if k.startswith("doc")})
+        doc_outputs = model(**{k[len(self.pos_prefix):]: v for k, v in inputs.items() if k.startswith(self.pos_prefix)})
         if "neg_doc_input_ids" in inputs:
             # Negative docs are not gathered across processes, so we can use them without offset
             num_negs = inputs["neg_doc_input_ids"].size(1)

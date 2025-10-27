@@ -9,6 +9,9 @@ from colpali_engine.models.paligemma import ColPaliProcessor
 from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 
 
+N_AUGMENTATION_TOKENS = 10
+
+
 def prefix_keys(data: Dict[str, Any], prefix: str) -> Dict[str, Any]:
     """
     Prefix all keys in a dictionary with the given prefix.
@@ -80,8 +83,7 @@ class VisualRetrieverCollator:
         is_str = isinstance(queries[0], str)
 
         # Process queries.
-        # queries = [self.processor.query_prefix + q + self.processor.query_augmentation_token * 10 for q in queries]
-        queries = [q + self.processor.query_augmentation_token * 10 for q in queries] if is_str else queries
+        queries = [self.processor.query_prefix + q + self.processor.query_augmentation_token * N_AUGMENTATION_TOKENS for q in queries]
         batch_query = self.auto_collate(queries, key_prefix=self.query_prefix)
 
         # Process targets.
@@ -123,8 +125,6 @@ class VisualRetrieverCollator:
             for k, v in proc_batch.items():
                 if isinstance(v, torch.Tensor):                        
                     proc_batch[k] = v.view(batch_size, num_negatives, *v.shape[1:])
-                else:
-                    proc_batch[k] = v
         else:
             raise ValueError(f"Unsupported batch type: {type(batch[0])}. Expected str or Image.")
         return prefix_keys(proc_batch, key_prefix)

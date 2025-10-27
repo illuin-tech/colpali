@@ -20,10 +20,6 @@ class ColModernVBertProcessor(BaseVisualRetrieverProcessor, Idefics3Processor):
         super().__init__(*args, image_seq_len=image_seq_len, **kwargs)
         self.tokenizer.padding_side = "left"
 
-    # @property
-    # def image_token_id(self) -> int:
-    #     return self.tokenizer.convert_tokens_to_ids(self.image_token)
-
     def process_images(
         self,
         images: List[Image.Image],
@@ -41,8 +37,6 @@ class ColModernVBertProcessor(BaseVisualRetrieverProcessor, Idefics3Processor):
             images=images,
             padding="longest",
             return_tensors="pt",
-            truncation=True,
-            max_length=8192,
         )
         return batch_doc
 
@@ -60,8 +54,6 @@ class ColModernVBertProcessor(BaseVisualRetrieverProcessor, Idefics3Processor):
             text=texts,
             return_tensors="pt",
             padding="longest",
-            truncation=True,
-            max_length=4096,
         )
 
     def score(

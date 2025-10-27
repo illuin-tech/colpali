@@ -21,6 +21,7 @@ class BiModernVBert(ModernVBertPreTrainedModel):
         super().__init__(config=config)
         self.model = ModernVBertModel(config, **kwargs)
         self.pooling_strategy = pooling_strategy
+        self.eps = 1e-12
         self.post_init()
 
     def forward(
@@ -60,5 +61,5 @@ class BiModernVBert(ModernVBertPreTrainedModel):
             raise ValueError(f"Invalid pooling strategy: {pooling_strategy}")
 
         # L2 normalization
-        pooled_output = pooled_output / pooled_output.norm(dim=-1, keepdim=True).clamp_min(1e-12)
+        pooled_output = pooled_output / pooled_output.norm(dim=-1, keepdim=True).clamp_min(self.eps)
         return pooled_output

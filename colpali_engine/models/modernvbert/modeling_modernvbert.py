@@ -401,6 +401,7 @@ class ModernVBertForMaskedLM(ModernVBertPreTrainedModel):
         if self.out_additional_features > 0:
             self.additional_fc = nn.Linear(self.in_features, self.out_additional_features, bias=False)
         self.lm_head.to(self.dtype)
+        self.loss_function = CrossEntropyLoss()
         self.post_init()
 
     def forward(
@@ -443,7 +444,7 @@ class ModernVBertForMaskedLM(ModernVBertPreTrainedModel):
             logits = torch.cat((logits, additional_features), -1)
         loss = None
         if labels is not None:
-            loss = CrossEntropyLoss()(logits.view(-1, self.vocab_size + self.out_additional_features), labels.view(-1))
+            loss = self.loss_function(logits.view(-1, self.vocab_size + self.out_additional_features), labels.view(-1))
         if not return_dict:
             output = (logits,) + outputs[2:]
             return ((loss,) + output) if loss is not None else output
