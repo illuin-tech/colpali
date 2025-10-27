@@ -14,7 +14,8 @@ class ColModernVBertProcessor(BaseVisualRetrieverProcessor, Idefics3Processor):
 
     query_augmentation_token: ClassVar[str] = "<end_of_utterance>"
     image_token: ClassVar[str] = "<image>"
-    visual_prompt_prefix: ClassVar[str] = "<|begin_of_text|>User:<image>Describe the image.<end_of_utterance>\nAssistant:"
+    visual_prompt_prefix: ClassVar[str] = ("<|begin_of_text|>User:<image>Describe the image.<end_of_utterance>"
+                                           "\nAssistant:")
 
     def __init__(self, *args, image_seq_len=64, **kwargs):
         super().__init__(*args, image_seq_len=image_seq_len, **kwargs)

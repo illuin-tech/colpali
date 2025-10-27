@@ -3,7 +3,6 @@ from typing import Optional
 
 import datasets
 import torch
-from datasets import DatasetDict
 from torch.distributed.nn.functional import all_gather  # PyTorch ≥ 2.1
 from torch.utils.data import ConcatDataset, DataLoader, Dataset
 from transformers import Trainer, is_datasets_available
@@ -52,7 +51,7 @@ class ContrastiveTrainer(Trainer):
         self.args.remove_unused_columns = False  # Safety, don't remove dataset columns from dataloader
         self.train_dataset_list = train_dataset_list
         self.eval_dataset_list = eval_dataset_list
-        self.compute_symetric_loss = compute_symetric_loss 
+        self.compute_symetric_loss = compute_symetric_loss
 
     def get_train_dataloader(self) -> DataLoader:
         """
@@ -65,14 +64,13 @@ class ContrastiveTrainer(Trainer):
         """
         if self.train_dataset is None:
             raise ValueError("Trainer: training requires a train_dataset.")
-        
+
         if self.train_dataset_list is None:
             # If no dataset list, use the default behavior
             return super().get_train_dataloader()
 
         dataset = self.train_dataset
         description = "Training"
-        batch_size = self._train_batch_size
         sampler_fn = self._get_train_sampler
         is_training = True
         dataloader_key = None
@@ -133,19 +131,21 @@ class ContrastiveTrainer(Trainer):
             drop_last=self.args.dataloader_drop_last,
             generator=generator,
         )
-    
+
     def _compute_loss_from_outputs(
-        self, 
-        query_outputs, 
-        pos_target_outputs, 
+        self,
+        query_outputs,
+        pos_target_outputs,
         neg_target_outputs=None,
     ):
         offset = 0
         batch_size = query_outputs.size(0)
         if self.accelerator.num_processes > 1 and self.accelerator.sync_gradients:
             # gather docs across all processes
-            pos_target_outputs = self.accelerator.pad_across_processes(pos_target_outputs, dim=1, pad_index=0, pad_first=True)
-            pos_target_outputs = concat_all_gather(pos_target_outputs)            
+            pos_target_outputs = self.accelerator.pad_across_processes(
+                pos_target_outputs, dim=1, pad_index=0, pad_first=True
+            )
+            pos_target_outputs = concat_all_gather(pos_target_outputs)
             rank = self.accelerator.process_index
             offset = rank * batch_size
 
@@ -164,7 +164,7 @@ class ContrastiveTrainer(Trainer):
             )
 
         return loss
-    
+
     def _reshape_neg_doc_inputs(self, inputs):
         """
         Helper function to reshape negative doc inputs to (batch_size * num_neg_docs, ...)
@@ -176,19 +176,21 @@ class ContrastiveTrainer(Trainer):
             neg_doc_inputs[k] = neg_doc_inputs[k].view(-1, *neg_doc_inputs[k].shape[2:])
 
         return neg_doc_inputs
-    
+
     def _reshape_neg_doc_outputs(self, neg_doc_outputs, num_neg_docs):
         """
         Helper function to reshape negative doc outputs to (batch_size, num_neg_docs, ...)
         """
         neg_doc_outputs = neg_doc_outputs.view(-1, num_neg_docs, *neg_doc_outputs.shape[1:])
-        
+
         return neg_doc_outputs
 
     def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
-        query_outputs = model(**{k[len(self.query_prefix):]: v for k, v in inputs.items() if k.startswith(self.query_prefix)})
+        query_inputs = {k[len(self.query_prefix) :]: v for k, v in inputs.items() if k.startswith(self.query_prefix)}
+        query_outputs = model(**query_inputs)
         # feed only kwargs with 'doc_' prefix
-        doc_outputs = model(**{k[len(self.pos_prefix):]: v for k, v in inputs.items() if k.startswith(self.pos_prefix)})
+        doc_inputs = {k[len(self.pos_prefix) :]: v for k, v in inputs.items() if k.startswith(self.pos_prefix)}
+        doc_outputs = model(**doc_inputs)
         if "neg_doc_input_ids" in inputs:
             # Negative docs are not gathered across processes, so we can use them without offset
             num_negs = inputs["neg_doc_input_ids"].size(1)
@@ -197,7 +199,7 @@ class ContrastiveTrainer(Trainer):
             neg_doc_outputs = self._reshape_neg_doc_outputs(neg_doc_outputs, num_negs)
         else:
             neg_doc_outputs = None
-        
+
         # query -> doc loss
         loss = self._compute_loss_from_outputs(query_outputs, doc_outputs, neg_doc_outputs)
 

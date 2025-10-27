@@ -380,7 +380,9 @@ class ColbertPairwiseNegativeCELoss(ColbertModule):
             Tensor: Scalar loss value.
         """
         lengths = (query_embeddings[:, :, 0] != 0).sum(dim=1)
-        pos_raw = torch.einsum("bnd,bld->bnl", query_embeddings, doc_embeddings[offset:offset + neg_doc_embeddings.size(0)])
+        pos_raw = torch.einsum(
+            "bnd,bld->bnl", query_embeddings, doc_embeddings[offset:offset + query_embeddings.size(0)]
+        )
         neg_raw = torch.einsum("bnd,bsld->bsnl", query_embeddings, neg_doc_embeddings) # B x Nneg x Nq x Lneg
         pos_scores = self._aggregate(pos_raw, self.use_smooth_max, dim_max=2, dim_sum=1)
         neg_scores = self._aggregate(neg_raw, self.use_smooth_max, dim_max=3, dim_sum=2)

@@ -26,9 +26,11 @@ def collect_arg_in_candidates(config, candidates, default=None) -> Any:
 
 class ModernVBertTextConfig(PretrainedConfig):
     r"""
-    This is the configuration class to store the configuration of a [`ModernBERT`]. It is used to instantiate an ModernBERT
+    This is the configuration class to store the configuration of a [`ModernBERT`].
+        It is used to instantiate an ModernBERT
     model according to the specified arguments, defining the model architecture. Instantiating a configuration with the
-    defaults will yield a similar configuration to that of the [jhu-clsp/ettin-encoder-150m](https://huggingface.co/jhu-clsp/ettin-encoder-150m) architecture.
+    defaults will yield a similar configuration to that of the
+        [jhu-clsp/ettin-encoder-150m](https://huggingface.co/jhu-clsp/ettin-encoder-150m) architecture.
 
     Configuration objects inherit from [`PretrainedConfig`] and can be used to control the model outputs. Read the
     documentation from [`PretrainedConfig`] for more information.
@@ -83,7 +85,8 @@ class ModernVBertTextConfig(PretrainedConfig):
 
 class ModernVBertVisionConfig(PretrainedConfig):
     r"""
-    This is the configuration class to store the configuration of a [`SigLIP`]. It is used to instantiate the vision encoder part of the ModernVBERT
+    This is the configuration class to store the configuration of a [`SigLIP`]. It is used to instantiate
+        the vision encoder part of the ModernVBERT.
     model according to the specified arguments, defining the model architecture. Instantiating a configuration with the
     defaults will yield a similar configuration to that of the SigLIP.
 
