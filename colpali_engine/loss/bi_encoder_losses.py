@@ -112,6 +112,7 @@ class BiEncoderLoss(BiEncoderModule):
 
         return self.ce_loss(scores / self.temperature, pos_idx)
 
+
 class BiPairedEncoderLoss(BiEncoderModule):
     """
     InfoNCE loss for bi-encoders without explicit negatives.
@@ -223,7 +224,7 @@ class BiNegativeCELoss(BiEncoderModule):
             Tensor: Scalar loss value.
         """
         # Dot-product only for matching pairs
-        pos_scores = (query_embeddings * doc_embeddings[offset:offset + neg_doc_embeddings.size(0)]).sum(dim=1)
+        pos_scores = (query_embeddings * doc_embeddings[offset : offset + neg_doc_embeddings.size(0)]).sum(dim=1)
         pos_scores /= self.temperature
         neg_scores = torch.einsum("bd,bnd->bn", query_embeddings, neg_doc_embeddings) / self.temperature
 
@@ -338,8 +339,8 @@ class BiPairwiseNegativeCELoss(BiEncoderModule):
             Tensor: Scalar loss value.
         """
         # dot product for matching pairs only
-        pos = (query_embeddings * doc_embeddings[offset:offset + query_embeddings.size(0)]).sum(dim=1) # B
-        neg = (query_embeddings.unsqueeze(1) * neg_doc_embeddings).sum(dim=2) # B x N
+        pos = (query_embeddings * doc_embeddings[offset : offset + query_embeddings.size(0)]).sum(dim=1)  # B
+        neg = (query_embeddings.unsqueeze(1) * neg_doc_embeddings).sum(dim=2)  # B x N
 
         loss = torch.nn.functional.softplus((neg - pos.unsqueeze(1)) / self.temperature).mean()
 
@@ -348,6 +349,7 @@ class BiPairwiseNegativeCELoss(BiEncoderModule):
             loss = loss * (1 - self.in_batch_term_weight) + loss_ib * self.in_batch_term_weight
 
         return loss
+
 
 class BiSigmoidLoss(BiEncoderModule):
     """

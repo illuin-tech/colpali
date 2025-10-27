@@ -12,12 +12,13 @@ class BiModernVBert(ModernVBertPreTrainedModel):
     Args:
         config : The model configuration.
     """
+
     supports_gradient_checkpointing = True
     _supports_flash_attn_2 = True
     _supports_sdpa = True
     _supports_cache_class = True
 
-    def __init__(self, config, pooling_strategy = "mean", **kwargs):
+    def __init__(self, config, pooling_strategy="mean", **kwargs):
         super().__init__(config=config)
         self.model = ModernVBertModel(config, **kwargs)
         self.pooling_strategy = pooling_strategy

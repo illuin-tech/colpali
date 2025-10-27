@@ -21,13 +21,7 @@ class BiModernVBertProcessor(ColModernVBertProcessor):  # noqa: N801
         Returns:
             Union[BatchFeature, BatchEncoding]: Processed texts.
         """
-        return self(
-            text=texts,
-            return_tensors="pt",
-            padding="longest",
-            truncation=True,
-            max_length=4096
-        )
+        return self(text=texts, return_tensors="pt", padding="longest")
 
     def score(
         self,

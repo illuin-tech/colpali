@@ -11,6 +11,7 @@ logger = logging.get_logger(__name__)
 DEFAULT_TEXT_MODEL_NAME = "jhu-clsp/ettin-encoder-150m"
 DEFAULT_VISION_MODEL_NAME = "google/siglip2-base-patch16-512"
 
+
 def collect_arg_in_candidates(config, candidates, default=None) -> Any:
     """Gets the first available argument in a config given a list of candidate names."""
     for c in candidates:
@@ -20,9 +21,8 @@ def collect_arg_in_candidates(config, candidates, default=None) -> Any:
             return config[c]
     if default is not None:
         return default
-    raise ValueError(
-        f"No matching arguments found in candidates. Candidates: {candidates}, Config: {config}"
-    )
+    raise ValueError(f"No matching arguments found in candidates. Candidates: {candidates}, Config: {config}")
+
 
 class ModernVBertTextConfig(PretrainedConfig):
     r"""
@@ -35,6 +35,7 @@ class ModernVBertTextConfig(PretrainedConfig):
     Configuration objects inherit from [`PretrainedConfig`] and can be used to control the model outputs. Read the
     documentation from [`PretrainedConfig`] for more information.
     """
+
     model_type = "modernvbert_text"
 
     def __init__(
@@ -83,6 +84,7 @@ class ModernVBertTextConfig(PretrainedConfig):
             **kwargs,
         )
 
+
 class ModernVBertVisionConfig(PretrainedConfig):
     r"""
     This is the configuration class to store the configuration of a [`SigLIP`]. It is used to instantiate
@@ -93,6 +95,7 @@ class ModernVBertVisionConfig(PretrainedConfig):
     Configuration objects inherit from [`PretrainedConfig`] and can be used to control the model outputs. Read the
     documentation from [`PretrainedConfig`] for more information.
     """
+
     model_type = "modernvbert_vision"
 
     attribute_map = {

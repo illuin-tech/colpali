@@ -3,7 +3,7 @@ from typing import Optional, Tuple, Union
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F  #noqa: N812
+import torch.nn.functional as F  # noqa: N812
 from torch.nn import CrossEntropyLoss
 from transformers import AutoConfig, AutoModel, AutoModelForMaskedLM, PreTrainedModel, logging
 from transformers.modeling_outputs import BaseModelOutput
@@ -100,7 +100,7 @@ class DecoupledEmbedding(nn.Embedding):
         # for successful lookup replace input_ids with 0, the results of these will be discarded anyway
         input_ids[additional_vocab_indices] = 0
         full_vector = F.embedding(input_ids, self.weight)
-        full_vector[additional_vocab_indices] = additional_embeddings      # overwrite the records with high indices
+        full_vector[additional_vocab_indices] = additional_embeddings  # overwrite the records with high indices
         return full_vector
 
 
@@ -129,6 +129,7 @@ class ModernVBertBaseModelOutput(BaseModelOutput):
             sequence_length, hidden_size)`.
             image_hidden_states of the model produced by the vision encoder
     """
+
     last_hidden_state: torch.FloatTensor = None
     hidden_states: Optional[Tuple[torch.FloatTensor]] = None
     attentions: Optional[Tuple[torch.FloatTensor]] = None
@@ -160,6 +161,7 @@ class ModernVBertMaskedLMOutput(MaskedLMOutput):
             sequence_length, hidden_size)`.
             image_hidden_states of the model produced by the vision encoder
     """
+
     loss: Optional[torch.FloatTensor] = None
     logits: torch.FloatTensor = None
     hidden_states: Optional[Tuple[torch.FloatTensor, ...]] = None
@@ -169,6 +171,7 @@ class ModernVBertMaskedLMOutput(MaskedLMOutput):
 
 class ModernVBertSimpleMLP(nn.Module):
     """A simple linear projection layer to project the vision hidden states to the text hidden states."""
+
     def __init__(self, input_size, output_size):
         super().__init__()
         self.proj = nn.Linear(input_size, output_size, bias=False)
@@ -183,6 +186,7 @@ class ModernVBertConnector(nn.Module):
     followed by a linear projection to match the text model's hidden size.
     Based on https://pytorch.org/docs/stable/generated/torch.nn.PixelShuffle.html
     """
+
     def __init__(self, config):
         super().__init__()
         self.scale_factor = config.pixel_shuffle_factor
@@ -260,10 +264,7 @@ class ModernVBertModel(ModernVBertPreTrainedModel):
             _attn_implementation=config._attn_implementation,
             trust_remote_code=True,
         )
-        text_model = AutoModel.from_config(
-            text_model_config,
-            trust_remote_code=True
-        )
+        text_model = AutoModel.from_config(text_model_config, trust_remote_code=True)
         embed_layer = DecoupledEmbedding(
             num_embeddings=text_model_config.vocab_size,
             num_additional_embeddings=config.additional_vocab_size,
@@ -393,6 +394,7 @@ class ModernVBertModel(ModernVBertPreTrainedModel):
             attentions=outputs.attentions,
             image_hidden_states=image_hidden_states,
         )
+
 
 class ModernVBertLMHead(nn.Module):
     def __init__(self, config):

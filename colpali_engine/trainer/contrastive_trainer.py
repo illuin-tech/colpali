@@ -154,14 +154,10 @@ class ContrastiveTrainer(Trainer):
                 query_embeddings=query_outputs,
                 doc_embeddings=pos_target_outputs,
                 neg_doc_embeddings=neg_target_outputs,
-                offset=offset
+                offset=offset,
             )
         else:
-            loss = self.loss_func(
-                query_embeddings=query_outputs,
-                doc_embeddings=pos_target_outputs,
-                offset=offset
-            )
+            loss = self.loss_func(query_embeddings=query_outputs, doc_embeddings=pos_target_outputs, offset=offset)
 
         return loss
 
@@ -169,7 +165,7 @@ class ContrastiveTrainer(Trainer):
         """
         Helper function to reshape negative doc inputs to (batch_size * num_neg_docs, ...)
         """
-        neg_doc_inputs = {k[len(self.neg_prefix):]: v for k, v in inputs.items() if k.startswith(self.neg_prefix)}
+        neg_doc_inputs = {k[len(self.neg_prefix) :]: v for k, v in inputs.items() if k.startswith(self.neg_prefix)}
 
         for k in neg_doc_inputs:
             # go from (batch_size, num_neg_docs, ...) to (batch_size * num_neg_docs, ...)

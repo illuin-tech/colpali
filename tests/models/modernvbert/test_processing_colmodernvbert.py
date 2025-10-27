@@ -35,6 +35,7 @@ def test_process_images(processor_from_pretrained: ColModernVBertProcessor):
     assert isinstance(batch_feature["pixel_values"], torch.Tensor)
     assert batch_feature["pixel_values"].shape[0] == 1
 
+
 def test_process_texts(processor_from_pretrained: ColModernVBertProcessor):
     queries = [
         "Is attention really all you need?",
@@ -48,6 +49,7 @@ def test_process_texts(processor_from_pretrained: ColModernVBertProcessor):
     assert "input_ids" in batch_encoding
     assert isinstance(batch_encoding["input_ids"], torch.Tensor)
     assert cast(torch.Tensor, batch_encoding["input_ids"]).shape[0] == len(queries)
+
 
 def test_process_queries(processor_from_pretrained: ColModernVBertProcessor):
     queries = [

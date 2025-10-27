@@ -113,7 +113,7 @@ class TestBiPairwiseNegativeCELoss:
         B, Nneg, D = 5, 2, 4
         query = torch.zeros(B, D)
         pos = torch.zeros(B, D)
-        neg = torch.zeros(B, Nneg,D)
+        neg = torch.zeros(B, Nneg, D)
         loss = loss_fn(query, pos, neg)
         expected = F.softplus(torch.tensor(0.0))
         assert torch.allclose(loss, expected)

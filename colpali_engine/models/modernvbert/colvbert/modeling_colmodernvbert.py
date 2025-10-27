@@ -13,6 +13,7 @@ class ColModernVBert(ModernVBertPreTrainedModel):
         except those of the image at inference.
         Defaults to False --> Do not mask any embeddings during forward pass.
     """
+
     supports_gradient_checkpointing = True
     _supports_flash_attn_2 = True
     _supports_sdpa = True
