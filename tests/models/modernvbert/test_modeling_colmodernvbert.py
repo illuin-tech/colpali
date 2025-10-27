@@ -5,7 +5,6 @@ import pytest
 import torch
 from datasets import load_dataset
 from PIL import Image
-from transformers.utils.import_utils import is_flash_attn_2_available
 
 from colpali_engine.models import ColModernVBert, ColModernVBertProcessor
 from colpali_engine.utils.torch_utils import get_torch_device, tear_down_torch
