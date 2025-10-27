@@ -7,14 +7,16 @@ from transformers import BatchEncoding, BatchFeature, Idefics3Processor
 from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 
 
-class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
+class ColModernVBertProcessor(BaseVisualRetrieverProcessor, Idefics3Processor):
     """
     Processor for ColIdefics3.
     """
 
     query_augmentation_token: ClassVar[str] = "<end_of_utterance>"
     image_token: ClassVar[str] = "<image>"
-    visual_prompt_prefix: ClassVar[str] = "<|im_start|>User:<image>Describe the image.<end_of_utterance>\nAssistant:"
+    visual_prompt_prefix: ClassVar[str] = (
+        "<|begin_of_text|>User:<image>Describe the image.<end_of_utterance>\nAssistant:"
+    )
 
     def __init__(self, *args, image_seq_len=64, **kwargs):
         super().__init__(*args, image_seq_len=image_seq_len, **kwargs)
@@ -25,7 +27,7 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
         images: List[Image.Image],
     ) -> Union[BatchFeature, BatchEncoding]:
         """
-        Process images for ColIdefics3.
+        Process images for ColModernVBert.
 
         Args:
             images: List of PIL images.
@@ -42,7 +44,7 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
 
     def process_texts(self, texts: List[str]) -> Union[BatchFeature, BatchEncoding]:
         """
-        Process texts for ColIdefics3.
+        Process texts for ColModernVBert.
 
         Args:
             texts: List of input texts.

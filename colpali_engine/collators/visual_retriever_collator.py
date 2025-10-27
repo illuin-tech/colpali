@@ -1,11 +1,14 @@
 import random
 from typing import Any, Dict, List, Union
 
+import torch
 from PIL.Image import Image
 
 from colpali_engine.data.dataset import ColPaliEngineDataset
 from colpali_engine.models.paligemma import ColPaliProcessor
 from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
+
+N_AUGMENTATION_TOKENS = 10
 
 
 def prefix_keys(data: Dict[str, Any], prefix: str) -> Dict[str, Any]:
@@ -69,8 +72,7 @@ class VisualRetrieverCollator:
 
             neg_tgt = example.get(ColPaliEngineDataset.NEG_TARGET_KEY, None)
             if neg_tgt is not None:
-                sampled_neg = random.choice(neg_tgt) if isinstance(neg_tgt, list) else neg_tgt
-                neg_targets.append(sampled_neg)
+                neg_targets.append(neg_tgt)
 
         # Ensure all queries are strings or images.
         assert all(isinstance(q, str) for q in queries), (
@@ -78,7 +80,10 @@ class VisualRetrieverCollator:
         )
 
         # Process queries.
-        queries = [self.processor.query_prefix + q + self.processor.query_augmentation_token * 10 for q in queries]
+        queries = [
+            self.processor.query_prefix + q + self.processor.query_augmentation_token * N_AUGMENTATION_TOKENS
+            for q in queries
+        ]
         batch_query = self.auto_collate(queries, key_prefix=self.query_prefix)
 
         # Process targets.
@@ -102,6 +107,22 @@ class VisualRetrieverCollator:
             proc_batch = self.processor.process_texts(texts=batch)
         elif isinstance(batch[0], Image):
             proc_batch = self.processor.process_images(images=batch)
+        elif isinstance(batch[0], list):
+            if isinstance(batch[0][0], str):
+                batch_size = len(batch)
+                all_texts = [text for texts in batch for text in texts]
+                num_negatives = len(all_texts) // batch_size
+                proc_batch = self.processor.process_texts(texts=all_texts)
+            elif isinstance(batch[0][0], Image):
+                batch_size = len(batch)
+                all_imgs = [img for imgs in batch for img in imgs]
+                num_negatives = len(all_imgs) // batch_size
+                proc_batch = self.processor.process_images(images=all_imgs)
+            else:
+                raise ValueError(f"Unsupported batch type: {type(batch[0][0])}. Expected str or Image.")
+            for k, v in proc_batch.items():
+                if isinstance(v, torch.Tensor):
+                    proc_batch[k] = v.view(batch_size, num_negatives, *v.shape[1:])
         else:
             raise ValueError(f"Unsupported batch type: {type(batch[0])}. Expected str or Image.")
         return prefix_keys(proc_batch, key_prefix)

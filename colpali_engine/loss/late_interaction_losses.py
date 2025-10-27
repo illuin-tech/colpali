@@ -142,8 +142,8 @@ class ColbertLoss(ColbertModule):
         Compute ColBERT InfoNCE loss over a batch of queries and documents.
 
         Args:
-            query_embeddings (Tensor): [B, Nq, D]
-            doc_embeddings (Tensor): [B, Nd, D]
+            query_embeddings (Tensor): (batch_size, query_length, dim)
+            doc_embeddings (Tensor): positive docs (batch_size, pos_doc_length, dim)
             offset (int): Offset for positive doc indices (multi-GPU).
 
         Returns:
@@ -152,7 +152,6 @@ class ColbertLoss(ColbertModule):
         lengths = (query_embeddings[:, :, 0] != 0).sum(dim=1)
         raw = torch.einsum("bnd,csd->bcns", query_embeddings, doc_embeddings)
         scores = self._aggregate(raw, self.use_smooth_max, dim_max=3, dim_sum=2)
-
         if self.normalize_scores:
             scores = self._apply_normalization(scores, lengths)
 
@@ -161,8 +160,6 @@ class ColbertLoss(ColbertModule):
 
         if self.pos_aware_negative_filtering:
             self._filter_high_negatives(scores, pos_idx)
-
-        # print(f"Scores shape: {scores.shape}, offset: {offset}")
 
         return self.ce_loss(scores / self.temperature, pos_idx)
 
@@ -226,25 +223,27 @@ class ColbertNegativeCELoss(ColbertModule):
         Compute InfoNCE loss with explicit negatives and optional in-batch term.
 
         Args:
-            query_embeddings (Tensor): [B, Nq, D]
-            doc_embeddings (Tensor): [B, Nd, D] positive docs
-            neg_doc_embeddings (Tensor): [B, Nneg, D] negative docs
+            query_embeddings (Tensor): (batch_size, query_length, dim)
+            doc_embeddings (Tensor): positive docs (batch_size, pos_doc_length, dim)
+            neg_doc_embeddings (Tensor): negative docs (batch_size, num_negs, neg_doc_length, dim)
             offset (int): Positional offset for in-batch CE.
 
         Returns:
             Tensor: Scalar loss.
         """
         lengths = (query_embeddings[:, :, 0] != 0).sum(dim=1)
-        pos_raw = torch.einsum("bnd,bsd->bns", query_embeddings, doc_embeddings)
-        neg_raw = torch.einsum("bnd,bsd->bns", query_embeddings, neg_doc_embeddings)
+        pos_raw = torch.einsum(
+            "bnd,bsd->bns", query_embeddings, doc_embeddings[offset : offset + neg_doc_embeddings.size(0)]
+        )
+        neg_raw = torch.einsum("bnd,blsd->blns", query_embeddings, neg_doc_embeddings)
         pos_scores = self._aggregate(pos_raw, self.use_smooth_max, dim_max=2, dim_sum=1)
-        neg_scores = self._aggregate(neg_raw, self.use_smooth_max, dim_max=2, dim_sum=1)
+        neg_scores = self._aggregate(neg_raw, self.use_smooth_max, dim_max=3, dim_sum=2)
 
         if self.normalize_scores:
             pos_scores = self._apply_normalization(pos_scores, lengths)
             neg_scores = self._apply_normalization(neg_scores, lengths)
 
-        loss = F.softplus((neg_scores - pos_scores) / self.temperature).mean()
+        loss = F.softplus((neg_scores - pos_scores.unsqueeze(1)) / self.temperature).mean()
 
         if self.in_batch_term_weight > 0:
             loss_ib = self.inner_loss(query_embeddings, doc_embeddings, offset)
@@ -287,8 +286,8 @@ class ColbertPairwiseCELoss(ColbertModule):
         Compute pairwise softplus loss over in-batch document pairs.
 
         Args:
-            query_embeddings (Tensor): [B, Nq, D]
-            doc_embeddings (Tensor): [B, Nd, D]
+            query_embeddings (Tensor): (batch_size, query_length, dim)
+            doc_embeddings (Tensor): positive docs (batch_size, pos_doc_length, dim)
             offset (int): Positional offset for positives.
 
         Returns:
@@ -370,28 +369,97 @@ class ColbertPairwiseNegativeCELoss(ColbertModule):
         Compute pairwise softplus loss with explicit negatives and optional in-batch term.
 
         Args:
-            query_embeddings (Tensor): [B, Nq, D]
-            doc_embeddings (Tensor): [B, Nd, D] positive docs
-            neg_doc_embeddings (Tensor): [B, Nneg, D] negative docs
+            query_embeddings (Tensor): (batch_size, query_length, dim)
+            doc_embeddings (Tensor): positive docs (batch_size, pos_doc_length, dim)
+            neg_doc_embeddings (Tensor): negative docs (batch_size, num_negs, neg_doc_length, dim)
             offset (int): Positional offset for positives.
 
         Returns:
             Tensor: Scalar loss value.
         """
         lengths = (query_embeddings[:, :, 0] != 0).sum(dim=1)
-        pos_raw = torch.einsum("bnd,bsd->bns", query_embeddings, doc_embeddings)
-        neg_raw = torch.einsum("bnd,bsd->bns", query_embeddings, neg_doc_embeddings)
+        pos_raw = torch.einsum(
+            "bnd,bld->bnl", query_embeddings, doc_embeddings[offset : offset + query_embeddings.size(0)]
+        )
+        neg_raw = torch.einsum("bnd,bsld->bsnl", query_embeddings, neg_doc_embeddings)  # B x Nneg x Nq x Lneg
         pos_scores = self._aggregate(pos_raw, self.use_smooth_max, dim_max=2, dim_sum=1)
-        neg_scores = self._aggregate(neg_raw, self.use_smooth_max, dim_max=2, dim_sum=1)
+        neg_scores = self._aggregate(neg_raw, self.use_smooth_max, dim_max=3, dim_sum=2)
 
         if self.normalize_scores:
             pos_scores = self._apply_normalization(pos_scores, lengths)
             neg_scores = self._apply_normalization(neg_scores, lengths)
 
-        loss = F.softplus((neg_scores - pos_scores) / self.temperature).mean()
+        loss = F.softplus((neg_scores - pos_scores.unsqueeze(1)) / self.temperature).mean()
 
         if self.in_batch_term_weight > 0:
             loss_ib = self.inner_pairwise(query_embeddings, doc_embeddings, offset)
             loss = loss * (1 - self.in_batch_term_weight) + loss_ib * self.in_batch_term_weight
 
         return loss
+
+
+class ColbertSigmoidLoss(ColbertModule):
+    """
+    Sigmoid loss for ColBERT with explicit negatives.
+
+    Args:
+        temperature (float): Scaling for logits.
+        normalize_scores (bool): Normalize scores by query lengths.
+        use_smooth_max (bool): Use log-sum-exp instead of amax.
+        pos_aware_negative_filtering (bool): Apply pos-aware negative filtering.
+    """
+
+    def __init__(
+        self,
+        temperature: float = 0.02,
+        normalize_scores: bool = True,
+        use_smooth_max: bool = False,
+        pos_aware_negative_filtering: bool = False,
+        max_batch_size: int = 1024,
+        tau: float = 0.1,
+        norm_tol: float = 1e-3,
+        filter_threshold: float = 0.95,
+        filter_factor: float = 0.5,
+    ):
+        super().__init__(max_batch_size, tau, norm_tol, filter_threshold, filter_factor)
+        self.temperature = temperature
+        self.normalize_scores = normalize_scores
+        self.use_smooth_max = use_smooth_max
+        self.pos_aware_negative_filtering = pos_aware_negative_filtering
+        self.ce_loss = CrossEntropyLoss()
+
+    def forward(self, query_embeddings: torch.Tensor, doc_embeddings: torch.Tensor, offset: int = 0) -> torch.Tensor:
+        """
+        Compute sigmoid loss over positive and negative document pairs.
+
+        Args:
+            query_embeddings (Tensor): (batch_size, query_length, dim)
+            doc_embeddings (Tensor): positive docs (batch_size, pos_doc_length, dim)
+
+        Returns:
+            Tensor: Scalar loss value.
+        """
+
+        lengths = (query_embeddings[:, :, 0] != 0).sum(dim=1)
+        raw = torch.einsum("bnd,csd->bcns", query_embeddings, doc_embeddings)
+        scores = self._aggregate(raw, self.use_smooth_max, dim_max=3, dim_sum=2)
+
+        if self.normalize_scores:
+            scores = self._apply_normalization(scores, lengths)
+
+        batch_size = scores.size(0)
+        idx, pos_idx = self._get_idx(batch_size, offset, scores.device)
+
+        if self.pos_aware_negative_filtering:
+            self._filter_high_negatives(scores, pos_idx)
+
+        # for each idx in pos_idx, the 2D index (idx, idx) → flat index = idx * B + idx
+        # build a 1-D mask of length B*B with ones at those positions
+        flat_pos = pos_idx * (batch_size + 1)
+        pos_mask = -torch.ones(batch_size * batch_size, device=scores.device)
+        pos_mask[flat_pos] = 1.0
+
+        # flatten the scores to [B * B]
+        scores = scores.view(-1) / self.temperature
+
+        return F.softplus(scores * pos_mask).mean()

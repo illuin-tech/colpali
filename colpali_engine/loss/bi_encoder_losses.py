@@ -1,4 +1,5 @@
 import torch
+import torch.nn.functional as F  # noqa: N812
 from torch.nn import CrossEntropyLoss
 
 
@@ -112,6 +113,61 @@ class BiEncoderLoss(BiEncoderModule):
         return self.ce_loss(scores / self.temperature, pos_idx)
 
 
+class BiPairedEncoderLoss(BiEncoderModule):
+    """
+    InfoNCE loss for bi-encoders without explicit negatives.
+
+    Args:
+        temperature (float): Scaling factor for logits.
+        pos_aware_negative_filtering (bool): Apply in-batch negative filtering if True.
+        max_batch_size (int): Max batch size for index buffer caching.
+        filter_threshold (float): Threshold ratio for negative filtering.
+        filter_factor (float): Factor to down-weight filtered negatives.
+    """
+
+    def __init__(
+        self,
+        temperature: float = 0.02,
+        pos_aware_negative_filtering: bool = False,
+        max_batch_size: int = 1024,
+        filter_threshold: float = 0.95,
+        filter_factor: float = 0.5,
+    ):
+        super().__init__(max_batch_size, temperature, filter_threshold, filter_factor)
+        self.pos_aware_negative_filtering = pos_aware_negative_filtering
+        self.ce_loss = CrossEntropyLoss()
+
+    def forward(
+        self,
+        query_embeddings: torch.Tensor,
+        doc_embeddings: torch.Tensor,
+        offset: int = 0,
+    ) -> torch.Tensor:
+        """
+        Compute the InfoNCE loss over a batch of bi-encoder embeddings.
+
+        Args:
+            query_embeddings (Tensor[B, D]): Query vectors.
+            doc_embeddings (Tensor[B, D]): Document vectors.
+            offset (int): Offset for positive indices (multi-GPU).
+
+        Returns:
+            Tensor: Scalar cross-entropy loss.
+        """
+        # Compute in-batch similarity matrix
+        scores = torch.einsum("bd,cd->bc", query_embeddings, doc_embeddings)
+        batch_size = scores.size(0)
+        idx, pos_idx = self._get_idx(batch_size, offset, scores.device)
+
+        if self.pos_aware_negative_filtering:
+            self._filter_high_negatives(scores, pos_idx)
+
+        q2t = self.ce_loss(scores / self.temperature, pos_idx)
+        t2q = self.ce_loss(scores.T / self.temperature, ...)
+
+        return (q2t + t2q) / 2.0
+
+
 class BiNegativeCELoss(BiEncoderModule):
     """
     InfoNCE loss with explicit negative samples and optional in-batch term.
@@ -161,17 +217,18 @@ class BiNegativeCELoss(BiEncoderModule):
         Args:
             query_embeddings (Tensor[B, D]): Query vectors.
             doc_embeddings (Tensor[B, D]): Positive document vectors.
-            neg_doc_embeddings (Tensor[B, D]): Negative document vectors.
+            neg_doc_embeddings (Tensor[B, N, D]): Negative document vectors.
             offset (int): Offset for in-batch CE positives.
 
         Returns:
             Tensor: Scalar loss value.
         """
         # Dot-product only for matching pairs
-        pos_scores = (query_embeddings * doc_embeddings).sum(dim=1) / self.temperature
-        neg_scores = (query_embeddings * neg_doc_embeddings).sum(dim=1) / self.temperature
+        pos_scores = (query_embeddings * doc_embeddings[offset : offset + neg_doc_embeddings.size(0)]).sum(dim=1)
+        pos_scores /= self.temperature
+        neg_scores = torch.einsum("bd,bnd->bn", query_embeddings, neg_doc_embeddings) / self.temperature
 
-        loss = torch.nn.functional.softplus(neg_scores - pos_scores).mean()
+        loss = F.softplus(neg_scores - pos_scores.unsqueeze(1)).mean()
 
         if self.in_batch_term_weight > 0:
             loss_ib = self.inner_loss(query_embeddings, doc_embeddings, offset)
@@ -206,6 +263,7 @@ class BiPairwiseCELoss(BiEncoderModule):
         self,
         query_embeddings: torch.Tensor,
         doc_embeddings: torch.Tensor,
+        offset: int = 0,
     ) -> torch.Tensor:
         """
         Compute softplus(hardest_neg - pos) where hardest_neg is the highest off-diagonal score.
@@ -267,6 +325,7 @@ class BiPairwiseNegativeCELoss(BiEncoderModule):
         query_embeddings: torch.Tensor,
         doc_embeddings: torch.Tensor,
         neg_doc_embeddings: torch.Tensor,
+        offset: int = 0,
     ) -> torch.Tensor:
         """
         Compute softplus(neg-explicit - pos) plus optional pairwise in-batch loss.
@@ -274,19 +333,86 @@ class BiPairwiseNegativeCELoss(BiEncoderModule):
         Args:
             query_embeddings (Tensor[B, D]): Query vectors.
             doc_embeddings (Tensor[B, D]): Positive document vectors.
-            neg_doc_embeddings (Tensor[B, D]): Negative document vectors.
+            neg_doc_embeddings (Tensor[B, N, D]): Negative document vectors.
 
         Returns:
             Tensor: Scalar loss value.
         """
         # dot product for matching pairs only
-        pos = (query_embeddings * doc_embeddings).sum(dim=1)
-        neg = (query_embeddings * neg_doc_embeddings).sum(dim=1)
+        pos = (query_embeddings * doc_embeddings[offset : offset + query_embeddings.size(0)]).sum(dim=1)  # B
+        neg = (query_embeddings.unsqueeze(1) * neg_doc_embeddings).sum(dim=2)  # B x N
 
-        loss = torch.nn.functional.softplus((neg - pos) / self.temperature).mean()
+        loss = torch.nn.functional.softplus((neg - pos.unsqueeze(1)) / self.temperature).mean()
 
         if self.in_batch_term_weight > 0:
-            loss_ib = self.inner_pairwise(query_embeddings, doc_embeddings)
+            loss_ib = self.inner_pairwise(query_embeddings, doc_embeddings, offset=offset)
             loss = loss * (1 - self.in_batch_term_weight) + loss_ib * self.in_batch_term_weight
 
         return loss
+
+
+class BiSigmoidLoss(BiEncoderModule):
+    """
+    Sigmoid loss for ColBERT with in-batch negatives.
+
+    Args:
+        temperature (float): Scaling factor for logits.
+        pos_aware_negative_filtering (bool): Apply in-batch negative filtering if True.
+        max_batch_size (int): Max batch size for index buffer caching.
+        filter_threshold (float): Threshold ratio for negative filtering.
+        filter_factor (float): Factor to down-weight filtered negatives.
+    """
+
+    def __init__(
+        self,
+        temperature: float = 0.02,
+        pos_aware_negative_filtering: bool = False,
+        max_batch_size: int = 1024,
+        filter_threshold: float = 0.95,
+        filter_factor: float = 0.5,
+    ):
+        super().__init__(max_batch_size, temperature, filter_threshold, filter_factor)
+        self.pos_aware_negative_filtering = pos_aware_negative_filtering
+
+    def forward(self, query_embeddings: torch.Tensor, doc_embeddings: torch.Tensor, offset: int = 0) -> torch.Tensor:
+        """
+        Compute the sigmoid loss for a batch of bi-encoder embeddings.
+
+        Args:
+            query_embeddings (Tensor[B, D]): Query vectors.
+            doc_embeddings (Tensor[B, D]): Document vectors.
+            offset (int): Offset for positive indices (multi-GPU).
+
+        Returns:
+            Tensor: Scalar cross-entropy loss.
+        """
+
+        # Compute in-batch similarity matrix
+        scores = torch.einsum("bd,cd->bc", query_embeddings, doc_embeddings)
+
+        batch_size, num_targets = scores.shape
+        device = scores.device
+
+        _, pos_idx = self._get_idx(batch_size, offset, device)
+
+        if self.pos_aware_negative_filtering:
+            self._filter_high_negatives(scores, pos_idx)
+
+        all_losses = []
+        for k in range(num_targets // batch_size):
+            # mask equal to 1 on offset -> offset + batch_size
+            curr_idx = torch.arange(offset, offset + batch_size, device=device)
+            # keep only the scores for the current batch
+            curr_scores = scores[:, curr_idx].view(-1) / self.temperature
+            # compute the labels
+            labels = -torch.ones(batch_size * batch_size, device=device)
+            if k == 0:
+                flat_pos = (pos_idx - offset) * (batch_size + 1)
+                labels[flat_pos] = 1.0
+            # compute the loss
+            block_loss = F.softplus(curr_scores * labels)
+            all_losses.append(block_loss)
+            # shift the offset for the next batch
+            offset = (offset + batch_size) % num_targets
+
+        return torch.stack(all_losses, dim=0).mean()

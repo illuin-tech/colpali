@@ -64,10 +64,10 @@ class TestBiEncoderLoss:
 class TestBiNegativeCELoss:
     def test_forward_no_inbatch(self):
         loss_fn = BiNegativeCELoss(temperature=1.0, in_batch_term_weight=0, pos_aware_negative_filtering=False)
-        B, D = 3, 4
+        B, D, Nneg = 3, 4, 1
         query = torch.zeros(B, D)
         pos = torch.zeros(B, D)
-        neg = torch.zeros(B, D)
+        neg = torch.zeros(B, Nneg, D)
         loss = loss_fn(query, pos, neg)
         # softplus(0 - 0) = ln(2)
         expected = F.softplus(torch.tensor(0.0))
@@ -75,10 +75,10 @@ class TestBiNegativeCELoss:
 
     def test_forward_with_inbatch(self):
         loss_fn = BiNegativeCELoss(temperature=1.0, in_batch_term_weight=0.5, pos_aware_negative_filtering=False)
-        B, D = 2, 3
+        B, D, Nneg = 2, 3, 1
         query = torch.zeros(B, D)
         pos = torch.zeros(B, D)
-        neg = torch.zeros(B, D)
+        neg = torch.zeros(B, Nneg, D)
         loss = loss_fn(query, pos, neg)
         # in-batch CE on zeros: log(B)
         ce = torch.log(torch.tensor(float(B)))
@@ -110,20 +110,20 @@ class TestBiPairwiseCELoss:
 class TestBiPairwiseNegativeCELoss:
     def test_forward_no_inbatch(self):
         loss_fn = BiPairwiseNegativeCELoss(temperature=1.0, in_batch_term_weight=0)
-        B, D = 5, 4
+        B, Nneg, D = 5, 2, 4
         query = torch.zeros(B, D)
         pos = torch.zeros(B, D)
-        neg = torch.zeros(B, D)
+        neg = torch.zeros(B, Nneg, D)
         loss = loss_fn(query, pos, neg)
         expected = F.softplus(torch.tensor(0.0))
         assert torch.allclose(loss, expected)
 
     def test_forward_with_inbatch(self):
         loss_fn = BiPairwiseNegativeCELoss(temperature=1.0, in_batch_term_weight=0.5)
-        B, D = 2, 3
+        B, Nneg, D = 2, 3, 4
         query = torch.zeros(B, D)
         pos = torch.zeros(B, D)
-        neg = torch.zeros(B, D)
+        neg = torch.zeros(B, Nneg, D)
         loss = loss_fn(query, pos, neg)
         # both explicit and in-batch pairwise yield ln(2), average remains ln(2)
         expected = F.softplus(torch.tensor(0.0))
