@@ -1,3 +1,4 @@
+import math
 from typing import ClassVar, List, Optional, Tuple, Union
 
 import torch
@@ -14,7 +15,9 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
 
     query_augmentation_token: ClassVar[str] = "<end_of_utterance>"
     image_token: ClassVar[str] = "<image>"
-    visual_prompt_prefix: ClassVar[str] = "<|im_start|>User:<image>Describe the image.<end_of_utterance>\nAssistant:"
+    visual_prompt_prefix: ClassVar[str] = (
+        "<|im_start|>User:<image>Describe the image.<end_of_utterance>\nAssistant:"
+    )
 
     def __init__(self, *args, image_seq_len=64, **kwargs):
         super().__init__(*args, image_seq_len=image_seq_len, **kwargs)
@@ -72,5 +75,71 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
         self,
         image_size: Tuple[int, int],
         patch_size: int,
+        *args,
+        **kwargs,
     ) -> Tuple[int, int]:
-        raise NotImplementedError("This method is not implemented for ColIdefics3.")
+        """
+        Get the number of patches (n_patches_x, n_patches_y) that will be used to process an image of
+        size (height, width) with the given patch size.
+
+        This method mirrors the Idefics3 image processing logic:
+        1. Resize the image so the longest edge equals the processor's longest_edge setting
+        2. Calculate the number of patches in each direction using ceiling division
+
+        Args:
+            image_size: Tuple of (height, width) in pixels.
+            patch_size: The size of each square patch in pixels.
+
+        Returns:
+            Tuple of (n_patches_x, n_patches_y) representing the number of patches
+            along the width and height dimensions respectively.
+        """
+        height, width = image_size
+
+        # Get the longest_edge from the image processor's size configuration
+        # This is the maximum size for the longest edge after resizing
+        longest_edge = self.image_processor.size.get("longest_edge", 4 * patch_size)
+
+        # Step 1: Resize the image so the longest edge equals longest_edge
+        # This mirrors _resize_output_size_rescale_to_max_len from Idefics3ImageProcessor
+        aspect_ratio = width / height
+
+        if width >= height:
+            # Width is the longest edge
+            width_new = longest_edge
+            height_new = int(width_new / aspect_ratio)
+            # Ensure height is even (as per Idefics3 implementation)
+            if height_new % 2 != 0:
+                height_new += 1
+        else:
+            # Height is the longest edge
+            height_new = longest_edge
+            width_new = int(height_new * aspect_ratio)
+            # Ensure width is even (as per Idefics3 implementation)
+            if width_new % 2 != 0:
+                width_new += 1
+
+        # Ensure minimum size of 1
+        height_new = max(height_new, 1)
+        width_new = max(width_new, 1)
+
+        # Step 2: Calculate the number of patches in each direction
+        # This mirrors the split_image logic from Idefics3ImageProcessor
+        n_patches_y = math.ceil(height_new / patch_size)
+        n_patches_x = math.ceil(width_new / patch_size)
+
+        return n_patches_x, n_patches_y
+
+    def get_image_mask(self, batch_images: BatchFeature) -> torch.Tensor:
+        """
+        Get a tensor mask that identifies the image tokens in the batch.
+
+        Args:
+            batch_images: BatchFeature containing processed images with input_ids.
+
+        Returns:
+            A boolean tensor of the same shape as input_ids, where True indicates
+            an image token position.
+        """
+        image_token_id = self.tokenizer.convert_tokens_to_ids(self.image_token)
+        return batch_images.input_ids == image_token_id
