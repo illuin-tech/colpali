@@ -1,4 +1,4 @@
-from typing import List, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import torch
 from einops import rearrange
@@ -56,12 +56,17 @@ def get_similarity_maps_from_embeddings(
     return similarity_maps
 
 
-def normalize_similarity_map(similarity_map: torch.Tensor) -> torch.Tensor:
+def normalize_similarity_map(
+    similarity_map: torch.Tensor,
+    value_range: Optional[Tuple[float, float]] = None,
+) -> torch.Tensor:
     """
     Normalize the similarity map to have values in the range [0, 1].
 
     Args:
         similarity_map: tensor of shape (n_patch_x, n_patch_y) or (batch_size, n_patch_x, n_patch_y)
+        value_range: optional tuple specifying the (min, max) range to use for normalization.
+            When None, the min/max are computed from the input tensor (default behavior).
     """
     if similarity_map.ndim not in [2, 3]:
         raise ValueError(
@@ -69,11 +74,25 @@ def normalize_similarity_map(similarity_map: torch.Tensor) -> torch.Tensor:
             "3 dimensions (batch_size, n_patch_x, n_patch_y)."
         )
 
-    # Compute the minimum values along the last two dimensions (n_patch_x, n_patch_y)
-    min_vals = similarity_map.min(dim=-1, keepdim=True)[0].min(dim=-2, keepdim=True)[0]  # (1, 1) or (batch_size, 1, 1)
+    if value_range is None:
+        # Compute the minimum values along the last two dimensions (n_patch_x, n_patch_y)
+        min_vals = similarity_map.min(dim=-1, keepdim=True)[0].min(
+            dim=-2, keepdim=True
+        )[0]  # (1, 1) or (batch_size, 1, 1)
 
-    # Compute the maximum values along the last two dimensions (n_patch_x, n_patch_y)
-    max_vals = similarity_map.max(dim=-1, keepdim=True)[0].max(dim=-2, keepdim=True)[0]  # (1, 1) or (batch_size, 1, 1)
+        # Compute the maximum values along the last two dimensions (n_patch_x, n_patch_y)
+        max_vals = similarity_map.max(dim=-1, keepdim=True)[0].max(
+            dim=-2, keepdim=True
+        )[0]  # (1, 1) or (batch_size, 1, 1)
+    else:
+        min_vals, max_vals = value_range
+        broadcast_shape = (1,) * similarity_map.ndim
+        min_vals = torch.as_tensor(min_vals, dtype=similarity_map.dtype, device=similarity_map.device).view(
+            broadcast_shape
+        )
+        max_vals = torch.as_tensor(max_vals, dtype=similarity_map.dtype, device=similarity_map.device).view(
+            broadcast_shape
+        )
 
     # Normalize the tensor
     # NOTE: Add a small epsilon to avoid division by zero.

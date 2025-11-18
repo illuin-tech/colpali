@@ -123,7 +123,7 @@ def main():
     print("\n=== Generating Similarity Maps ===")
     for query in queries:
         print(f"\nQuery: '{query}'")
-        batch_queries = processor.process_texts([query])
+        batch_queries = processor.process_queries([query])
 
         with torch.no_grad():
             query_embeddings = model(**batch_queries)
@@ -137,19 +137,34 @@ def main():
         )
 
         sim_map = similarity_maps[0]
+
+        # Filter out special tokens to avoid meaningless similarity noise
+        input_ids = batch_queries.input_ids[0].tolist()
+        query_tokens = processor.tokenizer.convert_ids_to_tokens(batch_queries.input_ids[0])
+        special_token_ids = set(processor.tokenizer.all_special_ids or [])
+        filtered_tokens = []
+        filtered_indices = []
+        for idx, (token, token_id) in enumerate(zip(query_tokens, input_ids)):
+            if token_id in special_token_ids:
+                continue
+            filtered_tokens.append(token)
+            filtered_indices.append(idx)
+
+        if not filtered_tokens:
+            print("  Skipping query – no non-special tokens found.")
+            continue
+
+        sim_map = sim_map[filtered_indices]
         print(f"  Similarity: [{sim_map.min().item():.3f}, {sim_map.max().item():.3f}]")
 
-        # Get tokens for visualization
-        query_tokens = processor.tokenizer.convert_ids_to_tokens(batch_queries.input_ids[0])
-
         # Generate plots
-        plots = plot_all_similarity_maps(image, query_tokens, sim_map)
+        plots = plot_all_similarity_maps(image, filtered_tokens, sim_map)
 
         # Save
         query_safe = query.replace(" ", "_")
         for idx, (fig, ax) in enumerate(plots):
-            token = query_tokens[idx] if idx < len(query_tokens) else f"token_{idx}"
-            token_safe = token.replace("<", "").replace(">", "").replace("Ġ", "")
+            token = filtered_tokens[idx] if idx < len(filtered_tokens) else f"token_{idx}"
+            token_safe = (token or f"token_{idx}").replace("<", "").replace(">", "").replace("Ġ", "")
             fig.savefig(
                 output_dir / f"{query_safe}_{idx}_{token_safe}.png",
                 dpi=150,
