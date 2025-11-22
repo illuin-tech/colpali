@@ -74,7 +74,7 @@ class ColModernVBertProcessor(BaseVisualRetrieverProcessor, Idefics3Processor):
     def get_n_patches(
         self,
         image_size: Tuple[int, int],
-        patch_size: int,
+        patch_size: Optional[int] = None,
         *args,
         **kwargs,
     ) -> Tuple[int, int]:
@@ -105,28 +105,33 @@ class ColModernVBertProcessor(BaseVisualRetrieverProcessor, Idefics3Processor):
         # This is the maximum size for the longest edge after resizing
         longest_edge = self.image_processor.size.get("longest_edge", 2048)
 
-        # Step 1: Resize the image so the longest edge equals longest_edge
-        # This mirrors _resize_output_size_rescale_to_max_len from Idefics3ImageProcessor
-        aspect_ratio = width / height
-
-        if width >= height:
-            # Width is the longest edge
-            width_new = longest_edge
-            height_new = int(width_new / aspect_ratio)
-            # Ensure height is even (as per Idefics3 implementation)
-            if height_new % 2 != 0:
-                height_new += 1
+        # Handle edge case where resizing is disabled (research use case)
+        # When longest_edge is None, use original dimensions without resizing
+        if longest_edge is None:
+            height_new, width_new = height, width
         else:
-            # Height is the longest edge
-            height_new = longest_edge
-            width_new = int(height_new * aspect_ratio)
-            # Ensure width is even (as per Idefics3 implementation)
-            if width_new % 2 != 0:
-                width_new += 1
+            # Step 1: Resize the image so the longest edge equals longest_edge
+            # This mirrors _resize_output_size_rescale_to_max_len from Idefics3ImageProcessor
+            aspect_ratio = width / height
 
-        # Ensure minimum size of 1
-        height_new = max(height_new, 1)
-        width_new = max(width_new, 1)
+            if width >= height:
+                # Width is the longest edge
+                width_new = longest_edge
+                height_new = int(width_new / aspect_ratio)
+                # Ensure height is even (as per Idefics3 implementation)
+                if height_new % 2 != 0:
+                    height_new += 1
+            else:
+                # Height is the longest edge
+                height_new = longest_edge
+                width_new = int(height_new * aspect_ratio)
+                # Ensure width is even (as per Idefics3 implementation)
+                if width_new % 2 != 0:
+                    width_new += 1
+
+            # Ensure minimum size of 1
+            height_new = max(height_new, 1)
+            width_new = max(width_new, 1)
 
         # Step 2: Calculate number of sub-patches (512x512 patches)
         # This mirrors the split_image logic from Idefics3ImageProcessor
@@ -295,7 +300,8 @@ class ColModernVBertProcessor(BaseVisualRetrieverProcessor, Idefics3Processor):
                 raise ValueError(
                     f"The number of patches ({n_patches[idx][0]} x {n_patches[idx][1]} = "
                     f"{n_patches[idx][0] * n_patches[idx][1]}) "
-                    f"does not match the number of non-padded image tokens ({image_mask[idx].sum()})."
+                    f"does not match the number of non-padded image tokens ({image_mask[idx].sum()}). "
+                    f"Hint: Use get_local_image_mask() instead of get_image_mask() to exclude the global patch."
                 )
 
             # Rearrange image embeddings to correct spatial order

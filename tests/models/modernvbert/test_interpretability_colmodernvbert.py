@@ -119,7 +119,11 @@ class TestGetNPatches:
         patch_ratio = n_patches_x / n_patches_y
         expected_ratio = 2.0
 
-        # Allow some tolerance due to rounding and even-dimension requirements
+        # Allow tolerance due to:
+        # 1. Image splitting into 512x512 sub-patches (quantization effects)
+        # 2. Even-dimension rounding in resize logic
+        # 3. Ceiling division in patch calculations
+        # These factors can cause ~25% deviation from the ideal aspect ratio
         assert 1.5 <= patch_ratio <= 2.5, f"Expected ~2:1 ratio, got {patch_ratio:.2f}"
 
 
