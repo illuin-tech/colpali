@@ -4,6 +4,10 @@ from typing import ClassVar, List, Optional, Tuple, Union
 import torch
 from PIL import Image
 from transformers import BatchEncoding, BatchFeature, Idefics3Processor
+from transformers.models.idefics3.image_processing_idefics3 import (
+    _resize_output_size_rescale_to_max_len,
+    _resize_output_size_scale_below_upper_bound,
+)
 
 from colpali_engine.utils.processing_utils import BaseVisualRetrieverProcessor
 
@@ -81,6 +85,9 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
         the final resized dimensions before calculating patches. The total number of patches
         is the grid size multiplied by the patch subdivision (sqrt of image_seq_len).
 
+        If the processor's do_resize is disabled, Steps 1-2 (rescaling) are skipped and
+        only grid alignment is applied to the original image dimensions.
+
         Args:
             image_size: The size of the original image as (width, height)
 
@@ -93,39 +100,16 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
         max_image_size_edge = self.image_processor.max_image_size["longest_edge"]  # Default: 364
         size_longest_edge = self.image_processor.size["longest_edge"]  # Default: 4 * 364 = 1456
 
-        # Step 1: Rescale to max length (preserving aspect ratio)
-        max_len = size_longest_edge
-        aspect_ratio = width / height
+        # Check if resizing is enabled
+        do_resize = self.image_processor.do_resize
 
-        if width >= height:
-            width = max_len
-            height = int(width / aspect_ratio)
-            if height % 2 != 0:
-                height += 1
-        elif height > width:
-            height = max_len
-            width = int(height * aspect_ratio)
-            if width % 2 != 0:
-                width += 1
+        # Apply Steps 1-2 only if resizing is enabled
+        if do_resize:
+            # Step 1: Rescale to max length (preserving aspect ratio)
+            height, width = _resize_output_size_rescale_to_max_len(height, width, min_len=1, max_len=size_longest_edge)
 
-        # Ensure minimum size of 1
-        height = max(height, 1)
-        width = max(width, 1)
-
-        # Step 2: Scale below upper bound (4096)
-        max_bound = 4096
-        aspect_ratio = width / height
-
-        if width >= height and width > max_bound:
-            width = max_bound
-            height = int(width / aspect_ratio)
-        elif height > width and height > max_bound:
-            height = max_bound
-            width = int(height * aspect_ratio)
-
-        # Ensure minimum size of 1
-        height = max(height, 1)
-        width = max(width, 1)
+            # Step 2: Scale below upper bound (4096)
+            height, width = _resize_output_size_scale_below_upper_bound(height, width, max_len=4096)
 
         # Step 3: Upscale to multiples of max_image_size (patch grid alignment)
         if width >= height:
@@ -180,7 +164,7 @@ class ColIdefics3Processor(BaseVisualRetrieverProcessor, Idefics3Processor):
             # We need to identify and exclude them
             if len(image_positions) >= self.image_seq_len:
                 # Get the last image_seq_len image token positions
-                global_image_positions = image_positions[-self.image_seq_len:]
+                global_image_positions = image_positions[-self.image_seq_len :]
 
                 # Verify they are consecutive (they should be)
                 if torch.all(global_image_positions[1:] - global_image_positions[:-1] == 1):
