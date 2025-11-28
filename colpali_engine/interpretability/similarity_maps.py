@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -15,6 +15,7 @@ def plot_similarity_map(
     similarity_map: torch.Tensor,
     figsize: Tuple[int, int] = (8, 8),
     show_colorbar: bool = False,
+    normalization_range: Optional[Tuple[float, float]] = None,
 ) -> Tuple[plt.Figure, plt.Axes]:
     """
     Plot and overlay a similarity map over the input image.
@@ -42,7 +43,10 @@ def plot_similarity_map(
 
     # Normalize the similarity map and convert it to Pillow image
     similarity_map_array = (
-        normalize_similarity_map(similarity_map).to(torch.float32).cpu().numpy()
+        normalize_similarity_map(similarity_map, value_range=normalization_range)
+        .to(torch.float32)
+        .cpu()
+        .numpy()
     )  # (n_patches_x, n_patches_y)
 
     # Reshape the similarity map to match the PIL shape convention
@@ -78,6 +82,7 @@ def plot_all_similarity_maps(
     figsize: Tuple[int, int] = (8, 8),
     show_colorbar: bool = False,
     add_title: bool = True,
+    normalize_per_query: bool = True,
 ) -> List[Tuple[plt.Figure, plt.Axes]]:
     """
     For each token in the query, plot and overlay a similarity map over the input image.
@@ -93,6 +98,8 @@ def plot_all_similarity_maps(
         figsize: size of the figure
         show_colorbar: whether to show a colorbar
         add_title: whether to add a title with the token and the max similarity score
+        normalize_per_query: if True (default), reuse a single min/max range across all tokens in the
+            provided query similarity tensor. This avoids stretching near-constant maps to the full color scale.
 
     Example usage for one query-image pair:
 
@@ -133,12 +140,20 @@ def plot_all_similarity_maps(
 
     plots: List[Tuple[plt.Figure, plt.Axes]] = []
 
+    normalization_range: Optional[Tuple[float, float]] = None
+    if normalize_per_query:
+        normalization_range = (
+            similarity_maps.min().item(),
+            similarity_maps.max().item(),
+        )
+
     for idx, token in enumerate(query_tokens):
         fig, ax = plot_similarity_map(
             image=image,
             similarity_map=similarity_maps[idx],
             figsize=figsize,
             show_colorbar=show_colorbar,
+            normalization_range=normalization_range,
         )
 
         if add_title:
