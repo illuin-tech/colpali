@@ -14,7 +14,7 @@ def model_name() -> str:
 
 @pytest.fixture(scope="module")
 def processor_from_pretrained(model_name: str) -> Generator[BiGemmaProcessor3, None, None]:
-    yield cast(BiGemmaProcessor3, BiGemmaProcessor3.from_pretrained(model_name))
+    yield cast(BiGemmaProcessor3, BiGemmaProcessor3.from_pretrained(model_name, use_fast=True))
 
 
 def test_load_processor_from_pretrained(processor_from_pretrained: BiGemmaProcessor3):

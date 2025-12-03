@@ -26,7 +26,7 @@ def model_without_mask(model_name: str) -> Generator[ColGemma3, None, None]:
         ColGemma3,
         ColGemma3.from_pretrained(
             model_name,
-            torch_dtype=torch.bfloat16,
+            dtype=torch.bfloat16,
             device_map=device,
         ).eval(),
     )
@@ -41,7 +41,7 @@ def model_with_mask(model_name: str) -> Generator[ColGemma3, None, None]:
     # Note: mask_non_image_embeddings is set in __init__, not from_pretrained
     base_model = ColGemma3.from_pretrained(
         model_name,
-        torch_dtype=torch.bfloat16,
+        dtype=torch.bfloat16,
         device_map=device,
     )
     base_model.mask_non_image_embeddings = True
@@ -52,7 +52,7 @@ def model_with_mask(model_name: str) -> Generator[ColGemma3, None, None]:
 
 @pytest.fixture(scope="module")
 def processor(model_name: str) -> Generator[ColGemmaProcessor3, None, None]:
-    yield cast(ColGemmaProcessor3, ColGemmaProcessor3.from_pretrained(model_name))
+    yield cast(ColGemmaProcessor3, ColGemmaProcessor3.from_pretrained(model_name, use_fast=True))
 
 
 class TestColGemma3Model:

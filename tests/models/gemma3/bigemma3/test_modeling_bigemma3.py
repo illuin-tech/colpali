@@ -26,7 +26,7 @@ def model(model_name: str) -> Generator[BiGemma3, None, None]:
         BiGemma3,
         BiGemma3.from_pretrained(
             model_name,
-            torch_dtype=torch.bfloat16,
+            dtype=torch.bfloat16,
             device_map=device,
         ).eval(),
     )
@@ -35,7 +35,7 @@ def model(model_name: str) -> Generator[BiGemma3, None, None]:
 
 @pytest.fixture(scope="module")
 def processor(model_name: str) -> Generator[BiGemmaProcessor3, None, None]:
-    yield cast(BiGemmaProcessor3, BiGemmaProcessor3.from_pretrained(model_name))
+    yield cast(BiGemmaProcessor3, BiGemmaProcessor3.from_pretrained(model_name, use_fast=True))
 
 
 class TestBiGemma3_Model:  # noqa N801

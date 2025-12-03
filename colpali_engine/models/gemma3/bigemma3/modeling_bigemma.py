@@ -8,26 +8,39 @@ class BiGemma3(Gemma3Model):  # noqa: N801
     """
     BiGemma3 is an implementation from the "ColPali: Efficient Document Retrieval with Vision Language Models" paper.
     Representations are pooled to obtain a single vector representation. Based on the Gemma3 backbone.
+
+    Supports Matryoshka embeddings with dimensions: 768, 1536, or 2560 (full).
     """
 
     main_input_name: ClassVar[str] = "doc_input_ids"  # transformers-related
 
-    def __init__(self, config: Gemma3Config, pooling_strategy: Literal["cls", "last", "mean"] = "last"):
+    def __init__(self, config: Gemma3Config, embedding_dim: int = 2560):
         super().__init__(config=config)
         self.padding_side = "left"
-        self.pooling_strategy = pooling_strategy
+
+        # Validate Matryoshka dimension
+        if embedding_dim not in [768, 1536, 2560]:
+            raise ValueError(f"embedding_dim must be one of [768, 1536, 2560], got {embedding_dim}")
+        self.embedding_dim = embedding_dim
+
         self.post_init()
 
     @classmethod
     def from_pretrained(cls, *args, **kwargs):
+        # Extract embedding_dim before passing to parent
+        embedding_dim = kwargs.pop("embedding_dim", 2560)
+
         key_mapping = kwargs.pop("key_mapping", None)
         if key_mapping is None:
             key_mapping = super()._checkpoint_conversion_mapping
-        return super().from_pretrained(*args, **kwargs, key_mapping=key_mapping)
+
+        # Load the model with the embedding_dim parameter
+        model = super().from_pretrained(*args, **kwargs, key_mapping=key_mapping, embedding_dim=embedding_dim)
+        return model
 
     def forward(
         self,
-        pooling_strategy: Literal["cls", "last", "mean"] | None = None,
+        pooling_strategy: Literal["cls", "last", "mean"] = "last",
         *args,
         **kwargs,
     ) -> torch.Tensor:
@@ -36,16 +49,12 @@ class BiGemma3(Gemma3Model):  # noqa: N801
 
         Args:
             pooling_strategy: The strategy to use for pooling the hidden states.
-                            If None, uses the model's default pooling_strategy.
             *args: Variable length argument list.
             **kwargs: Additional keyword arguments.
 
         Returns:
             torch.Tensor: Dense embeddings (batch_size, hidden_size).
         """
-        # Use instance pooling_strategy if not provided in forward call
-        if pooling_strategy is None:
-            pooling_strategy = self.pooling_strategy
 
         kwargs.pop("return_dict", True)
         kwargs.pop("output_hidden_states", None)
@@ -70,6 +79,9 @@ class BiGemma3(Gemma3Model):  # noqa: N801
                 pooled_output = last_hidden_states.mean(dim=1)  # (batch_size, hidden_size)
         else:
             raise ValueError(f"Invalid pooling strategy: {pooling_strategy}")
+
+        # Matryoshka: slice to the desired embedding dimension
+        pooled_output = pooled_output[:, : self.embedding_dim]  # (batch_size, embedding_dim)
 
         # L2 normalization
         pooled_output = torch.nn.functional.normalize(pooled_output, p=2, dim=-1)
