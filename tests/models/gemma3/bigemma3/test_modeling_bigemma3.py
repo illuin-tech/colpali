@@ -26,7 +26,7 @@ def model(model_name: str) -> Generator[BiGemma3, None, None]:
         BiGemma3,
         BiGemma3.from_pretrained(
             model_name,
-            dtype=torch.bfloat16,
+            torch_dtype=torch.bfloat16,
             device_map=device,
         ).eval(),
     )
