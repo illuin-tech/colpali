@@ -10,10 +10,9 @@ Usage:
     python examples/interpretability/colgemma/generate_interpretability_maps.py
 """
 
-from pathlib import Path
-import uuid
-from typing import cast, Any
 import math
+import uuid
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import torch
@@ -36,9 +35,7 @@ def main():
         print("Loading a real document from DocVQA dataset...")
         from datasets import load_dataset
 
-        dataset = load_dataset(
-            "vidore/docvqa_test_subsampled", split="test", streaming=True
-        )
+        dataset = load_dataset("vidore/docvqa_test_subsampled", split="test", streaming=True)
         # streaming datasets may yield values that type checkers treat as Sequence;
         # cast to dict so string indexing (sample["image"]) is accepted by the type checker.
         sample = dict(next(iter(dataset)))
@@ -93,15 +90,12 @@ def main():
         print(f"Number of image tokens: {image_mask.sum().item()}")
     else:
         # Fallback: assume all tokens are image tokens
-        image_mask = torch.ones(
-            image_embeddings.shape[0], image_embeddings.shape[1],
-            dtype=torch.bool, device=device
-        )
+        image_mask = torch.ones(image_embeddings.shape[0], image_embeddings.shape[1], dtype=torch.bool, device=device)
         print(f"Using all-ones mask: {image_mask.shape}")
 
     # Calculate n_patches from actual number of image tokens
     num_image_tokens = image_mask.sum().item()
-    print(f"\nCalculating patch configuration...")
+    print("Calculating patch configuration...")
     print(f"Number of image tokens: {num_image_tokens}")
 
     n_side = int(math.sqrt(num_image_tokens))
@@ -149,10 +143,8 @@ def main():
 
     # Clean tokens for display (remove special characters that may cause encoding issues)
     display_tokens = [t.replace("Ġ", " ").replace("▁", " ") for t in filtered_tokens]
-    print(f"\nQuery tokens: {display_tokens}")
-    print(
-        f"Similarity range: [{similarity_maps.min().item():.3f}, {similarity_maps.max().item():.3f}]"
-    )
+    print("\nQuery tokens:", display_tokens)
+    print(f"Similarity range: [{similarity_maps.min().item():.3f}, {similarity_maps.max().item():.3f}]")
 
     # Generate all similarity maps
     print("\nGenerating similarity map visualizations for all tokens...")
@@ -169,7 +161,7 @@ def main():
     output_dir = Path("outputs/interpretability/colgemma/" + uuid.uuid4().hex[:8])
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    for idx, (fig, ax) in enumerate(plots):
+    for idx, (fig, _) in enumerate(plots):
         token = filtered_tokens[idx]
         # Sanitize token for filename (remove special characters)
         token_safe = (
@@ -198,11 +190,11 @@ def main():
     print("\nGenerating aggregated heatmap (mean across all query tokens)...")
     aggregated_map = torch.mean(similarity_maps, dim=0)
 
-    from colpali_engine.interpretability.similarity_map_utils import normalize_similarity_map
-    import seaborn as sns
     import numpy as np
+    import seaborn as sns
     from einops import rearrange
-    import io
+
+    from colpali_engine.interpretability.similarity_map_utils import normalize_similarity_map
 
     # Convert the image to an array
     img_array = np.array(image.convert("RGBA"))
