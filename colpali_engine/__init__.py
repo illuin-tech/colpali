@@ -18,9 +18,9 @@ from .models import (
     ColQwen2,
     ColQwen2_5,
     ColQwen2_5_Processor,
-    ColQwen3,
-    ColQwen3Processor,
     # ColQwen2_5Omni,
     # ColQwen2_5OmniProcessor,
     ColQwen2Processor,
+    ColQwen3,
+    ColQwen3Processor,
 )

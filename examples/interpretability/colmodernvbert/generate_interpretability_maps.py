@@ -9,9 +9,9 @@ Usage:
     python examples/interpretability/colmodernvbert/simple_interpretability_example.py
 """
 
-from pathlib import Path
 import uuid
-from typing import cast, Any
+from pathlib import Path
+from typing import Any, cast
 
 import matplotlib.pyplot as plt
 import torch
