@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 @pytest.fixture(scope="module")
 def model_name() -> str:
-    return "Nayana-cognitivelab/bigemma"
+    return "Cognitive-Lab/NetraEmbed"
 
 
 @pytest.fixture(scope="module")

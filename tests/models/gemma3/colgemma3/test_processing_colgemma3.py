@@ -9,7 +9,7 @@ from colpali_engine.models import ColGemmaProcessor3
 
 @pytest.fixture(scope="module")
 def model_name() -> str:
-    return "Nayana-cognitivelab/colgemma"
+    return "Cognitive-Lab/ColNetraEmbed"
 
 
 @pytest.fixture(scope="module")
