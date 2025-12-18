@@ -22,9 +22,7 @@ class ColIdefics3Processor(
 
     query_augmentation_token: ClassVar[str] = "<end_of_utterance>"
     image_token: ClassVar[str] = "<image>"
-    visual_prompt_prefix: ClassVar[str] = (
-        "<|im_start|>User:<image>Describe the image.<end_of_utterance>\nAssistant:"
-    )
+    visual_prompt_prefix: ClassVar[str] = "<|im_start|>User:<image>Describe the image.<end_of_utterance>\nAssistant:"
 
     def __init__(self, *args, image_seq_len=64, **kwargs):
         super().__init__(*args, image_seq_len=image_seq_len, **kwargs)
@@ -105,9 +103,7 @@ class ColIdefics3Processor(
         longest_edge = self.image_processor.size.get("longest_edge", 4 * patch_size)
 
         # Step 1: Calculate resized dimensions using the mixin helper method
-        height_new, width_new = self._calculate_resized_dimensions(
-            image_size, longest_edge
-        )
+        height_new, width_new = self._calculate_resized_dimensions(image_size, longest_edge)
 
         # Step 2: Calculate the number of patches in each direction
         # This mirrors the split_image logic from Idefics3ImageProcessor
