@@ -21,8 +21,16 @@ class ColQwen2_5Omni(Qwen2_5OmniThinkerForConditionalGeneration):  # noqa: N801
         self.lm_head = nn.Identity()  # Disable the original lm_head
         self.padding_side = "left"
         self.mask_non_image_embeddings = mask_non_image_embeddings
-        self.lm_head = nn.Identity()  # Disable the original lm_head
         self.post_init()
+
+    def get_output_embeddings(self) -> None:  # -> None | Any:
+        """
+        Transformers >=4.54.0 fails during resize_token_embeddings() due to a new get_output_embeddings()
+        impl. The latter used to return None unless overridden, but they made it try harder to return
+        *something*. Of course, this was not flagged as a breaking change. Eventually I found the
+        responsible PR, and it endorses this change: https://github.com/huggingface/transformers/pull/39339
+        """
+        return None
 
     def forward(self, *args, **kwargs) -> torch.Tensor:
         # # Handle the custom "pixel_values" input obtained with `ColQwen2Processor` through unpadding
