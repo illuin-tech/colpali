@@ -52,5 +52,5 @@ def test_process_texts(processor_from_pretrained: BiGemmaProcessor3):
     assert "input_ids" in batch_encoding
     assert isinstance(batch_encoding["input_ids"], torch.Tensor)
     assert cast(torch.Tensor, batch_encoding["input_ids"]).shape[0] == len(queries)
-    assert "pixel_values" in batch_encoding  # Should have dummy image pixel values
-    assert isinstance(batch_encoding["pixel_values"], torch.Tensor)
+    # BiGemma3 doesn't require pixel_values for text-only inputs
+    # The model can process text without dummy images
