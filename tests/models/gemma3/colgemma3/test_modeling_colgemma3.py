@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 @pytest.fixture(scope="module")
 def model_name() -> str:
-    return "google/gemma-3-4b-it"
+    return "Nayana-cognitivelab/colgemma"
 
 
 @pytest.fixture(scope="module")

@@ -124,11 +124,7 @@ class ColGemmaProcessor3(BaseVisualRetrieverProcessor, Gemma3Processor):
             ]
 
             # Apply chat template to get formatted text
-            formatted_text = self.tokenizer.apply_chat_template(
-                message,
-                tokenize=False,
-                add_generation_prompt=False
-            )
+            formatted_text = self.tokenizer.apply_chat_template(message, tokenize=False, add_generation_prompt=False)
 
             # Process with formatted text
             batch_doc = self(
@@ -202,11 +198,7 @@ class ColGemmaProcessor3(BaseVisualRetrieverProcessor, Gemma3Processor):
             ]
 
             # Apply chat template to get formatted text
-            formatted_text = self.tokenizer.apply_chat_template(
-                message,
-                tokenize=False,
-                add_generation_prompt=False
-            )
+            formatted_text = self.tokenizer.apply_chat_template(message, tokenize=False, add_generation_prompt=False)
             formatted_texts.append(formatted_text)
 
         # Process all formatted texts
@@ -254,7 +246,7 @@ class ColGemmaProcessor3(BaseVisualRetrieverProcessor, Gemma3Processor):
         Returns:
             Tuple[int, int]: Number of patches in x and y directions.
         """
-        if hasattr(self.image_processor, 'size'):
+        if hasattr(self.image_processor, "size"):
             if isinstance(self.image_processor.size, dict):
                 width = self.image_processor.size.get("width", image_size[0])
                 height = self.image_processor.size.get("height", image_size[1])
