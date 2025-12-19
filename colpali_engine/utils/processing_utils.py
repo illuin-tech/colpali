@@ -495,9 +495,7 @@ class Idefics3SplitImageInterpretabilityMixin:
             # query: (query_tokens, dim)
             # image_grid: (n_patches_x, n_patches_y, dim)
             # result: (query_tokens, n_patches_x, n_patches_y)
-            similarity_map = torch.einsum(
-                "nk,ijk->nij", query_embeddings[idx], image_embedding_grid
-            )
+            similarity_map = torch.einsum("nk,ijk->nij", query_embeddings[idx], image_embedding_grid)
 
             similarity_maps.append(similarity_map)
 

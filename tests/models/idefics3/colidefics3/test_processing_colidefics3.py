@@ -74,15 +74,11 @@ def test_get_n_patches(processor_from_pretrained: ColIdefics3Processor):
     Test that get_n_patches returns the correct number of patches for various image sizes.
     """
     # Get the patch size from the image processor
-    patch_size = processor_from_pretrained.image_processor.max_image_size.get(
-        "longest_edge", 512
-    )
+    patch_size = processor_from_pretrained.image_processor.max_image_size.get("longest_edge", 512)
 
     # Test case 1: Small square image
     image_size = (100, 100)
-    n_patches_x, n_patches_y = processor_from_pretrained.get_n_patches(
-        image_size, patch_size
-    )
+    n_patches_x, n_patches_y = processor_from_pretrained.get_n_patches(image_size, patch_size)
     assert isinstance(n_patches_x, int)
     assert isinstance(n_patches_y, int)
     assert n_patches_x > 0
@@ -90,23 +86,17 @@ def test_get_n_patches(processor_from_pretrained: ColIdefics3Processor):
 
     # Test case 2: Wide image (width > height)
     image_size = (100, 200)
-    n_patches_x, n_patches_y = processor_from_pretrained.get_n_patches(
-        image_size, patch_size
-    )
+    n_patches_x, n_patches_y = processor_from_pretrained.get_n_patches(image_size, patch_size)
     assert n_patches_x >= n_patches_y  # More patches along width
 
     # Test case 3: Tall image (height > width)
     image_size = (200, 100)
-    n_patches_x, n_patches_y = processor_from_pretrained.get_n_patches(
-        image_size, patch_size
-    )
+    n_patches_x, n_patches_y = processor_from_pretrained.get_n_patches(image_size, patch_size)
     assert n_patches_y >= n_patches_x  # More patches along height
 
     # Test case 4: Square image
     image_size = (500, 500)
-    n_patches_x, n_patches_y = processor_from_pretrained.get_n_patches(
-        image_size, patch_size
-    )
+    n_patches_x, n_patches_y = processor_from_pretrained.get_n_patches(image_size, patch_size)
     assert n_patches_x == n_patches_y  # Equal patches for square image
 
 
@@ -126,22 +116,18 @@ def test_get_n_patches_matches_actual_processing(
     actual_num_patches = batch_feature["pixel_values"].shape[1]
 
     # Get the patch size from the image processor
-    patch_size = processor_from_pretrained.image_processor.max_image_size.get(
-        "longest_edge", 512
-    )
+    patch_size = processor_from_pretrained.image_processor.max_image_size.get("longest_edge", 512)
 
     # Calculate expected patches using get_n_patches
     # Note: image_size for get_n_patches is (height, width), but PIL uses (width, height)
-    n_patches_x, n_patches_y = processor_from_pretrained.get_n_patches(
-        (image_size[1], image_size[0]), patch_size
-    )
+    n_patches_x, n_patches_y = processor_from_pretrained.get_n_patches((image_size[1], image_size[0]), patch_size)
     expected_num_patches = n_patches_x * n_patches_y
 
     # The actual number of patches includes the global image patch (+1)
     # So we compare with expected + 1
-    assert (
-        actual_num_patches == expected_num_patches + 1
-    ), f"Expected {expected_num_patches + 1} patches (including global), got {actual_num_patches}"
+    assert actual_num_patches == expected_num_patches + 1, (
+        f"Expected {expected_num_patches + 1} patches (including global), got {actual_num_patches}"
+    )
 
 
 def test_get_image_mask(processor_from_pretrained: ColIdefics3Processor):
