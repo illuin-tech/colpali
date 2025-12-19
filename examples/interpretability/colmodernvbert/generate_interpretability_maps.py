@@ -9,9 +9,9 @@ Usage:
     python examples/interpretability/colmodernvbert/simple_interpretability_example.py
 """
 
-from pathlib import Path
 import uuid
-from typing import cast, Any
+from pathlib import Path
+from typing import Any, cast
 
 import matplotlib.pyplot as plt
 import torch
@@ -33,9 +33,7 @@ def main():
         print("Loading a real document from DocVQA dataset...")
         from datasets import load_dataset
 
-        dataset = load_dataset(
-            "vidore/docvqa_test_subsampled", split="test", streaming=True
-        )
+        dataset = load_dataset("vidore/docvqa_test_subsampled", split="test", streaming=True)
         # streaming datasets may yield values that type checkers treat as Sequence;
         # cast to dict so string indexing (sample["image"]) is accepted by the type checker.
         sample = dict(next(iter(dataset)))
@@ -81,9 +79,7 @@ def main():
     )
 
     # Get the similarity map for our input image
-    similarity_maps = similarity_maps_batch[
-        0
-    ]  # (query_length, n_patches_x, n_patches_y)
+    similarity_maps = similarity_maps_batch[0]  # (query_length, n_patches_x, n_patches_y)
     print(f"Similarity map shape: {similarity_maps.shape}")
 
     # Get query tokens (filtering out special tokens)
@@ -105,9 +101,7 @@ def main():
     # Clean tokens for display (remove special characters that may cause encoding issues)
     display_tokens = [t.replace("Ġ", " ").replace("▁", " ") for t in filtered_tokens]
     print(f"\nQuery tokens: {display_tokens}")
-    print(
-        f"Similarity range: [{similarity_maps.min().item():.3f}, {similarity_maps.max().item():.3f}]"
-    )
+    print(f"Similarity range: [{similarity_maps.min().item():.3f}, {similarity_maps.max().item():.3f}]")
 
     # Generate all similarity maps
     print("\nGenerating similarity maps for all tokens...")
