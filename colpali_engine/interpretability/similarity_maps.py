@@ -43,10 +43,7 @@ def plot_similarity_map(
 
     # Normalize the similarity map and convert it to Pillow image
     similarity_map_array = (
-        normalize_similarity_map(similarity_map, value_range=normalization_range)
-        .to(torch.float32)
-        .cpu()
-        .numpy()
+        normalize_similarity_map(similarity_map, value_range=normalization_range).to(torch.float32).cpu().numpy()
     )  # (n_patches_x, n_patches_y)
 
     # Reshape the similarity map to match the PIL shape convention
