@@ -76,14 +76,14 @@ def normalize_similarity_map(
 
     if value_range is None:
         # Compute the minimum values along the last two dimensions (n_patch_x, n_patch_y)
-        min_vals = similarity_map.min(dim=-1, keepdim=True)[0].min(
-            dim=-2, keepdim=True
-        )[0]  # (1, 1) or (batch_size, 1, 1)
+        min_vals = similarity_map.min(dim=-1, keepdim=True)[0].min(dim=-2, keepdim=True)[
+            0
+        ]  # (1, 1) or (batch_size, 1, 1)
 
         # Compute the maximum values along the last two dimensions (n_patch_x, n_patch_y)
-        max_vals = similarity_map.max(dim=-1, keepdim=True)[0].max(
-            dim=-2, keepdim=True
-        )[0]  # (1, 1) or (batch_size, 1, 1)
+        max_vals = similarity_map.max(dim=-1, keepdim=True)[0].max(dim=-2, keepdim=True)[
+            0
+        ]  # (1, 1) or (batch_size, 1, 1)
     else:
         min_vals, max_vals = value_range
         broadcast_shape = (1,) * similarity_map.ndim

@@ -110,9 +110,7 @@ class ColModernVBertProcessor(
         longest_edge = self.image_processor.size.get("longest_edge", 2048)
 
         # Step 1: Calculate resized dimensions using the mixin helper method
-        height_new, width_new = self._calculate_resized_dimensions(
-            image_size, longest_edge
-        )
+        height_new, width_new = self._calculate_resized_dimensions(image_size, longest_edge)
 
         # Step 2: Calculate number of sub-patches (512x512 patches)
         # This mirrors the split_image logic from Idefics3ImageProcessor
