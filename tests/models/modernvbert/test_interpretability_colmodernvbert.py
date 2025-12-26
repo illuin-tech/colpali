@@ -91,7 +91,7 @@ class TestGetNPatches:
 
         # The aspect ratio of patches should be close to 2:1
         patch_ratio = n_patches_x / n_patches_y
-        # expected_ratio = 2.0
+        expected_ratio = 2.0
 
         # Allow tolerance due to:
         # 1. Image splitting into 512x512 sub-patches (quantization effects)
