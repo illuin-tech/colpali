@@ -6,7 +6,7 @@ similar to the example scripts in examples/interpretability/.
 """
 
 import math
-from typing import List, Tuple
+from typing import Tuple
 
 import pytest
 import torch
