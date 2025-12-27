@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+### Added
+
+- Add ColQwen3 and BiQwen3 support (model + processor).
+
+### Tests
+
+- Cover ColQwen3 processing and modeling with slow integration tests.
+
 ## [0.3.13] - 2025-11-15
 
 ### Added
