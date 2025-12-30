@@ -330,10 +330,12 @@ class TestNormalizationRanges:
 
     def test_normalize_with_custom_range(self):
         """Test normalization with custom min/max range."""
-        similarity_map = torch.tensor([
-            [0.5, 0.7],
-            [0.3, 0.9],
-        ])
+        similarity_map = torch.tensor(
+            [
+                [0.5, 0.7],
+                [0.3, 0.9],
+            ]
+        )
 
         # Use custom range
         value_range = (0.0, 1.0)
