@@ -7,6 +7,8 @@ from .models import (
     BiQwen2_5,
     BiQwen2_5_Processor,
     BiQwen2Processor,
+    BiQwen3,
+    BiQwen3Processor,
     ColIdefics3,
     ColIdefics3Processor,
     ColModernVBert,
@@ -19,4 +21,6 @@ from .models import (
     ColQwen2_5Omni,
     ColQwen2_5OmniProcessor,
     ColQwen2Processor,
+    ColQwen3,
+    ColQwen3Processor,
 )
