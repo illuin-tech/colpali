@@ -34,7 +34,7 @@ classifiers = [
 
 dependencies = [
     "numpy",
-    "peft>=0.14.0,<0.18.0",
+    "peft>=0.14.0,<0.19.0",
     "pillow>=10.0.0",
     "requests",
     "scipy",
