@@ -20,6 +20,7 @@ from typing import Any, Dict, Type
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
+
 def _resolve_class(class_path: str) -> Type[Any]:
     """Dynamically import and return a class from a fully qualified path."""
     try:
@@ -30,27 +31,31 @@ def _resolve_class(class_path: str) -> Type[Any]:
         logger.error(f"Failed to import class from {class_path}: {e}")
         sys.exit(1)
 
+
 def _resolve_load_kwargs(args: argparse.Namespace) -> Dict[str, Any]:
     """Map CLI arguments to Transformers-style from_pretrained kwargs."""
     kwargs = {
         "pretrained_model_name_or_path": args.model_name_or_path,
         "revision": args.revision,
-        "trust_remote_code": args.trust_remote_code or None, # Only include if True
+        "trust_remote_code": args.trust_remote_code or None,  # Only include if True
         "torch_dtype": args.dtype,
         "device_map": args.device_map,
     }
     # Filter out None values to use model defaults
     return {k: v for k, v in kwargs.items() if v is not None}
 
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Load a ColModel via from_pretrained and save it locally.",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    
+
     # Required arguments
     parser.add_argument("--model-name-or-path", required=True, help="HF model ID or local path.")
-    parser.add_argument("--model-class", required=True, help="Full class path (e.g., 'colpali_engine.models.ColQwen3').")
+    parser.add_argument(
+        "--model-class", required=True, help="Full class path (e.g., 'colpali_engine.models.ColQwen3')."
+    )
     parser.add_argument("--save-path", required=True, help="Target directory for the model.")
 
     # Optional configuration
@@ -62,6 +67,7 @@ def parse_args() -> argparse.Namespace:
 
     return parser.parse_args()
 
+
 def main() -> None:
     args = parse_args()
 
@@ -72,7 +78,7 @@ def main() -> None:
     # 2. Load Model
     load_kwargs = _resolve_load_kwargs(args)
     logger.info(f"Loading model from {args.model_name_or_path}...")
-    
+
     try:
         model = model_class.from_pretrained(**load_kwargs)
     except Exception as e:
@@ -82,7 +88,7 @@ def main() -> None:
     # 3. Save Locally
     save_dir = Path(args.save_path)
     save_dir.mkdir(parents=True, exist_ok=True)
-    
+
     logger.info(f"Saving model to {save_dir}...")
     model.save_pretrained(save_dir)
 
@@ -92,6 +98,7 @@ def main() -> None:
         model.push_to_hub(args.hf_repo, commit_message="Initial model upload")
 
     logger.info("Task completed successfully!")
+
 
 if __name__ == "__main__":
     main()
