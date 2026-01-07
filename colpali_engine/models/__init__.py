@@ -1,8 +1,8 @@
-from .gemma3 import BiGemma3, BiGemmaProcessor3, ColGemma3, ColGemmaProcessor3
-from .idefics3 import BiIdefics3, BiIdefics3Processor, ColIdefics3, ColIdefics3Processor
-from .modernvbert import BiModernVBert, BiModernVBertProcessor, ColModernVBert, ColModernVBertProcessor
-from .paligemma import BiPali, BiPaliProcessor, BiPaliProj, ColPali, ColPaliProcessor
-from .qwen2 import BiQwen2, BiQwen2Processor, ColQwen2, ColQwen2Processor
-from .qwen2_5 import BiQwen2_5, BiQwen2_5_Processor, ColQwen2_5, ColQwen2_5_Processor
-from .qwen3 import BiQwen3, BiQwen3Processor, ColQwen3, ColQwen3Processor
-from .qwen_omni import ColQwen2_5Omni, ColQwen2_5OmniProcessor
+from .gemma3 import *
+from .idefics3 import *
+from .modernvbert import *
+from .paligemma import *
+from .qwen2 import *
+from .qwen2_5 import *
+from .qwen3 import *
+from .qwen_omni import *
