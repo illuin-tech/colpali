@@ -47,15 +47,6 @@ class ColGemmaProcessor3(BaseVisualRetrieverProcessor, Gemma3Processor):
 
     query_augmentation_token: ClassVar[str] = "<eos>"
 
-    def __init__(
-        self,
-        *args,
-        **kwargs,
-    ):
-        super().__init__(*args, **kwargs)
-        # Set padding side to left (important for decoder-only models)
-        self.tokenizer.padding_side = "left"
-
     @classmethod
     def from_pretrained(
         cls,

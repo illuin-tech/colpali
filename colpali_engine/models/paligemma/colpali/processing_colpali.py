@@ -14,9 +14,6 @@ class ColPaliProcessor(BaseVisualRetrieverProcessor, PaliGemmaProcessor):
 
     visual_prompt_prefix: ClassVar[str] = "<image><bos>Describe the image."
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     @property
     def query_augmentation_token(self) -> str:
         """

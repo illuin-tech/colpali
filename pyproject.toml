@@ -22,7 +22,7 @@ maintainers = [
     { name = "Tony Wu", email = "tony.wu@illuin.tech" },
 ]
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
@@ -40,7 +40,7 @@ dependencies = [
     "scipy",
     "torch>=2.2.0,<2.10.0",
     "torchvision",
-    "transformers>=4.57.0,<4.58.0",
+    "transformers>=5.0.0,<5.1.0",
 ]
 
 [project.optional-dependencies]

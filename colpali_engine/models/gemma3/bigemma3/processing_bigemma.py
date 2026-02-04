@@ -20,14 +20,6 @@ class BiGemmaProcessor3(BaseVisualRetrieverProcessor, Gemma3Processor):  # noqa:
 
     query_augmentation_token: ClassVar[str] = "<eos>"
 
-    def __init__(
-        self,
-        *args,
-        **kwargs,
-    ):
-        super().__init__(*args, **kwargs)
-        self.tokenizer.padding_side = "left"
-
     @classmethod
     def from_pretrained(
         cls,
