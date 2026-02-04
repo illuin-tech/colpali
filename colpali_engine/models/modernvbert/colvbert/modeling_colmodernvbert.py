@@ -26,6 +26,7 @@ class ColModernVBert(ModernVBertPreTrainedModel):
         self.custom_text_proj = nn.Linear(self.model.config.text_config.hidden_size, self.dim)
         self.mask_non_image_embeddings = mask_non_image_embeddings
         self.main_input_name = "doc_input_ids"
+        self.post_init()
 
     def forward(self, *args, **kwargs):
         """

@@ -25,12 +25,8 @@ class ColQwen3Processor(BaseVisualRetrieverProcessor, Qwen3VLProcessor):
     query_augmentation_token: ClassVar[str] = "<|endoftext|>"
     image_token: ClassVar[str] = "<|image_pad|>"
 
-    def __init__(
-        self,
-        *args,
-        **kwargs,
-    ):
-        super().__init__(*args, **kwargs)
+    def __init__(self, image_processor=None, tokenizer=None, image_seq_len=64, **kwargs):
+        super().__init__(image_processor=image_processor, tokenizer=tokenizer, image_seq_len=image_seq_len, **kwargs)
         self.tokenizer.padding_side = "left"
 
     @classmethod
