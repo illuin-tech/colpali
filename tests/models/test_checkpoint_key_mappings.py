@@ -1,5 +1,6 @@
 import re
 
+from colpali_engine.models.modernvbert.colvbert.modeling_colmodernvbert import ColModernVBert
 from colpali_engine.models.paligemma.bipali.modeling_bipali import BiPali
 from colpali_engine.models.paligemma.colpali.modeling_colpali import ColPali
 from colpali_engine.models.qwen2.colqwen2.modeling_colqwen2 import ColQwen2
@@ -60,3 +61,13 @@ def test_colpali_adapter_key_mapping_remaps_custom_text_proj():
 def test_pali_wrappers_ignore_expected_missing_lm_head_weight():
     assert r"model\.lm_head\.weight" in ColPali._keys_to_ignore_on_load_missing
     assert r"model\.lm_head\.weight" in BiPali._keys_to_ignore_on_load_missing
+
+
+def test_colmodernvbert_adapter_key_mapping_remaps_custom_text_proj():
+    assert (
+        _apply_mapping(
+            "base_model.model.custom_text_proj.lora_A.default.weight",
+            ColModernVBert._checkpoint_conversion_mapping,
+        )
+        == "custom_text_proj.lora_A.default.weight"
+    )

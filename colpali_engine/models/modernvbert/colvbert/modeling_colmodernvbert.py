@@ -4,6 +4,9 @@ from colpali_engine.models.modernvbert.modeling_modernvbert import ModernVBertMo
 
 
 class ColModernVBert(ModernVBertPreTrainedModel):
+    _checkpoint_conversion_mapping = {
+        r"^base_model\.model\.custom_text_proj": "custom_text_proj",
+    }
     """
     Initializes the ColModernVBert model.
 
@@ -27,6 +30,14 @@ class ColModernVBert(ModernVBertPreTrainedModel):
         self.mask_non_image_embeddings = mask_non_image_embeddings
         self.main_input_name = "doc_input_ids"
         self.post_init()
+
+    @classmethod
+    def from_pretrained(cls, *args, **kwargs):
+        key_mapping = kwargs.pop("key_mapping", None)
+        if key_mapping is None:
+            key_mapping = dict(getattr(super(), "_checkpoint_conversion_mapping", {}))
+            key_mapping.update(cls._checkpoint_conversion_mapping)
+        return super().from_pretrained(*args, **kwargs, key_mapping=key_mapping)
 
     def forward(self, *args, **kwargs):
         """

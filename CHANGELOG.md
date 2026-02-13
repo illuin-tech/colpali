@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Improve `VisualRetrieverCollator` image token id resolution by preferring processor-level `image_token_id` when available.
 - Fix ColQwen2 and ColQwen2.5 LoRA checkpoint key remapping for `custom_text_proj` (`base_model.model.*` -> model keys) to avoid missing/unexpected adapter keys at load time.
 - Fix ColPali LoRA adapter key remapping for `custom_text_proj` (`base_model.model.*` -> model keys) and ignore expected missing `model.lm_head.weight` during load.
+- Fix ColModernVBert LoRA adapter key remapping for `custom_text_proj` (`base_model.model.*` -> model keys) to avoid missing/unexpected adapter keys at load time.
 
 ### Tests
 
