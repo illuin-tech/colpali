@@ -7,6 +7,7 @@ from colpali_engine.models.paligemma.bipali.modeling_bipali import BiPali
 from colpali_engine.models.paligemma.colpali.modeling_colpali import ColPali
 from colpali_engine.models.qwen2.colqwen2.modeling_colqwen2 import ColQwen2
 from colpali_engine.models.qwen2_5.colqwen2_5.modeling_colqwen2_5 import ColQwen2_5
+from colpali_engine.models.qwen_omni.colqwen_omni.modeling_colqwen_omni import ColQwen2_5Omni
 
 
 def _apply_mapping(key: str, mapping: dict[str, str]) -> str:
@@ -77,6 +78,30 @@ def test_colmodernvbert_adapter_key_mapping_remaps_custom_text_proj():
 
 def test_colmodernvbert_conversion_mapping_is_registered_for_adapter_loading():
     mapping = get_checkpoint_conversion_mapping("modernvbert")
+    assert mapping is not None
+
+    key = "base_model.model.custom_text_proj.lora_B.default.weight"
+    for renaming in mapping:
+        if not hasattr(renaming, "source_patterns") or not hasattr(renaming, "target_patterns"):
+            continue
+        for pattern, replacement in zip(renaming.source_patterns, renaming.target_patterns):
+            key = re.sub(pattern, replacement, key)
+
+    assert key == "custom_text_proj.lora_B.default.weight"
+
+
+def test_colqwen2_5_omni_adapter_key_mapping_remaps_custom_text_proj():
+    assert (
+        _apply_mapping(
+            "base_model.model.custom_text_proj.lora_A.default.weight",
+            ColQwen2_5Omni._checkpoint_conversion_mapping,
+        )
+        == "custom_text_proj.lora_A.default.weight"
+    )
+
+
+def test_colqwen2_5_omni_conversion_mapping_is_registered_for_adapter_loading():
+    mapping = get_checkpoint_conversion_mapping("qwen2_5_omni_thinker")
     assert mapping is not None
 
     key = "base_model.model.custom_text_proj.lora_B.default.weight"
