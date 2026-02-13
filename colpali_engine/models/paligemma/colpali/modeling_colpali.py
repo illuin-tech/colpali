@@ -21,11 +21,13 @@ class ColPali(PaliGemmaPreTrainedModel):
     """
 
     main_input_name: ClassVar[str] = "doc_input_ids"  # transformers-related
+    _keys_to_ignore_on_load_missing = [r"model\.lm_head\.weight"]
     _checkpoint_conversion_mapping = {
         "^model.language_model.model": "model.model.language_model",
         "^model.vision_tower": "model.model.vision_tower",
         "^model.multi_modal_projector": "model.model.multi_modal_projector",
         "^model.language_model.lm_head": "model.lm_head",
+        r"^base_model\.model\.custom_text_proj": "custom_text_proj",
     }
 
     @classmethod

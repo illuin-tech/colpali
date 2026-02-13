@@ -7,6 +7,7 @@ from transformers.models.paligemma.modeling_paligemma import PaliGemmaForConditi
 
 
 class BiPali(PaliGemmaPreTrainedModel):
+    _keys_to_ignore_on_load_missing = [r"model\.lm_head\.weight"]
     """
     BiPali is an implementation from the "ColPali: Efficient Document Retrieval with Vision Language Models" paper.
     Representations are average pooled to obtain a single vector representation.
@@ -17,6 +18,7 @@ class BiPali(PaliGemmaPreTrainedModel):
         "^model.vision_tower": "model.model.vision_tower",
         "^model.multi_modal_projector": "model.model.multi_modal_projector",
         "^model.language_model.lm_head": "model.lm_head",
+        r"^base_model\.model\.custom_text_proj": "custom_text_proj",
     }
 
     @classmethod
