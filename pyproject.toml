@@ -22,7 +22,7 @@ maintainers = [
     { name = "Tony Wu", email = "tony.wu@illuin.tech" },
 ]
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10,<3.15"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
@@ -34,7 +34,7 @@ classifiers = [
 
 dependencies = [
     "numpy",
-    "peft>=0.14.0,<0.18.0",
+    "peft>=0.18.0,<0.19.0",
     "pillow>=10.0.0",
     "requests",
     "scipy",

@@ -29,36 +29,37 @@ class BiPali(PaliGemmaPreTrainedModel):
     def __init__(self, config: PaliGemmaConfig):
         super(BiPali, self).__init__(config=config)
         model: PaliGemmaForConditionalGeneration = PaliGemmaForConditionalGeneration(config)
-        if model.language_model._tied_weights_keys is not None:
-            self._tied_weights_keys = [f"model.language_model.{k}" for k in model.language_model._tied_weights_keys]
+        if model.model.language_model._tied_weights_keys is not None:
+            self._tied_weights_keys = [
+                f"model.model.language_model.{k}" for k in model.model.language_model._tied_weights_keys
+            ]
         self.model: PaliGemmaForConditionalGeneration = model
-        self.model.lm_head = torch.nn.Identity()
         self.main_input_name = "doc_input_ids"
         self.post_init()
 
     def get_input_embeddings(self):
-        return self.model.language_model.get_input_embeddings()
+        return self.model.model.language_model.get_input_embeddings()
 
     def set_input_embeddings(self, value):
-        self.model.language_model.set_input_embeddings(value)
+        self.model.model.language_model.set_input_embeddings(value)
 
     def get_output_embeddings(self):
-        return self.model.language_model.get_output_embeddings()
+        return self.model.model.language_model.get_output_embeddings()
 
     def set_output_embeddings(self, new_embeddings):
-        self.model.language_model.set_output_embeddings(new_embeddings)
+        self.model.model.language_model.set_output_embeddings(new_embeddings)
 
     def set_decoder(self, decoder):
-        self.model.language_model.set_decoder(decoder)
+        self.model.model.language_model.set_decoder(decoder)
 
     def get_decoder(self):
-        return self.model.language_model.get_decoder()
+        return self.model.model.language_model.get_decoder()
 
-    def tie_weights(self):
-        return self.model.language_model.tie_weights()
+    def tie_weights(self, *args, **kwargs):
+        return self.model.model.language_model.tie_weights(*args, **kwargs)
 
     def resize_token_embeddings(self, new_num_tokens: Optional[int] = None, pad_to_multiple_of=None) -> nn.Embedding:
-        model_embeds = self.model.language_model.resize_token_embeddings(new_num_tokens, pad_to_multiple_of)
+        model_embeds = self.model.model.language_model.resize_token_embeddings(new_num_tokens, pad_to_multiple_of)
         # update vocab size
         self.config.text_config.vocab_size = model_embeds.num_embeddings
         self.config.vocab_size = model_embeds.num_embeddings
@@ -89,8 +90,10 @@ class BiPaliProj(PaliGemmaPreTrainedModel):
     def __init__(self, config: PaliGemmaConfig):
         super(BiPaliProj, self).__init__(config=config)
         model: PaliGemmaForConditionalGeneration = PaliGemmaForConditionalGeneration(config)
-        if model.language_model._tied_weights_keys is not None:
-            self._tied_weights_keys = [f"model.language_model.{k}" for k in model.language_model._tied_weights_keys]
+        if model.model.language_model._tied_weights_keys is not None:
+            self._tied_weights_keys = [
+                f"model.model.language_model.{k}" for k in model.model.language_model._tied_weights_keys
+            ]
         self.model: PaliGemmaForConditionalGeneration = model
         self.main_input_name = "doc_input_ids"
         self.dim = 1024
@@ -98,28 +101,28 @@ class BiPaliProj(PaliGemmaPreTrainedModel):
         self.post_init()
 
     def get_input_embeddings(self):
-        return self.model.language_model.get_input_embeddings()
+        return self.model.model.language_model.get_input_embeddings()
 
     def set_input_embeddings(self, value):
-        self.model.language_model.set_input_embeddings(value)
+        self.model.model.language_model.set_input_embeddings(value)
 
     def get_output_embeddings(self):
-        return self.model.language_model.get_output_embeddings()
+        return self.model.model.language_model.get_output_embeddings()
 
     def set_output_embeddings(self, new_embeddings):
-        self.model.language_model.set_output_embeddings(new_embeddings)
+        self.model.model.language_model.set_output_embeddings(new_embeddings)
 
     def set_decoder(self, decoder):
-        self.model.language_model.set_decoder(decoder)
+        self.model.model.language_model.set_decoder(decoder)
 
     def get_decoder(self):
-        return self.model.language_model.get_decoder()
+        return self.model.model.language_model.get_decoder()
 
-    def tie_weights(self):
-        return self.model.language_model.tie_weights()
+    def tie_weights(self, *args, **kwargs):
+        return self.model.model.language_model.tie_weights(*args, **kwargs)
 
     def resize_token_embeddings(self, new_num_tokens: Optional[int] = None, pad_to_multiple_of=None) -> nn.Embedding:
-        model_embeds = self.model.language_model.resize_token_embeddings(new_num_tokens, pad_to_multiple_of)
+        model_embeds = self.model.model.language_model.resize_token_embeddings(new_num_tokens, pad_to_multiple_of)
         # update vocab size
         self.config.text_config.vocab_size = model_embeds.num_embeddings
         self.config.vocab_size = model_embeds.num_embeddings
