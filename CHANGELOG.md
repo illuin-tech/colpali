@@ -34,13 +34,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Fix ColQwen2.5-Omni LoRA adapter key remapping for `custom_text_proj` (`base_model.model.*` -> model keys) to avoid missing/unexpected adapter keys at load time.
 - Fix ColQwen3 LoRA adapter key remapping for `custom_text_proj` (`base_model.model.*` -> model keys) to avoid missing/unexpected adapter keys at load time.
 - Fix ColGemma3 LoRA adapter key remapping for `custom_text_proj` (`base_model.model.*` -> model keys) to avoid missing/unexpected adapter keys at load time.
+- Ensure adapter loading remains robust across Transformers v5 base-load and PEFT adapter-load code paths, preventing silent fallback to randomly initialized projection adapters in retrieval models.
 
 ### Tests
 
 - Cover ColQwen3 processing and modeling with slow integration tests.
 - Run targeted non-slow processing tests for Gemma3, Idefics3, ModernVBert, Qwen2, Qwen2.5 and Qwen3 after the Transformers v5 processor-signature migration.
 - Run slow ColPali model-loading and query-forward integration tests under Transformers v5 to validate end-to-end loading behavior.
-- Add unit tests for adapter checkpoint key remapping to catch missing/unexpected LoRA key regressions in ColPali, ColQwen2 and ColQwen2.5.
+- Expand adapter checkpoint key remapping regression tests to cover ColPali, ColGemma3, ColQwen2, ColQwen2.5, ColQwen3, ColQwen2.5-Omni and ColModernVBert, including registry-backed conversion checks where needed.
 
 ## [0.3.13] - 2025-11-15
 
