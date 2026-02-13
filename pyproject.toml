@@ -40,12 +40,12 @@ dependencies = [
     "scipy",
     "torch>=2.2.0,<2.10.0",
     "torchvision",
-    "transformers>=4.57.0,<4.58.0",
+    "transformers>=5.0.0,<6.0.0",
 ]
 
 [project.optional-dependencies]
 train = [
-    "accelerate>=0.34.0,<1.11.0",
+    "accelerate>=1.1.0,<2.0.0",
     "bitsandbytes",
     "configue>=5.0.0",
     "datasets>=2.19.1",
