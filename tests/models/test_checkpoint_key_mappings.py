@@ -2,6 +2,7 @@ import re
 
 from transformers.conversion_mapping import get_checkpoint_conversion_mapping
 
+from colpali_engine.models.gemma3.colgemma3.modeling_colgemma import ColGemma3
 from colpali_engine.models.modernvbert.colvbert.modeling_colmodernvbert import ColModernVBert
 from colpali_engine.models.paligemma.bipali.modeling_bipali import BiPali
 from colpali_engine.models.paligemma.colpali.modeling_colpali import ColPali
@@ -57,6 +58,16 @@ def test_colpali_adapter_key_mapping_remaps_custom_text_proj():
         _apply_mapping(
             "base_model.model.custom_text_proj.lora_A.default.weight",
             ColPali._checkpoint_conversion_mapping,
+        )
+        == "custom_text_proj.lora_A.default.weight"
+    )
+
+
+def test_colgemma3_adapter_key_mapping_remaps_custom_text_proj():
+    assert (
+        _apply_mapping(
+            "base_model.model.custom_text_proj.lora_A.default.weight",
+            ColGemma3._checkpoint_conversion_mapping,
         )
         == "custom_text_proj.lora_A.default.weight"
     )

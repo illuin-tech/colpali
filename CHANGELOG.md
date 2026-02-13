@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Fix ColModernVBert LoRA adapter key remapping for `custom_text_proj` (`base_model.model.*` -> model keys) to avoid missing/unexpected adapter keys at load time.
 - Fix ColQwen2.5-Omni LoRA adapter key remapping for `custom_text_proj` (`base_model.model.*` -> model keys) to avoid missing/unexpected adapter keys at load time.
 - Fix ColQwen3 LoRA adapter key remapping for `custom_text_proj` (`base_model.model.*` -> model keys) to avoid missing/unexpected adapter keys at load time.
+- Fix ColGemma3 LoRA adapter key remapping for `custom_text_proj` (`base_model.model.*` -> model keys) to avoid missing/unexpected adapter keys at load time.
 
 ### Tests
 
