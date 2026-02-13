@@ -20,8 +20,14 @@ class ColQwen2(Qwen2VLModel):
 
     def __init__(self, config: Qwen2VLConfig, mask_non_image_embeddings: bool = False):
         super().__init__(config=config)
+        hidden_size = getattr(self.config, "hidden_size", None)
+        if hidden_size is None and hasattr(self.config, "text_config"):
+            hidden_size = getattr(self.config.text_config, "hidden_size", None)
+        if hidden_size is None:
+            raise ValueError(f"Unable to determine text hidden size for {type(self.config).__name__}.")
+
         self.dim = 128
-        self.custom_text_proj = nn.Linear(self.config.text_config.hidden_size, self.dim)
+        self.custom_text_proj = nn.Linear(hidden_size, self.dim)
         self.padding_side = "left"
         self.mask_non_image_embeddings = mask_non_image_embeddings
         self.post_init()

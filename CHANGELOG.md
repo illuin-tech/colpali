@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Fix ColPali collator image token id lookup to use `convert_tokens_to_ids`, compatible with Transformers v5 tokenizer backend changes.
 - Fix test collection on Python 3.14 by making `tests` an explicit package (`tests/__init__.py`).
 - Fix CI formatting failure by applying `ruff format` to updated ColPali processing tests.
-- Fix `custom_text_proj` input dimensions for ColQwen2 and ColQwen2.5 to use `text_config.hidden_size` under Transformers v5.
+- Fix ColQwen2 and ColQwen2.5 initialization across Transformers versions by resolving hidden size from either `config.hidden_size` or `config.text_config.hidden_size`.
 - Call `post_init()` in ColIdefics3 and ColModernVBert to align model initialization with Transformers v5 expectations.
 - Improve `VisualRetrieverCollator` image token id resolution by preferring processor-level `image_token_id` when available.
 
