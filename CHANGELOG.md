@@ -10,10 +10,27 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 - Add ColQwen3 and BiQwen3 support (model + processor).
+- Add regression tests for `ColPaliProcessor` to validate Transformers v5 modality registration and fallback loading behavior when a processor bundle is incomplete.
+
+### Changed
+
+- Bump runtime compatibility to `transformers>=5.0.0,<6.0.0`, `peft>=0.18.0,<0.19.0`, and `accelerate>=1.1.0,<2.0.0`.
+- Update supported Python versions to `>=3.10,<3.15` and align CI workflows to Python 3.10–3.14.
+- Update all affected processor subclasses (`Qwen2/Qwen2.5/Qwen3`, `Gemma3`, `Idefics3`, `ModernVBert`, `Qwen2.5 Omni`) to explicit `__init__` modality signatures required by Transformers v5 `ProcessorMixin`.
+
+### Fixed
+
+- Fix ColPali/PaliGemma model loading under Transformers v5 by adapting wrapper internals to new module layout and tied-weights expectations.
+- Fix ColPali processor loading for checkpoints without a complete processor bundle by explicitly falling back to `AutoImageProcessor` + `AutoTokenizer`.
+- Fix ColPali collator image token id lookup to use `convert_tokens_to_ids`, compatible with Transformers v5 tokenizer backend changes.
+- Fix test collection on Python 3.14 by making `tests` an explicit package (`tests/__init__.py`).
+- Fix CI formatting failure by applying `ruff format` to updated ColPali processing tests.
 
 ### Tests
 
 - Cover ColQwen3 processing and modeling with slow integration tests.
+- Run targeted non-slow processing tests for Gemma3, Idefics3, ModernVBert, Qwen2, Qwen2.5 and Qwen3 after the Transformers v5 processor-signature migration.
+- Run slow ColPali model-loading and query-forward integration tests under Transformers v5 to validate end-to-end loading behavior.
 
 ## [0.3.13] - 2025-11-15
 
