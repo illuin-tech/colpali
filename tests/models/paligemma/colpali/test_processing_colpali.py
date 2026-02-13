@@ -76,16 +76,21 @@ def test_load_processor_fallback_when_processor_bundle_is_incomplete():
     class DummyProcessor:
         pass
 
-    with patch(
-        "transformers.PaliGemmaProcessor.from_pretrained",
-        side_effect=ValueError("Image processor is missing an `image_seq_length` attribute."),
-    ), patch(
-        "colpali_engine.models.paligemma.colpali.processing_colpali.AutoImageProcessor.from_pretrained"
-    ) as mock_image, patch(
-        "colpali_engine.models.paligemma.colpali.processing_colpali.AutoTokenizer.from_pretrained"
-    ) as mock_tokenizer, patch(
-        "colpali_engine.models.paligemma.colpali.processing_colpali.ColPaliProcessor.__init__", return_value=None
-    ) as mock_init:
+    with (
+        patch(
+            "transformers.PaliGemmaProcessor.from_pretrained",
+            side_effect=ValueError("Image processor is missing an `image_seq_length` attribute."),
+        ),
+        patch(
+            "colpali_engine.models.paligemma.colpali.processing_colpali.AutoImageProcessor.from_pretrained"
+        ) as mock_image,
+        patch(
+            "colpali_engine.models.paligemma.colpali.processing_colpali.AutoTokenizer.from_pretrained"
+        ) as mock_tokenizer,
+        patch(
+            "colpali_engine.models.paligemma.colpali.processing_colpali.ColPaliProcessor.__init__", return_value=None
+        ) as mock_init,
+    ):
         mock_image.return_value = DummyProcessor()
         mock_tokenizer.return_value = DummyProcessor()
 
