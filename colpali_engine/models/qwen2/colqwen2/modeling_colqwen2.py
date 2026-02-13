@@ -18,6 +18,11 @@ class ColQwen2(Qwen2VLModel):
 
     main_input_name: ClassVar[str] = "doc_input_ids"  # transformers-related
 
+    _checkpoint_conversion_mapping = {
+        r"^base_model\.model\.custom_text_proj": "custom_text_proj",
+        r"^model\.layers": "language_model.layers",
+    }
+
     def __init__(self, config: Qwen2VLConfig, mask_non_image_embeddings: bool = False):
         super().__init__(config=config)
         hidden_size = getattr(self.config, "hidden_size", None)
@@ -36,7 +41,8 @@ class ColQwen2(Qwen2VLModel):
     def from_pretrained(cls, *args, **kwargs):
         key_mapping = kwargs.pop("key_mapping", None)
         if key_mapping is None:
-            key_mapping = super()._checkpoint_conversion_mapping
+            key_mapping = dict(getattr(super(), "_checkpoint_conversion_mapping", {}))
+            key_mapping.update(cls._checkpoint_conversion_mapping)
         return super().from_pretrained(*args, **kwargs, key_mapping=key_mapping)
 
     def forward(self, *args, **kwargs) -> torch.Tensor:

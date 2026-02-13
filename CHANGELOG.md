@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Fix ColQwen2 and ColQwen2.5 initialization across Transformers versions by resolving hidden size from either `config.hidden_size` or `config.text_config.hidden_size`.
 - Call `post_init()` in ColIdefics3 and ColModernVBert to align model initialization with Transformers v5 expectations.
 - Improve `VisualRetrieverCollator` image token id resolution by preferring processor-level `image_token_id` when available.
+- Fix ColQwen2 and ColQwen2.5 LoRA checkpoint key remapping for `custom_text_proj` (`base_model.model.*` -> model keys) to avoid missing/unexpected adapter keys at load time.
 
 ### Tests
 
