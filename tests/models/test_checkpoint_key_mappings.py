@@ -1,5 +1,7 @@
 import re
 
+from transformers.conversion_mapping import get_checkpoint_conversion_mapping
+
 from colpali_engine.models.modernvbert.colvbert.modeling_colmodernvbert import ColModernVBert
 from colpali_engine.models.paligemma.bipali.modeling_bipali import BiPali
 from colpali_engine.models.paligemma.colpali.modeling_colpali import ColPali
@@ -71,3 +73,17 @@ def test_colmodernvbert_adapter_key_mapping_remaps_custom_text_proj():
         )
         == "custom_text_proj.lora_A.default.weight"
     )
+
+
+def test_colmodernvbert_conversion_mapping_is_registered_for_adapter_loading():
+    mapping = get_checkpoint_conversion_mapping("modernvbert")
+    assert mapping is not None
+
+    key = "base_model.model.custom_text_proj.lora_B.default.weight"
+    for renaming in mapping:
+        if not hasattr(renaming, "source_patterns") or not hasattr(renaming, "target_patterns"):
+            continue
+        for pattern, replacement in zip(renaming.source_patterns, renaming.target_patterns):
+            key = re.sub(pattern, replacement, key)
+
+    assert key == "custom_text_proj.lora_B.default.weight"

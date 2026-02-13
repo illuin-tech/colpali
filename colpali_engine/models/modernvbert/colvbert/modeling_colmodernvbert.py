@@ -1,4 +1,6 @@
 from torch import nn
+from transformers.conversion_mapping import get_checkpoint_conversion_mapping, register_checkpoint_conversion_mapping
+from transformers.core_model_loading import WeightRenaming
 
 from colpali_engine.models.modernvbert.modeling_modernvbert import ModernVBertModel, ModernVBertPreTrainedModel
 
@@ -62,3 +64,13 @@ class ColModernVBert(ModernVBertPreTrainedModel):
             image_mask = (kwargs["input_ids"] == self.config.image_token_id).unsqueeze(-1)
             proj = proj * image_mask
         return proj
+
+
+if get_checkpoint_conversion_mapping("modernvbert") is None:
+    register_checkpoint_conversion_mapping(
+        "modernvbert",
+        [
+            WeightRenaming(source_patterns=k, target_patterns=v)
+            for k, v in ColModernVBert._checkpoint_conversion_mapping.items()
+        ],
+    )
