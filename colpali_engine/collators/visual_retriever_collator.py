@@ -39,8 +39,10 @@ class VisualRetrieverCollator:
 
         # If processor is one of the supported types, extract the <image> token id.
         if isinstance(self.processor, (ColPaliProcessor,)):
-            image_token = "<image>"
-            token_id = self.processor.tokenizer.convert_tokens_to_ids(image_token)
+            if hasattr(self.processor, "image_token_id"):
+                token_id = self.processor.image_token_id
+            else:
+                token_id = self.processor.tokenizer.convert_tokens_to_ids("<image>")
             self.image_token_id = token_id if token_id is not None and token_id >= 0 else None
 
         # Force padding to be on the right for ColPaliProcessor.

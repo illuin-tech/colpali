@@ -22,7 +22,7 @@ class ColQwen2_5(Qwen2_5_VLModel):  # noqa: N801
     def __init__(self, config: Qwen2_5_VLConfig, mask_non_image_embeddings: bool = False):
         super().__init__(config=config)
         self.dim = 128
-        self.custom_text_proj = nn.Linear(self.config.hidden_size, self.dim)
+        self.custom_text_proj = nn.Linear(self.config.text_config.hidden_size, self.dim)
         self.padding_side = "left"
         self.mask_non_image_embeddings = mask_non_image_embeddings
         self.post_init()
