@@ -48,7 +48,7 @@ Using ColPali removes the need for potentially complex and brittle layout recogn
 
 ## Setup
 
-We used Python 3.11.6 and PyTorch 2.4 to train and test our models, but the codebase is compatible with Python >=3.9 and recent PyTorch versions. To install the package, run:
+We used Python 3.11.6 and PyTorch 2.4 to train and test our models, but the codebase is compatible with Python >=3.10 and recent PyTorch versions. To install the package, run:
 
 ```bash
 pip install colpali-engine # from PyPi
