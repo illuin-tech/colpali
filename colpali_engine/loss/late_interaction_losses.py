@@ -462,4 +462,4 @@ class ColbertSigmoidLoss(ColbertModule):
         # flatten the scores to [B * B]
         scores = scores.view(-1) / self.temperature
 
-        return F.softplus(scores * pos_mask).mean()
+        return F.softplus(-scores * pos_mask).mean()

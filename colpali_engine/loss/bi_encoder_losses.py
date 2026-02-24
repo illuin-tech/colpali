@@ -163,7 +163,7 @@ class BiPairedEncoderLoss(BiEncoderModule):
             self._filter_high_negatives(scores, pos_idx)
 
         q2t = self.ce_loss(scores / self.temperature, pos_idx)
-        t2q = self.ce_loss(scores.T / self.temperature, ...)
+        t2q = self.ce_loss(scores.T / self.temperature, idx)
 
         return (q2t + t2q) / 2.0
 
@@ -410,7 +410,7 @@ class BiSigmoidLoss(BiEncoderModule):
                 flat_pos = (pos_idx - offset) * (batch_size + 1)
                 labels[flat_pos] = 1.0
             # compute the loss
-            block_loss = F.softplus(curr_scores * labels)
+            block_loss = F.softplus(-curr_scores * labels)
             all_losses.append(block_loss)
             # shift the offset for the next batch
             offset = (offset + batch_size) % num_targets

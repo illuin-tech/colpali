@@ -107,7 +107,7 @@ class TestBiGemma3_ModelIntegration:  # noqa N801
 
         # Preprocess the examples
         batch_images = processor.process_images(images=ds["image"]).to(model.device)
-        batch_queries = processor.process_texts(queries=ds["query"]).to(model.device)
+        batch_queries = processor.process_texts(texts=ds["query"]).to(model.device)
 
         # Run inference
         with torch.inference_mode():
