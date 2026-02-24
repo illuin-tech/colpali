@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## Unreleased
+## [0.3.14] - 2026-02-24
 
 ### Added
 
@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
-- Bump runtime compatibility to `transformers>=5.0.0,<6.0.0`, `peft>=0.18.0,<0.19.0`, and `accelerate>=1.1.0,<2.0.0`.
+- Bump runtime compatibility to `transformers>=5.0.0,<6.0.0`, `peft>=0.18.0,<0.19.0`, and `accelerate>=1.1.0,<2.0.0` and latest torch version.
 - Update supported Python versions to `>=3.10,<3.15` and align CI workflows to Python 3.10–3.14.
 - Update all affected processor subclasses (`Qwen2/Qwen2.5/Qwen3`, `Gemma3`, `Idefics3`, `ModernVBert`, `Qwen2.5 Omni`) to explicit `__init__` modality signatures required by Transformers v5 `ProcessorMixin`.
 
