@@ -59,13 +59,13 @@ def processor(model_name: str) -> Generator[ColQwen3_5Processor, None, None]:
     yield cast(ColQwen3_5Processor, ColQwen3_5Processor.from_pretrained(model_name))
 
 
-class TestColQwen3_5Model:
+class TestColQwen3_5Model:  # noqa: N801
     @pytest.mark.slow
     def test_load_model_from_pretrained(self, model_without_mask: ColQwen3_5):
         assert isinstance(model_without_mask, ColQwen3_5)
 
 
-class TestColQwen3_5ModelIntegration:
+class TestColQwen3_5ModelIntegration:  # noqa: N801
     @pytest.mark.slow
     def test_forward_images_integration(
         self,
