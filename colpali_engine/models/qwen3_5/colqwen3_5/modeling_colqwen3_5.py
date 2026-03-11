@@ -19,23 +19,18 @@ class ColQwen3_5(Qwen3_5Model):  # noqa: N801
 
     main_input_name: ClassVar[str] = "doc_input_ids"  # transformers-related
 
-    def __init__(
-        self,
-        config: Qwen3_5Config,
-        mask_non_image_embeddings: bool = False,
-        **kwargs,
-    ):
-        dtype = kwargs.pop("dtype", kwargs.pop("torch_dtype", None))
-        attn_impl = kwargs.pop("attn_implementation", None)
-        use_cache = kwargs.pop("use_cache", None)
+    _checkpoint_conversion_mapping = {
+        r"^base_model\.model\.custom_text_proj": "custom_text_proj",
+    }
 
+    def __init__(self, config: Qwen3_5Config, mask_non_image_embeddings: bool = False):
         super().__init__(config=config)
 
         hidden_size = getattr(self.config, "hidden_size", None)
         if hidden_size is None and hasattr(self.config, "text_config"):
-            hidden_size = self.config.text_config.hidden_size
+            hidden_size = getattr(self.config.text_config, "hidden_size", None)
         if hidden_size is None:
-            raise ValueError("Unable to determine text hidden size for Qwen3_5Config.")
+            raise ValueError(f"Unable to determine text hidden size for {type(self.config).__name__}.")
 
         self.dim = 320
         self.custom_text_proj = nn.Linear(hidden_size, self.dim)
@@ -43,12 +38,13 @@ class ColQwen3_5(Qwen3_5Model):  # noqa: N801
         self.mask_non_image_embeddings = mask_non_image_embeddings
         self.post_init()
 
-        if dtype is not None:
-            self.to(dtype=dtype)
-        if use_cache is not None:
-            self.config.use_cache = use_cache
-        if attn_impl is not None and hasattr(self, "set_attn_implementation"):
-            self.set_attn_implementation(attn_impl)
+    @classmethod
+    def from_pretrained(cls, *args, **kwargs):
+        key_mapping = kwargs.pop("key_mapping", None)
+        if key_mapping is None:
+            key_mapping = dict(getattr(super(), "_checkpoint_conversion_mapping", {}))
+            key_mapping.update(cls._checkpoint_conversion_mapping)
+        return super().from_pretrained(*args, **kwargs, key_mapping=key_mapping)
 
     def forward(self, *args, **kwargs) -> torch.Tensor:
         # Handle the custom "pixel_values" input obtained with `ColQwen3_5Processor` through unpadding

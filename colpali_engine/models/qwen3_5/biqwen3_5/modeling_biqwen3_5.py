@@ -12,21 +12,17 @@ class BiQwen3_5(Qwen3_5Model):  # noqa: N801
 
     main_input_name: ClassVar[str] = "doc_input_ids"
 
-    def __init__(self, config: Qwen3_5Config, **kwargs):
-        dtype = kwargs.pop("dtype", kwargs.pop("torch_dtype", None))
-        attn_impl = kwargs.pop("attn_implementation", None)
-        use_cache = kwargs.pop("use_cache", None)
-
+    def __init__(self, config: Qwen3_5Config):
         super().__init__(config=config)
         self.padding_side = "left"
         self.post_init()
 
-        if dtype is not None:
-            self.to(dtype=dtype)
-        if use_cache is not None:
-            self.config.use_cache = use_cache
-        if attn_impl is not None and hasattr(self, "set_attn_implementation"):
-            self.set_attn_implementation(attn_impl)
+    @classmethod
+    def from_pretrained(cls, *args, **kwargs):
+        key_mapping = kwargs.pop("key_mapping", None)
+        if key_mapping is None:
+            key_mapping = getattr(super(), "_checkpoint_conversion_mapping", None)
+        return super().from_pretrained(*args, **kwargs, key_mapping=key_mapping)
 
     def forward(
         self,
@@ -39,11 +35,14 @@ class BiQwen3_5(Qwen3_5Model):  # noqa: N801
 
         Args:
             pooling_strategy: The strategy to use for pooling the hidden states.
+                Note: Since Qwen3.5 is a causal (decoder-only) model, "last" is the only
+                recommended strategy. "cls" and "mean" are kept for experimental use but
+                are inherently suboptimal as earlier tokens cannot attend to later ones.
             *args: Variable length argument list.
             **kwargs: Additional keyword arguments.
 
         Returns:
-            torch.Tensor: Dense embeddings (batch_size, hidden_size).
+            torch.Tensor: L2-normalized dense embeddings (batch_size, hidden_size).
         """
         if "pixel_values" in kwargs:
             offsets = kwargs["image_grid_thw"].prod(dim=1).tolist()
