@@ -53,7 +53,6 @@ if __name__ == "__main__":
         model=ColQwen3_5.from_pretrained(
             pretrained_model_name_or_path="./models/base_models/colqwen3_5-base",
             torch_dtype=torch.bfloat16,
-            use_cache=False,
             attn_implementation="flash_attention_2",
         ),
         train_dataset=load_train_set(),
