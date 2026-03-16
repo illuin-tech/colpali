@@ -32,7 +32,7 @@ class ColQwen3_5(Qwen3_5Model):  # noqa: N801
         if hidden_size is None:
             raise ValueError(f"Unable to determine text hidden size for {type(self.config).__name__}.")
 
-        self.dim = 320
+        self.dim = getattr(config, "dim", 128)
         self.custom_text_proj = nn.Linear(hidden_size, self.dim)
         self.padding_side = "left"
         self.mask_non_image_embeddings = mask_non_image_embeddings
