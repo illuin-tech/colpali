@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 @pytest.fixture(scope="module")
 def model_name() -> str:
-    return "athrael-soju/colqwen3.5-v1"
+    return "athrael-soju/colqwen3.5-4.5B-v3"
 
 
 @pytest.fixture(scope="module")
