@@ -148,7 +148,10 @@ def test_colqwen3_checkpoint_key_mapping_remaps_adapter_and_tomoro_checkpoint_ke
         )
         == "visual.blocks.3.attn.proj.weight"
     )
-    assert _apply_mapping("embedding_proj_layer.bias", ColQwen3._checkpoint_conversion_mapping) == "custom_text_proj.bias"
+    assert (
+        _apply_mapping("embedding_proj_layer.bias", ColQwen3._checkpoint_conversion_mapping)
+        == "custom_text_proj.bias"
+    )
 
 
 def test_colqwen3_ignores_expected_unexpected_lm_head_weight():
