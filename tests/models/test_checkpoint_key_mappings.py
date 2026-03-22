@@ -126,7 +126,7 @@ def test_colqwen2_5_omni_conversion_mapping_is_registered_for_adapter_loading():
     assert key == "custom_text_proj.lora_B.default.weight"
 
 
-def test_colqwen3_adapter_key_mapping_remaps_custom_text_proj_and_layers():
+def test_colqwen3_checkpoint_key_mapping_remaps_adapter_and_tomoro_checkpoint_keys():
     assert (
         _apply_mapping(
             "base_model.model.custom_text_proj.lora_A.default.weight",
@@ -134,17 +134,44 @@ def test_colqwen3_adapter_key_mapping_remaps_custom_text_proj_and_layers():
         )
         == "custom_text_proj.lora_A.default.weight"
     )
+    assert (
+        _apply_mapping(
+            "vlm.model.language_model.layers.17.self_attn.v_proj.weight",
+            ColQwen3._checkpoint_conversion_mapping,
+        )
+        == "language_model.layers.17.self_attn.v_proj.weight"
+    )
+    assert (
+        _apply_mapping(
+            "vlm.model.visual.blocks.3.attn.proj.weight",
+            ColQwen3._checkpoint_conversion_mapping,
+        )
+        == "visual.blocks.3.attn.proj.weight"
+    )
+    assert (
+        _apply_mapping("embedding_proj_layer.bias", ColQwen3._checkpoint_conversion_mapping)
+        == "custom_text_proj.bias"
+    )
 
 
-def test_colqwen3_conversion_mapping_is_registered_for_adapter_loading():
+def test_colqwen3_ignores_expected_unexpected_lm_head_weight():
+    assert r"^vlm\.lm_head\.weight$" in ColQwen3._keys_to_ignore_on_load_unexpected
+    assert r"^lm_head\.weight$" in ColQwen3._keys_to_ignore_on_load_unexpected
+
+
+def test_colqwen3_conversion_mapping_is_registered_for_adapter_and_tomoro_checkpoint_loading():
     mapping = get_checkpoint_conversion_mapping("qwen3_vl")
     assert mapping is not None
 
-    key = "base_model.model.custom_text_proj.lora_B.default.weight"
-    for renaming in mapping:
-        if not hasattr(renaming, "source_patterns") or not hasattr(renaming, "target_patterns"):
-            continue
-        for pattern, replacement in zip(renaming.source_patterns, renaming.target_patterns):
-            key = re.sub(pattern, replacement, key)
+    for key, expected in (
+        ("base_model.model.custom_text_proj.lora_B.default.weight", "custom_text_proj.lora_B.default.weight"),
+        ("vlm.model.language_model.layers.3.mlp.down_proj.weight", "language_model.layers.3.mlp.down_proj.weight"),
+    ):
+        remapped_key = key
+        for renaming in mapping:
+            if not hasattr(renaming, "source_patterns") or not hasattr(renaming, "target_patterns"):
+                continue
+            for pattern, replacement in zip(renaming.source_patterns, renaming.target_patterns):
+                remapped_key = re.sub(pattern, replacement, remapped_key)
 
-    assert key == "custom_text_proj.lora_B.default.weight"
+        assert remapped_key == expected
