@@ -18,11 +18,11 @@
 
 ## Associated Paper
 
-This repository contains the code used for training the vision retrievers in the [*ColPali: Efficient Document Retrieval with Vision Language Models*](https://arxiv.org/abs/2407.01449) paper. In particular, it contains the code for training the ColPali model, which is a vision retriever based on the ColBERT architecture and the PaliGemma model.
+This repository contains the code used for training and running visual document retrievers introduced by the [*ColPali: Efficient Document Retrieval with Vision Language Models*](https://arxiv.org/abs/2407.01449) paper. It includes the original ColPali model, based on the ColBERT architecture and the PaliGemma model, along with later ColVision and bi-encoder retriever variants.
 
 ## Introduction
 
-With our new model *ColPali*, we propose to leverage VLMs to construct efficient multi-vector embeddings in the visual space for document retrieval. By feeding the ViT output patches from PaliGemma-3B to a linear projection, we create a multi-vector representation of documents. We train the model to maximize the similarity between these document embeddings and the query embeddings, following the ColBERT method.
+With *ColPali*, we propose to leverage VLMs to construct efficient multi-vector embeddings in the visual space for document retrieval. By feeding the ViT output patches from PaliGemma-3B to a linear projection, we create a multi-vector representation of documents. We train the model to maximize the similarity between these document embeddings and the query embeddings, following the ColBERT method.
 
 Using ColPali removes the need for potentially complex and brittle layout recognition and OCR pipelines with a single model that can take into account both the textual and visual content (layout, charts, ...) of a document.
 
@@ -38,7 +38,7 @@ Using ColPali removes the need for potentially complex and brittle layout recogn
 | [vidore/colpali-v1.3](https://huggingface.co/vidore/colpali-v1.3)   | 84.8                                                                          | Gemma      | • Similar to `vidore/colpali-v1.2`.<br />• Trained with a larger effective batch size of 256 batch size for 3 epochs.                                          | ✅                   |
 | [vidore/colqwen2-v0.1](https://huggingface.co/vidore/colqwen2-v0.1) | 87.3                                                                          | Apache 2.0 | • Based on `Qwen/Qwen2-VL-2B-Instruct`.<br />• Supports dynamic resolution.<br />• Trained using 768 image patches per page and an effective batch size of 32. | ✅                   |
 | [vidore/colqwen2-v1.0](https://huggingface.co/vidore/colqwen2-v1.0) | 89.3                                                                          | Apache 2.0 | • Similar to `vidore/colqwen2-v0.1`, but trained with more powerful GPUs and with a larger effective batch size (256).                                         | ✅                   |
-| [vidore/colqwen2.5-v0.1](https://huggingface.co/vidore/colqwen2.5-v0.1) | 88.8                                                                          | Apache 2.0 | • Based on `Qwen/Qwen2 5-VL-3B-Instruct`<br />• Supports dynamic resolution.<br />• Trained using 768 image patches per page and an effective batch size of 32.                                         | ✅                   |
+| [vidore/colqwen2.5-v0.1](https://huggingface.co/vidore/colqwen2.5-v0.1) | 88.8                                                                          | Apache 2.0 | • Based on `Qwen/Qwen2.5-VL-3B-Instruct`<br />• Supports dynamic resolution.<br />• Trained using 768 image patches per page and an effective batch size of 32.                                         | ✅                   |
 | [vidore/colqwen2.5-v0.2](https://huggingface.co/vidore/colqwen2.5-v0.2) | 89.4                                                                          | Apache 2.0 | • Similar to `vidore/colqwen2.5-v0.1`, but trained with slightly different hyper parameters                                        | ✅                   |
 | [TomoroAI/tomoro-colqwen3-embed-4b](https://huggingface.co/TomoroAI/tomoro-colqwen3-embed-4b) | 90.6                                                                           | Apache 2.0 | • Based on the Qwen3-VL backbone.<br />• 320-dim ColBERT-style embeddings with dynamic resolution.<br />• Trained for multi-vector document retrieval.          | ✅                   |
 | [athrael-soju/colqwen3.5-4.5B-v3](https://huggingface.co/athrael-soju/colqwen3.5-4.5B-v3) | 90.9                                                                           | Apache 2.0 | • Based on `Qwen/Qwen3.5-4B` (hybrid GatedDeltaNet + full-attention).<br />• 320-dim ColBERT-style embeddings.<br />• 4.5B params, LoRA-trained.          | ✅                   |
@@ -49,10 +49,10 @@ Using ColPali removes the need for potentially complex and brittle layout recogn
 
 ## Setup
 
-We used Python 3.11.6 and PyTorch 2.4 to train and test our models, but the codebase is compatible with Python >=3.10 and recent PyTorch versions. To install the package, run:
+The codebase is compatible with Python >=3.10,<3.15 and recent PyTorch versions. To install the package, run:
 
 ```bash
-pip install colpali-engine # from PyPi
+pip install colpali-engine # from PyPI
 pip install git+https://github.com/illuin-tech/colpali # from source
 ```
 
@@ -224,7 +224,7 @@ For a more detailed example, you can refer to the interpretability notebooks fro
 
 [Token pooling](https://doi.org/10.48550/arXiv.2409.14683) is a CRUDE-compliant method (document addition/deletion-friendly) that aims at reducing the sequence length of multi-vector embeddings. For ColPali, many image patches share redundant information, e.g. white background patches. By pooling these patches together, we can reduce the amount of embeddings while retaining most of the page's signal. Retrieval performance with hierarchical mean token pooling on image embeddings can be found in the [ColPali paper](https://doi.org/10.48550/arXiv.2407.01449). In our experiments, we found that a pool factor of 3 offered the optimal trade-off: the total number of vectors is reduced by $66.7\%$ while $97.8\%$ of the original performance is maintained.
 
-To use token pooling, you can use the `HierarchicalEmbeddingPooler` class from the `colpali-engine` package:
+To use token pooling, you can use the `HierarchicalTokenPooler` class from the `colpali-engine` package:
 
 <details>
 <summary><strong>🔽 Click to expand code snippet</strong></summary>
@@ -343,7 +343,7 @@ When your PR is ready, ping one of the repository maintainers. We will do our be
 
 ## Community Projects
 
-Several community projects and ressources have been developed around ColPali to facilitate its usage. Feel free to reach out if you want to add your project to this list!
+Several community projects and resources have been developed around ColPali to facilitate its usage. Feel free to reach out if you want to add your project to this list!
 
 <details>
 <summary><strong>🔽 Libraries 📚</strong></summary>
