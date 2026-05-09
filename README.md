@@ -61,6 +61,10 @@ Mac users using MPS with the ColQwen models have reported errors with torch 2.6.
 > [!WARNING]
 > For ColPali versions above v1.0, make sure to install the `colpali-engine` package from source or with a version above v0.2.0.
 
+## Development docs
+
+- [Adding a new model family](docs/add_model_family.md)
+
 ## Usage
 
 ### Quick start
