@@ -116,9 +116,9 @@ class ContrastiveTrainer(Trainer):
 
         return self.accelerator.prepare(dataloader)
 
-    def _get_train_sampler(self) -> Optional[torch.utils.data.Sampler]:
+    def _get_train_sampler(self, train_dataset: Optional[Dataset] = None) -> Optional[torch.utils.data.Sampler]:
         if self.train_dataset_list is None:
-            return super()._get_train_sampler()
+            return super()._get_train_sampler(train_dataset)
 
         # Use SingleDatasetBatchSampler to ensure that each dataset in the list is sampled independently
         # Note: Surely breaks in distributed training
