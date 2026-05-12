@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.16] - 2026-05-12
+
+### Changed
+- Extend supported dependency ranges to allow `torch<2.12.0`, `peft<0.20.0`, and `pillow<12.3.0`.
+
+## [0.3.15] - 2026-03-31
+
 ### Added
 
 - Add ColQwen3.5 and BiQwen3.5 support (model + processor). Pretrained checkpoint: [athrael-soju/colqwen3.5-4.5B-v3](https://huggingface.co/athrael-soju/colqwen3.5-4.5B-v3).
