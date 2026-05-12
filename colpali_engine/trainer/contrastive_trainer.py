@@ -52,6 +52,9 @@ class ContrastiveTrainer(Trainer):
         self.train_dataset_list = train_dataset_list
         self.eval_dataset_list = eval_dataset_list
         self.compute_symetric_loss = compute_symetric_loss
+        self.query_prefix = self.data_collator.query_prefix
+        self.pos_prefix = self.data_collator.pos_doc_prefix
+        self.neg_prefix = self.data_collator.neg_doc_prefix
 
     def get_train_dataloader(self) -> DataLoader:
         """
@@ -80,10 +83,6 @@ class ContrastiveTrainer(Trainer):
             dataset = self._remove_unused_columns(dataset, description=description)
         else:
             data_collator = self._get_collator_with_removed_columns(self.data_collator, description=description)
-
-        self.query_prefix = data_collator.query_prefix
-        self.pos_prefix = data_collator.pos_doc_prefix
-        self.neg_prefix = data_collator.neg_doc_prefix
 
         dataloader_params = {
             ######### don't set batch size, mutually exclusive from batch sampler ######
@@ -214,10 +213,16 @@ class ContrastiveTrainer(Trainer):
 
         with torch.no_grad():
             # feed only kwargs with 'doc_' prefix
-            doc_outputs = model(**{k[4:]: v for k, v in inputs.items() if k.startswith("doc")})
-            query_outputs = model(input_ids=inputs["query_input_ids"], attention_mask=inputs["query_attention_mask"])
-            if "neg_doc_input_ids" in inputs:
-                neg_doc_outputs = model(**{k[8:]: v for k, v in inputs.items() if k.startswith("neg_doc")})
+            doc_outputs = model(
+                **{k[len(self.pos_prefix) :]: v for k, v in inputs.items() if k.startswith(self.pos_prefix)}
+            )
+            query_outputs = model(
+                **{k[len(self.query_prefix) :]: v for k, v in inputs.items() if k.startswith(self.query_prefix)}
+            )
+            if f"{self.neg_prefix}input_ids" in inputs:
+                neg_doc_outputs = model(
+                    **{k[len(self.neg_prefix) :]: v for k, v in inputs.items() if k.startswith(self.neg_prefix)}
+                )
                 loss = self.loss_func(query_outputs, doc_outputs, neg_doc_outputs)
                 return loss, None, None
 
