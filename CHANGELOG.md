@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 - Add ColQwen3.5 and BiQwen3.5 support (model + processor). Pretrained checkpoint: [athrael-soju/colqwen3.5-4.5B-v3](https://huggingface.co/athrael-soju/colqwen3.5-4.5B-v3).
+- Add optional `[lik]` extra (`late-interaction-kernels>=0.4.1,<0.5.0`) that routes `score_multi_vector` and the five ColBERT losses through the fused Triton MaxSim kernel on CUDA Ampere+ / Apple Silicon, with a transparent torch fallback elsewhere. `COLPALI_SCORES_BACKEND` selects the backend (mirrors PyLate's `PYLATE_SCORES_BACKEND`): `auto` (default), `torch` (force the fallback), or `lik` (strict; raises when the kernel cannot run).
 
 ### Changed
 

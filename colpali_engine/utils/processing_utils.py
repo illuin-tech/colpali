@@ -15,6 +15,7 @@ except ImportError:
         "FastPlaid is not installed.If you want to use it:Instal with `pip install --no-deps fast-plaid fastkmeans`"
     )
 
+from colpali_engine.utils.maxsim import maxsim_inbatch
 from colpali_engine.utils.torch_utils import get_torch_device
 
 
@@ -176,7 +177,7 @@ class BaseVisualRetrieverProcessor(ABC):
                 ps_batch = torch.nn.utils.rnn.pad_sequence(
                     ps[j : j + batch_size], batch_first=True, padding_value=0
                 ).to(device)
-                scores_batch.append(torch.einsum("bnd,csd->bcns", qs_batch, ps_batch).max(dim=3)[0].sum(dim=2))
+                scores_batch.append(maxsim_inbatch(qs_batch, ps_batch))
             scores_batch = torch.cat(scores_batch, dim=1).cpu()
             scores_list.append(scores_batch)
 

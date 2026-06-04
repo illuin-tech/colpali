@@ -61,6 +61,16 @@ Mac users using MPS with the ColQwen models have reported errors with torch 2.6.
 > [!WARNING]
 > For ColPali versions above v1.0, make sure to install the `colpali-engine` package from source or with a version above v0.2.0.
 
+### Fused MaxSim kernels (optional)
+
+The optional `[lik]` extra installs [`late-interaction-kernels`](https://github.com/hcompai/late-interaction-kernels), a fused Triton MaxSim kernel used automatically on CUDA Ampere+ / Apple Silicon for scoring and the ColBERT losses. It avoids materializing the `[B, B, Lq, Ld]` score tensor, which roughly doubles the trainable batch size on memory-bound setups:
+
+```bash
+pip install "colpali-engine[lik]"
+```
+
+The `COLPALI_SCORES_BACKEND` environment variable selects the backend (mirrors PyLate's `PYLATE_SCORES_BACKEND`): `auto` (default) uses the kernel when eligible and silently falls back to torch, `torch` forces the pure-torch reference, and `lik` requires the kernel and raises if it cannot run.
+
 ## Development docs
 
 - [Adding a new model family](docs/add_model_family.md)

@@ -52,6 +52,13 @@ class ContrastiveTrainer(Trainer):
         self.train_dataset_list = train_dataset_list
         self.eval_dataset_list = eval_dataset_list
         self.compute_symetric_loss = compute_symetric_loss
+        # Prime the prefixes from the collator. The multi-dataset path also
+        # sets these inside get_train_dataloader, but the single-dataset path
+        # never does, and compute_loss reads them on every step.
+        collator = kwargs.get("data_collator")
+        self.query_prefix = getattr(collator, "query_prefix", "query_")
+        self.pos_prefix = getattr(collator, "pos_doc_prefix", "doc_")
+        self.neg_prefix = getattr(collator, "neg_doc_prefix", "neg_doc_")
 
     def get_train_dataloader(self) -> DataLoader:
         """
@@ -116,8 +123,11 @@ class ContrastiveTrainer(Trainer):
 
         return self.accelerator.prepare(dataloader)
 
-    def _get_train_sampler(self) -> Optional[torch.utils.data.Sampler]:
+    def _get_train_sampler(self, dataset=None) -> Optional[torch.utils.data.Sampler]:
         if self.train_dataset_list is None:
+            # transformers 5.x passes the dataset positionally; older versions do not.
+            if dataset is not None:
+                return super()._get_train_sampler(dataset)
             return super()._get_train_sampler()
 
         # Use SingleDatasetBatchSampler to ensure that each dataset in the list is sampled independently
