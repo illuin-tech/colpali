@@ -1,0 +1,65 @@
+{
+  "colpali_scores_backend": "torch",
+  "lik_version": "0.4.1",
+  "device_name": "NVIDIA H100 80GB HBM3",
+  "torch_version": "2.11.0+cu130",
+  "batch_size": 128,
+  "oom": true,
+  "oom_message": "CUDA out of memory. Tried to allocate 1.81 GiB. GPU 0 has a total capacity of 79.18 GiB of which 826.19 MiB is free. Including non-PyTorch memory, this process has 78.33 GiB memory in use. Of the allocated memory 52.57 GiB is allocated by PyTorch, and 25.01 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)",
+  "step_peak_alloc_mib": 55250.29150390625,
+  "step_peak_reserved_mib": 79598.0,
+  "step_times_sec": [
+    13.635143723106012
+  ],
+  "maxsim_in_train_summary": {
+    "num_calls": 1,
+    "num_oom": 0,
+    "max_forward_transient_peak_mib": 2460.8125,
+    "max_saved_for_backward_mib": 2460.8125,
+    "max_backward_transient_peak_mib": null
+  },
+  "maxsim_isolated_summary": {
+    "num_calls": 1,
+    "num_oom": 0,
+    "max_forward_transient_peak_mib": 2461.25,
+    "max_saved_for_backward_mib": 2461.25,
+    "max_backward_transient_peak_mib": 5536.7666015625
+  },
+  "maxsim_calls_in_train": [
+    {
+      "op": "maxsim_inbatch",
+      "query_shape": [
+        128,
+        51,
+        128
+      ],
+      "doc_shape": [
+        128,
+        771,
+        128
+      ],
+      "dtype": "torch.float32",
+      "forward_transient_peak_mib": 2460.8125,
+      "saved_for_backward_mib": 2460.8125
+    }
+  ],
+  "maxsim_calls_isolated": [
+    {
+      "op": "maxsim_inbatch",
+      "query_shape": [
+        128,
+        51,
+        128
+      ],
+      "doc_shape": [
+        128,
+        771,
+        128
+      ],
+      "dtype": "torch.float32",
+      "forward_transient_peak_mib": 2461.25,
+      "saved_for_backward_mib": 2461.25,
+      "backward_transient_peak_mib": 5536.7666015625
+    }
+  ]
+}

@@ -1,0 +1,166 @@
+{
+  "colpali_scores_backend": "auto",
+  "lik_version": "0.4.1",
+  "device_name": "NVIDIA H100 80GB HBM3",
+  "torch_version": "2.11.0+cu130",
+  "batch_size": 64,
+  "oom": false,
+  "step_peak_alloc_mib": 30247.37158203125,
+  "step_peak_reserved_mib": 49642.0,
+  "step_times_sec": [
+    10.859198668040335,
+    4.5799013380892575,
+    4.531077978899702,
+    4.335974773159251
+  ],
+  "maxsim_in_train_summary": {
+    "num_calls": 4,
+    "num_oom": 0,
+    "max_forward_transient_peak_mib": 3.7734375,
+    "max_saved_for_backward_mib": 3.76953125,
+    "max_backward_transient_peak_mib": null
+  },
+  "maxsim_isolated_summary": {
+    "num_calls": 4,
+    "num_oom": 0,
+    "max_forward_transient_peak_mib": 3.0234375,
+    "max_saved_for_backward_mib": 3.01953125,
+    "max_backward_transient_peak_mib": 26.1103515625
+  },
+  "maxsim_calls_in_train": [
+    {
+      "op": "maxsim_inbatch",
+      "query_shape": [
+        64,
+        44,
+        128
+      ],
+      "doc_shape": [
+        64,
+        767,
+        128
+      ],
+      "dtype": "torch.float32",
+      "forward_transient_peak_mib": 3.02392578125,
+      "saved_for_backward_mib": 3.02001953125
+    },
+    {
+      "op": "maxsim_inbatch",
+      "query_shape": [
+        64,
+        51,
+        128
+      ],
+      "doc_shape": [
+        64,
+        771,
+        128
+      ],
+      "dtype": "torch.float32",
+      "forward_transient_peak_mib": 3.2109375,
+      "saved_for_backward_mib": 3.20703125
+    },
+    {
+      "op": "maxsim_inbatch",
+      "query_shape": [
+        64,
+        42,
+        128
+      ],
+      "doc_shape": [
+        64,
+        770,
+        128
+      ],
+      "dtype": "torch.float32",
+      "forward_transient_peak_mib": 3.7734375,
+      "saved_for_backward_mib": 3.76953125
+    },
+    {
+      "op": "maxsim_inbatch",
+      "query_shape": [
+        64,
+        40,
+        128
+      ],
+      "doc_shape": [
+        64,
+        767,
+        128
+      ],
+      "dtype": "torch.float32",
+      "forward_transient_peak_mib": 3.02734375,
+      "saved_for_backward_mib": 3.0234375
+    }
+  ],
+  "maxsim_calls_isolated": [
+    {
+      "op": "maxsim_inbatch",
+      "query_shape": [
+        64,
+        44,
+        128
+      ],
+      "doc_shape": [
+        64,
+        767,
+        128
+      ],
+      "dtype": "torch.float32",
+      "forward_transient_peak_mib": 3.0234375,
+      "saved_for_backward_mib": 3.01953125,
+      "backward_transient_peak_mib": 25.9853515625
+    },
+    {
+      "op": "maxsim_inbatch",
+      "query_shape": [
+        64,
+        51,
+        128
+      ],
+      "doc_shape": [
+        64,
+        771,
+        128
+      ],
+      "dtype": "torch.float32",
+      "forward_transient_peak_mib": 3.0234375,
+      "saved_for_backward_mib": 3.01953125,
+      "backward_transient_peak_mib": 26.1103515625
+    },
+    {
+      "op": "maxsim_inbatch",
+      "query_shape": [
+        64,
+        42,
+        128
+      ],
+      "doc_shape": [
+        64,
+        770,
+        128
+      ],
+      "dtype": "torch.float32",
+      "forward_transient_peak_mib": 3.0234375,
+      "saved_for_backward_mib": 3.01953125,
+      "backward_transient_peak_mib": 26.0791015625
+    },
+    {
+      "op": "maxsim_inbatch",
+      "query_shape": [
+        64,
+        40,
+        128
+      ],
+      "doc_shape": [
+        64,
+        767,
+        128
+      ],
+      "dtype": "torch.float32",
+      "forward_transient_peak_mib": 3.0234375,
+      "saved_for_backward_mib": 3.01953125,
+      "backward_transient_peak_mib": 25.9853515625
+    }
+  ]
+}
