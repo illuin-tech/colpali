@@ -1,0 +1,61 @@
+# ColQwen2 training config for the BATCH-SIZE SWEEP.
+#
+# Same recipe as bench_config.yaml (ColQwen2 + LoRA r=32, ColbertPairwiseCELoss,
+# grad-checkpointing, bf16) but:
+#   - trains on a SUBSET of vidore/colpali_train_set (one ~640 MB shard, not 52 GB),
+#   - runs only a few steps (max_steps is overridden by --max-steps on the CLI),
+#   - the per-device batch size is overridden by --batch-size on the CLI.
+#
+# The sweep increases --batch-size until OOM, with LIK on vs off, to measure how much
+# larger a batch the fused kernel allows (it never materializes the [B, B, Lq, Ld]
+# score tensor that the torch path OOMs on).
+config:
+  (): colpali_engine.trainer.colmodel_training.ColModelTrainingConfig
+  output_dir: ./bench_lik/run_output_subset
+  processor:
+    (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
+    class_to_instanciate: !ext colpali_engine.models.ColQwen2Processor
+    pretrained_model_name_or_path: "vidore/colqwen2-base"
+    max_num_visual_tokens: 768
+  model:
+    (): colpali_engine.utils.transformers_wrappers.AllPurposeWrapper
+    class_to_instanciate: !ext colpali_engine.models.ColQwen2
+    pretrained_model_name_or_path: "vidore/colqwen2-base"
+    torch_dtype: !ext torch.bfloat16
+    attn_implementation: "sdpa"
+
+  train_dataset:
+    (): colpali_engine.utils.dataset_transformation.load_colpali_train_subset
+    n_samples: 2048
+
+  run_eval: false
+  loss_func:
+    (): colpali_engine.loss.late_interaction_losses.ColbertPairwiseCELoss
+
+  tr_args:
+    (): transformers.training_args.TrainingArguments
+    output_dir: ./bench_lik/run_output_subset
+    max_steps: 4
+    per_device_train_batch_size: 16
+    gradient_checkpointing: true
+    gradient_checkpointing_kwargs: { "use_reentrant": false }
+    dataloader_num_workers: 4
+    logging_steps: 1
+    save_strategy: "no"
+    eval_strategy: "no"
+    warmup_steps: 0
+    learning_rate: 5e-5
+    report_to: "none"
+    bf16: true
+    seed: 42
+    data_seed: 42
+
+  peft_config:
+    (): peft.LoraConfig
+    r: 32
+    lora_alpha: 32
+    lora_dropout: 0.1
+    init_lora_weights: "gaussian"
+    bias: "none"
+    task_type: "FEATURE_EXTRACTION"
+    target_modules: '(.*(model).*(down_proj|gate_proj|up_proj|k_proj|q_proj|v_proj|o_proj).*$|.*(custom_text_proj).*$)'

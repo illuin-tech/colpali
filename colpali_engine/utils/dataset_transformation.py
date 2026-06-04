@@ -1,3 +1,4 @@
+import math
 import os
 from typing import List, Tuple, cast
 
@@ -16,6 +17,45 @@ def load_train_set() -> ColPaliEngineDataset:
     train_dataset = ColPaliEngineDataset(dataset, pos_target_column_name="image")
 
     return train_dataset
+
+
+def load_docvqa_test_subsampled() -> ColPaliEngineDataset:
+    """Load ``vidore/docvqa_test_subsampled`` as a (query, positive page) training set.
+
+    The ViDoRe benchmark eval set ships ``query`` + ``image`` columns; rows whose
+    ``query`` is null (pages with no associated question) are dropped so every
+    sample is a usable (query, positive page) pair. Used by the LIK A/B training
+    benchmark as a small, fast-to-download alternative to ``colpali_train_set``.
+    """
+    dataset = load_dataset("vidore/docvqa_test_subsampled", split="test")
+    dataset = dataset.filter(lambda example: example["query"] is not None)
+
+    return ColPaliEngineDataset(dataset, query_column_name="query", pos_target_column_name="image")
+
+
+def load_colpali_train_subset(n_samples: int = 2048) -> ColPaliEngineDataset:
+    """Load a subset of ``vidore/colpali_train_set`` from just enough parquet shards.
+
+    The full train set is 82 shards (~52 GB, ~1442 rows each). Shape / throughput / memory
+    benchmarks only need a few thousand examples, so this downloads just the first few shards
+    that cover ``n_samples`` rows (via ``data_files``) and keeps that many — never the full set.
+    ``verification_mode="no_checks"`` skips the split-completeness check (the repo declares
+    ``train``+``test``, but we deliberately load only part of ``train``). Same ``(query, image)``
+    schema as ``load_train_set``.
+    """
+    rows_per_shard = 1442  # approximate; +1 shard of headroom guards against variance
+    num_shards = min(82, math.ceil(n_samples / rows_per_shard) + 1)
+    data_files = [f"data/train-{i:05d}-of-00082.parquet" for i in range(num_shards)]
+    dataset = load_dataset(
+        "vidore/colpali_train_set",
+        data_files=data_files,
+        split="train",
+        verification_mode="no_checks",
+    )
+    if n_samples < len(dataset):
+        dataset = dataset.select(range(n_samples))
+
+    return ColPaliEngineDataset(dataset, pos_target_column_name="image")
 
 
 def load_eval_set(dataset_path) -> ColPaliEngineDataset:
