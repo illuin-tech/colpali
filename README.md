@@ -63,7 +63,7 @@ Mac users using MPS with the ColQwen models have reported errors with torch 2.6.
 
 ### Fused MaxSim kernels (optional)
 
-The optional `[lik]` extra installs [`late-interaction-kernels`](https://github.com/hcompai/late-interaction-kernels), a fused Triton MaxSim kernel used automatically on CUDA Ampere+ / Apple Silicon for scoring and the ColBERT losses. It avoids materializing the `[B, B, Lq, Ld]` score tensor, which roughly doubles the trainable batch size on memory-bound setups:
+The optional `[lik]` extra installs [`late-interaction-kernels`](https://github.com/hcompai/late-interaction-kernels), a fused Triton MaxSim kernel used automatically on CUDA Ampere+ / Apple Silicon for scoring and the ColBERT losses. It avoids materializing the `[B, B, Lq, Ld]` score tensor, whose memory cost grows quadratically with the batch size and can become the allocation that caps it: in our ColQwen2 + LoRA benchmark on an 80 GB H100, this raised the largest trainable batch size from 64 to 128, with unchanged end-to-end throughput. Full benchmark results in [illuin-tech/colpali#412](https://github.com/illuin-tech/colpali/pull/412):
 
 ```bash
 pip install "colpali-engine[lik]"
