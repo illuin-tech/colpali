@@ -39,11 +39,11 @@ def _cache_first_snapshot_download(repo_id: str, **kwargs: Any) -> str:
     if kwargs.get("force_download") or not allow_patterns:
         return huggingface_hub.snapshot_download(repo_id, **kwargs)
 
-    # `transformers` passes exact filenames as patterns, ignores the returned path, and re-resolves
-    # each file from the cache afterwards: knowing the state of every file (`.no_exist` entries are
-    # non-None) is enough to skip the download.
+    # `transformers` passes exact filenames as patterns and re-resolves each file from the cache
+    # afterwards: knowing the state of every file (`.no_exist` entries are non-None) is enough to
+    # resolve the snapshot offline, preserving the returned-path contract without any network call.
     if all(_try_cache(repo_id, filename, kwargs) is not None for filename in allow_patterns):
-        return ""
+        return huggingface_hub.snapshot_download(repo_id, **{**kwargs, "local_files_only": True})
     return huggingface_hub.snapshot_download(repo_id, **kwargs)
 
 
