@@ -7,6 +7,9 @@
 /models/
 /outputs/
 
+# Ignore the uv.lock generated when running `uv run` / `uv sync`.
+uv.lock
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

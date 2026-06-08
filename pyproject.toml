@@ -60,11 +60,14 @@ interpretability = [
     "seaborn>=0.13.2,<1.0.0",
 ]
 
+lik = ["late-interaction-kernels>=0.4.1,<0.5.0"]
+
 dev = ["pytest>=8.0.0", "ruff>=0.4.0"]
 
 all = [
     "colpali-engine[dev]",
     "colpali-engine[interpretability]",
+    "colpali-engine[lik]",
     "colpali-engine[train]",
 ]
 

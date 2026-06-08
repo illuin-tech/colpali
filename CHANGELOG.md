@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 - Add ColQwen3.5 and BiQwen3.5 support (model + processor). Pretrained checkpoint: [athrael-soju/colqwen3.5-4.5B-v3](https://huggingface.co/athrael-soju/colqwen3.5-4.5B-v3).
+- Add optional `[lik]` extra (`late-interaction-kernels>=0.4.1,<0.5.0`) that routes `score_multi_vector` and the five ColBERT losses through the fused Triton MaxSim kernel on CUDA Ampere+ / Apple Silicon, with a transparent torch fallback elsewhere. `COLPALI_SCORES_BACKEND` selects the backend (mirrors PyLate's `PYLATE_SCORES_BACKEND`): `auto` (default), `torch` (force the fallback), or `lik` (strict; raises when the kernel cannot run).
 
 ### Changed
 
@@ -18,6 +19,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 
 - Fix ModernVBERT wrappers to rely on the upstream Hugging Face implementation and keep checkpoint key conversion mapping working with current Transformers v5 loading.
+- Fix `ContrastiveTrainer._get_train_sampler` to accept the dataset argument that Transformers v5 passes positionally (single-dataset training crashed with a `TypeError` at dataloader build).
+- Fix `ContrastiveTrainer` to prime `query_prefix`/`pos_prefix`/`neg_prefix` from the collator in `__init__` (single-dataset training crashed with an `AttributeError` in `compute_loss`, as only the multi-dataset path set them).
 
 ## [0.3.14] - 2026-02-24
 

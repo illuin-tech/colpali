@@ -2,6 +2,8 @@ import torch
 import torch.nn.functional as F  # noqa: N812
 from torch.nn import CrossEntropyLoss
 
+from colpali_engine.utils.maxsim import maxsim_inbatch, maxsim_kd
+
 
 class ColbertModule(torch.nn.Module):
     """
@@ -90,6 +92,23 @@ class ColbertModule(torch.nn.Module):
             return self._smooth_max(scores_raw, dim=dim_max).sum(dim=dim_sum)
         return scores_raw.amax(dim=dim_max).sum(dim=dim_sum)
 
+    def _inbatch_scores(self, query_embeddings: torch.Tensor, doc_embeddings: torch.Tensor) -> torch.Tensor:
+        """
+        Compute the in-batch MaxSim score matrix and apply optional length normalization.
+
+        Routes through the fused late-interaction kernel when ``use_smooth_max`` is False;
+        smooth-max keeps the logsumexp path since the kernel only exposes hard max.
+        """
+        if self.use_smooth_max:
+            raw = torch.einsum("bnd,csd->bcns", query_embeddings, doc_embeddings)
+            scores = self._aggregate(raw, True, dim_max=3, dim_sum=2)
+        else:
+            scores = maxsim_inbatch(query_embeddings, doc_embeddings)
+        if self.normalize_scores:
+            lengths = (query_embeddings[:, :, 0] != 0).sum(dim=1)
+            scores = self._apply_normalization(scores, lengths)
+        return scores
+
     def _filter_high_negatives(self, scores: torch.Tensor, pos_idx: torch.Tensor) -> None:
         """
         Down-weight negatives whose score exceeds a fraction of the positive score.
@@ -149,11 +168,7 @@ class ColbertLoss(ColbertModule):
         Returns:
             Tensor: Scalar loss value.
         """
-        lengths = (query_embeddings[:, :, 0] != 0).sum(dim=1)
-        raw = torch.einsum("bnd,csd->bcns", query_embeddings, doc_embeddings)
-        scores = self._aggregate(raw, self.use_smooth_max, dim_max=3, dim_sum=2)
-        if self.normalize_scores:
-            scores = self._apply_normalization(scores, lengths)
+        scores = self._inbatch_scores(query_embeddings, doc_embeddings)
 
         batch_size = scores.size(0)
         idx, pos_idx = self._get_idx(batch_size, offset, scores.device)
@@ -235,9 +250,13 @@ class ColbertNegativeCELoss(ColbertModule):
         pos_raw = torch.einsum(
             "bnd,bsd->bns", query_embeddings, doc_embeddings[offset : offset + neg_doc_embeddings.size(0)]
         )
-        neg_raw = torch.einsum("bnd,blsd->blns", query_embeddings, neg_doc_embeddings)
         pos_scores = self._aggregate(pos_raw, self.use_smooth_max, dim_max=2, dim_sum=1)
-        neg_scores = self._aggregate(neg_raw, self.use_smooth_max, dim_max=3, dim_sum=2)
+        if self.use_smooth_max:
+            # Smooth-max keeps the logsumexp path since the kernel only exposes hard max.
+            neg_raw = torch.einsum("bnd,blsd->blns", query_embeddings, neg_doc_embeddings)
+            neg_scores = self._aggregate(neg_raw, True, dim_max=3, dim_sum=2)
+        else:
+            neg_scores = maxsim_kd(query_embeddings, neg_doc_embeddings)
 
         if self.normalize_scores:
             pos_scores = self._apply_normalization(pos_scores, lengths)
@@ -293,12 +312,7 @@ class ColbertPairwiseCELoss(ColbertModule):
         Returns:
             Tensor: Scalar loss value.
         """
-        lengths = (query_embeddings[:, :, 0] != 0).sum(dim=1)
-        raw = torch.einsum("bnd,csd->bcns", query_embeddings, doc_embeddings)
-        scores = self._aggregate(raw, self.use_smooth_max, dim_max=3, dim_sum=2)
-
-        if self.normalize_scores:
-            scores = self._apply_normalization(scores, lengths)
+        scores = self._inbatch_scores(query_embeddings, doc_embeddings)
 
         batch_size = scores.size(0)
         idx, pos_idx = self._get_idx(batch_size, offset, scores.device)
@@ -381,9 +395,13 @@ class ColbertPairwiseNegativeCELoss(ColbertModule):
         pos_raw = torch.einsum(
             "bnd,bld->bnl", query_embeddings, doc_embeddings[offset : offset + query_embeddings.size(0)]
         )
-        neg_raw = torch.einsum("bnd,bsld->bsnl", query_embeddings, neg_doc_embeddings)  # B x Nneg x Nq x Lneg
         pos_scores = self._aggregate(pos_raw, self.use_smooth_max, dim_max=2, dim_sum=1)
-        neg_scores = self._aggregate(neg_raw, self.use_smooth_max, dim_max=3, dim_sum=2)
+        if self.use_smooth_max:
+            # Smooth-max keeps the logsumexp path since the kernel only exposes hard max.
+            neg_raw = torch.einsum("bnd,bsld->bsnl", query_embeddings, neg_doc_embeddings)  # B x Nneg x Nq x Lneg
+            neg_scores = self._aggregate(neg_raw, True, dim_max=3, dim_sum=2)
+        else:
+            neg_scores = maxsim_kd(query_embeddings, neg_doc_embeddings)
 
         if self.normalize_scores:
             pos_scores = self._apply_normalization(pos_scores, lengths)
@@ -440,12 +458,7 @@ class ColbertSigmoidLoss(ColbertModule):
             Tensor: Scalar loss value.
         """
 
-        lengths = (query_embeddings[:, :, 0] != 0).sum(dim=1)
-        raw = torch.einsum("bnd,csd->bcns", query_embeddings, doc_embeddings)
-        scores = self._aggregate(raw, self.use_smooth_max, dim_max=3, dim_sum=2)
-
-        if self.normalize_scores:
-            scores = self._apply_normalization(scores, lengths)
+        scores = self._inbatch_scores(query_embeddings, doc_embeddings)
 
         batch_size = scores.size(0)
         idx, pos_idx = self._get_idx(batch_size, offset, scores.device)

@@ -26,6 +26,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[all]"
 
+      # Hugging Face Hub rate-limits unauthenticated requests from shared runner IPs (HTTP 429).
+      # With a warm cache, huggingface_hub falls back to cached files when a HEAD request fails.
+      - name: Cache Hugging Face models
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: huggingface-${{ runner.os }}-${{ hashFiles('tests/**/*.py') }}
+          restore-keys: |
+            huggingface-${{ runner.os }}-
+
       - name: Run tests with pytest (except "slow" tests)
         run: |
           pytest -m "not slow"
