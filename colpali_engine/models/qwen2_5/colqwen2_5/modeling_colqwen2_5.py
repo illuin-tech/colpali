@@ -22,6 +22,8 @@ class ColQwen2_5(Qwen2_5_VLModel):  # noqa: N801
     _checkpoint_conversion_mapping = {
         r"^base_model\.model\.custom_text_proj": "custom_text_proj",
         r"^model\.layers": "language_model.layers",
+        r"^model\.embed_tokens": "language_model.embed_tokens",
+        r"^model\.norm": "language_model.norm",
     }
 
     def __init__(self, config: Qwen2_5_VLConfig, mask_non_image_embeddings: bool = False):
