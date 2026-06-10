@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Fix ModernVBERT wrappers to rely on the upstream Hugging Face implementation and keep checkpoint key conversion mapping working with current Transformers v5 loading.
 - Fix `ContrastiveTrainer._get_train_sampler` to accept the dataset argument that Transformers v5 passes positionally (single-dataset training crashed with a `TypeError` at dataloader build).
 - Fix `ContrastiveTrainer` to prime `query_prefix`/`pos_prefix`/`neg_prefix` from the collator in `__init__` (single-dataset training crashed with an `AttributeError` in `compute_loss`, as only the multi-dataset path set them).
+- Fix `ColQwen2`/`ColQwen2_5` checkpoint conversion to remap `model.embed_tokens` and `model.norm` to the `language_model.*` layout used by Transformers v5, so these weights are no longer silently dropped and randomly re-initialized when loading from Qwen2-VL checkpoints.
 
 ## [0.3.14] - 2026-02-24
 
