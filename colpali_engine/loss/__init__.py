@@ -6,6 +6,7 @@ from .bi_encoder_losses import (
     BiPairwiseNegativeCELoss,
     BiSigmoidLoss,
 )
+from .gradcache import WithGradCache
 from .late_interaction_losses import (
     ColbertLoss,
     ColbertModule,
