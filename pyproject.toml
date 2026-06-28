@@ -62,12 +62,15 @@ interpretability = [
 
 lik = ["late-interaction-kernels>=0.4.1,<0.5.0"]
 
+plaid = ["fast-plaid>=1.4.7,<2.0.0", "fastkmeans"]
+
 dev = ["pytest>=8.0.0", "ruff>=0.4.0"]
 
 all = [
     "colpali-engine[dev]",
     "colpali-engine[interpretability]",
     "colpali-engine[lik]",
+    "colpali-engine[plaid]",
     "colpali-engine[train]",
 ]
 
