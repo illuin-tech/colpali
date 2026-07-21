@@ -89,6 +89,8 @@ class WithGradCache(nn.Module):
 
     def __init__(self, loss: nn.Module, mini_batch_size: int = 32, show_progress_bar: bool = False):
         super().__init__()
+        if mini_batch_size <= 0:
+            raise ValueError("mini_batch_size must be a positive integer.")
         self.loss = loss
         self.mini_batch_size = mini_batch_size
         self.show_progress_bar = show_progress_bar
