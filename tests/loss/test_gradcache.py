@@ -1,6 +1,9 @@
 # ruff: noqa: N806, N812
 import os
+import shutil
 import socket
+import subprocess
+import sys
 
 import pytest
 import torch
@@ -314,3 +317,130 @@ def test_gradcache_autocast_parity_cuda(dtype):
     assert torch.allclose(ref_loss, gc_loss, atol=1e-2, rtol=1e-2)
     assert all(torch.isfinite(g).all() for g in gc_grads.values())
     assert max_rel_grad_diff(ref_grads, gc_grads) < 5e-2
+
+
+class _ToyPairDataset(torch.utils.data.Dataset):
+    """Deterministic pairs used by the launched Accelerate integration test."""
+
+    def __len__(self):
+        return 64
+
+    def __getitem__(self, index):
+        generator = torch.Generator().manual_seed(index)
+        query_ids = torch.randint(1, 64, (8,), generator=generator)
+        doc_ids = torch.randint(1, 64, (8,), generator=generator)
+        return {
+            "query_input_ids": query_ids,
+            "query_attention_mask": torch.ones_like(query_ids),
+            "doc_input_ids": doc_ids,
+            "doc_attention_mask": torch.ones_like(doc_ids),
+        }
+
+
+class _ToyPairCollator:
+    query_prefix = "query_"
+    pos_doc_prefix = "doc_"
+    neg_doc_prefix = "neg_doc_"
+
+    def __call__(self, features):
+        return {key: torch.stack([feature[key] for feature in features]) for key in features[0]}
+
+
+class _RecordingGradCache(WithGradCache):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.gather_history = []
+
+    def forward(self, *args, **kwargs):
+        self.gather_history.append(self.gather_across_processes)
+        return super().forward(*args, **kwargs)
+
+
+def _accelerate_ddp_gradacc_worker(output_dir):
+    """Run by ``accelerate launch``; assertions execute independently on both ranks."""
+    from accelerate.utils import DistributedType
+    from transformers import TrainingArguments
+
+    from colpali_engine.trainer import ContrastiveTrainer
+
+    loss_fn = _RecordingGradCache(_bi_encoder(), mini_batch_size=2)
+    model = ToyEncoder(pooled=True, dropout=0.1)
+    initial_params = {name: param.detach().clone() for name, param in model.named_parameters()}
+    ddp_observations = []
+
+    class RecordingTrainer(ContrastiveTrainer):
+        def compute_loss(self, wrapped_model, inputs, *args, **kwargs):
+            ddp_observations.append(isinstance(wrapped_model, torch.nn.parallel.DistributedDataParallel))
+            return super().compute_loss(wrapped_model, inputs, *args, **kwargs)
+
+    args = TrainingArguments(
+        output_dir=output_dir,
+        per_device_train_batch_size=8,
+        gradient_accumulation_steps=2,
+        max_steps=2,
+        learning_rate=5e-2,
+        save_strategy="no",
+        logging_strategy="no",
+        report_to="none",
+        disable_tqdm=True,
+        dataloader_num_workers=0,
+        seed=17,
+    )
+    trainer = RecordingTrainer(
+        model=model,
+        args=args,
+        train_dataset=_ToyPairDataset(),
+        eval_dataset=None,
+        data_collator=_ToyPairCollator(),
+        loss_func=loss_fn,
+        is_vision_model=False,
+    )
+    result = trainer.train()
+
+    assert trainer.accelerator.distributed_type == DistributedType.MULTI_GPU
+    assert dist.is_initialized() and dist.get_backend() == "nccl"
+    assert result.global_step == 2
+    assert ddp_observations == [True, True, True, True]
+    assert loss_fn.gather_history == [False, True, False, True]
+
+    params_changed = False
+    for name, param in model.named_parameters():
+        assert torch.isfinite(param).all(), f"non-finite parameter on rank {dist.get_rank()}: {name}"
+        params_changed |= not torch.equal(param.detach().cpu(), initial_params[name])
+        gathered = [torch.empty_like(param) for _ in range(dist.get_world_size())]
+        dist.all_gather(gathered, param.detach())
+        for other_rank, other_param in enumerate(gathered):
+            assert torch.equal(param, other_param), f"parameter {name} differs on rank {other_rank}"
+    assert params_changed, f"optimizer did not update parameters on rank {dist.get_rank()}"
+
+
+@pytest.mark.slow
+@pytest.mark.skipif(not torch.cuda.is_available() or torch.cuda.device_count() < 2, reason="requires 2 CUDA GPUs")
+def test_gradcache_accelerate_ddp_nccl_with_gradient_accumulation(tmp_path):
+    """End-to-end HF Trainer run through Accelerate, 2-process DDP/NCCL, and grad accumulation."""
+    accelerate = shutil.which("accelerate") or os.path.join(os.path.dirname(sys.executable), "accelerate")
+    if not os.path.isfile(accelerate):
+        pytest.skip("requires the Accelerate CLI")
+
+    command = [
+        accelerate,
+        "launch",
+        "--multi_gpu",
+        "--num_processes=2",
+        f"--main_process_port={_find_free_port()}",
+        "--mixed_precision=no",
+        os.path.abspath(__file__),
+        "--accelerate-ddp-gradacc-worker",
+        str(tmp_path),
+    ]
+    completed = subprocess.run(command, capture_output=True, text=True, timeout=180, check=False)
+    assert completed.returncode == 0, (
+        f"Accelerate DDP worker failed with exit code {completed.returncode}\n"
+        f"stdout:\n{completed.stdout}\n"
+        f"stderr:\n{completed.stderr}"
+    )
+
+
+if __name__ == "__main__" and "--accelerate-ddp-gradacc-worker" in sys.argv:
+    marker_index = sys.argv.index("--accelerate-ddp-gradacc-worker")
+    _accelerate_ddp_gradacc_worker(sys.argv[marker_index + 1])
