@@ -132,7 +132,7 @@ dataloader = DataLoader(
     collate_fn=lambda x: processor.process_images(x),
 )
 
-ds  = []
+ds = []
 for batch_doc in tqdm(dataloader):
     with torch.no_grad():
         batch_doc = {k: v.to(model.device) for k, v in batch_doc.items()}
