@@ -28,6 +28,73 @@ Using ColPali removes the need for potentially complex and brittle layout recogn
 
 ![ColPali Architecture](assets/colpali_architecture.webp)
 
+## ⚠️ ColPali Engine is deprecated
+
+> [!IMPORTANT]
+> `colpali-engine` is now deprecated. The repository and package remain available for research, reproducibility, and existing projects, but we recommend [Sentence Transformers](https://www.sbert.net/) for new projects and production use.
+
+[Sentence Transformers v6](https://github.com/huggingface/sentence-transformers/releases/tag/v6.0.0) introduces first-class support for ColPali-style models through `MultiVectorEncoder`. It provides one ecosystem for embedding and retrieval models—including dense bi-encoders and multi-vector late-interaction models—across text, images, audio, and video, depending on the model.
+
+The Sentence Transformers integration was developed with help from the ColPali and ViDoRe teams in bringing the model configurations to the Hugging Face Hub. See the [v6 release](https://github.com/huggingface/sentence-transformers/releases/tag/v6.0.0), the [multi-vector documentation](https://www.sbert.net/docs/multi_vector_encoder/usage/usage.html), and the dedicated [migration guide from `colpali-engine`](https://www.sbert.net/docs/migration_guide.html#migrating-from-colpali-engine).
+
+Install Sentence Transformers with image support:
+
+```bash
+pip install -U "sentence-transformers[image]>=6.0.0"
+```
+
+ColPali-family models now use the same concise API as other late-interaction models:
+
+```python
+from sentence_transformers import MultiVectorEncoder
+
+# You can also use models such as "vidore/colqwen2-v1.0" or "vidore/colpali-v1.3".
+model = MultiVectorEncoder("vidore/colqwen2.5-v0.2")
+
+queries = [
+    "What is the variable represented on the y-axis of the graph?",
+    "Which year has the highest total outlay?",
+]
+images = ["page_1.png", "page_2.png"]  # Paths, URLs, or PIL images
+
+query_embeddings = model.encode_query(queries)
+document_embeddings = model.encode_document(images)
+scores = model.similarity(query_embeddings, document_embeddings)
+```
+
+### Migrating from `colpali-engine`
+
+Sentence Transformers automatically recognizes Transformers-native `*ForRetrieval` checkpoints, including the `-hf` variants of the Vidore models. For example, `vidore/colqwen2-v1.0-hf` keeps its projection and normalization inside the model while its processor formats text queries and image documents.
+
+The main API equivalents are:
+
+| `colpali-engine` | Sentence Transformers v6 |
+|---|---|
+| `ColQwen2.from_pretrained(...)` and `ColQwen2Processor` | `MultiVectorEncoder("vidore/colqwen2-v1.0")` |
+| `processor.process_queries(...)` followed by `model(**batch)` | `model.encode_query(queries)` |
+| `processor.process_images(...)` followed by `model(**batch)` | `model.encode_document(images)` |
+| `processor.score_multi_vector(query_embeddings, document_embeddings)` | `model.similarity(query_embeddings, document_embeddings)` |
+| `mask_non_image_embeddings=True` | `MultiVectorMask(keep_only_token_ids=[processor.tokenizer.convert_tokens_to_ids(processor.image_token)])` |
+| `HierarchicalTokenPooler` | `HierarchicalTokenPooling` |
+| `colpali_engine.interpretability` | `sentence_transformers.multi_vector_encoder.interpretability` |
+
+In short, most inference migrations reduce to:
+
+```python
+from sentence_transformers import MultiVectorEncoder
+
+model = MultiVectorEncoder("vidore/colqwen2-v1.0")
+query_embeddings = model.encode_query(queries)
+document_embeddings = model.encode_document(images)
+scores = model.similarity(query_embeddings, document_embeddings)
+```
+
+For exact-parity notes, training guidance, and advanced configuration, refer to the full [Sentence Transformers migration guide](https://www.sbert.net/docs/migration_guide.html#migrating-from-colpali-engine).
+
+A huge thank you to every user, contributor, and researcher who supported the ColPali project, shared feedback, built integrations, trained models, and believed in visual document retrieval alongside us. We are deeply grateful to everyone who joined us on this journey, which is far from over and continues over at SentenceTransformers. 💛
+
+The original project documentation is preserved below for research and reproducibility.
+
 ## List of ColVision models
 
 | Model                                                               | Score on [ViDoRe](https://huggingface.co/spaces/vidore/vidore-leaderboard) 🏆 | License    | Comments                                                                                                                                                       | Currently supported |
