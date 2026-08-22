@@ -119,10 +119,10 @@ with torch.no_grad():
 scores = processor.score_multi_vector(query_embeddings, image_embeddings)
 ```
 
-We now support `fast-plaid` experimentally to make matching quicker for larger corpus sizes:
+We support `fast-plaid` to make matching quicker for larger corpus sizes. Install it with the `plaid` extra:
 
 ```python
-# !pip install --no-deps fast-plaid fastkmeans
+# !pip install "colpali-engine[plaid]"
 
 # Process the inputs by batches of 4
 dataloader = DataLoader(
