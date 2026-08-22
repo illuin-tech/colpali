@@ -7,10 +7,42 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.18] - 2026-08-22
+
+### Added
+
+- Add the optional `[plaid]` extra (`fast-plaid>=1.4.7,<2.0.0` and `fastkmeans`) for faster matching on larger corpora, and include it in the `[all]` extra.
+
+### Changed
+
+- Extend supported dependency ranges to allow `torch<2.14.0`, `peft<0.21.0`, and `pillow<12.4.0` in the training extra.
+
+### Fixed
+
+- Fix `ColQwen2`/`ColQwen2_5` checkpoint conversion to remap `model.embed_tokens` and `model.norm` to the `language_model.*` layout used by Transformers v5, so these weights are no longer silently dropped and randomly re-initialized when loading from Qwen2-VL checkpoints.
+
+## [0.3.17] - 2026-06-08
+
+### Added
+
+- Add optional `[lik]` extra (`late-interaction-kernels>=0.4.1,<0.5.0`) that routes `score_multi_vector` and the five ColBERT losses through the fused Triton MaxSim kernel on CUDA Ampere+ / Apple Silicon, with a transparent torch fallback elsewhere. `COLPALI_SCORES_BACKEND` selects the backend (mirrors PyLate's `PYLATE_SCORES_BACKEND`): `auto` (default), `torch` (force the fallback), or `lik` (strict; raises when the kernel cannot run).
+
+### Fixed
+
+- Fix `ContrastiveTrainer._get_train_sampler` to accept the dataset argument that Transformers v5 passes positionally (single-dataset training crashed with a `TypeError` at dataloader build).
+- Fix `ContrastiveTrainer` to prime `query_prefix`/`pos_prefix`/`neg_prefix` from the collator in `__init__` (single-dataset training crashed with an `AttributeError` in `compute_loss`, as only the multi-dataset path set them).
+
+## [0.3.16] - 2026-05-12
+
+### Changed
+
+- Extend supported dependency ranges to allow `torch<2.12.0`, `peft<0.20.0`, and `pillow<12.3.0`.
+
+## [0.3.15] - 2026-03-31
+
 ### Added
 
 - Add ColQwen3.5 and BiQwen3.5 support (model + processor). Pretrained checkpoint: [athrael-soju/colqwen3.5-4.5B-v3](https://huggingface.co/athrael-soju/colqwen3.5-4.5B-v3).
-- Add optional `[lik]` extra (`late-interaction-kernels>=0.4.1,<0.5.0`) that routes `score_multi_vector` and the five ColBERT losses through the fused Triton MaxSim kernel on CUDA Ampere+ / Apple Silicon, with a transparent torch fallback elsewhere. `COLPALI_SCORES_BACKEND` selects the backend (mirrors PyLate's `PYLATE_SCORES_BACKEND`): `auto` (default), `torch` (force the fallback), or `lik` (strict; raises when the kernel cannot run).
 
 ### Changed
 
@@ -19,9 +51,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 
 - Fix ModernVBERT wrappers to rely on the upstream Hugging Face implementation and keep checkpoint key conversion mapping working with current Transformers v5 loading.
-- Fix `ContrastiveTrainer._get_train_sampler` to accept the dataset argument that Transformers v5 passes positionally (single-dataset training crashed with a `TypeError` at dataloader build).
-- Fix `ContrastiveTrainer` to prime `query_prefix`/`pos_prefix`/`neg_prefix` from the collator in `__init__` (single-dataset training crashed with an `AttributeError` in `compute_loss`, as only the multi-dataset path set them).
-- Fix `ColQwen2`/`ColQwen2_5` checkpoint conversion to remap `model.embed_tokens` and `model.norm` to the `language_model.*` layout used by Transformers v5, so these weights are no longer silently dropped and randomly re-initialized when loading from Qwen2-VL checkpoints.
 
 ## [0.3.14] - 2026-02-24
 

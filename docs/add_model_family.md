@@ -72,6 +72,7 @@ Expose patch metadata needed by interpretability when the backbone supports it:
 def patch_size(self) -> int:
     return self.visual.config.patch_size
 
+
 @property
 def spatial_merge_size(self) -> int:
     return self.visual.config.spatial_merge_size
@@ -120,8 +121,7 @@ Processors should inherit from `BaseVisualRetrieverProcessor` and the matching
 Transformers processor:
 
 ```python
-class ColNewFamilyProcessor(BaseVisualRetrieverProcessor, NewFamilyProcessor):
-    ...
+class ColNewFamilyProcessor(BaseVisualRetrieverProcessor, NewFamilyProcessor): ...
 ```
 
 The processor must implement:
