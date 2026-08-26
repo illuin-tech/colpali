@@ -192,6 +192,16 @@ class ContrastiveTrainer(Trainer):
         return neg_doc_outputs
 
     def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
+        if getattr(self.loss_func, "gradcache_enabled", False):
+            if self.compute_symetric_loss:
+                raise ValueError("GradCache losses do not support compute_symetric_loss.")
+            if hasattr(self.loss_func, "gather_across_processes"):
+                self.loss_func.gather_across_processes = self.accelerator.num_processes > 1 and bool(
+                    self.accelerator.sync_gradients
+                )
+            loss = self.loss_func(model, inputs, self.query_prefix, self.pos_prefix, self.neg_prefix)
+            return (loss, None) if return_outputs else loss
+
         query_inputs = {k[len(self.query_prefix) :]: v for k, v in inputs.items() if k.startswith(self.query_prefix)}
         query_outputs = model(**query_inputs)
         # feed only kwargs with 'doc_' prefix
@@ -223,6 +233,12 @@ class ContrastiveTrainer(Trainer):
             raise ValueError("prediction_step is only called with prediction_loss_only=True")
 
         with torch.no_grad():
+            if getattr(self.loss_func, "gradcache_enabled", False):
+                # Eval loss is computed per-process; never gather docs across processes here.
+                if hasattr(self.loss_func, "gather_across_processes"):
+                    self.loss_func.gather_across_processes = False
+                loss = self.loss_func(model, inputs, self.query_prefix, self.pos_prefix, self.neg_prefix)
+                return loss, None, None
             # feed only kwargs with 'doc_' prefix
             doc_outputs = model(**{k[4:]: v for k, v in inputs.items() if k.startswith("doc")})
             query_outputs = model(input_ids=inputs["query_input_ids"], attention_mask=inputs["query_attention_mask"])

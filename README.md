@@ -404,6 +404,68 @@ sbatch --nodes=1  --time=5:00:00 -A cad15443 --gres=gpu:8  --constraint=MI250 --
 
 </details>
 
+GradCache can reduce activation memory and enable larger in-batch negative pools by embedding each training batch in
+smaller mini-batches. This trades additional computation time for lower peak memory.
+
+<details>
+<summary><strong>🔽 Example 3: Training with GradCache</strong></summary>
+
+Wrap an existing contrastive loss with `WithGradCache` and pass it as the `loss_func` in
+`ColModelTrainingConfig`:
+
+```python
+from colpali_engine.loss import ColbertLoss, WithGradCache
+from colpali_engine.trainer import ColModelTrainingConfig
+
+training_config = ColModelTrainingConfig(
+    model=model,
+    processor=processor,
+    train_dataset=train_dataset,
+    tr_args=training_args,
+    loss_func=WithGradCache(
+        loss=ColbertLoss(temperature=0.02),
+        mini_batch_size=8,
+    ),
+)
+```
+
+To disable GradCache, use the original loss directly in the same training configuration:
+
+```python
+training_config.loss_func = ColbertLoss(temperature=0.02)
+```
+
+`WithGradCache` delegates scoring and loss computation to the wrapped loss, so the wrapped loss's hyperparameters still
+apply.
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `loss` | Required | A compatible bi-encoder or late-interaction contrastive loss to wrap. |
+| `mini_batch_size` | `32` | Positive integer number of items embedded in each forward mini-batch. Smaller values generally use less memory but take longer. |
+| `show_progress_bar` | `False` | Whether to show progress while embedding mini-batches. |
+
+`per_device_train_batch_size` still controls the contrastive batch and its in-batch negative pool;
+`mini_batch_size` only controls how many items are embedded at once. `ContrastiveTrainer` detects the wrapper
+automatically, while an unwrapped loss follows the standard training path. GradCache is not compatible with
+`compute_symetric_loss=True`.
+
+In a ColQwen2 LoRA experiment on one NVIDIA RTX PRO 6000 (96 GiB), GradCache made a batch size of 192 fit where the
+standard path ran out of memory. Both runs used one epoch on `vidore/colpali_train_set`, gradient checkpointing, the
+same learning rate, seed, and a `ColbertLoss` temperature of `0.02`:
+
+| Mode | Batch size | Mini-batch size | Peak VRAM | Time per epoch | Average NDCG@5 |
+|------|-----------:|----------------:|----------:|---------------:|---------------:|
+| Standard | 128 | - | 88.7 GiB | 4h 17m | 75.2 |
+| Standard | 192 | - | OOM | - | - |
+| GradCache | 192 | 8 | 83.4 GiB | 6h 48m | 76.3 |
+
+Average NDCG@5 is calculated across the 14 ViDoRe v1 and v2 tasks. These measurements illustrate the memory-compute
+trade-off for this setup and are not general performance guarantees. GradCache primarily reduces model activation
+memory; full-batch embeddings and loss tensors still scale with the batch size, so larger batches can still run out of
+memory.
+
+</details>
+
 ## Contributing
 
 We welcome contributions to ColPali! 🤗
