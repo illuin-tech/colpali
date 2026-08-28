@@ -6,6 +6,8 @@ from transformers.conversion_mapping import get_checkpoint_conversion_mapping, r
 from transformers.core_model_loading import WeightRenaming
 from transformers.models.qwen3_vl import Qwen3VLConfig, Qwen3VLModel
 
+from .configuration_colqwen3 import ColQwen3Config
+
 
 class ColQwen3(Qwen3VLModel):
     """
@@ -20,8 +22,13 @@ class ColQwen3(Qwen3VLModel):
     """
 
     main_input_name: ClassVar[str] = "doc_input_ids"  # transformers-related
+    config_class = ColQwen3Config
+    _keys_to_ignore_on_load_unexpected = [r"^vlm\.lm_head\.weight$", r"^lm_head\.weight$"]
     _checkpoint_conversion_mapping = {
         r"^base_model\.model\.custom_text_proj": "custom_text_proj",
+        r"^vlm\.model\.visual": "visual",
+        r"^vlm\.model\.language_model": "language_model",
+        r"^embedding_proj_layer": "custom_text_proj",
         r"^model\.visual": "visual",
         r"^model\.language_model": "language_model",
         r"^model\.": "",
@@ -29,25 +36,26 @@ class ColQwen3(Qwen3VLModel):
 
     def __init__(
         self,
-        config: Qwen3VLConfig,
+        config: Qwen3VLConfig | ColQwen3Config,
         mask_non_image_embeddings: bool = False,
         **kwargs,
     ):
         dtype = kwargs.pop("dtype", kwargs.pop("torch_dtype", None))
         attn_impl = kwargs.pop("attn_implementation", None)
         use_cache = kwargs.pop("use_cache", None)
+        embed_dim = getattr(config, "embed_dim", 320)
+        padding_side = getattr(config, "padding_side", "left")
+        config = self._to_backbone_config(config)
 
         super().__init__(config=config)
 
-        hidden_size = getattr(self.config, "hidden_size", None)
-        if hidden_size is None and hasattr(self.config, "text_config"):
-            hidden_size = self.config.text_config.hidden_size
+        hidden_size = self._get_text_hidden_size(self.config)
         if hidden_size is None:
             raise ValueError("Unable to determine text hidden size for Qwen3VLConfig.")
 
-        self.dim = 320
+        self.dim = embed_dim
         self.custom_text_proj = nn.Linear(hidden_size, self.dim)
-        self.padding_side = "left"
+        self.padding_side = padding_side
         self.mask_non_image_embeddings = mask_non_image_embeddings
         self.post_init()
 
@@ -65,6 +73,18 @@ class ColQwen3(Qwen3VLModel):
             key_mapping = dict(getattr(super(), "_checkpoint_conversion_mapping", {}))
             key_mapping.update(getattr(cls, "_checkpoint_conversion_mapping", {}))
         return super().from_pretrained(*args, **kwargs, key_mapping=key_mapping)
+
+    @staticmethod
+    def _to_backbone_config(config: Qwen3VLConfig | ColQwen3Config) -> Qwen3VLConfig:
+        if isinstance(config, ColQwen3Config):
+            return config.to_backbone_config()
+        return config
+
+    @staticmethod
+    def _get_text_hidden_size(config: Qwen3VLConfig) -> int | None:
+        if hasattr(config, "text_config") and hasattr(config.text_config, "hidden_size"):
+            return config.text_config.hidden_size
+        return getattr(config, "hidden_size", None)
 
     def forward(self, *args, **kwargs) -> torch.Tensor:
         # Handle the custom "pixel_values" input obtained with `ColQwen3Processor` through unpadding
