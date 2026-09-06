@@ -41,7 +41,7 @@ class ContrastiveTrainer(Trainer):
 
         if isinstance(kwargs["eval_dataset"], list):
             eval_dataset_list = kwargs["eval_dataset"]
-            kwargs["eval_dataset"] = concat_datasets(eval_dataset_list)
+            kwargs["eval_dataset"] = concat_datasets(eval_dataset_list, batch_size=kwargs["args"].eval_batch_size)
         else:
             eval_dataset_list = None
 
